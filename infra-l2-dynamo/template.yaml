@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   infra-l2-dynamo
 
-  Dynamo DB tables for long term session state storage
+  Dynamo DB tables for session events aggregator table
 
 Parameters:
   Environment:
@@ -58,12 +58,12 @@ Globals:
       - !Ref AWS::NoValue
 
 Resources:
-  SessionTable:
+  SessionEventsTable:
     Type: "AWS::DynamoDB::Table"
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
-      TableName: !Sub "session-${AWS::StackName}"
+      TableName: !Sub "session-events-${AWS::StackName}"
       BillingMode: "PAY_PER_REQUEST"
       AttributeDefinitions:
         - AttributeName: "sessionId"
@@ -91,11 +91,11 @@ Resources:
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       SSESpecification:
-        KMSMasterKeyId: !Ref SessionTableKey
+        KMSMasterKeyId: !Ref SessionEventsTableKey
         SSEEnabled: true
         SSEType: KMS
 
-  SessionTableKey:
+  SessionEventsTableKey:
     Type: AWS::KMS::Key
     Properties:
       Description: !Sub "${AWS::StackName} session table key"
@@ -116,7 +116,7 @@ Resources:
             Resource: "*"
       Tags:
         - Key: Name
-          Value: !Sub "${AWS::StackName} session table key"
+          Value: !Sub "${AWS::StackName} session events table key"
         - Key: Product
           Value: Gov.UK Sign On
         - Key: System
@@ -124,34 +124,34 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
-  SessionTableKeyAlias:
+  SessionEventsTableKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub "alias/${AWS::StackName}-session-table-key"
-      TargetKeyId: !Ref SessionTableKey
+      AliasName: !Sub "alias/${AWS::StackName}-session-events-table-key"
+      TargetKeyId: !Ref SessionEventsTableKey
 
   
 Outputs:
-  SessionTableName:
-    Description: "The name of the DynamoDB Session table"
-    Value: !Ref SessionTable
+  SessionEventsTableName:
+    Description: "The name of the DynamoDB Session Events table"
+    Value: !Ref SessionEventsTable
     Export:
-      Name: !Sub "${AWS::StackName}-session-table-name"
-  SessionTableArn:
-    Description: "The Arn of the DynamoDB Session table"
-    Value: !GetAtt SessionTable.Arn
+      Name: !Sub "${AWS::StackName}-session-events-table-name"
+  SessionEventsTableArn:
+    Description: "The Arn of the DynamoDB Session Events table"
+    Value: !GetAtt SessionEventsTable.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-session-table-arn"
-  SessionTableKeyArn:
-    Description: "The Arn of the session table encryption key"
-    Value: !GetAtt SessionTableKey.Arn
+      Name: !Sub "${AWS::StackName}-session-events-table-arn"
+  SessionEventsTableKeyArn:
+    Description: "The Arn of the Session Events table encryption key"
+    Value: !GetAtt SessionEventsTableKey.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-session-table-key-arn"
-  SessionTableKeyId:
-    Description: "The Id of the session table encryption key"
-    Value: !Ref SessionTableKey
+      Name: !Sub "${AWS::StackName}-session-events-table-key-arn"
+  SessionEventsTableKeyId:
+    Description: "The Id of the Session Events table encryption key"
+    Value: !Ref SessionEventsTableKey
     Export:
-      Name: !Sub "${AWS::StackName}-session-table-key-id"
-  SessionTableKeyAlias:
-    Description: "The Alias of the session table encryption key"
-    Value: !Ref SessionTableKeyAlias
+      Name: !Sub "${AWS::StackName}-session-events-table-key-id"
+  SessionEventsTableKeyAlias:
+    Description: "The Alias of the Session Events encryption key"
+    Value: !Ref SessionEventsTableKeyAlias
