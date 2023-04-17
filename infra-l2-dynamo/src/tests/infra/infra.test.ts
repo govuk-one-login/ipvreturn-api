@@ -12,7 +12,7 @@ beforeAll(() => {
   template = Template.fromJSON(yamlTemplate)
 })
 
-it("should define 2 DynamoDB tables", async () => {
+it("should define 1 DynamoDB tables", async () => {
   template.resourceCountIs('AWS::DynamoDB::Table', 1)
 })
 
