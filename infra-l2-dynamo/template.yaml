@@ -68,23 +68,9 @@ Resources:
       AttributeDefinitions:
         - AttributeName: "userId"
           AttributeType: "S"
-        - AttributeName: "authorizationCode"
-          AttributeType: "S"
       KeySchema:
         - AttributeName: "userId"
           KeyType: "HASH"
-      GlobalSecondaryIndexes:
-        - IndexName: "authorizationCode-index"
-          KeySchema:
-            - AttributeName: "authorizationCode"
-              KeyType: "HASH"
-          Projection:
-            NonKeyAttributes:
-              - "userId"
-              - "redirectUri"
-              - "clientId"
-              - "authSessionState"
-            ProjectionType: "INCLUDE"
       TimeToLiveSpecification:
         AttributeName: expiryDate
         Enabled: true
@@ -98,7 +84,7 @@ Resources:
   SessionEventsTableKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: !Sub "${AWS::StackName} session table key"
+      Description: !Sub "${AWS::StackName} sessionEvents table key"
       Enabled: true
       KeySpec: SYMMETRIC_DEFAULT
       KeyUsage: ENCRYPT_DECRYPT
