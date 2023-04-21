@@ -63,7 +63,7 @@ Resources:
     Type: AWS::KMS::Key
     #checkov:skip=CKV_AWS_7:Automatic key rotation can only be enabled on symmetric keys.
     Properties:
-      Description: !Sub "${AWS::StackName} VC signing key"
+      Description: !Sub "${AWS::StackName} signing key for public_key_jwt method of client assertion"
       Enabled: true
       EnableKeyRotation: false
       KeyPolicy:
@@ -77,12 +77,12 @@ Resources:
             Resource:
               - "*"
       KeySpec: RSA_2048
-      KeyUsage: ENCRYPT_DECRYPT
+      KeyUsage: SIGN_VERIFY
       MultiRegion: false
       PendingWindowInDays: !Ref KmsPendingWindowInDays
       Tags:
         - Key: KeyType
-          Value: VC Signing Key
+          Value: Signing Key
         - Key: Environment
           Value: !Sub ${Environment}
         - Key: CheckovRulesToSkip
@@ -91,20 +91,20 @@ Resources:
   KMSSigningKeyAlias:
     Type: 'AWS::KMS::Alias'
     Properties:
-      AliasName: !Sub "alias/${AWS::StackName}-vc-signing-key"
+      AliasName: !Sub "alias/${AWS::StackName}-auth-signing-key"
       TargetKeyId: !Ref KMSSigningKey
 
 Outputs:
   SigningKeyArn:
-    Description: "The Arn of the VC signing key"
+    Description: "The Arn of the public_key_jwt signing key"
     Value: !GetAtt KMSSigningKey.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-vc-signing-key"
+      Name: !Sub "${AWS::StackName}-auth-signing-key"
   SigningKeyId:
-    Description: "The Id of the VC signing key"
+    Description: "The Id of the signing key"
     Value: !Ref KMSSigningKey
     Export:
-      Name: !Sub "${AWS::StackName}-vc-signing-key-id"
+      Name: !Sub "${AWS::StackName}-auth-signing-key-id"
   SigningKeyAlias:
-    Description: "The Alias of the VC signing key"
+    Description: "The Alias of the signing key"
     Value: !Ref KMSSigningKeyAlias
