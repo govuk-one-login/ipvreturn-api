@@ -106,7 +106,7 @@ Resources:
         - Key: Product
           Value: Gov.UK Sign On
         - Key: System
-          Value: Claimed Identity Collector
+          Value: IPV Return Service
         - Key: Environment
           Value: !Ref Environment
 
