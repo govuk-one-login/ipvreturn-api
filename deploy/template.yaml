@@ -73,23 +73,23 @@ Mappings:
     dev:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      RETURNJOURNEYURL: "https://XXX.return.journey.url"
+      RETURNJOURNEYURL: "https://return.dev.account.gov.uk"
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      RETURNJOURNEYURL: "https://XXX.return.journey.url"
+      RETURNJOURNEYURL: "https://return.build.account.gov.uk"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      RETURNJOURNEYURL: "https://XXX.return.journey.url"
+      RETURNJOURNEYURL: "https://return.staging.account.gov.uk"
     integration:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      RETURNJOURNEYURL: "https://XXX.return.journey.url"
+      RETURNJOURNEYURL: "https://return.integration.account.gov.uk"
     production:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      RETURNJOURNEYURL: "https://XXX.return.journey.url"
+      RETURNJOURNEYURL: "https://return.account.gov.uk"
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
