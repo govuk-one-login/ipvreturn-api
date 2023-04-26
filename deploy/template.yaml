@@ -1,0 +1,322 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: "Digital Identity IPV CRI IPR API"
+
+Parameters:
+  CodeSigningConfigArn:
+    Type: String
+    Default: "none"
+    Description: >
+      The ARN of the Code Signing Config to use, provided by the deployment pipeline
+  Environment:
+    Description: "The environment type"
+    Type: "String"
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+    ConstraintDescription: Ensure environment variable is set to one of dev, build, staging, integration or production.
+  PermissionsBoundary:
+    Description: "The ARN of the permissions boundary to apply when creating IAM roles"
+    Type: String
+    Default: "none"
+  SecretPrefix:
+    Type: String
+    Default: "none"
+    Description: Secrets name prefix
+  VpcStackName:
+    Type: String
+    Default: "vpc-cri"
+    Description: The name of the VPC stack deployed.
+  L2DynamoStackName:
+    Type: String
+    Default: "ipvreturn-ddb"
+    Description: The name of the L2 DynamoDB stack deployed.
+  L2KMSStackName:
+    Type: String
+    Default: "ipvreturn-kms"
+    Description: The name of the L2 DynamoDB stack deployed.
+
+Mappings:
+  EnvironmentConfiguration: # This is where you store per-environment settings.
+    dev:
+      logretentionindays: 3
+      apiTracingEnabled: true
+    build:
+      logretentionindays: 3
+      apiTracingEnabled: true
+    staging:
+      logretentionindays: 3
+      apiTracingEnabled: true
+    integration:
+      logretentionindays: 30
+      apiTracingEnabled: false
+    production:
+      logretentionindays: 30
+      apiTracingEnabled: false
+
+  PlatformConfiguration:
+    dev:
+      CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+    build:
+      CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+    staging:
+      CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+    integration:
+      CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+    production:
+      CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+
+  EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
+    dev:
+      GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
+      MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
+      RETURNJOURNEYURL: "https://return.dev.account.gov.uk"
+    build:
+      GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
+      MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
+      RETURNJOURNEYURL: "https://return.build.account.gov.uk"
+    staging:
+      GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
+      MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
+      RETURNJOURNEYURL: "https://return.staging.account.gov.uk"
+    integration:
+      GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
+      MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
+      RETURNJOURNEYURL: "https://return.integration.account.gov.uk"
+    production:
+      GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
+      MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
+      RETURNJOURNEYURL: "https://return.account.gov.uk"
+  TxMAAccounts:
+    # EVENTS is used to egress to TxMA.
+    dev:
+      AUDIT: arn:aws:iam::725018305812:root
+      EVENTS: arn:aws:iam::248098332657:root
+    build:
+      AUDIT: arn:aws:iam::761029721660:root
+      EVENTS: arn:aws:iam::750703655225:root
+    staging:
+      AUDIT: arn:aws:iam::778587367904:root
+      EVENTS: arn:aws:iam::178023842775:root
+    integration:
+      AUDIT: arn:aws:iam::423448613278:root
+      EVENTS: arn:aws:iam::729485541398:root
+    production:
+      AUDIT: arn:aws:iam::348043515437:root
+      EVENTS: arn:aws:iam::451773080033:root
+
+Conditions:
+  CreateDevResources: !Equals
+    - !Ref Environment
+    - dev
+  IsProdLikeEnvironment: !Or
+    - !Equals [!Ref Environment, staging]
+    - !Equals [!Ref Environment, integration]
+    - !Equals [!Ref Environment, production]
+  UseCodeSigning:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref CodeSigningConfigArn
+          - "none"
+  UsePermissionsBoundary:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref PermissionsBoundary
+          - "none"
+  UseSecretPrefix:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref SecretPrefix
+          - "none"
+
+Globals:
+  Function:
+    Runtime: nodejs18.x
+    VpcConfig:
+      SecurityGroupIds:
+        - !GetAtt LambdaEgressSecurityGroup.GroupId
+      SubnetIds:
+        - Fn::ImportValue:
+            "Fn::Sub": "${VpcStackName}-ProtectedSubnetIdA"
+        - Fn::ImportValue:
+            "Fn::Sub": "${VpcStackName}-ProtectedSubnetIdB"
+    PermissionsBoundary: !If
+      - UsePermissionsBoundary
+      - !Ref PermissionsBoundary
+      - !Ref AWS::NoValue
+    CodeSigningConfigArn: !If
+      - UseCodeSigning
+      - !Ref CodeSigningConfigArn
+      - !Ref AWS::NoValue
+    Timeout: 30 # seconds
+    Tracing: Active
+    MemorySize: 1024
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        # These should always be alphabetically organised.
+        AWS_STACK_NAME: !Sub ${AWS::StackName} # The AWS Stack Name, as passed into the template.
+        POWERTOOLS_LOG_LEVEL: DEBUG # The LogLevel for the AWS PowerTools LogHelper
+        POWERTOOLS_METRICS_NAMESPACE: IPR-CRI # The Metric Namespace for the AWS PowerTools MetricHelper
+    AutoPublishAlias: live
+
+Resources:
+  LambdaEgressSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: >-
+        Permits outbound on port 443 from within the VPC to the internet.
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow to the wider internet on port 443
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+      VpcId:
+        Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
+
+  ### Start of API Gateway definition.
+
+  ### Function Definition
+  GovNotifyFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: GovNotifyFunctionLogGroup
+    Properties:
+      FunctionName: !Sub "Ipvreturn-GovNotify-${AWS::StackName}"
+      Handler: GovNotifyHandler.lambdaHandler
+      CodeUri: ../src/
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: GovNotifyHandler
+          GOVUKNOTIFY_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYTEMPLATEID ]
+          GOVUKNOTIFY_API_KEY_SSM_PATH: !Sub "/${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY"
+          RETURN_JOURNEY_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNJOURNEYURL ]
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSXrayWriteOnlyAccess
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub "${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY"
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "kms:Decrypt"
+              Resource: !GetAtt GovNotifyEncryptionKey.Arn
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt GovNotifySQSQueue.Arn
+            BatchSize: 1
+            Enabled: true
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
+        EntryPoints:
+          - GovNotifyHandler.ts
+
+  GovNotifyFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/Ipvreturn-GovNotify-${AWS::StackName}"
+      RetentionInDays:
+        !FindInMap [
+          EnvironmentConfiguration,
+          !Ref Environment,
+          logretentionindays,
+        ]
+
+  GovNotifyFunctionLogsSubscriptionFilterCSLS:
+    Type: AWS::Logs::SubscriptionFilter
+    Condition: IsProdLikeEnvironment
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
+      FilterPattern: ""
+      LogGroupName: !Ref GovNotifyFunctionLogGroup
+
+  GovNotifyFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GovNotifyFunction
+      Principal: apigateway.amazonaws.com
+
+  #Gov Notify SQS Queue
+  GovNotifySQSQueue:
+    Type: "AWS::SQS::Queue"
+    Properties:
+      MessageRetentionPeriod: !FindInMap [EnvironmentVariables, !Ref Environment, MESSAGERETENTIONPERIODDAYS]
+      VisibilityTimeout: 60
+      KmsMasterKeyId: !Ref GovNotifyKeyAlias
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt:
+            - "GovNotifySQSQueueDeadLetterQueue"
+            - "Arn"
+        maxReceiveCount: 5
+
+  GovNotifySQSQueueDeadLetterQueue:
+    Type: "AWS::SQS::Queue"
+    Properties:
+      MessageRetentionPeriod: 259200 # three days
+      KmsMasterKeyId: !Sub GovNotifyEncryptionKey
+
+  GovNotifySQSQueuePolicy:
+    Type: "AWS::SQS::QueuePolicy"
+    Properties:
+      Queues:
+        - !Ref GovNotifySQSQueue
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "lambda.amazonaws.com"
+            Action:
+              - "sqs:ReceiveMessage"
+              - "sqs:DeleteMessage"
+            Resource: !GetAtt GovNotifySQSQueue.Arn
+
+  GovNotifyEncryptionKey:
+    Type: AWS::KMS::Key
+    # KMS Key manually rotated.
+    # checkov:skip=CKV_AWS_7: KMS Key manually rotated.
+    Properties:
+      Description: A KMS Key for encrypting the SQS Queue for GovNotify
+      Enabled: true
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "kms:*"
+            Resource:
+              - "*"
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      MultiRegion: false
+      PendingWindowInDays: 7
+      Tags:
+        - Key: KeyType
+          Value: Encryption Key
+        - Key: Environment
+          Value: !Sub ${Environment}
+
+  GovNotifyKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !If
+        - CreateDevResources
+        - !Sub "alias/GovNotifyEncryptionKey-${AWS::StackName}"
+        - alias/GovNotifyEncryptionKey
+      TargetKeyId: !Ref GovNotifyEncryptionKey
