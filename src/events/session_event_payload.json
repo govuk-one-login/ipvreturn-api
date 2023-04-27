@@ -1,0 +1,49 @@
+{
+  "Records": [
+    {
+      "eventID": "7de3041dd709b024af6f29e4fa13d34c",
+      "eventName": "MODIFY",
+      "eventVersion": "1.1",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "eu-west-2",
+      "dynamodb": {
+        "ApproximateCreationDateTime": 1479499740,
+        "Keys": {
+          "userId": {
+            "S": "userId"
+          }
+        },
+        "NewImage": {
+          "eventName": {
+            "S": "IPV_F2F_CRI_VC_CONSUMED"
+          },
+          "email": {
+            "S": "bhavana.hemanth@digital.cabinet-office.gov.uk"
+          },
+          "userId": {
+            "S": "userId"
+          },
+          "clientId": {
+            "S": "sdfdsf"
+          },
+          "firstName": {
+            "S": "Fredrick Niel"
+          },
+          "lastName": {
+            "S": "Jason"
+          },
+          "redirectUri": {
+            "S": "redirect_uri"
+          },
+          "rpName": {
+            "S": "RP name"
+          }
+        },
+        "SequenceNumber": "13021600000000001596893679",
+        "SizeBytes": 112,
+        "StreamViewType": "NEW_IMAGE"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:region:123456789012:table/SessionEventsTable/stream/2016-11-16T20:42:48.104"
+    }
+  ]
+}

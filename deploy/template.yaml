@@ -249,6 +249,85 @@ Resources:
       FunctionName: !Ref GovNotifyFunction
       Principal: apigateway.amazonaws.com
 
+  StreamProcessorFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: StreamProcessorFunctionLogGroup
+    Properties:
+      FunctionName: !Sub "Ipvreturn-StreamProcessor-${AWS::StackName}"
+      Handler: StreamProcessorHandler.lambdaHandler
+      CodeUri: ../src/
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: StreamProcessorHandler
+          GOV_NOTIFY_QUEUE_URL: !Ref GovNotifySQSQueue
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSXrayWriteOnlyAccess
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "sqs:SendMessage"
+              Resource: !GetAtt GovNotifySQSQueue.Arn
+            - Effect: Allow
+              Action:
+                - "kms:Encrypt"
+                - "kms:Decrypt"
+                - "kms:GenerateDataKey"
+              Resource: !GetAtt GovNotifyEncryptionKey.Arn
+            - Effect: Allow #allow lambda to read from the event stream
+              Action:
+                - dynamodb:DescribeStream
+                - dynamodb:GetRecords
+                - dynamodb:GetShardIterator
+                - dynamodb:ListStreams
+              Resource: "*"
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
+        EntryPoints:
+          - StreamProcessorHandler.ts
+
+  SessionEventsTableStream:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      # The maximum number of DB items to send to Lambda
+      BatchSize: 1
+      Enabled: True
+      EventSourceArn:
+        Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-stream-arn"
+      FunctionName: !Ref StreamProcessorFunction
+      # Always start at the tail of the Stream
+      StartingPosition: LATEST
+
+  StreamProcessorFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/Ipvreturn-StreamProcessor-${AWS::StackName}"
+      RetentionInDays:
+        !FindInMap [
+          EnvironmentConfiguration,
+          !Ref Environment,
+          logretentionindays,
+        ]
+
+  StreamProcessorFunctionLogsSubscriptionFilterCSLS:
+    Type: AWS::Logs::SubscriptionFilter
+    Condition: IsProdLikeEnvironment
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
+      FilterPattern: ""
+      LogGroupName: !Ref StreamProcessorFunctionLogGroup
+
+  StreamProcessorFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref StreamProcessorFunction
+      Principal: apigateway.amazonaws.com
+
   #Gov Notify SQS Queue
   GovNotifySQSQueue:
     Type: "AWS::SQS::Queue"

@@ -26,39 +26,39 @@ export class SendEmailService {
 
     private readonly logger: Logger;
 
-	/**
-	 * Constructor sets up the client needed to use gov notify service with API key read from env var
-	 *
-	 * @param environmentVariables
-	 * @private
-	 */
-	private constructor(logger: Logger,GOVUKNOTIFY_API_KEY: string) {
+    /**
+     * Constructor sets up the client needed to use gov notify service with API key read from env var
+     *
+     * @param environmentVariables
+     * @private
+     */
+    private constructor(logger: Logger, GOVUKNOTIFY_API_KEY: string) {
     	this.logger = logger;
     	this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GOV_NOTIFY_SERVICE);
     	this.govNotify = new NotifyClient(GOVUKNOTIFY_API_KEY);
-		this.govNotifyErrorMapper = new GovNotifyErrorMapper();
-	}
+    	this.govNotifyErrorMapper = new GovNotifyErrorMapper();
+    }
 
-	static getInstance(logger: Logger, GOVUKNOTIFY_API_KEY: string): SendEmailService {
+    static getInstance(logger: Logger, GOVUKNOTIFY_API_KEY: string): SendEmailService {
     	if (!this.instance) {
     		this.instance = new SendEmailService(logger, GOVUKNOTIFY_API_KEY);
     	}
     	return this.instance;
-	}
+    }
 
-	/**
-	 * Method to compose send email request
-	 * This method receive object containing the data to compose the email and retrieves needed field based on object type (Email | EmailMessage)
-	 * it attempts to send the email.
-	 * If there is a failure, it checks if the error is retryable. If it is, it retries for the configured max number of times with a cool off period after each try.
-	 * If the error is not retryable, an AppError is thrown
-	 * If max number of retries is exceeded an AppError is thrown
-	 *
-	 * @param message
-	 * @returns EmailResponse
-	 * @throws AppError
-	 */
-	async sendEmail(message: Email): Promise<EmailResponse> {
+    /**
+     * Method to compose send email request
+     * This method receive object containing the data to compose the email and retrieves needed field based on object type (Email | EmailMessage)
+     * it attempts to send the email.
+     * If there is a failure, it checks if the error is retryable. If it is, it retries for the configured max number of times with a cool off period after each try.
+     * If the error is not retryable, an AppError is thrown
+     * If max number of retries is exceeded an AppError is thrown
+     *
+     * @param message
+     * @returns EmailResponse
+     * @throws AppError
+     */
+    async sendEmail(message: Email): Promise<EmailResponse> {
     	let encoded;
 
     	const personalisation = {
@@ -117,6 +117,6 @@ export class SendEmailService {
     	// an error is thrown
     	this.logger.error(`sendEmail - cannot send EMail ${SendEmailService.name}`);
     	throw new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot send EMail");
-	}
+    }
 
 }

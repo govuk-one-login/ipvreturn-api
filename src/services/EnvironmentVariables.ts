@@ -19,6 +19,8 @@ export class EnvironmentVariables {
 
 	private readonly RETURN_JOURNEY_URL = process.env.RETURN_JOURNEY_URL;
 
+	private readonly GOV_NOTIFY_QUEUE_URL = process.env.GOV_NOTIFY_QUEUE_URL;
+
 	/*
 	 * This function performs validation on env variable values.
 	 * If certain variables have unexpected values the constructor will throw an error and/or log an error message
@@ -45,6 +47,13 @@ export class EnvironmentVariables {
 					|| +this.GOVUKNOTIFY_MAX_RETRIES.trim() >= 100) {
 					this.GOVUKNOTIFY_MAX_RETRIES = "3";
 					logger.warn("GOVUKNOTIFY_MAX_RETRIES env var is not set. Setting to default - 3");
+				}
+				break;
+			}
+			case ServicesEnum.STREAM_PROCESSOR_SERVICE: {
+				if (!this.GOV_NOTIFY_QUEUE_URL || this.GOV_NOTIFY_QUEUE_URL.trim().length === 0 ) {
+					logger.error(`Stream Processor Handler - Misconfigured external API's key ${EnvironmentVariables.name}`);
+					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				break;
 			}
@@ -86,6 +95,14 @@ export class EnvironmentVariables {
 
 	returnJourneyUrl(): any {
 		return this.RETURN_JOURNEY_URL;
+	}
+
+	getGovNotifyQueueURL(logger: Logger): string {
+		if (!this.GOV_NOTIFY_QUEUE_URL || this.GOV_NOTIFY_QUEUE_URL.trim().length === 0) {
+			logger.error(`GovNotifyService - Misconfigured external API's key ${EnvironmentVariables.name}`);
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
+		}
+		return this.GOV_NOTIFY_QUEUE_URL;
 	}
 
 }

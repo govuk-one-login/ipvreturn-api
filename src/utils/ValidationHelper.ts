@@ -1,7 +1,7 @@
 import { validateOrReject } from "class-validator";
 import { AppError } from "./AppError";
 import { Logger } from "@aws-lambda-powertools/logger";
-import {HttpCodesEnum} from "../models/enums/HttpCodesEnum";
+import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 
 export class ValidationHelper {
 
