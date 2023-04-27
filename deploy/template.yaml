@@ -182,6 +182,69 @@ Resources:
   ### Start of API Gateway definition.
 
   ### Function Definition
+  PostEventFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: PostEventFunctionLogGroup
+    Properties:
+      FunctionName: !Sub "Ipvreturn-PostEvent-${AWS::StackName}"
+      Handler: PostEventHandler.lambdaHandler
+      CodeUri: ../src/
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: PostEventHandler
+          SESSION_EVENTS_TABLE:
+            Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSXrayWriteOnlyAccess
+        - DynamoDBWritePolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-session-events-table-name"
+        - DynamoDBReadPolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-session-events-table-name"
+        - KMSDecryptPolicy:
+            KeyId:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-session-events-table-key-id"
+
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
+        EntryPoints:
+          - PostEventHandler.ts
+
+  PostEventFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/Ipvreturn-PostEvent-${AWS::StackName}"
+      RetentionInDays:
+        !FindInMap [
+          EnvironmentConfiguration,
+          !Ref Environment,
+          logretentionindays,
+        ]
+
+  PostEventFunctionLogsSubscriptionFilterCSLS:
+    Type: AWS::Logs::SubscriptionFilter
+    Condition: IsProdLikeEnvironment
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
+      FilterPattern: ""
+      LogGroupName: !Ref PostEventFunctionLogGroup
+
+  PostEventFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref PostEventFunction
+      Principal: apigateway.amazonaws.com
+
   GovNotifyFunction:
     Type: AWS::Serverless::Function
     DependsOn: GovNotifyFunctionLogGroup

@@ -19,6 +19,8 @@ export class EnvironmentVariables {
 
 	private readonly RETURN_JOURNEY_URL = process.env.RETURN_JOURNEY_URL;
 
+	private readonly SESSION_EVENTS_TABLE = process.env.SESSION_EVENTS_TABLE;
+
 	/*
 	 * This function performs validation on env variable values.
 	 * If certain variables have unexpected values the constructor will throw an error and/or log an error message
@@ -86,6 +88,10 @@ export class EnvironmentVariables {
 
 	returnJourneyUrl(): any {
 		return this.RETURN_JOURNEY_URL;
+	}
+
+	sessionEventsTable(): any {
+		return this.SESSION_EVENTS_TABLE;
 	}
 
 }

@@ -1,4 +1,5 @@
 export enum ServicesEnum {
 	GOV_NOTIFY_SERVICE = "F2F_GOV_NOTIFY_SERVICE",
+	POST_EVENT_SERVICE = "POST_EVENT_SERVICE",
 	NA = "NA",
 }
