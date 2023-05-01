@@ -2,12 +2,9 @@ import { SQSEvent, SQSRecord } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Response } from "./utils/Response";
-
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
-
 import { Constants } from "./utils/Constants";
 import { HttpCodesEnum } from "./models/enums/HttpCodesEnum";
-
 import { PostEventProcessor } from "./services/PostEventProcessor";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : Constants.IPR_METRICS_NAMESPACE;
@@ -40,9 +37,9 @@ class PostEventHandler implements LambdaInterface {
 				return new Response(postEventResponse.statusCode, responseBody);
 
 			} catch (error: any) {
-					logger.error({ message: "SQS Event could not be processed", error });
-					return new Response(HttpCodesEnum.SERVER_ERROR, "postEvent - Event could not be processed");
-				}
+				logger.error({ message: "SQS Event could not be processed", error });
+				return new Response(HttpCodesEnum.SERVER_ERROR, "postEvent - Event could not be processed");
+			}
 
 		} else {
 			logger.warn({ message: "Unexpected no. of records received", numOfRecords: event.Records.length });

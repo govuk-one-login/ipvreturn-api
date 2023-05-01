@@ -52,7 +52,7 @@ export class PostEventProcessor {
 						userEmail: userDetails.email,
 						nameParts: [],
 						clientName: eventDetails.client_id,
-						redirectUri: eventDetails.component_id
+						redirectUri: eventDetails.component_id,
 					};
 					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
 					expressionAttributeValues = {
