@@ -1,5 +1,21 @@
+export interface SQSEvent {
+	event_id: string;
+	client_id: string;
+	component_id: string;
+	event_name: string;
+	redirect_uri: string;
+	rp_name: string;
+	timestamp: number;
+	timestamp_formatted: string;
+	user: {
+		user_id: string;
+		email?: string;
+		sub?: string;
+	};
+}
+
 export interface IpvStartedOnEvent {
-	":ipvStartedOn": string;
+	":ipvStartedOn": number;
 	":userEmail": string;
 	":nameParts": Array<{
 		type: string;
@@ -10,15 +26,15 @@ export interface IpvStartedOnEvent {
 }
 
 export interface JourneyWentAsyncOnEvent {
-	":journeyWentAsyncOn": string;
+	":journeyWentAsyncOn": number;
 }
 
 export interface ReadyToResumeOnEvent {
-	":readyToResumeOn": string;
+	":readyToResumeOn": number;
 }
 
 export interface AccountDeletedOnEvent {
-	":accountDeletedOn": string;
+	":accountDeletedOn": number;
 	":userEmail": string;
 	":nameParts": never[];
 	":clientName": string;

@@ -28,7 +28,7 @@ export class IPRService {
 	}
 
 	async isFlaggedForDeletion(userId: string): Promise<boolean | undefined> {
-		this.logger.debug("Table name " + this.tableName);
+		this.logger.info({ message: "Checking if record is flagged for deletion", tableName: this.tableName, userId });
 		const getSessionCommand = new GetCommand({
 			TableName: this.tableName,
 			Key: {
@@ -36,9 +36,8 @@ export class IPRService {
 			},
 		});
 
-		let session;
 		try {
-			session = await this.dynamo.send(getSessionCommand);
+			const session = await this.dynamo.send(getSessionCommand);
 			if (session.Item) return session.Item.accountDeletedOn ? true : false;
 		} catch (e: any) {
 			this.logger.error({ message: "getSessionById - failed executing get from dynamodb:", e });
@@ -54,7 +53,7 @@ export class IPRService {
 			return "Record flagged for deletion, skipping update";
 		}
 
-		this.logger.debug("Table name " + this.tableName);
+		this.logger.info({ message: "Saving event data to dynamodb", tableName: this.tableName, userId });
 		const updateSessionInfoCommand = new UpdateCommand({
 			TableName: this.tableName,
 			Key: {
@@ -64,7 +63,7 @@ export class IPRService {
 			ExpressionAttributeValues: expressionAttributeValues,
 		});
 
-		this.logger.info({ message: "Updating session record for userID:", userId });
+		this.logger.info({ message: "Updating session record", userId });
 
 		try {
 			await this.dynamo.send(updateSessionInfoCommand);

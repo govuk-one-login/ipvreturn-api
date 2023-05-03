@@ -50,6 +50,13 @@ export class EnvironmentVariables {
 				}
 				break;
 			}
+			case ServicesEnum.POST_EVENT_SERVICE: {
+				if (!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
+					logger.error("PostEvent Handler - Missing SessionEvents Tablename");
+					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
+				}
+				break;
+			}
 			default:
 				break;
 		}

@@ -3,13 +3,12 @@ import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Response } from "./utils/Response";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
-import { Constants } from "./utils/Constants";
 import { HttpCodesEnum } from "./models/enums/HttpCodesEnum";
 import { PostEventProcessor } from "./services/PostEventProcessor";
 
-const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : Constants.IPR_METRICS_NAMESPACE;
-const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : Constants.DEBUG;
-const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME ? process.env.POWERTOOLS_SERVICE_NAME : Constants.POSTEVENT_LOGGER_SVC_NAME;
+const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE;
+const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL;
+const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME;
 
 const logger = new Logger({
 	logLevel: POWERTOOLS_LOG_LEVEL,
@@ -21,7 +20,7 @@ const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceNa
 class PostEventHandler implements LambdaInterface {
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
-	async handler(event: SQSEvent, context: any): Promise<any> {
+	async handler(event: SQSEvent, context: any): Promise<Response> {
 		if (event.Records.length === 1) {
 
 			const record: SQSRecord = event.Records[0];

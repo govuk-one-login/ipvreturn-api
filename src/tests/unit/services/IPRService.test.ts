@@ -12,7 +12,7 @@ const userId = "SESSID";
 const mockDynamoDbClient = jest.mocked(createDynamoDbClient());
 const authRequestedUpdatExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
 const authRequestedExpressionAttributeValues = {
-	":ipvStartedOn": "1681902001",
+	":ipvStartedOn": 1681902001,
 	":userEmail": "viveak@test.com",
 	":nameParts": [{ type: "Firstname", value: "test" }],
 	":clientName": "RqFZ83csmS4Mi4Y7s7ohD9-ekwU",

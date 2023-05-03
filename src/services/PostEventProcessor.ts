@@ -8,7 +8,7 @@ import { IPRService } from "./IPRService";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
-import { IpvStartedOnEvent, JourneyWentAsyncOnEvent, ReadyToResumeOnEvent, AccountDeletedOnEvent } from "../models/IPREventTypes";
+import { IpvStartedOnEvent, JourneyWentAsyncOnEvent, ReadyToResumeOnEvent, AccountDeletedOnEvent, SQSEvent } from "../models/IPREventTypes";
 
 
 export class PostEventProcessor {
@@ -38,73 +38,66 @@ export class PostEventProcessor {
 
 	async processRequest(eventBody: any): Promise<any> {
 		try {
-			const eventDetails = JSON.parse(eventBody);
+			const eventDetails: SQSEvent = JSON.parse(eventBody);
 			const eventName = eventDetails.event_name;
+			if (!eventDetails.user) { 
+				this.logger.error({ message: "Missing user details in event", eventDetails });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
+			}
 			const userDetails = eventDetails.user;
 
-			let eventData, updateExpression, expressionAttributeValues;
+			if (!(userDetails.user_id || userDetails.sub) || !eventDetails.timestamp) { 
+				this.logger.error({ message: "Missing required fields in event payload", eventDetails, userDetails });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
+			}
+
+			let userId = userDetails.user_id;
+
+			let updateExpression, expressionAttributeValues;
 
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {
-					eventData = {
-						userId: userDetails.user_id,
-						ipvStartedOn: eventDetails.timestamp,
-						userEmail: userDetails.email,
-						nameParts: [],
-						clientName: eventDetails.client_id,
-						redirectUri: eventDetails.component_id,
-					};
+					if (!userDetails.email || !eventDetails.client_id || !eventDetails.component_id) { 
+						this.logger.error({ message: "Missing required fields in event payload", eventDetails, userDetails });
+						throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
+					}
 					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
 					expressionAttributeValues = {
-						":ipvStartedOn": eventData.ipvStartedOn,
-						":userEmail": eventData.userEmail,
-						":nameParts": eventData.nameParts,
-						":clientName": eventData.clientName,
-						":redirectUri": eventData.redirectUri,
+						":ipvStartedOn": eventDetails.timestamp,
+						":userEmail": userDetails.email,
+						":nameParts": [],
+						":clientName": eventDetails.client_id,
+						":redirectUri": eventDetails.component_id,
 					};
 					break;
 				}
 				case Constants.F2F_YOTI_START: {
-					eventData = {
-						userId: userDetails.sub,
-						journeyWentAsyncOn: eventDetails.timestamp,
-					};
-
+					if (!userDetails.sub) { 
+						this.logger.error({ message: "Missing required fields in event payload", eventDetails, userDetails });
+						throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
+					}
+					userId = userDetails.sub;
 					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn";
 					expressionAttributeValues = {
-						":journeyWentAsyncOn": eventData.journeyWentAsyncOn,
+						":journeyWentAsyncOn": eventDetails.timestamp,
 					};
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_CONSUMED: {
-					eventData = {
-						userId: userDetails.user_id,
-						readyToResumeOn: eventDetails.timestamp,
-					};
-
 					updateExpression = "SET readyToResumeOn = :readyToResumeOn";
 					expressionAttributeValues = {
-						":readyToResumeOn": eventData.readyToResumeOn,
+						":readyToResumeOn": eventDetails.timestamp,
 					};
 					break;
 				}
 				case Constants.AUTH_DELETE_ACCOUNT: {
-					eventData = {
-						userId: userDetails.user_id,
-						accountDeletedOn: eventDetails.timestamp,
-						userEmail: "",
-						nameParts: [],
-						clientName: "",
-						redirectUri: "",
-					};
-
 					updateExpression = "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
 					expressionAttributeValues = {
-						":accountDeletedOn": eventData.accountDeletedOn,
-						":userEmail": eventData.userEmail,
-						":nameParts": eventData.nameParts,
-						":clientName": eventData.clientName,
-						":redirectUri": eventData.redirectUri,
+						":accountDeletedOn": eventDetails.timestamp,
+						":userEmail": "",
+						":nameParts": [],
+						":clientName": "",
+						":redirectUri": "",
 					};
 					break;
 				}
@@ -113,12 +106,12 @@ export class PostEventProcessor {
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unexpected event received");
 			}
 
-			if (!eventData || !updateExpression || !expressionAttributeValues) {
+			if (!updateExpression || !expressionAttributeValues) {
 				this.logger.error({ message: "Missing config to update DynamboDB for event:", eventName });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 			}
 			
-			const saveEventData = await this.iprService.saveEventData(eventData.userId, updateExpression, expressionAttributeValues);
+			const saveEventData = await this.iprService.saveEventData(userId, updateExpression, expressionAttributeValues);
 
 			return {
 				statusCode: HttpCodesEnum.CREATED,
