@@ -6,6 +6,9 @@ import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { Response } from "../utils/Response";
 import { buildGovNotifyEventFields } from "../utils/GovNotifyEvent";
 import { IprService } from "./IprService";
+import { EnvironmentVariables } from "./EnvironmentVariables";
+import { ServicesEnum } from "../models/enums/ServicesEnum";
+import { createDynamoDbClient } from "../utils/DynamoDBFactory";
 
 export class SessionEventProcessor {
 
@@ -19,11 +22,14 @@ export class SessionEventProcessor {
 
 	private readonly iprService: IprService;
 
+	private readonly environmentVariables: EnvironmentVariables;
+
 	constructor(logger: Logger, metrics: Metrics) {
     	this.logger = logger;
+		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.STREAM_PROCESSOR_SERVICE);
     	this.validationHelper = new ValidationHelper();
     	this.metrics = metrics;
-		this.iprService = IprService.getInstance(this.logger);
+		this.iprService = IprService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics): SessionEventProcessor {
@@ -36,24 +42,30 @@ export class SessionEventProcessor {
 	async processRequest(sessionEvent: any): Promise<Response> {
 		const sessionEventData: SessionEvent = SessionEvent.parseRequest(JSON.stringify(sessionEvent));
 
-    	this.logger.debug("Session Event data for reference: ", { sessionEventData });
-		// Check the eventName was last updated with IPV_F2F_CRI_VC_CONSUMED
-		if (sessionEventData.eventName !== "IPV_F2F_CRI_VC_CONSUMED") {
-			this.logger.error(`EventName is in wrong state: Expected state- IPV_F2F_CRI_VC_CONSUMED, actual state- ${sessionEventData.eventName}`);
-			return new Response(HttpCodesEnum.SERVER_ERROR, `EventName is in wrong state: Expected state- IPV_F2F_CRI_VC_CONSUMED, actual state- ${sessionEventData.eventName}`);
-		}
-
 		// Validate the notified field is set to false
 		if (sessionEventData.notified) {
-			this.logger.error("User is already notified for this session event.");
+			this.logger.warn("User is already notified for this session event.");
 			return new Response(HttpCodesEnum.SERVER_ERROR, "User is already notified for this session event.");
 		}
+		// Validate if the record is missing some fields related to the Events and log the details and stop record processing.
+		try {
+			this.validationHelper.validateSessionEventFields(sessionEventData);
+		} catch (error: any) {
+			this.logger.warn(error.message);
+			return new Response(HttpCodesEnum.SERVER_ERROR, error.message);
+		}
+
 		// Validate all necessary fields are populated before processing the data.
-		await this.validationHelper.validateModel(sessionEventData, this.logger);
+		try {
+			await this.validationHelper.validateModel(sessionEventData, this.logger);
+		} catch (error) {
+			this.logger.error("Unable to process the DB record as the necessary fields are not populated.", sessionEventData.userId);
+			return new Response(HttpCodesEnum.SERVER_ERROR, `Unable to process the DB record as the necessary fields are not populated for userId: ${sessionEventData.userId}`);
+		}
 
 		// Send SQS message to GovNotify queue to send email to the user.
 		try {
-			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEventData.email, sessionEventData.firstName, sessionEventData.lastName));
+			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEventData.userEmail, "Given name", "Last name"));
 		} catch (error) {
 			const userId = sessionEventData.userId;
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
@@ -64,7 +76,16 @@ export class SessionEventProcessor {
 			return new Response(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending message to GovNotify handler");
 		}
 		// Update the DB table with notified flag set to true
-
+		try {
+			const updateExpression = "SET notified = :notified";
+			const expressionAttributeValues = {
+				":notified": true,
+			};
+			await this.iprService.saveEventData(sessionEventData.userId, updateExpression, expressionAttributeValues);
+			this.logger.info({ message: "Updated the session event record with notified flag" }, sessionEventData.userId);
+		} catch (error: any) {
+			return new Response(HttpCodesEnum.SERVER_ERROR, error.message);
+		}
     	return new Response( HttpCodesEnum.OK, "Success");
 	}
 }

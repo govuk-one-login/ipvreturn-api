@@ -21,6 +21,8 @@ export class EnvironmentVariables {
 
 	private readonly GOV_NOTIFY_QUEUE_URL = process.env.GOV_NOTIFY_QUEUE_URL;
 
+	private readonly SESSION_EVENTS_TABLE = process.env.SESSION_EVENTS_TABLE;
+
 	/*
 	 * This function performs validation on env variable values.
 	 * If certain variables have unexpected values the constructor will throw an error and/or log an error message
@@ -51,8 +53,9 @@ export class EnvironmentVariables {
 				break;
 			}
 			case ServicesEnum.STREAM_PROCESSOR_SERVICE: {
-				if (!this.GOV_NOTIFY_QUEUE_URL || this.GOV_NOTIFY_QUEUE_URL.trim().length === 0 ) {
-					logger.error(`Stream Processor Handler - Misconfigured external API's key ${EnvironmentVariables.name}`);
+				if (!this.GOV_NOTIFY_QUEUE_URL || this.GOV_NOTIFY_QUEUE_URL.trim().length === 0 ||
+					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
+					logger.error(`Stream Processor Service - Misconfigured external API's key ${EnvironmentVariables.name}`);
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				break;
@@ -103,6 +106,10 @@ export class EnvironmentVariables {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 		}
 		return this.GOV_NOTIFY_QUEUE_URL;
+	}
+
+	sessionEventsTable(): any {
+		return this.SESSION_EVENTS_TABLE;
 	}
 
 }

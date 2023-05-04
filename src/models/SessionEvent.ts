@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEmail, IsBoolean } from "class-validator";
+import { IsString, IsNotEmpty, IsEmail, IsBoolean, IsArray, IsNumber } from "class-validator";
 
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "./enums/HttpCodesEnum";
@@ -9,14 +9,14 @@ import { HttpCodesEnum } from "./enums/HttpCodesEnum";
 export class SessionEvent {
 
 	constructor(data: Partial<SessionEvent>) {
-		this.eventName = data.eventName!;
-		this.email = data.email!;
+		this.userEmail = data.userEmail!;
 		this.userId = data.userId!;
-		this.clientId = data.clientId!;
+		this.clientName = data.clientName!;
 		this.redirectUri = data.redirectUri!;
-		this.firstName = data.firstName!;
-		this.lastName = data.lastName!;
-		this.rpName = data.rpName!;
+		//this.nameParts = data.nameParts!;
+		this.ipvStartedOn = data.ipvStartedOn!;
+		this.journeyWentAsyncOn = data.journeyWentAsyncOn!;
+		this.readyToResumeOn = data.readyToResumeOn!;
 		this.notified = (data.notified === undefined) ? false : data.notified;
 	}
 
@@ -30,14 +30,10 @@ export class SessionEvent {
 		}
 	}
 
-	@IsString()
-	@IsNotEmpty()
-	eventName!: string;
-
     @IsString()
     @IsNotEmpty()
     @IsEmail()
-    email!: string;
+    userEmail!: string;
 
     @IsString()
     @IsNotEmpty()
@@ -45,23 +41,30 @@ export class SessionEvent {
 
 	@IsString()
 	@IsNotEmpty()
-	clientId!: string;
+	clientName!: string;
 
-	@IsString()
-	@IsNotEmpty()
-	firstName!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	lastName!: string;
+	// @IsArray()
+	// @IsNotEmpty()
+	// nameParts!: Array<{
+	// 	type: string;
+	// 	value: string;
+	// }>;
 
     @IsString()
     @IsNotEmpty()
     redirectUri!: string;
 
-	@IsString()
+	@IsNumber()
 	@IsNotEmpty()
-	rpName!: string;
+	ipvStartedOn!: number;
+
+	@IsNumber()
+	@IsNotEmpty()
+	journeyWentAsyncOn!: number;
+
+	@IsNumber()
+	@IsNotEmpty()
+	readyToResumeOn!: number;
 
 	@IsBoolean()
 	notified!: boolean;

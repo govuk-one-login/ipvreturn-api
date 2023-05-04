@@ -260,9 +260,22 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: StreamProcessorHandler
           GOV_NOTIFY_QUEUE_URL: !Ref GovNotifySQSQueue
+          SESSION_EVENTS_TABLE:
+            Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
+        - DynamoDBWritePolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-session-events-table-name"
+        - DynamoDBReadPolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-session-events-table-name"
+        - KMSDecryptPolicy:
+            KeyId:
+              Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-id"
         - Statement:
             - Effect: Allow
               Action:
@@ -276,11 +289,12 @@ Resources:
               Resource: !GetAtt GovNotifyEncryptionKey.Arn
             - Effect: Allow #allow lambda to read from the event stream
               Action:
-                - dynamodb:DescribeStream
-                - dynamodb:GetRecords
-                - dynamodb:GetShardIterator
-                - dynamodb:ListStreams
-              Resource: "*"
+                - "dynamodb:DescribeStream"
+                - "dynamodb:GetRecords"
+                - "dynamodb:GetShardIterator"
+                - "dynamodb:ListStreams"
+              Resource:
+                Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-stream-arn"
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
       BuildProperties:

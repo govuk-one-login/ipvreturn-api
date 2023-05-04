@@ -14,29 +14,26 @@
           }
         },
         "NewImage": {
-          "eventName": {
-            "S": "IPV_F2F_CRI_VC_CONSUMED"
-          },
-          "email": {
+          "userEmail": {
             "S": "bhavana.hemanth@digital.cabinet-office.gov.uk"
           },
           "userId": {
-            "S": "userId"
+            "S": "01333e01-dde3-412f-a484-4444"
           },
-          "clientId": {
-            "S": "sdfdsf"
-          },
-          "firstName": {
-            "S": "Fredrick Niel"
-          },
-          "lastName": {
-            "S": "Jason"
+          "clientName": {
+            "S": "clientName"
           },
           "redirectUri": {
             "S": "redirect_uri"
           },
-          "rpName": {
-            "S": "RP name"
+          "ipvStartedOn": {
+            "N": "1681902001"
+          },
+          "journeyWentAsyncOn": {
+            "N": "1681902002"
+          },
+          "readyToResumeOn": {
+            "N": "1681902003"
           }
         },
         "SequenceNumber": "13021600000000001596893679",
