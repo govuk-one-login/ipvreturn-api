@@ -20,6 +20,9 @@
 
 ## Checklists
 
+### PII logging
+- [ ] Verified that no PII data is being logged
+
 ### Environment variables or secrets
 
 <!-- Delete if changes DO include new environment variables or secrets -->
