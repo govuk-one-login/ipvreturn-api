@@ -9,7 +9,7 @@ import { mock } from "jest-mock-extended";
 import { EmailResponse } from "../../../models/EmailResponse";
 import { Email } from "../../../models/Email";
 import { AppError } from "../../../utils/AppError";
-import {HttpCodesEnum} from "../../../models/enums/HttpCodesEnum";
+import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
 
 const mockGovNotify = mock<NotifyClient>();
 let sendEmailServiceTest: SendEmailService;

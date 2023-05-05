@@ -3,7 +3,7 @@ import { lambdaHandler } from "../../GovNotifyHandler";
 import { SendEmailProcessor } from "../../services/SendEmailProcessor";
 import { VALID_SQS_EVENT } from "./data/sqs-events";
 import { AppError } from "../../utils/AppError";
-import {HttpCodesEnum} from "../../models/enums/HttpCodesEnum";
+import { HttpCodesEnum } from "../../models/enums/HttpCodesEnum";
 
 const mockedSendEmailRequestProcessor = mock<SendEmailProcessor>();
 
