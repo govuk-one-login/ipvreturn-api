@@ -1,4 +1,4 @@
-import {HttpCodesEnum} from "../models/enums/HttpCodesEnum";
+import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 
 export class Response {
 	constructor(
