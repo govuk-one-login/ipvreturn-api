@@ -21,6 +21,7 @@
 ## Checklists
 
 ### PII logging
+
 - [ ] Verified that no PII data is being logged
 
 ### Environment variables or secrets
