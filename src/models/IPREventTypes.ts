@@ -23,14 +23,17 @@ export interface IpvStartedOnAttributes {
 	}>;
 	":clientName": string;
 	":redirectUri": string;
+	":expiryDate": number;
 }
 
 export interface JourneyWentAsyncOnAttributes {
 	":journeyWentAsyncOn": number;
+	":expiryDate": number;
 }
 
 export interface ReadyToResumeOnAttributes {
 	":readyToResumeOn": number;
+	":expiryDate": number;
 }
 
 export interface AccountDeletedOnAttributes {
@@ -39,4 +42,5 @@ export interface AccountDeletedOnAttributes {
 	":nameParts": never[];
 	":clientName": string;
 	":redirectUri": string;
+	":expiryDate": number;
 }

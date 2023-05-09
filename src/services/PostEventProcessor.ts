@@ -63,13 +63,14 @@ export class PostEventProcessor {
 						throw new AppError(HttpCodesEnum.BAD_REQUEST, "Missing info in sqs event");
 					}
 
-					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
+					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri, expiryDate = :expiryDate";
 					expressionAttributeValues = {
 						":ipvStartedOn": eventDetails.timestamp,
 						":userEmail": userDetails.email,
 						":nameParts": [],
 						":clientName": eventDetails.client_id,
 						":redirectUri": eventDetails.component_id,
+						":expiryDate": Date.now() + Number(this.environmentVariables.sessionRecordTTL()) * 1000,
 					};
 					break;
 				}
@@ -79,27 +80,30 @@ export class PostEventProcessor {
 						throw new AppError(HttpCodesEnum.BAD_REQUEST, "Missing info in sqs event");
 					}
 					userId = userDetails.sub;
-					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn";
+					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiryDate = :expiryDate";
 					expressionAttributeValues = {
 						":journeyWentAsyncOn": eventDetails.timestamp,
+						":expiryDate": Date.now() + Number(this.environmentVariables.sessionRecordTTL()) * 1000,
 					};
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_CONSUMED: {
-					updateExpression = "SET readyToResumeOn = :readyToResumeOn";
+					updateExpression = "SET readyToResumeOn = :readyToResumeOn, expiryDate = :expiryDate";
 					expressionAttributeValues = {
 						":readyToResumeOn": eventDetails.timestamp,
+						":expiryDate": Date.now() + Number(this.environmentVariables.sessionRecordTTL()) * 1000,
 					};
 					break;
 				}
 				case Constants.AUTH_DELETE_ACCOUNT: {
-					updateExpression = "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
+					updateExpression = "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri, expiryDate = :expiryDate";
 					expressionAttributeValues = {
 						":accountDeletedOn": eventDetails.timestamp,
 						":userEmail": "",
 						":nameParts": [],
 						":clientName": "",
 						":redirectUri": "",
+						":expiryDate": Date.now() + Number(this.environmentVariables.sessionRecordTTL()) * 1000,
 					};
 					break;
 				}

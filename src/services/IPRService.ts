@@ -43,6 +43,8 @@ export class IPRService {
 			this.logger.error({ message: "getSessionById - failed executing get from dynamodb:", e });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 		}
+
+		return false;
 	}
 
 	async saveEventData(userId: string, updateExpression: string, expressionAttributeValues: IpvStartedOnAttributes | JourneyWentAsyncOnAttributes | ReadyToResumeOnAttributes | AccountDeletedOnAttributes ): Promise<string | void> {

@@ -26,6 +26,11 @@ describe("PostEventProcessor", () => {
 		mockIprService.saveEventData.mockResolvedValueOnce();
 	});
 
+	beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(1585695600000)); // == 2020-03-31T23:00:00.000Z
+  	});
+
 	it("Returns success response when call to save event data is successful", async () => {
 		const response = await postEventProcessorMock.processRequest(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT);
 		expect(response.statusCode).toBe(HttpCodesEnum.CREATED);
@@ -35,24 +40,25 @@ describe("PostEventProcessor", () => {
 	it("Calls saveEventData with appropriate payload for AUTH_IPV_AUTHORISATION_REQUESTED event", async () => {
 		await postEventProcessorMock.processRequest(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
-		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-5555", "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri", { ":clientName": "RqFZ83csmS4Mi4Y7s7ohD9-ekwU", ":ipvStartedOn": "1681902001", ":nameParts": [], ":redirectUri": "UNKNOWN", ":userEmail": "jest@test.com" });
+		// pragma: allowlist secret
+		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-5555", "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri, expiryDate = :expiryDate", { ":clientName": "RqFZ83csmS4Mi4Y7s7ohD9-ekwU", ":expiryDate": Date.now() + Number("604800") * 1000, ":ipvStartedOn": "1681902001", ":nameParts": [], ":redirectUri": "UNKNOWN", ":userEmail": "jest@test.com" });
 	});
 
 	it("Calls saveEventData with appropriate payload for F2F_YOTI_START_EVENT event", async () => {
 		await postEventProcessorMock.processRequest(F2F_YOTI_START_EVENT);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
-		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn", { ":journeyWentAsyncOn": 1681902001 });
+		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiryDate = :expiryDate", { ":journeyWentAsyncOn": 1681902001, ":expiryDate": Date.now() + Number("604800") * 1000 });
 	});
 	
 	it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event", async () => {
 		await postEventProcessorMock.processRequest(IPV_F2F_CRI_VC_CONSUMED_EVENT);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
-		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn", { ":readyToResumeOn": 1681902001 });
+		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, expiryDate = :expiryDate", { ":readyToResumeOn": 1681902001, ":expiryDate": Date.now() + Number("604800") * 1000 });
 	});
 
 	it("Calls saveEventData with appropriate payload for AUTH_DELETE_ACCOUNT_EVENT event", async () => {
 		await postEventProcessorMock.processRequest(AUTH_DELETE_ACCOUNT_EVENT);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
-		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-3333", "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri", { ":accountDeletedOn": 1681902001, ":clientName": "", ":nameParts": [], ":redirectUri": "", ":userEmail": "" });
+		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-3333", "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri, expiryDate = :expiryDate", { ":accountDeletedOn": 1681902001, ":expiryDate": Date.now() + Number("604800") * 1000, ":clientName": "", ":nameParts": [], ":redirectUri": "", ":userEmail": "" });
 	});
 });
