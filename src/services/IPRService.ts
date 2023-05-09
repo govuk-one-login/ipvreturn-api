@@ -3,7 +3,7 @@ import { Logger } from "@aws-lambda-powertools/logger";
 import { AppError } from "../utils/AppError";
 import { DynamoDBDocument, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
-import { IpvStartedOnEvent, JourneyWentAsyncOnEvent, ReadyToResumeOnEvent, AccountDeletedOnEvent } from "../models/IPREventTypes";
+import { IpvStartedOnAttributes, JourneyWentAsyncOnAttributes, ReadyToResumeOnAttributes, AccountDeletedOnAttributes } from "../models/IPREventTypes";
 
 export class IPRService {
 	readonly tableName: string;
@@ -43,10 +43,9 @@ export class IPRService {
 			this.logger.error({ message: "getSessionById - failed executing get from dynamodb:", e });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 		}
-		return false;
 	}
 
-	async saveEventData(userId: string, updateExpression: string, expressionAttributeValues: IpvStartedOnEvent | JourneyWentAsyncOnEvent | ReadyToResumeOnEvent | AccountDeletedOnEvent ): Promise<string | void> {
+	async saveEventData(userId: string, updateExpression: string, expressionAttributeValues: IpvStartedOnAttributes | JourneyWentAsyncOnAttributes | ReadyToResumeOnAttributes | AccountDeletedOnAttributes ): Promise<string | void> {
 		const isFlaggedForDeletion = await this.isFlaggedForDeletion(userId);
 		if (isFlaggedForDeletion) {
 			this.logger.info({ message: "Record flagged for deletion, skipping update", userId });
