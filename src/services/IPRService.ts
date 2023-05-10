@@ -3,7 +3,6 @@ import { Logger } from "@aws-lambda-powertools/logger";
 import { AppError } from "../utils/AppError";
 import { DynamoDBDocument, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
-import { IPREventTypeToAttributeMapper } from "./IPREventTypeToAttributeMapper";
 import { Constants } from "../utils/Constants";
 
 export class IPRService {
@@ -15,13 +14,17 @@ export class IPRService {
 
 	private static instance: IPRService;
 
-	private readonly iprEventTypeToAttributeMapper: IPREventTypeToAttributeMapper;
+	private readonly eventAttributeMap = new Map<string, string>([
+		[Constants.AUTH_IPV_AUTHORISATION_REQUESTED, "ipvStartedOn"],
+		[Constants.F2F_YOTI_START, "journeyWentAsyncOn"],
+		[Constants.IPV_F2F_CRI_VC_CONSUMED, "readyToResumeOn"],
+		[Constants.AUTH_DELETE_ACCOUNT, "accountDeletedOn"],
+	]);
 
 	constructor(tableName: any, logger: Logger, dynamoDbClient: DynamoDBDocument) {
 		this.tableName = tableName;
 		this.dynamo = dynamoDbClient;
 		this.logger = logger;
-		this.iprEventTypeToAttributeMapper = new IPREventTypeToAttributeMapper();
 	}
 
 	static getInstance(tableName: string, logger: Logger, dynamoDbClient: DynamoDBDocument): IPRService {
@@ -42,7 +45,7 @@ export class IPRService {
 
 		try {
 			const session = await this.dynamo.send(getSessionCommand);
-			const eventAttribute = this.iprEventTypeToAttributeMapper.map(eventType);
+			const eventAttribute = this.eventAttributeMap.get(eventType);
 			// If Event type is AUTH_DELETE_ACCOUNT and no record was found, or flagged for deletion then do not process the event.
 			if (eventType === Constants.AUTH_DELETE_ACCOUNT && (!session.Item || (session.Item && session.Item.accountDeletedOn))) {
 				return true;

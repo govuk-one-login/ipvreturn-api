@@ -14,8 +14,6 @@ export class Constants {
 
     static readonly EMAIL_METRICS_NAMESPACE = "F2F-CRI";
 
-    static readonly BASE_EVENT_TYPES = ["F2F_YOTI_START", "IPV_F2F_CRI_VC_CONSUMED", "AUTH_DELETE_ACCOUNT"];
-
     static readonly F2F_YOTI_START = "F2F_YOTI_START";
 
     static readonly AUTH_IPV_AUTHORISATION_REQUESTED = "AUTH_IPV_AUTHORISATION_REQUESTED";
