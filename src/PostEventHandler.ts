@@ -1,9 +1,7 @@
-import { SQSEvent, SQSRecord } from "aws-lambda";
+import { SQSBatchResponse, SQSEvent, SQSRecord } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
-import { Response } from "./utils/Response";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
-import { HttpCodesEnum } from "./models/enums/HttpCodesEnum";
 import { PostEventProcessor } from "./services/PostEventProcessor";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE;
@@ -20,29 +18,26 @@ const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceNa
 class PostEventHandler implements LambdaInterface {
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
-	async handler(event: SQSEvent, context: any): Promise<Response> {
+	async handler(event: SQSEvent, context: any): Promise<SQSBatchResponse> {
 		if (event.Records.length === 1) {
 
 			const record: SQSRecord = event.Records[0];
 			logger.debug("Starting to process record", { record });
 
 			try {
-				const postEventResponse = await PostEventProcessor.getInstance(logger, metrics).processRequest(record.body);
-				const responseBody = {
-					batchItemFailures: [],
-				};
+				await PostEventProcessor.getInstance(logger, metrics).processRequest(record.body);
 
 				logger.debug("Finished processing record from SQS");
-				return new Response(postEventResponse.statusCode, responseBody);
+				return { batchItemFailures:[] };
 
 			} catch (error: any) {
 				logger.error({ message: "SQS Event could not be processed", error });
-				return new Response(HttpCodesEnum.SERVER_ERROR, "postEvent - Event could not be processed");
+				return { batchItemFailures:[] };
 			}
 
 		} else {
 			logger.warn({ message: "Unexpected no. of records received", numOfRecords: event.Records.length });
-			return new Response(HttpCodesEnum.BAD_REQUEST, "Unexpected no. of records received");
+			return { batchItemFailures:[] };
 		}
 	}
 

@@ -30,8 +30,7 @@ describe("PostEventHandler", () => {
 	it("returns Bad request when number of records in the SQS message is more than 1", async () => {
 		const event = { "Records": [] };
 		const response = await lambdaHandler(event, "IPR");
-		expect(response.statusCode).toEqual(HttpCodesEnum.BAD_REQUEST);
-		expect(response.body).toBe("Unexpected no. of records received");
+		expect(response.batchItemFailures).toEqual([]);
 	});
 
 	it("errors when postEvent processor throws AppError", async () => {
@@ -39,8 +38,6 @@ describe("PostEventHandler", () => {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 		});
 		const response = await lambdaHandler(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_EVENT, "IPR");
-		expect(response.statusCode).toEqual(HttpCodesEnum.SERVER_ERROR);
-		expect(response.body).toBe("postEvent - Event could not be processed");
-
+		expect(response.batchItemFailures).toEqual([]);
 	});
 });
