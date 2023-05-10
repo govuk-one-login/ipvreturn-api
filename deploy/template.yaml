@@ -74,27 +74,27 @@ Mappings:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk"
-      SESSIONRECORDTTL: "604800" # 7 days in seconds
+      SESSIONRETURNRECORDTTL: 950400 # Default 11 days
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.build.account.gov.uk"
-      SESSIONRECORDTTL: "604800" # 7 days in seconds
+      SESSIONRETURNRECORDTTL: 950400 # Default 11 days
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk"
-      SESSIONRECORDTTL: "604800" # 7 days in seconds
+      SESSIONRETURNRECORDTTL: 950400 # Default 11 days
     integration:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk"
-      SESSIONRECORDTTL: "604800" # 7 days in seconds
+      SESSIONRETURNRECORDTTL: 950400 # Default 11 days
     production:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.account.gov.uk"
-      SESSIONRECORDTTL: "604800" # 7 days in seconds
+      SESSIONRETURNRECORDTTL: 950400 # Default 11 days
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
@@ -199,8 +199,7 @@ Resources:
           POWERTOOLS_SERVICE_NAME: PostEventHandler
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
-          SESSION_RECORD_TTL:
-            !FindInMap [EnvironmentVariables, !Ref Environment, SESSIONRECORDTTL]
+          SESSION_RETURN_RECORD_TTL: !FindInMap [ EnvironmentVariables, !Ref Environment, SESSIONRETURNRECORDTTL ]
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
@@ -306,9 +305,9 @@ Resources:
 
   GovNotifyFunctionLogsSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
-    #Condition: IsProdLikeEnvironment
+    Condition: IsProdLikeEnvironment
     Properties:
-      DestinationArn: !FindInMap [ PlatformConfiguration, !Ref Environment, CSLSEGRESS ]
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
       FilterPattern: ""
       LogGroupName: !Ref GovNotifyFunctionLogGroup
 

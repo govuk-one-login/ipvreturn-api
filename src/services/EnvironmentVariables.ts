@@ -20,8 +20,8 @@ export class EnvironmentVariables {
 	private readonly RETURN_JOURNEY_URL = process.env.RETURN_JOURNEY_URL;
 
 	private readonly SESSION_EVENTS_TABLE = process.env.SESSION_EVENTS_TABLE;
-	
-	private readonly SESSION_RECORD_TTL = process.env.SESSION_RECORD_TTL;
+
+	private readonly SESSION_RETURN_RECORD_TTL = process.env.SESSION_RETURN_RECORD_TTL;
 
 	/*
 	 * This function performs validation on env variable values.
@@ -53,13 +53,9 @@ export class EnvironmentVariables {
 				break;
 			}
 			case ServicesEnum.POST_EVENT_SERVICE: {
-				if (!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
-					logger.error("PostEvent Handler - Missing SessionEvents Tablename");
-					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
-				}
-
-				if (!this.SESSION_RECORD_TTL || this.SESSION_RECORD_TTL.trim().length === 0) {
-					logger.error("PostEvent Handler - Missing SESSION_RECORD_TTL");
+				if (!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0 ||
+					!this.SESSION_RETURN_RECORD_TTL || this.SESSION_RETURN_RECORD_TTL.trim().length === 0) {
+					logger.error("PostEvent Handler - Missing SessionEvents Tablename or SESSION_RETURN_RECORD_TTL");
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				break;
@@ -108,8 +104,8 @@ export class EnvironmentVariables {
 		return this.SESSION_EVENTS_TABLE;
 	}
 
-	sessionRecordTTL(): any {
-		return this.SESSION_RECORD_TTL
+	sessionReturnRecordTtl(): any {
+		return this.SESSION_RETURN_RECORD_TTL;
 	}
 
 }

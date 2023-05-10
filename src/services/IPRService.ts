@@ -3,7 +3,8 @@ import { Logger } from "@aws-lambda-powertools/logger";
 import { AppError } from "../utils/AppError";
 import { DynamoDBDocument, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
-import { IpvStartedOnAttributes, JourneyWentAsyncOnAttributes, ReadyToResumeOnAttributes, AccountDeletedOnAttributes } from "../models/IPREventTypes";
+import { IPREventTypeToAttributeMapper } from "./IPREventTypeToAttributeMapper";
+import { Constants } from "../utils/Constants";
 
 export class IPRService {
 	readonly tableName: string;
@@ -14,10 +15,13 @@ export class IPRService {
 
 	private static instance: IPRService;
 
+	private readonly iprEventTypeToAttributeMapper: IPREventTypeToAttributeMapper;
+
 	constructor(tableName: any, logger: Logger, dynamoDbClient: DynamoDBDocument) {
 		this.tableName = tableName;
 		this.dynamo = dynamoDbClient;
 		this.logger = logger;
+		this.iprEventTypeToAttributeMapper = new IPREventTypeToAttributeMapper();
 	}
 
 	static getInstance(tableName: string, logger: Logger, dynamoDbClient: DynamoDBDocument): IPRService {
@@ -27,8 +31,8 @@ export class IPRService {
 		return IPRService.instance;
 	}
 
-	async isFlaggedForDeletion(userId: string): Promise<boolean | undefined> {
-		this.logger.info({ message: "Checking if record is flagged for deletion", tableName: this.tableName, userId });
+	async isFlaggedForDeletionOrEventAlreadyProcessed(userId: string, eventType: string): Promise<boolean | undefined> {
+		this.logger.info({ message: "Checking if record is flagged for deletion or already processed", tableName: this.tableName, userId });
 		const getSessionCommand = new GetCommand({
 			TableName: this.tableName,
 			Key: {
@@ -38,21 +42,24 @@ export class IPRService {
 
 		try {
 			const session = await this.dynamo.send(getSessionCommand);
-			if (session.Item) return session.Item.accountDeletedOn ? true : false;
+			const eventAttribute = this.iprEventTypeToAttributeMapper.map(eventType);
+			// If Event type is AUTH_DELETE_ACCOUNT and no record was found, or flagged for deletion then do not process the event.
+			if (eventType === Constants.AUTH_DELETE_ACCOUNT && (!session.Item || (session.Item && session.Item.accountDeletedOn))) {
+				return true;
+			} else if (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!])) {
+				// Do not process the event if the record is flagged for deletion or the event mapped attribute exists.
+				return true;
+			} else {
+				// Process all events except AUTH_DELETE_ACCOUNT when no record exists.
+				return false;
+			}
 		} catch (e: any) {
 			this.logger.error({ message: "getSessionById - failed executing get from dynamodb:", e });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 		}
-
-		return false;
 	}
 
-	async saveEventData(userId: string, updateExpression: string, expressionAttributeValues: IpvStartedOnAttributes | JourneyWentAsyncOnAttributes | ReadyToResumeOnAttributes | AccountDeletedOnAttributes ): Promise<string | void> {
-		const isFlaggedForDeletion = await this.isFlaggedForDeletion(userId);
-		if (isFlaggedForDeletion) {
-			this.logger.info({ message: "Record flagged for deletion, skipping update", userId });
-			return "Record flagged for deletion, skipping update";
-		}
+	async saveEventData(userId: string, updateExpression: string, expressionAttributeValues: any): Promise<string | void> {
 
 		this.logger.info({ message: "Saving event data to dynamodb", tableName: this.tableName, userId });
 		const updateSessionInfoCommand = new UpdateCommand({
@@ -64,7 +71,8 @@ export class IPRService {
 			ExpressionAttributeValues: expressionAttributeValues,
 		});
 
-		this.logger.info({ message: "Updating session record", userId });
+		this.logger.debug("UpdateSessionInfoCommand: ", { updateSessionInfoCommand });
+		this.logger.info("Updating session record", userId );
 
 		try {
 			await this.dynamo.send(updateSessionInfoCommand);
