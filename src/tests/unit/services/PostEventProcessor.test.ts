@@ -37,7 +37,6 @@ describe("PostEventProcessor", () => {
 		await postEventProcessorMock.processRequest(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT);
 		const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL!);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
-		// pragma: allowlist secret
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-5555", "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn", { ":clientName": "ekwU", ":ipvStartedOn": "1681902001", ":nameParts": [], ":redirectUri": "UNKNOWN", ":userEmail": "jest@test.com", ":expiresOn": expiresOn });
 	});
 

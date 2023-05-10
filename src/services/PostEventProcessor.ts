@@ -79,7 +79,7 @@ export class PostEventProcessor {
 						":nameParts": [],
 						":clientName": returnRecord.clientName,
 						":redirectUri": returnRecord.redirectUri,
-						":expiresOn": returnRecord.expiresOn,
+						":expiresOn": returnRecord.expiresDate,
 					};
 					break;
 				}

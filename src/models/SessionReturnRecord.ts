@@ -16,10 +16,9 @@ export class SessionReturnRecord {
 			case Constants.AUTH_IPV_AUTHORISATION_REQUESTED:{
 				this.clientName = data.client_id!;
 				this.redirectUri = data.component_id!;
-				this.userId = data.user.user_id;
 				this.userEmail = data.user.email;
 				this.ipvStartedOn = data.timestamp;
-				this.expiresOn = expiresOn;
+				this.expiresDate = expiresOn;
 				break;
 			}
 			case Constants.F2F_YOTI_START:{
@@ -63,5 +62,5 @@ export class SessionReturnRecord {
 
     accountDeletedOn?: number;
 
-    expiresOn?: number;
+    expiresDate?: number;
 }
