@@ -98,7 +98,7 @@ export class IPRService {
 			const messageBody = JSON.stringify(event);
 			const params = {
 				MessageBody: messageBody,
-				QueueUrl: this.environmentVariables.getGovNotifyQueueURL(this.logger)
+				QueueUrl: this.environmentVariables.getGovNotifyQueueURL(this.logger),
 			};
 
 			await sqsClient.send(new SendMessageCommand(params));

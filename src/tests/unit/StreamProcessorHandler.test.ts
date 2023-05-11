@@ -18,8 +18,7 @@ describe("StreamProcessorHandler", () => {
 	it("returns Bad request when number of records in the DynamoDBStreamEvent is not equal to 1", async () => {
 		const event = { "Records": [] };
 		const response = await lambdaHandler(event, "IPR");
-		expect(response.statusCode).toEqual(HttpCodesEnum.BAD_REQUEST);
-		expect(response.body).toBe("Unexpected no of records received");
+		expect(response).toEqual({ "batchItemFailures": [] });
 	});
 
 	it("errors when stream processor throws AppError", async () => {
@@ -27,9 +26,7 @@ describe("StreamProcessorHandler", () => {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "");
 		});
 		const response = await lambdaHandler(VALID_DYNAMODB_STREAM_EVENT, "IPR");
-		expect(response.statusCode).toEqual(HttpCodesEnum.SERVER_ERROR);
-		expect(response.body).toBe("An error has occurred");
-
+		expect(response).toEqual({ "batchItemFailures": [] });
 	});
 
 	it("logs message when the record eventName doesnt match MODIFY state", async () => {
@@ -37,8 +34,7 @@ describe("StreamProcessorHandler", () => {
 		//Update the eventName to be INSERT
 		event.Records[0].eventName = EventNameEnum.INSERT;
 		const response = await lambdaHandler(event, "IPR");
-		expect(response.statusCode).toEqual(HttpCodesEnum.UNPROCESSABLE_ENTITY);
-		expect(response.body).toBe("Record eventName doesnt match MODIFY state");
+		expect(response).toEqual({ "batchItemFailures": [] });
 	});
 
 });

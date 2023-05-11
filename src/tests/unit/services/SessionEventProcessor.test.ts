@@ -72,9 +72,7 @@ describe("SessionEventProcessor", () => {
 		"redirectUri",
 	])("Throws error when session event record is missing necessary attributes", async (attribute) => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
-		console.log("--Before event:" + JSON.stringify(sessionEvent));
 		delete sessionEvent[attribute];
-		console.log("--After event:" + JSON.stringify(sessionEvent));
 		const response = await sessionEventProcessorTest.processRequest(sessionEvent);
 
 		expect(response.statusCode).toBe(HttpCodesEnum.SERVER_ERROR);
