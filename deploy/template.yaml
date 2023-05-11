@@ -74,22 +74,27 @@ Mappings:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk"
+      SESSIONRETURNRECORDTTL: 950400 # Default 11 days
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.build.account.gov.uk"
+      SESSIONRETURNRECORDTTL: 950400 # Default 11 days
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk"
+      SESSIONRETURNRECORDTTL: 950400 # Default 11 days
     integration:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk"
+      SESSIONRETURNRECORDTTL: 950400 # Default 11 days
     production:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.account.gov.uk"
+      SESSIONRETURNRECORDTTL: 950400 # Default 11 days
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
@@ -182,6 +187,70 @@ Resources:
   ### Start of API Gateway definition.
 
   ### Function Definition
+  PostEventFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: PostEventFunctionLogGroup
+    Properties:
+      FunctionName: !Sub "Ipvreturn-PostEvent-${AWS::StackName}"
+      Handler: PostEventHandler.lambdaHandler
+      CodeUri: ../src/
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: PostEventHandler
+          SESSION_EVENTS_TABLE:
+            Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+          SESSION_RETURN_RECORD_TTL: !FindInMap [ EnvironmentVariables, !Ref Environment, SESSIONRETURNRECORDTTL ]
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSXrayWriteOnlyAccess
+        - DynamoDBWritePolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-session-events-table-name"
+        - DynamoDBReadPolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-session-events-table-name"
+        - KMSDecryptPolicy:
+            KeyId:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-session-events-table-key-id"
+
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
+        EntryPoints:
+          - PostEventHandler.ts
+
+  PostEventFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/Ipvreturn-PostEvent-${AWS::StackName}"
+      RetentionInDays:
+        !FindInMap [
+          EnvironmentConfiguration,
+          !Ref Environment,
+          logretentionindays,
+        ]
+
+  PostEventFunctionLogsSubscriptionFilterCSLS:
+    Type: AWS::Logs::SubscriptionFilter
+    Condition: IsProdLikeEnvironment
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
+      FilterPattern: ""
+      LogGroupName: !Ref PostEventFunctionLogGroup
+
+  PostEventFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref PostEventFunction
+      Principal: apigateway.amazonaws.com
+
   GovNotifyFunction:
     Type: AWS::Serverless::Function
     DependsOn: GovNotifyFunctionLogGroup
@@ -236,9 +305,9 @@ Resources:
 
   GovNotifyFunctionLogsSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
-    #Condition: IsProdLikeEnvironment
+    Condition: IsProdLikeEnvironment
     Properties:
-      DestinationArn: !FindInMap [ PlatformConfiguration, !Ref Environment, CSLSEGRESS ]
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
       FilterPattern: ""
       LogGroupName: !Ref GovNotifyFunctionLogGroup
 

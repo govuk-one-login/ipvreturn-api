@@ -13,4 +13,16 @@ export class Constants {
     static readonly EMAIL_LOGGER_SVC_NAME = "SendEmailHandler";
 
     static readonly EMAIL_METRICS_NAMESPACE = "F2F-CRI";
+
+    static readonly F2F_YOTI_START = "F2F_YOTI_START";
+
+    static readonly AUTH_IPV_AUTHORISATION_REQUESTED = "AUTH_IPV_AUTHORISATION_REQUESTED";
+
+    static readonly IPV_F2F_CRI_VC_CONSUMED = "IPV_F2F_CRI_VC_CONSUMED";
+
+    static readonly AUTH_DELETE_ACCOUNT = "AUTH_DELETE_ACCOUNT";
+
+    static readonly POSTEVENT_LOGGER_SVC_NAME = "PostEventHandler";
+
+    static readonly IPR_METRICS_NAMESPACE = "F2F-IPR";
 }

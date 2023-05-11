@@ -19,6 +19,10 @@ export class EnvironmentVariables {
 
 	private readonly RETURN_JOURNEY_URL = process.env.RETURN_JOURNEY_URL;
 
+	private readonly SESSION_EVENTS_TABLE = process.env.SESSION_EVENTS_TABLE;
+
+	private readonly SESSION_RETURN_RECORD_TTL = process.env.SESSION_RETURN_RECORD_TTL;
+
 	/*
 	 * This function performs validation on env variable values.
 	 * If certain variables have unexpected values the constructor will throw an error and/or log an error message
@@ -45,6 +49,14 @@ export class EnvironmentVariables {
 					|| +this.GOVUKNOTIFY_MAX_RETRIES.trim() >= 100) {
 					this.GOVUKNOTIFY_MAX_RETRIES = "3";
 					logger.warn("GOVUKNOTIFY_MAX_RETRIES env var is not set. Setting to default - 3");
+				}
+				break;
+			}
+			case ServicesEnum.POST_EVENT_SERVICE: {
+				if (!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0 ||
+					!this.SESSION_RETURN_RECORD_TTL || this.SESSION_RETURN_RECORD_TTL.trim().length === 0) {
+					logger.error("PostEvent Handler - Missing SessionEvents Tablename or SESSION_RETURN_RECORD_TTL");
+					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				break;
 			}
@@ -86,6 +98,14 @@ export class EnvironmentVariables {
 
 	returnJourneyUrl(): any {
 		return this.RETURN_JOURNEY_URL;
+	}
+
+	sessionEventsTable(): any {
+		return this.SESSION_EVENTS_TABLE;
+	}
+
+	sessionReturnRecordTtl(): any {
+		return this.SESSION_RETURN_RECORD_TTL;
 	}
 
 }
