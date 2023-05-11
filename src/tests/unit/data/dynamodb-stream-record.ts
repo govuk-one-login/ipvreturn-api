@@ -14,7 +14,7 @@ export enum StreamViewType {
 export const VALID_DYNAMODB_STREAM_EVENT = {
 	"Records": [
 		{
-			"eventID": "testa13d34c",
+			"eventID": "testId",
 			"eventName": EventNameEnum.MODIFY,
 			"eventVersion": "1.1",
 			"eventSource": "aws:dynamodb",
