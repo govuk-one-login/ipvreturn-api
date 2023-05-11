@@ -22,7 +22,6 @@ export class SessionReturnRecord {
 				break;
 			}
 			case Constants.F2F_YOTI_START:{
-				this.userId = data.user.sub!;
 				this.journeyWentAsyncOn = data.timestamp;
 				break;
 			}

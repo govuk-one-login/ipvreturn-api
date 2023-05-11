@@ -50,12 +50,12 @@ export class PostEventProcessor {
 			}
 			const userDetails = eventDetails.user;
 
-			if (!(userDetails.user_id || userDetails.sub) || !eventDetails.timestamp) { 
+			if (!userDetails.user_id || !eventDetails.timestamp) {
 				this.logger.error({ message: "Missing required fields in event payload", eventDetails, userDetails });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
 
-			let userId = (eventName === Constants.F2F_YOTI_START) ? userDetails.sub! : userDetails.user_id;
+			const userId = userDetails.user_id;
 			// Do not process the event if the event is already processed or flagged for deletion
 			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, eventName);
 			if (isFlaggedForDeletionOrEventAlreadyProcessed) {
@@ -84,11 +84,6 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.F2F_YOTI_START: {
-					if (!userDetails.sub) {
-						this.logger.error({ message: "Missing required fields in event payload", eventDetails, userDetails });
-						throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
-					}
-					userId = userDetails.sub;
 					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn";
 					expressionAttributeValues = {
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
