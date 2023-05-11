@@ -7,6 +7,7 @@ AWSXRay.setContextMissingStrategy("LOG_ERROR");
 const sqsClientRaw = new SQSClient({
 	region: process.env.REGION,
 	maxAttempts: 2,
+	// @ts-ignore
 	requestHandler: new NodeHttpHandler({
 		connectionTimeout: 29000,
 		socketTimeout: 29000,
