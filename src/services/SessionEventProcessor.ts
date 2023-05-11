@@ -5,10 +5,10 @@ import { SessionEvent } from "../models/SessionEvent";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { Response } from "../utils/Response";
 import { buildGovNotifyEventFields } from "../utils/GovNotifyEvent";
-import { IprService } from "./IprService";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
+import { IPRService } from "./IPRService";
 
 export class SessionEventProcessor {
 
@@ -20,7 +20,7 @@ export class SessionEventProcessor {
 
     private readonly validationHelper: ValidationHelper;
 
-	private readonly iprService: IprService;
+	private readonly iprService: IPRService;
 
 	private readonly environmentVariables: EnvironmentVariables;
 
@@ -29,7 +29,7 @@ export class SessionEventProcessor {
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.STREAM_PROCESSOR_SERVICE);
     	this.validationHelper = new ValidationHelper();
     	this.metrics = metrics;
-		this.iprService = IprService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
+		this.iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics): SessionEventProcessor {
@@ -82,7 +82,7 @@ export class SessionEventProcessor {
 				":notified": true,
 			};
 			await this.iprService.saveEventData(sessionEventData.userId, updateExpression, expressionAttributeValues);
-			this.logger.info({ message: "Updated the session event record with notified flag" }, sessionEventData.userId);
+			this.logger.info({ message: "Updated the session event record with notified flag", userId: sessionEventData.userId });
 		} catch (error: any) {
 			return new Response(HttpCodesEnum.SERVER_ERROR, error.message);
 		}

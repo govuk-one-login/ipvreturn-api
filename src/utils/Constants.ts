@@ -12,8 +12,6 @@ export class Constants {
 
     static readonly EMAIL_LOGGER_SVC_NAME = "SendEmailHandler";
 
-    static readonly EMAIL_METRICS_NAMESPACE = "F2F-CRI";
-
     static readonly F2F_YOTI_START = "F2F_YOTI_START";
 
     static readonly AUTH_IPV_AUTHORISATION_REQUESTED = "AUTH_IPV_AUTHORISATION_REQUESTED";
@@ -24,7 +22,6 @@ export class Constants {
 
     static readonly POSTEVENT_LOGGER_SVC_NAME = "PostEventHandler";
 
-    static readonly IPR_METRICS_NAMESPACE = "F2F-IPR";
     static readonly STREAM_PROCESSOR_LOGGER_SVC_NAME = "StreamProcessorHandler";
 
     static readonly IPVRETURN_METRICS_NAMESPACE = "IPVRETURN-CRI";

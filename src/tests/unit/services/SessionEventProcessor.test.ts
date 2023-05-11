@@ -2,14 +2,14 @@ import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SessionEventProcessor } from "../../../services/SessionEventProcessor";
 import { mock } from "jest-mock-extended";
-import { IprService } from "../../../services/IprService";
 import { DynamoDBStreamEvent } from "aws-lambda";
 import { VALID_DYNAMODB_STREAM_EVENT } from "../data/dynamodb-stream-record";
 import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
+import { IPRService } from "../../../services/IPRService";
 const { unmarshall } = require("@aws-sdk/util-dynamodb");
 
 let sessionEventProcessorTest: SessionEventProcessor;
-const mockIprService = mock<IprService>();
+const mockIprService = mock<IPRService>();
 const logger = mock<Logger>();
 const metrics = new Metrics({ namespace: "F2F" });
 let streamEvent: DynamoDBStreamEvent;
