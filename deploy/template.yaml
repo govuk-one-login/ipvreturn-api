@@ -75,26 +75,31 @@ Mappings:
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
+      DNSSUFFIX: "return.dev.account.gov.uk"
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.build.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
+      DNSSUFFIX: "return.build.account.gov.uk"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
+      DNSSUFFIX: "return.staging.account.gov.uk"
     integration:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
+      DNSSUFFIX: "return.integration.account.gov.uk"
     production:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
+      DNSSUFFIX: "return.account.gov.uk"
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
@@ -136,6 +141,8 @@ Conditions:
       - Fn::Equals:
           - !Ref SecretPrefix
           - "none"
+  CreateProdResources: !Equals [ !Ref Environment, production]
+  CreateNonProdResources: !Not [!Condition CreateProdResources]
 
 Globals:
   Function:
@@ -233,6 +240,47 @@ Resources:
           Value: APIGatewayAccessLogGroup
 
   ### End of API Gateway definition.
+
+  ### API Gateway Custom Domain definition
+
+  IPVRApiCustomDomain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: !If
+        - CreateDevResources
+        - !Sub
+          - "api-${AWS::StackName}.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+        - !Sub
+          - "api.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      RegionalCertificateArn: !Sub "{{resolve:ssm:/${Environment}/Platform/ACM/PrimaryZoneWildcardCertificateARN}}"
+      SecurityPolicy: TLS_1_2
+
+  IPVRApiCertificateRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !Ref IPVRApiCustomDomain
+      Type: A
+      HostedZoneId: !Sub "{{resolve:ssm:/${Environment}/Platform/Route53/PrimaryZoneID}}"
+      AliasTarget:
+        DNSName: !GetAtt IPVRApiCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt IPVRApiCustomDomain.RegionalHostedZoneId
+
+  IPVRApiMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn: IPVRApiCustomDomain
+    Properties:
+      DomainName: !Ref IPVRApiCustomDomain
+      RestApiId: !Ref IPVRRestApi
+      Stage: !Sub "${IPVRRestApi.Stage}"
+
+  ### End of API Gateway Custom Domain definition
 
   ### Function Definition
   PostEventFunction:
