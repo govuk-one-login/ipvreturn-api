@@ -185,6 +185,54 @@ Resources:
         Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
 
   ### Start of API Gateway definition.
+  IPVRRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      OpenApiVersion: 3.0.1
+      AccessLogSetting:
+        Format: "$context.requestId $context.httpMethod $context.path"
+        DestinationArn: !GetAtt IPVRAPIGatewayAccessLogGroup.Arn
+      EndpointConfiguration:
+        Type: REGIONAL
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: "./ipvr-spec.yaml"
+        OpenApiVersion: 3.0.1
+
+      TracingEnabled: true
+      Tags:
+        Product: GOV.UK Sign In
+        System: F2F
+        Environment: !Ref Environment
+        Service: backend
+        Name: CICRestApi
+        Source: alphagov/di-devplatform-demo-sam-app/sam-app/template.yaml
+
+  IPVRAPIGatewayAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays:
+        !FindInMap [
+          EnvironmentConfiguration,
+          !Ref Environment,
+          logretentionindays,
+        ]
+      Tags:
+        - Key: Product
+          Value: GOV.UK Sign In
+        - Key: System
+          Value: Dev Platform
+        - Key: Environment
+          Value: Demo
+        - Key: Service
+          Value: backend
+        - Key: Name
+          Value: APIGatewayAccessLogGroup
+
+  ### End of API Gateway definition.
 
   ### Function Definition
   PostEventFunction:
@@ -316,6 +364,62 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref GovNotifyFunction
+      Principal: apigateway.amazonaws.com
+
+  ## Session
+  SessionFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: SessionFunctionLogGroup
+    Properties:
+      FunctionName: !Sub "Session-${AWS::StackName}"
+      Handler: SessionHandler.lambdaHandler
+      CodeUri: ../src/
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: SessionHandler
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        userInfo:
+          Type: Api
+          Properties:
+            Path: /session
+            Method: get
+            RestApiId: !Ref IPVRRestApi
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
+        EntryPoints:
+          - SessionHandler.ts
+
+  SessionFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/Session-${AWS::StackName}"
+      RetentionInDays:
+        !FindInMap [
+          EnvironmentConfiguration,
+          !Ref Environment,
+          logretentionindays,
+        ]
+
+  SessionFunctionLogsSubscriptionFilterCSLS:
+    Type: AWS::Logs::SubscriptionFilter
+    # Condition: IsProdLikeEnvironment
+    Properties:
+      DestinationArn:
+        !FindInMap [PlatformConfiguration, !Ref Environment, CSLSEGRESS]
+      FilterPattern: ""
+      LogGroupName: !Ref SessionFunctionLogGroup
+
+  SessionFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SessionFunction
       Principal: apigateway.amazonaws.com
 
   #Gov Notify SQS Queue
