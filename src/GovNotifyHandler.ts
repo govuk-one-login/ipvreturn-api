@@ -53,7 +53,7 @@ class GovNotifyHandler implements LambdaInterface {
 				};
 
 				logger.debug("Finished processing record from SQS");
-				return new Response(HttpCodesEnum.OK, responseBody);
+				return new Response(HttpCodesEnum.OK, JSON.stringify(responseBody));
 
 			} catch (error: any) {
 				// If an appError was thrown at the service level
@@ -77,7 +77,7 @@ class GovNotifyHandler implements LambdaInterface {
 					};
 
 					logger.error("Email could not be sent. Returning failed message", "Handler");
-					return new Response(statusCode, body, appErrorCode);
+					return new Response(statusCode, JSON.stringify(body), appErrorCode);
 				}
 			}
 
