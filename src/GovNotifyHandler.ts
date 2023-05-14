@@ -1,13 +1,10 @@
-import { SQSEvent, SQSRecord } from "aws-lambda";
+import {SQSBatchResponse, SQSEvent, SQSRecord} from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
-import { Response } from "./utils/Response";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
 import { Constants } from "./utils/Constants";
 import { BatchItemFailure } from "./utils/BatchItemFailure";
-import { EmailResponse } from "./models/EmailResponse";
 import { SendEmailProcessor } from "./services/SendEmailProcessor";
-import { HttpCodesEnum } from "./models/enums/HttpCodesEnum";
 import { getParameter } from "./utils/Config";
 import { EnvironmentVariables } from "./services/EnvironmentVariables";
 import { ServicesEnum } from "./models/enums/ServicesEnum";
@@ -28,7 +25,7 @@ class GovNotifyHandler implements LambdaInterface {
 	private readonly environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GOV_NOTIFY_SERVICE);
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
-	async handler(event: SQSEvent, context: any): Promise<any> {
+	async handler(event: SQSEvent, _context: any): Promise<SQSBatchResponse> {
 		if (event.Records.length === 1) {
 			const record: SQSRecord = event.Records[0];
 			logger.debug("Starting to process record", { record });
@@ -46,14 +43,13 @@ class GovNotifyHandler implements LambdaInterface {
 						throw err;
 					}
 				}
-				const emailResponse: EmailResponse = await SendEmailProcessor.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY).processRequest(body);
-				const responseBody = {
-					messageId: emailResponse.metadata.id,
-					batchItemFailures: [],
-				};
+				await SendEmailProcessor.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY).processRequest(body);
 
 				logger.debug("Finished processing record from SQS");
-				return new Response(HttpCodesEnum.OK, JSON.stringify(responseBody));
+
+				// return an empty batchItemFailures array to mark the batch as a success
+				// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
+				return {batchItemFailures: []};
 
 			} catch (error: any) {
 				// If an appError was thrown at the service level
@@ -66,24 +62,20 @@ class GovNotifyHandler implements LambdaInterface {
 					logger.error("Email could not be sent. Returning batch item failure so it can be retried", { sqsBatchResponse });
 					return sqsBatchResponse;
 				} else {
-					const appErrorCode = error.appCode;
-					const statusCode = error.statusCode ? error.statusCode : HttpCodesEnum.SERVER_ERROR;
-					const body = {
-						statusCode,
-						message: error.message || JSON.stringify(error),
-						batchItemFailures: [],
-						error,
-						appErrorCode,
-					};
-
 					logger.error("Email could not be sent. Returning failed message", "Handler");
-					return new Response(statusCode, JSON.stringify(body), appErrorCode);
+
+					// explicitly  set itemIdentifier to an empty string to fail the whole batch
+					// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
+					return {batchItemFailures: [{itemIdentifier: ""}]};
 				}
 			}
 
 		} else {
 			logger.warn("Unexpected no of records received");
-			return new Response(HttpCodesEnum.BAD_REQUEST, "Unexpected no of records received");
+
+			// explicitly  set itemIdentifier to an empty string to fail the whole batch
+			// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
+			return {batchItemFailures: [{itemIdentifier: ""}]};
 		}
 	}
 

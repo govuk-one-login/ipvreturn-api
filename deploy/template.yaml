@@ -265,7 +265,16 @@ Resources:
   IPVRApiCertificateRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      Name: !Ref IPVRApiCustomDomain
+      Name: !If
+        - CreateDevResources
+        - !Sub
+          - "api-${AWS::StackName}.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+        - !Sub
+          - "api.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       Type: A
       HostedZoneId: !Sub "{{resolve:ssm:/${Environment}/Platform/Route53/PrimaryZoneID}}"
       AliasTarget:
@@ -276,7 +285,16 @@ Resources:
     Type: AWS::ApiGateway::BasePathMapping
     DependsOn: IPVRApiCustomDomain
     Properties:
-      DomainName: !Ref IPVRApiCustomDomain
+      DomainName: !If
+        - CreateDevResources
+        - !Sub
+          - "api-${AWS::StackName}.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+        - !Sub
+          - "api.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       RestApiId: !Ref IPVRRestApi
       Stage: !Sub "${IPVRRestApi.Stage}"
 
