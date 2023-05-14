@@ -1,7 +1,7 @@
 export const VALID_SESSION = {
   httpMethod: "POST",
   body: "",
-  headers: { "X-Forwarded-For": "192.168.0.1" },
+  headers: { "X-Forwarded-For": "192.0.2.1" },  // safe IP address for documentation purposes
   isBase64Encoded: false,
   multiValueHeaders: {},
   multiValueQueryStringParameters: {},
@@ -51,7 +51,7 @@ export const VALID_SESSION = {
 export const INVALID_SESSION = {
   httpMethod: "POST",
   body: "",
-  headers: { "X-Forwarded-For": "192.168.0.1" },
+  headers: { "X-Forwarded-For": "192.0.2.1" },  // safe IP address for documentation purposes
   isBase64Encoded: false,
   multiValueHeaders: {},
   multiValueQueryStringParameters: {},
