@@ -1,4 +1,4 @@
-import {SQSBatchResponse, SQSEvent, SQSRecord} from "aws-lambda";
+import { SQSBatchResponse, SQSEvent, SQSRecord } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
@@ -49,7 +49,7 @@ class GovNotifyHandler implements LambdaInterface {
 
 				// return an empty batchItemFailures array to mark the batch as a success
 				// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-				return {batchItemFailures: []};
+				return { batchItemFailures: [] };
 
 			} catch (error: any) {
 				// If an appError was thrown at the service level
@@ -66,7 +66,7 @@ class GovNotifyHandler implements LambdaInterface {
 
 					// explicitly  set itemIdentifier to an empty string to fail the whole batch
 					// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-					return {batchItemFailures: [{itemIdentifier: ""}]};
+					return { batchItemFailures: [{ itemIdentifier: "" }] };
 				}
 			}
 
@@ -75,7 +75,7 @@ class GovNotifyHandler implements LambdaInterface {
 
 			// explicitly  set itemIdentifier to an empty string to fail the whole batch
 			// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-			return {batchItemFailures: [{itemIdentifier: ""}]};
+			return { batchItemFailures: [{ itemIdentifier: "" }] };
 		}
 	}
 

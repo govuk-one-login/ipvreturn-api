@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEmail, IsBoolean, IsArray, IsNumber } from "class-validator";
+import { IsString, IsNotEmpty, IsEmail, IsBoolean, IsNumber } from "class-validator";
 
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "./enums/HttpCodesEnum";

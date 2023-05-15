@@ -11,39 +11,39 @@ const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? 
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : "DEBUG";
 
 const logger = new Logger({
-  logLevel: POWERTOOLS_LOG_LEVEL,
-  serviceName: "SessionHandler",
+	logLevel: POWERTOOLS_LOG_LEVEL,
+	serviceName: "SessionHandler",
 });
 
 const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceName: "SessionHandler" });
 
 class Session implements LambdaInterface {
 
-  @metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
-  @logger.injectLambdaContext()
-  async handler(event: APIGatewayProxyEvent, _context: any): Promise<APIGatewayProxyResult> {
-    switch (event.resource) {
-      case ResourcesEnum.SESSION:
-        try {
-          logger.debug("metrics is", { metrics });
-          logger.debug("Event received", { event });
+	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
+	@logger.injectLambdaContext()
+	async handler(event: APIGatewayProxyEvent, _context: any): Promise<APIGatewayProxyResult> {
+		switch (event.resource) {
+			case ResourcesEnum.SESSION:
+				try {
+					logger.debug("metrics is", { metrics });
+					logger.debug("Event received", { event });
 
-          // add code here
+					// add code here
 
-          return new Response(HttpCodesEnum.OK, "OK");
+					return new Response(HttpCodesEnum.OK, "OK");
 
-        } catch (err: any) {
-          logger.error("An error has occurred.", { err });
-          // if (err instanceof AppError) {
-          //   return new Response(err.statusCode, err.message);
-          // }
-          return new Response(HttpCodesEnum.SERVER_ERROR, "An error has occurred");
-        }
-      default:
-      //   throw new AppError("Requested resource does not exist" + { resource: event.resource }, HttpCodesEnum.NOT_FOUND);
-      return new Response(HttpCodesEnum.NOT_FOUND, "Resource not found");
-    }
-  }
+				} catch (err: any) {
+					logger.error("An error has occurred.", { err });
+					// if (err instanceof AppError) {
+					//   return new Response(err.statusCode, err.message);
+					// }
+					return new Response(HttpCodesEnum.SERVER_ERROR, "An error has occurred");
+				}
+			default:
+				//   throw new AppError("Requested resource does not exist" + { resource: event.resource }, HttpCodesEnum.NOT_FOUND);
+				return new Response(HttpCodesEnum.NOT_FOUND, "Resource not found");
+		}
+	}
 
 }
 const handlerClass = new Session();
