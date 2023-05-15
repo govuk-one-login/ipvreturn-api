@@ -301,80 +301,6 @@ Resources:
   ### End of API Gateway Custom Domain definition
 
   ### Function Definition
-  SessionEventFunction:
-    Type: AWS::Serverless::Function
-    DependsOn: SessionEventFunctionLogGroup
-    Properties:
-      FunctionName: !Sub "Ipvreturn-SessionEvent-${AWS::StackName}"
-      Handler: SessionEventHandler.lambdaHandler
-      CodeUri: ../src/
-      Environment:
-        Variables:
-          POWERTOOLS_SERVICE_NAME: SessionEventHandler
-          #ISSUER: !FindInMap [ EnvironmentVariables, !Ref Environment, ISSUER ]
-#          TXMA_QUEUE_URL: !Ref TxMASQSQueue
-          KMS_KEY_ARN:
-            Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
-      Policies:
-        - AWSLambdaBasicExecutionRole
-        - AWSXrayWriteOnlyAccess
-#        - DynamoDBWritePolicy:
-#            TableName:
-#              Fn::ImportValue:
-#                !Sub "${L2DynamoStackName}-session-table-name"
-#        - DynamoDBReadPolicy:
-#            TableName:
-#              Fn::ImportValue:
-#                !Sub "${L2DynamoStackName}-session-table-name"
-#        - KMSDecryptPolicy:
-#            KeyId:
-#              Fn::ImportValue:
-#                !Sub "${L2DynamoStackName}-session-table-key-id"
-        - Statement:
-            - Sid: KMSPolicy
-              Effect: Allow
-              Action:
-                - kms:Sign
-              Resource:
-                Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
-#      Events:
-#        userInfo:
-#          Type: Api
-#          Properties:
-#            Path: /session
-#            Method: post
-#            RestApiId: !Ref F2FRestApi
-    Metadata: # Manage esbuild properties
-      BuildMethod: esbuild
-      BuildProperties:
-        Minify: true
-        Target: "es2020"
-        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
-        EntryPoints:
-          - SessionEventHandler.ts
-
-  SessionEventFunctionLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "/aws/lambda/Ipvreturn-SessionEvent-${AWS::StackName}"
-      RetentionInDays: !FindInMap [ EnvironmentConfiguration, !Ref Environment, logretentionindays ]
-
-  SessionEventFunctionLogsSubscriptionFilterCSLS:
-    Type: AWS::Logs::SubscriptionFilter
-    # Condition: IsProdLikeEnvironment
-    Properties:
-      DestinationArn:
-        !FindInMap [ PlatformConfiguration, !Ref Environment, CSLSEGRESS ]
-      FilterPattern: ""
-      LogGroupName: !Ref SessionEventFunctionLogGroup
-
-  SessionEventFunctionPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref SessionEventFunction
-      Principal: apigateway.amazonaws.com
-
   PostEventFunction:
     Type: AWS::Serverless::Function
     DependsOn: PostEventFunctionLogGroup
@@ -517,8 +443,17 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: SessionHandler
+          KMS_KEY_ARN:
+            Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
       Policies:
         - AWSLambdaBasicExecutionRole
+        - Statement:
+            - Sid: KMSPolicy
+              Effect: Allow
+              Action:
+                - kms:Sign
+              Resource:
+                Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
       Events:
         userInfo:
           Type: Api
