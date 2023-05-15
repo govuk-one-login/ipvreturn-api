@@ -1,0 +1,117 @@
+openapi: 3.0.1
+info:
+  title:
+     Fn::Sub: "${AWS::StackName} - IPVR API"
+  version: "1.0"
+  description: >-
+    IPV Return Journey Relying Party (IPVR) - Backend API specification
+  contact:
+    name: Darren Dunford
+    email: darren.dunford@digital.cabinet-office.gov.uk
+servers:
+  - url: https://www.example.com
+tags:
+  - name: Backend
+    description: Backend endpoints implemented by IPVR
+
+paths:
+  /session:
+    get:
+      operationId: getSession
+      summary: returns a redirect to the Relying Party specific to the session attached to the user logged in
+      description: >-
+        returns a redirect to the Relying Party specific to the session attached to the user logged in
+      tags:
+        - Backend
+      parameters:
+        - $ref: "#/components/parameters/AuthCode"
+      x-amazon-apigateway-request-validator: "both"
+      x-amazon-apigateway-integration:
+        httpMethod: "POST"
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SessionFunction.Arn}:live/invocations
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        contentHandling: "CONVERT_TO_TEXT"
+        type: "aws_proxy"
+      responses:
+        "200":
+          description: >-
+            Created - OAuth token is valid - Session details have been stored in the backend and a `session_id`
+            is returned.
+          headers:
+            Cache-Control:
+              schema:
+                type: "string"
+            Content-Type:
+              schema:
+                type: "string"
+            Strict-Transport-Security:
+              schema:
+                type: "string"
+            X-Content-Type-Options:
+              schema:
+                type: "string"
+            X-Frame-Options:
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "401":
+          description: Unauthorized
+          headers:
+            Cache-Control:
+              schema:
+                type: "string"
+            Content-Type:
+              schema:
+                type: "string"
+            Strict-Transport-Security:
+              schema:
+                type: "string"
+            X-Content-Type-Options:
+              schema:
+                type: "string"
+            X-Frame-Options:
+              schema:
+                type: "string"
+
+components:
+  schemas:
+    SessionResponse:
+      type: object
+      additionalProperties: true
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - "pending"
+            - "completed"
+          example: "completed"
+          description: >-
+            Indicates whether the session retrieved is in `pending` or `completed` status
+        redirect_uri:
+          type: string
+          example: "https://www.hmrc.gov.uk/"
+          description: >-
+            URI to redirect the user to so they go back to their original service. Only returned when `status` is
+            `completed`.
+  parameters:
+    AuthCode:
+      name: code
+      in: query
+      description: The authorization code returned from GOV.UK Signin
+      required: true
+      schema:
+        type: string
+
+x-amazon-apigateway-request-validators:
+    both:
+      validateRequestBody: true
+      validateRequestParameters: true
