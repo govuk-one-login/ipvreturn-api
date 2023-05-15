@@ -75,26 +75,31 @@ Mappings:
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
+      DNSSUFFIX: "return.dev.account.gov.uk"
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.build.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
+      DNSSUFFIX: "return.build.account.gov.uk"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
+      DNSSUFFIX: "return.staging.account.gov.uk"
     integration:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
+      DNSSUFFIX: "return.integration.account.gov.uk"
     production:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
+      DNSSUFFIX: "return.account.gov.uk"
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
@@ -136,6 +141,8 @@ Conditions:
       - Fn::Equals:
           - !Ref SecretPrefix
           - "none"
+  CreateProdResources: !Equals [ !Ref Environment, production]
+  CreateNonProdResources: !Not [!Condition CreateProdResources]
 
 Globals:
   Function:
@@ -185,6 +192,113 @@ Resources:
         Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
 
   ### Start of API Gateway definition.
+  IPVRRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      OpenApiVersion: 3.0.1
+      AccessLogSetting:
+        Format: "$context.requestId $context.httpMethod $context.path"
+        DestinationArn: !GetAtt IPVRAPIGatewayAccessLogGroup.Arn
+      EndpointConfiguration:
+        Type: REGIONAL
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: "./ipvr-spec.yaml"
+        OpenApiVersion: 3.0.1
+
+      TracingEnabled: true
+      Tags:
+        Product: GOV.UK Sign In
+        System: F2F
+        Environment: !Ref Environment
+        Service: backend
+        Name: CICRestApi
+        Source: alphagov/di-devplatform-demo-sam-app/sam-app/template.yaml
+
+  IPVRAPIGatewayAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays:
+        !FindInMap [
+          EnvironmentConfiguration,
+          !Ref Environment,
+          logretentionindays,
+        ]
+      Tags:
+        - Key: Product
+          Value: GOV.UK Sign In
+        - Key: System
+          Value: Dev Platform
+        - Key: Environment
+          Value: Demo
+        - Key: Service
+          Value: backend
+        - Key: Name
+          Value: APIGatewayAccessLogGroup
+
+  ### End of API Gateway definition.
+
+  ### API Gateway Custom Domain definition
+
+  IPVRApiCustomDomain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: !If
+        - CreateDevResources
+        - !Sub
+          - "api-${AWS::StackName}.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+        - !Sub
+          - "api.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      RegionalCertificateArn: !Sub "{{resolve:ssm:/${Environment}/Platform/ACM/PrimaryZoneWildcardCertificateARN}}"
+      SecurityPolicy: TLS_1_2
+
+  IPVRApiCertificateRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !If
+        - CreateDevResources
+        - !Sub
+          - "api-${AWS::StackName}.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+        - !Sub
+          - "api.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+      Type: A
+      HostedZoneId: !Sub "{{resolve:ssm:/${Environment}/Platform/Route53/PrimaryZoneID}}"
+      AliasTarget:
+        DNSName: !GetAtt IPVRApiCustomDomain.RegionalDomainName
+        HostedZoneId: !GetAtt IPVRApiCustomDomain.RegionalHostedZoneId
+
+  IPVRApiMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn: IPVRApiCustomDomain
+    Properties:
+      DomainName: !If
+        - CreateDevResources
+        - !Sub
+          - "api-${AWS::StackName}.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+        - !Sub
+          - "api.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+      RestApiId: !Ref IPVRRestApi
+      Stage: !Sub "${IPVRRestApi.Stage}"
+
+  ### End of API Gateway Custom Domain definition
 
   ### Function Definition
   PostEventFunction:
@@ -316,6 +430,62 @@ Resources:
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref GovNotifyFunction
+      Principal: apigateway.amazonaws.com
+
+  ## Session
+  SessionFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: SessionFunctionLogGroup
+    Properties:
+      FunctionName: !Sub "Session-${AWS::StackName}"
+      Handler: SessionHandler.lambdaHandler
+      CodeUri: ../src/
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: SessionHandler
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        userInfo:
+          Type: Api
+          Properties:
+            Path: /session
+            Method: get
+            RestApiId: !Ref IPVRRestApi
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
+        EntryPoints:
+          - SessionHandler.ts
+
+  SessionFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/Session-${AWS::StackName}"
+      RetentionInDays:
+        !FindInMap [
+          EnvironmentConfiguration,
+          !Ref Environment,
+          logretentionindays,
+        ]
+
+  SessionFunctionLogsSubscriptionFilterCSLS:
+    Type: AWS::Logs::SubscriptionFilter
+    # Condition: IsProdLikeEnvironment
+    Properties:
+      DestinationArn:
+        !FindInMap [PlatformConfiguration, !Ref Environment, CSLSEGRESS]
+      FilterPattern: ""
+      LogGroupName: !Ref SessionFunctionLogGroup
+
+  SessionFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SessionFunction
       Principal: apigateway.amazonaws.com
 
   #Gov Notify SQS Queue
