@@ -4,6 +4,11 @@ import { AppError } from "../utils/AppError";
 import { DynamoDBDocument, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { Constants } from "../utils/Constants";
+import { sqsClient } from "../utils/SqsClient";
+import { SendMessageCommand } from "@aws-sdk/client-sqs";
+import { GovNotifyEvent } from "../utils/GovNotifyEvent";
+import { EnvironmentVariables } from "./EnvironmentVariables";
+import { ServicesEnum } from "../models/enums/ServicesEnum";
 
 export class IPRService {
 	readonly tableName: string;
@@ -11,6 +16,8 @@ export class IPRService {
 	private readonly dynamo: DynamoDBDocument;
 
 	readonly logger: Logger;
+
+	private readonly environmentVariables: EnvironmentVariables;
 
 	private static instance: IPRService;
 
@@ -25,6 +32,7 @@ export class IPRService {
 		this.tableName = tableName;
 		this.dynamo = dynamoDbClient;
 		this.logger = logger;
+		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.NA);
 	}
 
 	static getInstance(tableName: string, logger: Logger, dynamoDbClient: DynamoDBDocument): IPRService {
@@ -82,6 +90,22 @@ export class IPRService {
 		} catch (e: any) {
 			this.logger.error({ message: "Failed to update session record in dynamo", e });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
+		}
+	}
+
+	async sendToGovNotify(event: GovNotifyEvent): Promise<void> {
+		try {
+			const messageBody = JSON.stringify(event);
+			const params = {
+				MessageBody: messageBody,
+				QueueUrl: this.environmentVariables.getGovNotifyQueueURL(this.logger),
+			};
+
+			await sqsClient.send(new SendMessageCommand(params));
+			 		this.logger.info("Sent message to Gov Notify");
+		} catch (error) {
+			this.logger.error({ message: "Error when sending message to GovNotify Queue", error });
+			   		throw new AppError(HttpCodesEnum.SERVER_ERROR, "sending event to govNotify queue - failed ");
 		}
 	}
 

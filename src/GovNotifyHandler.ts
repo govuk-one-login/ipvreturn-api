@@ -1,4 +1,4 @@
-import {SQSBatchResponse, SQSEvent, SQSRecord} from "aws-lambda";
+import { SQSBatchResponse, SQSEvent, SQSRecord } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
@@ -9,7 +9,7 @@ import { getParameter } from "./utils/Config";
 import { EnvironmentVariables } from "./services/EnvironmentVariables";
 import { ServicesEnum } from "./models/enums/ServicesEnum";
 
-const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : Constants.EMAIL_METRICS_NAMESPACE;
+const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : Constants.IPVRETURN_METRICS_NAMESPACE;
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : Constants.DEBUG;
 const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME ? process.env.POWERTOOLS_SERVICE_NAME : Constants.EMAIL_LOGGER_SVC_NAME;
 
@@ -49,7 +49,7 @@ class GovNotifyHandler implements LambdaInterface {
 
 				// return an empty batchItemFailures array to mark the batch as a success
 				// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-				return {batchItemFailures: []};
+				return { batchItemFailures: [] };
 
 			} catch (error: any) {
 				// If an appError was thrown at the service level
@@ -66,7 +66,7 @@ class GovNotifyHandler implements LambdaInterface {
 
 					// explicitly  set itemIdentifier to an empty string to fail the whole batch
 					// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-					return {batchItemFailures: [{itemIdentifier: ""}]};
+					return { batchItemFailures: [{ itemIdentifier: "" }] };
 				}
 			}
 
@@ -75,7 +75,7 @@ class GovNotifyHandler implements LambdaInterface {
 
 			// explicitly  set itemIdentifier to an empty string to fail the whole batch
 			// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-			return {batchItemFailures: [{itemIdentifier: ""}]};
+			return { batchItemFailures: [{ itemIdentifier: "" }] };
 		}
 	}
 
