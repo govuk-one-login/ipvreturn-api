@@ -80,6 +80,8 @@ Resources:
         KMSMasterKeyId: !Ref SessionEventsTableKey
         SSEEnabled: true
         SSEType: KMS
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
 
   SessionEventsTableKey:
     Type: AWS::KMS::Key
@@ -141,3 +143,8 @@ Outputs:
   SessionEventsTableKeyAlias:
     Description: "The Alias of the Session Events encryption key"
     Value: !Ref SessionEventsTableKeyAlias
+  SessionEventsTableStreamArn:
+    Description: "The Arn for the Session Events table Stream"
+    Value: !GetAtt SessionEventsTable.StreamArn
+    Export:
+      Name: !Sub "${AWS::StackName}-session-events-table-stream-arn"

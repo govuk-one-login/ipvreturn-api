@@ -4,3 +4,4 @@ process.env.GOVUKNOTIFY_API_KEY_SSM_PATH = "/dev/f2f-gov-notify/lsdkgl"
 process.env.RETURN_JOURNEY_URL = "www.test.com/return_journey_url";
 process.env.SESSION_EVENTS_TABLE = 'SessionEventsTable';
 process.env.SESSION_RETURN_RECORD_TTL = '950400';
+process.env.GOV_NOTIFY_QUEUE_URL = "govNotify-queue";

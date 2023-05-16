@@ -2,6 +2,7 @@ import { validateOrReject } from "class-validator";
 import { AppError } from "./AppError";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
+import { SessionEvent } from "../models/SessionEvent";
 
 export class ValidationHelper {
 
@@ -28,4 +29,13 @@ export class ValidationHelper {
 		});
 	}
 
+	validateSessionEventFields(sessionEventData: SessionEvent): void {
+		if (!sessionEventData.ipvStartedOn || !(sessionEventData.ipvStartedOn > 0)) {
+			throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, `ipvStartedOn is not yet populated for userId: ${sessionEventData.userId}, unable to process the DB record.`);
+		} else if (!sessionEventData.journeyWentAsyncOn || !(sessionEventData.journeyWentAsyncOn > 0)) {
+			throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, `journeyWentAsyncOn is not yet populated for userId: ${sessionEventData.userId}, unable to process the DB record.`);
+		} else if (!sessionEventData.readyToResumeOn || !(sessionEventData.readyToResumeOn > 0)) {
+			throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, `readyToResumeOn is not yet populated for userId: ${sessionEventData.userId}, unable to process the DB record.`);
+		}
+	}
 }
