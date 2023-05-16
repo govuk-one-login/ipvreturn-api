@@ -15,8 +15,8 @@ import { ServicesEnum } from "../models/enums/ServicesEnum";
 import {randomUUID} from "crypto";
 //import { AuthSessionState } from "../models/enums/AuthSessionState";
 
-export class SessionEventProcessor {
-	private static instance: SessionEventProcessor;
+export class SessionProcessor {
+	private static instance: SessionProcessor;
 
 	private readonly logger: Logger;
 
@@ -40,11 +40,11 @@ export class SessionEventProcessor {
 		//this.f2fService = F2fService.getInstance(this.environmentVariables.sessionTable(), this.logger, createDynamoDbClient());
 	}
 
-	static getInstance(logger: Logger, metrics: Metrics): SessionEventProcessor {
-		if (!SessionEventProcessor.instance) {
-			SessionEventProcessor.instance = new SessionEventProcessor(logger, metrics);
+	static getInstance(logger: Logger, metrics: Metrics): SessionProcessor {
+		if (!SessionProcessor.instance) {
+			SessionProcessor.instance = new SessionProcessor(logger, metrics);
 		}
-		return SessionEventProcessor.instance;
+		return SessionProcessor.instance;
 	}
 
 	async processRequest(event: APIGatewayProxyEvent): Promise<Response> {

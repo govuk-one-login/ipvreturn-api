@@ -6,7 +6,7 @@ import { ResourcesEnum } from "./models/enums/ResourcesEnum";
 // import { AppError } from "./utils/AppError";
 import { HttpCodesEnum } from "./utils/HttpCodesEnum";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
-import {SessionEventProcessor} from "./services/SessionEventProcessor";
+import {SessionProcessor} from "./services/SessionProcessor";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : "CIC-CRI";
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : "DEBUG";
@@ -31,7 +31,7 @@ class Session implements LambdaInterface {
         if (event.httpMethod === "POST") {
           try {
             logger.info("Got Session request:", {event});
-            return await SessionEventProcessor.getInstance(logger, metrics).processRequest(event);
+            return await SessionProcessor.getInstance(logger, metrics).processRequest(event);
           } catch (err) {
             logger.error({message: "An error has occurred. ", err});
             return new Response(HttpCodesEnum.SERVER_ERROR, "An error has occurred");
