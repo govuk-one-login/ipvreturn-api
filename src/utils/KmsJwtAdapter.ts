@@ -44,23 +44,23 @@ export class KmsJwtAdapter {
 			MessageType: "RAW",
 		};
 
-		console.log(tokenComponents)
-		console.log(params)
+		console.log(tokenComponents);
+		console.log(params);
 
 		const res = await this.kms.sign(params);
-		console.log(res)
+		console.log(res);
 		// if (res.Signature == null) {
 		// 	throw new Error("Failed to sign Jwt");
 		// }
-		console.log(res.Signature)
+		console.log(res.Signature);
 
-		console.log(Buffer.from(res.Signature).toString("base64"))
+		console.log(Buffer.from(res.Signature).toString("base64"));
 
 		//token_components["signature"] = base64.urlsafe_b64encode(signature).decode().rstrip("=")
 
-		tokenComponents.signature = Buffer.from(res.Signature).toString("base64").replace(/\+/g, '-')
-			.replace(/\//g, '_')
-			.replace(/=/g, '')
+		tokenComponents.signature = Buffer.from(res.Signature).toString("base64").replace(/\+/g, "-")
+			.replace(/\//g, "_")
+			.replace(/=/g, "");
 		//tokenComponents.signature = jwtUtils.base64Encode(res.signature)
 
 		//tokenComponents.signature = format.derToJose(Buffer.from(res.Signature).toString("base64"), "RS256");

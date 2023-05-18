@@ -1,19 +1,18 @@
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
-//import { F2fService } from "./F2fService";
 import { KmsJwtAdapter } from "../utils/KmsJwtAdapter";
 import { HttpCodesEnum } from "../utils/HttpCodesEnum";
-import { createDynamoDbClient } from "../utils/DynamoDBFactory";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { Response } from "../utils/Response";
-//import { AccessTokenRequestValidationHelper } from "../utils/AccessTokenRequestValidationHelper";
-//import { ISessionItem } from "../models/ISessionItem";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
-import { Constants } from "../utils/Constants";
-import { EnvironmentVariables } from "./EnvironmentVariables";
-import { ServicesEnum } from "../models/enums/ServicesEnum";
-import {randomUUID} from "crypto";
-//import { AuthSessionState } from "../models/enums/AuthSessionState";
+import { randomUUID } from "crypto";
+import axios from "axios";
+import { AppError } from "../utils/AppError";
+import { DynamoDB } from "@aws-sdk/client-dynamodb";
+
+const { STS } = require("@aws-sdk/client-sts");
+const stsClient = new STS({ region: process.env.REGION });
+const jose = require("jose");
 
 export class SessionProcessor {
 	private static instance: SessionProcessor;
@@ -22,9 +21,6 @@ export class SessionProcessor {
 
 	private readonly metrics: Metrics;
 
-	// private readonly accessTokenRequestValidationHelper: AccessTokenRequestValidationHelper;
-	//
-	// private readonly f2fService: F2fService;
 
 	private readonly kmsJwtAdapter: KmsJwtAdapter;
 
@@ -35,9 +31,7 @@ export class SessionProcessor {
 		//this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.AUTHORIZATION_SERVICE);
 		// @ts-ignore
 		this.kmsJwtAdapter = new KmsJwtAdapter(process.env.KMS_KEY_ARN);
-		//this.accessTokenRequestValidationHelper = new AccessTokenRequestValidationHelper();
 		this.metrics = metrics;
-		//this.f2fService = F2fService.getInstance(this.environmentVariables.sessionTable(), this.logger, createDynamoDbClient());
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics): SessionProcessor {
@@ -49,59 +43,101 @@ export class SessionProcessor {
 
 	async processRequest(event: APIGatewayProxyEvent): Promise<Response> {
 		try {
-			// const requestPayload = this.accessTokenRequestValidationHelper.validatePayload(event.body);
-			// let session: ISessionItem | undefined;
-			// try {
-			// 	session = await this.f2fService.getSessionByAuthorizationCode(requestPayload.code);
-			// 	this.logger.info({ message: "Found Session: " + JSON.stringify(session) });
-			// 	if (!session) {
-			// 		return new Response(HttpCodesEnum.UNAUTHORIZED, `No session found by authorization code: ${requestPayload.code}`);
-			// 	}
-			// } catch (err) {
-			// 	return new Response(HttpCodesEnum.UNAUTHORIZED, "Error while retrieving the session");
-			// }
+			const authCode = event.queryStringParameters?.code;
+			// Get OpenId configuration to extract the jwks_uri
+			const openIdConfigEndpoint = "https://oidc.staging.account.gov.uk/.well-known/openid-configuration";
+			const openIdConfiguration = (await axios.get(openIdConfigEndpoint)).data;
+			this.logger.debug("OpenId Configuration data: ", { openIdConfiguration });
+			const jwksEndpoint = openIdConfiguration.jwks_uri;
+			this.logger.debug("Jwks_uri endpoint: ", jwksEndpoint);
 
-			//if (session.authSessionState === AuthSessionState.F2F_AUTH_CODE_ISSUED) {
+			// Generate access token
+			const jwtPayload = {
+				jti: randomUUID(),
+				aud:"https://oidc.staging.account.gov.uk/token",
+				sub: "ppcQQGGNxghc-QJiqhRyGIJ5Its",
+				iss: "ppcQQGGNxghc-QJiqhRyGIJ5Its",
+				iat: absoluteTimeNow(),
+				exp: absoluteTimeNow() + 86400,
+			};
+			let client_assertion;
+			try {
+				client_assertion = await this.kmsJwtAdapter.sign(jwtPayload);
+			} catch (error) {
+				return new Response(HttpCodesEnum.SERVER_ERROR, "Failed to sign the accessToken Jwt");
+			}
 
-				//this.accessTokenRequestValidationHelper.validateTokenRequestToRecord(session, requestPayload.redirectUri);
-				// Generate access token
-				const jwtPayload = {
-					jti: randomUUID(),
-					aud:"https://oidc.staging.account.gov.uk/token",
-					sub: "ppcQQGGNxghc-QJiqhRyGIJ5Its",
-					iss: "ppcQQGGNxghc-QJiqhRyGIJ5Its",
-					iat: absoluteTimeNow(),
-					exp: absoluteTimeNow() + 86400,
-				};
-				let accessToken;
-				try {
-					accessToken = await this.kmsJwtAdapter.sign(jwtPayload);
-				} catch (error) {
-					return new Response(HttpCodesEnum.SERVER_ERROR, "Failed to sign the accessToken Jwt");
-				}
+			this.logger.debug("client_assertion generated successfully", { client_assertion });
+			const ENCODED_REDIRECT_URI = encodeURIComponent("https://return.dev.account.gov.uk/callback");
+			const ENCODED_CLIENT_ASSERTION_TYPE = encodeURIComponent("urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+			const urlEncodedBody = `grant_type=authorization_code&code=${authCode}&redirect_uri=${ENCODED_REDIRECT_URI}&client_assertion_type=${ENCODED_CLIENT_ASSERTION_TYPE}&client_assertion=${client_assertion}`;
 
-				// Update the sessionTable with accessTokenExpiryDate and AuthSessionState.
-				//await this.f2fService.updateSessionWithAccessTokenDetails(session.sessionId, jwtPayload.exp);
+			console.log("urlencodedBody: ", urlEncodedBody);
+			let idToken;
+			let sub;
+			try {
+				const { data } = await axios.post(
+					"https://oidc.staging.account.gov.uk/token",
+					urlEncodedBody,
+					{ headers:{ "Content-Type" : "text/plain" } },
+				);
 
-				this.logger.info("Access token generated successfully",{accessToken });
+				this.logger.info("OIDC Token response: ", { data });
+				idToken = data.id_token;
+				sub = jose.decodeJwt(idToken).sub;
+				console.log("sub from the id_token: ", sub );
+			} catch (err: any) {
+				this.logger.error({ message: "An error occurred when retrieving OIDC token response ", err });
+				return new Response(err.statusCode, err.message);
+			}
 
+			// Call AssumeRoleWithWebIdentity using the id_token
+			let assumedRole;
+			try {
+				assumedRole = await stsClient.assumeRoleWithWebIdentity({
+					RoleSessionName: "ExampleSessionName",
+					WebIdentityToken: idToken,
+					RoleArn: "arn:aws:iam::489145412748:role/assumeRole-FullAdmin",
+
+				});
+			} catch (err: any) {
+				this.logger.error({ message: "An error occurred while assuming the role with WebIdentity ", err });
+				return new Response(err.statusCode, err.message);
+			}
+			// Dynamo access using the temporary credentials
+			// from the ID token
+			const dynamo = new DynamoDB({
+				region: process.env.REGION,
+				credentials: {
+					accessKeyId: assumedRole.Credentials.AccessKeyId,
+					secretAccessKey: assumedRole.Credentials.SecretAccessKey,
+					sessionToken: assumedRole.Credentials.SessionToken,
+				},
+			});
+
+			// The assumed role only allows access
+			// to rows where the leading key (partition key)
+			// is equal to the sub of the ID.
+			//
+			let session;
+			try {
+				session = await dynamo.getItem({
+					TableName: "session-events-ipvreturn-ddb-bhavana",
+					Key: {
+						userId: { S: sub },
+					},
+				});
+				this.logger.debug("Session retrieved from DB: ", { session });
+
+			} catch (error) {
+				this.logger.error({ message: "getSessionById - failed executing get from dynamodb:", error });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
+			}
 
 			return {
 				statusCode: HttpCodesEnum.CREATED,
-				body: "",
+				body: "Successfully retrieved Session Item",
 			};
-				// return {
-				// 	statusCode: HttpCodesEnum.CREATED,
-				// 	body: JSON.stringify({
-				// 		access_token: accessToken,
-				// 		token_type: Constants.BEARER,
-				// 		expires_in: Constants.TOKEN_EXPIRY_SECONDS,
-				// 	}),
-				// };
-			// } else {
-			// 	this.logger.warn(`Session is in the wrong state: ${session.authSessionState}, expected state should be ${AuthSessionState.F2F_AUTH_CODE_ISSUED}`);
-			// 	return new Response(HttpCodesEnum.UNAUTHORIZED, `Session is in the wrong state: ${session.authSessionState}`);
-			// }
 		} catch (err: any) {
 			return new Response(err.statusCode, err.message);
 		}
