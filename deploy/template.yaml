@@ -76,24 +76,32 @@ Mappings:
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.dev.account.gov.uk"
+      CLIENTID: "ppcQQGGNxghc-QJiqhRyGIJ5Its"
+      OIDCURL: "https://oidc.staging.account.gov.uk"
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.build.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.build.account.gov.uk"
+      CLIENTID: "v152k0nWrZlHF2h4be0PVMLkUfY"
+      OIDCURL: "https://oidc.staging.account.gov.uk"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.staging.account.gov.uk"
+      CLIENTID: "EGGcyKOjEONo3g2iXSxeec51nCY"
+      OIDCURL: "https://oidc.staging.account.gov.uk"
     integration:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.integration.account.gov.uk"
+      CLIENTID: "xdQACfjKkzJW0BWhGGJ4KGbdqwk"
+      OIDCURL: "https://oidc.integration.account.gov.uk"
     production:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
@@ -526,6 +534,17 @@ Resources:
       Principal: apigateway.amazonaws.com
 
   ## Session
+
+#  Type: AWS::IAM::OIDCProvider
+#  Properties:
+#    ClientIdList:
+#      - !FindInMap [ EnvironmentVariables, !Ref Environment, CLIENTID ]
+#    Tags:
+#      - Tag
+#    ThumbprintList:
+#      - String
+#    Url: String
+
   SessionFunction:
     Type: AWS::Serverless::Function
     DependsOn: SessionFunctionLogGroup
@@ -538,6 +557,10 @@ Resources:
           POWERTOOLS_SERVICE_NAME: SessionHandler
           KMS_KEY_ARN:
             Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
+          SESSION_EVENTS_TABLE:
+            Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+          SESSION_RETURN_RECORD_TTL: !FindInMap [ EnvironmentVariables, !Ref Environment, SESSIONRETURNRECORDTTL ]
+
       Policies:
         - AWSLambdaBasicExecutionRole
         - Statement:

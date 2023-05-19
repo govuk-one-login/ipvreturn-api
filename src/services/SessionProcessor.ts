@@ -9,6 +9,11 @@ import { randomUUID } from "crypto";
 import axios from "axios";
 import { AppError } from "../utils/AppError";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
+import {SessionEvent} from "../models/SessionEvent";
+import {createDynamoDbClient, createDynamoDbClientWithCreds} from "../utils/DynamoDBFactory";
+import {IPRService} from "./IPRService";
+import {EnvironmentVariables} from "./EnvironmentVariables";
+import {ServicesEnum} from "../models/enums/ServicesEnum";
 
 const { STS } = require("@aws-sdk/client-sts");
 const stsClient = new STS({ region: process.env.REGION });
@@ -21,14 +26,13 @@ export class SessionProcessor {
 
 	private readonly metrics: Metrics;
 
-
 	private readonly kmsJwtAdapter: KmsJwtAdapter;
 
-	//private readonly environmentVariables: EnvironmentVariables;
+	private readonly environmentVariables: EnvironmentVariables;
 
 	constructor(logger: Logger, metrics: Metrics) {
 		this.logger = logger;
-		//this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.AUTHORIZATION_SERVICE);
+		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.POST_EVENT_SERVICE);
 		// @ts-ignore
 		this.kmsJwtAdapter = new KmsJwtAdapter(process.env.KMS_KEY_ARN);
 		this.metrics = metrics;
@@ -106,6 +110,8 @@ export class SessionProcessor {
 			}
 			// Dynamo access using the temporary credentials
 			// from the ID token
+			//const dynamo = createDynamoDbClientWithCreds(assumedRole.Credentials);
+			//const iprService =IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClientWithCreds(assumedRole.Credentials));
 			const dynamo = new DynamoDB({
 				region: process.env.REGION,
 				credentials: {
@@ -115,6 +121,10 @@ export class SessionProcessor {
 				},
 			});
 
+			this.logger.info("Accessid",{"accessKeyId": assumedRole.Credentials.AccessKeyId})
+			this.logger.info("secretAccessKey",{"secretAccessKey": assumedRole.Credentials.SecretAccessKey})
+			this.logger.info("sessionToken",{"sessionToken": assumedRole.Credentials.SessionToken})
+
 			// The assumed role only allows access
 			// to rows where the leading key (partition key)
 			// is equal to the sub of the ID.
@@ -122,11 +132,13 @@ export class SessionProcessor {
 			let session;
 			try {
 				session = await dynamo.getItem({
-					TableName: "session-events-ipvreturn-ddb-bhavana",
+					TableName: "session-events-ipvreturn-ddb",
 					Key: {
 						userId: { S: sub },
 					},
-				});
+				}) ;
+
+				//session = await iprService.getSessionBySub(sub)
 				this.logger.debug("Session retrieved from DB: ", { session });
 
 			} catch (error) {
@@ -134,9 +146,13 @@ export class SessionProcessor {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 			}
 
+			// @ts-ignore
 			return {
 				statusCode: HttpCodesEnum.CREATED,
-				body: "Successfully retrieved Session Item",
+				body: JSON.stringify({
+					status: "completed",
+					redirect_uri:session?.Item?.redirectUri.S
+				})
 			};
 		} catch (err: any) {
 			return new Response(err.statusCode, err.message);
