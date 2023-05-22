@@ -39,7 +39,12 @@ export const createDynamoDbClientWithCreds = (credentials:any) => {
 		wrapNumbers: false,
 	};
 	const translateConfig = { marshallOptions, unmarshallOptions };
-	const dbClient = new DynamoDBClient({ region: awsRegion, credentials: credentials });
+	const dbClient = new DynamoDBClient({ region: awsRegion,
+		credentials: {
+			accessKeyId: credentials.AccessKeyId,
+			secretAccessKey: credentials.SecretAccessKey,
+			sessionToken: credentials.SessionToken,
+		} });
 	const dbClientRaw = DynamoDBDocument.from(dbClient, translateConfig);
 	return process.env.XRAY_ENABLED === "true" ? AWSXRay.captureAWSv3Client(dbClientRaw as any) : dbClientRaw;
 };

@@ -9,11 +9,10 @@ import { randomUUID } from "crypto";
 import axios from "axios";
 import { AppError } from "../utils/AppError";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
-import {SessionEvent} from "../models/SessionEvent";
-import {createDynamoDbClient, createDynamoDbClientWithCreds} from "../utils/DynamoDBFactory";
-import {IPRService} from "./IPRService";
-import {EnvironmentVariables} from "./EnvironmentVariables";
-import {ServicesEnum} from "../models/enums/ServicesEnum";
+import { createDynamoDbClientWithCreds } from "../utils/DynamoDBFactory";
+import { IPRService } from "./IPRService";
+import { EnvironmentVariables } from "./EnvironmentVariables";
+import { ServicesEnum } from "../models/enums/ServicesEnum";
 
 const { STS } = require("@aws-sdk/client-sts");
 const stsClient = new STS({ region: process.env.REGION });
@@ -99,10 +98,9 @@ export class SessionProcessor {
 			let assumedRole;
 			try {
 				assumedRole = await stsClient.assumeRoleWithWebIdentity({
-					RoleSessionName: "ExampleSessionName",
+					RoleSessionName: "AssumeRoleWithWebIdentityRole",
 					WebIdentityToken: idToken,
-					RoleArn: "arn:aws:iam::489145412748:role/assumeRole-FullAdmin",
-
+					RoleArn: process.env.ASSUMEROLE_WITH_WEB_IDENTITY_ARN,
 				});
 			} catch (err: any) {
 				this.logger.error({ message: "An error occurred while assuming the role with WebIdentity ", err });
@@ -110,20 +108,7 @@ export class SessionProcessor {
 			}
 			// Dynamo access using the temporary credentials
 			// from the ID token
-			//const dynamo = createDynamoDbClientWithCreds(assumedRole.Credentials);
-			//const iprService =IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClientWithCreds(assumedRole.Credentials));
-			const dynamo = new DynamoDB({
-				region: process.env.REGION,
-				credentials: {
-					accessKeyId: assumedRole.Credentials.AccessKeyId,
-					secretAccessKey: assumedRole.Credentials.SecretAccessKey,
-					sessionToken: assumedRole.Credentials.SessionToken,
-				},
-			});
-
-			this.logger.info("Accessid",{"accessKeyId": assumedRole.Credentials.AccessKeyId})
-			this.logger.info("secretAccessKey",{"secretAccessKey": assumedRole.Credentials.SecretAccessKey})
-			this.logger.info("sessionToken",{"sessionToken": assumedRole.Credentials.SessionToken})
+			const iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClientWithCreds(assumedRole.Credentials));
 
 			// The assumed role only allows access
 			// to rows where the leading key (partition key)
@@ -131,28 +116,20 @@ export class SessionProcessor {
 			//
 			let session;
 			try {
-				session = await dynamo.getItem({
-					TableName: "session-events-ipvreturn-ddb",
-					Key: {
-						userId: { S: sub },
-					},
-				}) ;
-
-				//session = await iprService.getSessionBySub(sub)
+				session = await iprService.getSessionBySub(sub);
 				this.logger.debug("Session retrieved from DB: ", { session });
 
 			} catch (error) {
-				this.logger.error({ message: "getSessionById - failed executing get from dynamodb:", error });
+				this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", error });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 			}
 
-			// @ts-ignore
 			return {
 				statusCode: HttpCodesEnum.CREATED,
 				body: JSON.stringify({
 					status: "completed",
-					redirect_uri:session?.Item?.redirectUri.S
-				})
+					redirect_uri:session?.redirectUri,
+				}),
 			};
 		} catch (err: any) {
 			return new Response(err.statusCode, err.message);

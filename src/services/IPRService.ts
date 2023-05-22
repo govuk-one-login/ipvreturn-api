@@ -9,7 +9,7 @@ import { SendMessageCommand } from "@aws-sdk/client-sqs";
 import { GovNotifyEvent } from "../utils/GovNotifyEvent";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
-import {SessionEvent} from "../models/SessionEvent";
+import { SessionEvent } from "../models/SessionEvent";
 
 export class IPRService {
 	readonly tableName: string;
@@ -43,36 +43,24 @@ export class IPRService {
 		return IPRService.instance;
 	}
 
-	async getSessionBySub(sub: string): Promise<SessionEvent> {
-
-		// const getSessionCommand = new GetCommand({
-		// 	TableName: "session-events-ipvreturn-ddb-bhavana",
-		// 	Key: {
-		// 		userId: { S: sub },
-		// 	},
-		// })
-
+	async getSessionBySub(userId: string): Promise<SessionEvent | undefined> {
 		const getSessionCommand = new GetCommand({
 			TableName: this.tableName,
 			Key: {
-				sub
+				userId,
 			},
-		})
-
-		console.log(JSON.stringify(this.dynamo));
-		console.log(JSON.stringify(getSessionCommand));
+		});
+		let session;
 		try {
-			const session = await this.dynamo.send(getSessionCommand);
-			if (!session?.Item || session?.Item.length !== 1) {
-				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session by subject");
-			}
-			return session.Item[0];
-		}catch (e: any) {
-			this.logger.error({ message: "getSessionById - failed executing get from dynamodb:", e });
+			session = await this.dynamo.send(getSessionCommand);
+		} catch (e: any) {
+			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", e });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 		}
 
-
+		if (session.Item) {
+			return session.Item as SessionEvent;
+		}
 	}
 
 
