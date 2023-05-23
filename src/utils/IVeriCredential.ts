@@ -38,6 +38,7 @@ export interface JwtPayload {
 	nbf?: number | undefined;
 	iat?: number | undefined;
 	jti?: string | undefined;
+	nonce?: string | undefined;
 }
 export interface JWKSBody {
 	keys: Jwk[];

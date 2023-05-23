@@ -3,6 +3,8 @@ import { AppError } from "./AppError";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { SessionEvent } from "../models/SessionEvent";
+import { JwtPayload } from "./IVeriCredential";
+import { absoluteTimeNow } from "./DateTimeUtils";
 
 export class ValidationHelper {
 
@@ -38,4 +40,29 @@ export class ValidationHelper {
 			throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, `readyToResumeOn is not yet populated for userId: ${sessionEventData.userId}, unable to process the DB record.`);
 		}
 	}
+
+	isJwtComplete = (payload: JwtPayload): boolean => {
+		const { iss, sub, aud, exp, iat, nonce } = payload;
+		const mandatoryJwtValues = [iss, sub, aud, exp, iat, nonce];
+		return !mandatoryJwtValues.some((value) => value === undefined);
+	};
+
+	isJwtValid = (jwtPayload: JwtPayload,
+				  clientId: string, expectedIssuer: string): string => {
+
+		if (!this.isJwtComplete(jwtPayload)) {
+			return "JWT validation/verification failed: Missing mandatory fields in JWT payload";
+		} else if ((jwtPayload.exp == null) || (absoluteTimeNow() > jwtPayload.exp)) {
+			return "JWT validation/verification failed: JWT expired";
+		} else if (jwtPayload.iat == null || (absoluteTimeNow() < jwtPayload.iat)) {
+			return "JWT validation/verification failed: JWT not yet valid";
+		} else if (jwtPayload.aud !== clientId) {
+			return `JWT validation/verification failed: Mismatched client_id in request body (${clientId}) & jwt (${jwtPayload.aud})`;
+		} else if (expectedIssuer !== jwtPayload.iss) {
+			return `JWT validation/verification failed: Issuer ${jwtPayload.iss} does not match configuration uri ${expectedIssuer}`;
+		}
+
+		return "";
+	};
+
 }
