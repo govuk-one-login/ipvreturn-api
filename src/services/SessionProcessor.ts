@@ -14,6 +14,8 @@ import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { Jwt, JwtPayload } from "../utils/IVeriCredential";
+import { Constants } from "../utils/Constants";
+import { SessionEventStatusEnum } from "../models/enums/SessoinEventStatusEnum";
 
 const { STS } = require("@aws-sdk/client-sts");
 const stsClient = new STS({ region: process.env.REGION });
@@ -32,13 +34,10 @@ export class SessionProcessor {
 
 	private readonly validationHelper: ValidationHelper;
 
-	private readonly CLIENT_ID = "ppcQQGGNxghc-QJiqhRyGIJ5Its";
-
 	constructor(logger: Logger, metrics: Metrics) {
 		this.logger = logger;
-		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.POST_EVENT_SERVICE);
-		// @ts-ignore
-		this.kmsJwtAdapter = new KmsJwtAdapter(process.env.KMS_KEY_ARN);
+		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GET_SESSION_EVENT_DATA_SERVICE);
+		this.kmsJwtAdapter = new KmsJwtAdapter(this.environmentVariables.kmsKeyArn());
 		this.metrics = metrics;
 		this.validationHelper = new ValidationHelper();
 	}
@@ -54,47 +53,22 @@ export class SessionProcessor {
 		try {
 			const authCode = event.queryStringParameters?.code;
 			// Get OpenId configuration to extract the jwks_uri
-			const openIdConfigEndpoint = "https://oidc.staging.account.gov.uk/.well-known/openid-configuration";
+			const openIdConfigEndpoint = `${this.environmentVariables.oidcUrl()}${Constants.OIDC_OPENID_CONFIG_ENDPOINT}`;
 			const openIdConfiguration = (await axios.get(openIdConfigEndpoint)).data;
 			const issuer = openIdConfiguration.issuer;
 			this.logger.debug("OpenId Configuration data: ", { openIdConfiguration });
 			const jwksEndpoint = openIdConfiguration.jwks_uri;
 
-			// Generate access token
-			const jwtPayload = {
-				jti: randomUUID(),
-				aud:"https://oidc.staging.account.gov.uk/token",
-				sub: this.CLIENT_ID,
-				iss: this.CLIENT_ID,
-				iat: absoluteTimeNow(),
-				exp: absoluteTimeNow() + 86400,
-			};
-			let client_assertion;
-			try {
-				client_assertion = await this.kmsJwtAdapter.sign(jwtPayload);
-			} catch (error) {
-				return new Response(HttpCodesEnum.SERVER_ERROR, "Failed to sign the accessToken Jwt");
-			}
-
-			const ENCODED_REDIRECT_URI = encodeURIComponent("https://return.dev.account.gov.uk/callback");
-			const ENCODED_CLIENT_ASSERTION_TYPE = encodeURIComponent("urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
-			const urlEncodedBody = `grant_type=authorization_code&code=${authCode}&redirect_uri=${ENCODED_REDIRECT_URI}&client_assertion_type=${ENCODED_CLIENT_ASSERTION_TYPE}&client_assertion=${client_assertion}`;
-
+			// Generate id_token
 			let idToken;
 			let sub;
-			try {
-				const { data } = await axios.post(
-					"https://oidc.staging.account.gov.uk/token",
-					urlEncodedBody,
-					{ headers:{ "Content-Type" : "text/plain" } },
-				);
-
-				idToken = data.id_token;
+			if (authCode) {
+				idToken = await this.generateIdToken(authCode);
 				sub = jose.decodeJwt(idToken).sub;
 				this.logger.debug("sub from the id_token: ", sub );
-			} catch (err: any) {
-				this.logger.error({ message: "An error occurred when retrieving OIDC token response ", err });
-				return new Response(HttpCodesEnum.SERVER_ERROR, err.message);
+			} else {
+				this.logger.error("Missing authCode to generate id_token");
+				return new Response(HttpCodesEnum.UNAUTHORIZED, "Missing authCode to generate id_token");
 			}
 
 			let parsedIdTokenJwt: Jwt;
@@ -124,8 +98,8 @@ export class SessionProcessor {
 			}
 
 			// Verify Jwt claims
-			if (this.CLIENT_ID && issuer) {
-				const jwtErrors = this.validationHelper.isJwtValid(jwtIdTokenPayload, this.CLIENT_ID, issuer);
+			if (issuer) {
+				const jwtErrors = this.validationHelper.isJwtValid(jwtIdTokenPayload, this.environmentVariables.clientId(), issuer);
 				if (jwtErrors.length > 0) {
 					this.logger.error(jwtErrors);
 					return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT validation/verification failed");
@@ -139,9 +113,9 @@ export class SessionProcessor {
 			let assumedRole;
 			try {
 				assumedRole = await stsClient.assumeRoleWithWebIdentity({
-					RoleSessionName: "AssumeRoleWithWebIdentityRole",
+					RoleSessionName: Constants.ROLE_SESSION_NAME,
 					WebIdentityToken: idToken,
-					RoleArn: process.env.ASSUMEROLE_WITH_WEB_IDENTITY_ARN,
+					RoleArn: this.environmentVariables.assumeRoleWithWebIdentityArn(),
 				});
 			} catch (err: any) {
 				this.logger.error({ message: "An error occurred while assuming the role with WebIdentity ", err });
@@ -177,7 +151,7 @@ export class SessionProcessor {
 				return {
 					statusCode: HttpCodesEnum.OK,
 					body: JSON.stringify({
-						status: "pending",
+						status: SessionEventStatusEnum.PENDING,
 						message: error.message,
 					}),
 				};
@@ -191,7 +165,7 @@ export class SessionProcessor {
 			return {
 				statusCode: HttpCodesEnum.OK,
 				body: JSON.stringify({
-					status: "completed",
+					status: SessionEventStatusEnum.COMPLETED,
 					redirect_uri:session?.redirectUri,
 				}),
 			};
@@ -199,4 +173,40 @@ export class SessionProcessor {
 			return new Response(HttpCodesEnum.SERVER_ERROR, err.message);
 		}
 	}
+
+	async generateIdToken(authCode : string): Promise<string> {
+		const oidcTokenUrl = `${this.environmentVariables.oidcUrl()}${Constants.OIDC_TOKEN_ENDPOINT}`;
+		const jwtPayload = {
+			jti: randomUUID(),
+			aud: oidcTokenUrl,
+			sub: this.environmentVariables.clientId(),
+			iss: this.environmentVariables.clientId(),
+			iat: absoluteTimeNow(),
+			exp: absoluteTimeNow() + Number(this.environmentVariables.oidcJwtAssertionTokenExpiry()),
+		};
+		let client_assertion;
+		try {
+			client_assertion = await this.kmsJwtAdapter.sign(jwtPayload);
+		} catch (error) {
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Failed to sign the accessToken Jwt");
+		}
+
+		const ENCODED_REDIRECT_URI = encodeURIComponent(this.environmentVariables.returnRedirectUrl());
+		const ENCODED_CLIENT_ASSERTION_TYPE = encodeURIComponent(Constants.CLIENT_ASSERTION_TYPE);
+		const urlEncodedBody = `grant_type=${Constants.GRANT_TYPE}&code=${authCode}&redirect_uri=${ENCODED_REDIRECT_URI}&client_assertion_type=${ENCODED_CLIENT_ASSERTION_TYPE}&client_assertion=${client_assertion}`;
+
+		try {
+			const { data } = await axios.post(
+				oidcTokenUrl,
+				urlEncodedBody,
+				{ headers:{ "Content-Type" : "text/plain" } },
+			);
+
+			return data.id_token;
+		} catch (err: any) {
+			this.logger.error({ message: "An error occurred when retrieving OIDC token response ", err });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, err.message);
+		}
+	}
+
 }
