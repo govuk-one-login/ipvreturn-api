@@ -64,10 +64,16 @@ Mappings:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
     staging:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+      TxMASQS: arn:aws:sqs:eu-west-2:178023842775:self-staging-EC-SQS-Output-Queue-return
+      TxMAKey: arn:aws:kms:eu-west-2:178023842775:key/aba0d7ef-779a-4f6c-9b50-ec91f6cb8b5c
     integration:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+      TxMASQS: arn:aws:sqs:eu-west-2:729485541398:self-integration-EC-SQS-Output-Queue-return
+      TxMAKey: arn:aws:kms:eu-west-2:729485541398:key/e45c19b4-bf7c-4542-95d0-89485c20533c
     production:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+      TxMASQS: arn:aws:sqs:eu-west-2:451773080033:self-production-EC-SQS-Output-Queue-return
+      TxMAKey: arn:aws:kms:eu-west-2:451773080033:key/35e96311-91fd-425e-bb53-b90bc8c3549c
 
   EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
     dev:
@@ -329,6 +335,29 @@ Resources:
             KeyId:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-key-id"
+        - Statement:
+            - Sid: TxMAKMS_Decryptkeys_Policy
+              Effect: Allow
+              Action:
+                - "kms:Decrypt"
+              Resource: !FindInMap [PlatformConfiguration, !Ref Environment, TxMAKey]
+            - Sid: TxMASQS_ConsumeEvent_Policy
+              Effect: Allow
+              Action:
+                - "sqs:DeleteMessage"
+                - "sqs:GetQueueAttributes"
+                - "sqs:ChangeMessageVisibility"
+                - "sqs:ReceiveMessage"
+              Resource: !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
+            BatchSize: 1
+            Enabled: true
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
 
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
