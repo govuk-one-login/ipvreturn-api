@@ -15,11 +15,8 @@ import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { Jwt, JwtPayload } from "../utils/IVeriCredential";
 import { Constants } from "../utils/Constants";
-import { SessionEventStatusEnum } from "../models/enums/SessoinEventStatusEnum";
-
-const { STS } = require("@aws-sdk/client-sts");
-const stsClient = new STS({ region: process.env.REGION });
-const jose = require("jose");
+import { SessionEventStatusEnum } from "../models/enums/SessionEventStatusEnum";
+import { stsClient } from "../utils/StsClient";
 
 export class SessionProcessor {
 	private static instance: SessionProcessor;
@@ -50,26 +47,26 @@ export class SessionProcessor {
 	}
 
 	async processRequest(event: APIGatewayProxyEvent): Promise<Response> {
+		let issuer, jwksEndpoint;
 		try {
 			const authCode = event.queryStringParameters?.code;
 			// Get OpenId configuration to extract the jwks_uri
 			const openIdConfigEndpoint = `${this.environmentVariables.oidcUrl()}${Constants.OIDC_OPENID_CONFIG_ENDPOINT}`;
 			const openIdConfiguration = (await axios.get(openIdConfigEndpoint)).data;
-			const issuer = openIdConfiguration.issuer;
+			if (openIdConfiguration.issuer == null || openIdConfiguration.jwks_uri == null ) {
+				this.logger.error("Missing openIdConfiguration values.");
+				return new Response(HttpCodesEnum.UNAUTHORIZED, "Missing openIdConfiguration values.");
+			}
 			this.logger.debug("OpenId Configuration data: ", { openIdConfiguration });
-			const jwksEndpoint = openIdConfiguration.jwks_uri;
+			issuer = openIdConfiguration.issuer;
+			jwksEndpoint = openIdConfiguration.jwks_uri;
 
 			// Generate id_token
-			let idToken;
-			let sub;
-			if (authCode) {
-				idToken = await this.generateIdToken(authCode);
-				sub = jose.decodeJwt(idToken).sub;
-				this.logger.debug("sub from the id_token: ", sub );
-			} else {
+			if (authCode == null || authCode.length <= 0) {
 				this.logger.error("Missing authCode to generate id_token");
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Missing authCode to generate id_token");
 			}
+			const idToken = await this.generateIdToken(authCode);
 
 			let parsedIdTokenJwt: Jwt;
 			try {
@@ -82,15 +79,10 @@ export class SessionProcessor {
 
 			// idToken Validation
 			try {
-				if (jwksEndpoint) {
-					const payload = await this.kmsJwtAdapter.verifyWithJwks(idToken, jwksEndpoint);
-					if (!payload) {
-						this.logger.error("JWT verification failed");
-						return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT verification failed");
-					}
-				} else {
-					this.logger.error("Missing jwksEndpoint for jwt verification");
-					return new Response(HttpCodesEnum.UNAUTHORIZED, "Missing jwksEndpoint for jwt verification");
+				const payload = await this.kmsJwtAdapter.verifyWithJwks(idToken, jwksEndpoint);
+				if (!payload) {
+					this.logger.error("JWT verification failed");
+					return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT verification failed");
 				}
 			} catch (error) {
 				this.logger.debug("UNEXPECTED_ERROR_VERIFYING_JWT", { error });
@@ -98,15 +90,10 @@ export class SessionProcessor {
 			}
 
 			// Verify Jwt claims
-			if (issuer) {
-				const jwtErrors = this.validationHelper.isJwtValid(jwtIdTokenPayload, this.environmentVariables.clientId(), issuer);
-				if (jwtErrors.length > 0) {
-					this.logger.error(jwtErrors);
-					return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT validation/verification failed");
-				}
-			} else {
-				this.logger.error("Missing Client Config");
-				return new Response(HttpCodesEnum.UNAUTHORIZED, "Missing Client Config");
+			const jwtErrors = this.validationHelper.isJwtValid(jwtIdTokenPayload, this.environmentVariables.clientId(), issuer);
+			if (jwtErrors.length > 0) {
+				this.logger.error(jwtErrors);
+				return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT validation/verification failed");
 			}
 
 			// Call AssumeRoleWithWebIdentity using the id_token
@@ -119,8 +106,9 @@ export class SessionProcessor {
 				});
 			} catch (err: any) {
 				this.logger.error({ message: "An error occurred while assuming the role with WebIdentity ", err });
-				return new Response(HttpCodesEnum.SERVER_ERROR, err.message);
+				return new Response(HttpCodesEnum.UNAUTHORIZED, err.message);
 			}
+
 			// Dynamo access using the temporary credentials
 			// from the ID token
 			const iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClientWithCreds(assumedRole.Credentials));
@@ -130,6 +118,7 @@ export class SessionProcessor {
 			// is equal to the sub of the ID.
 			//
 			let session;
+			const sub = jwtIdTokenPayload.sub!;
 			try {
 				session = await iprService.getSessionBySub(sub);
 				this.logger.debug("Session retrieved from DB: ", { session });
@@ -140,7 +129,7 @@ export class SessionProcessor {
 
 			} catch (error) {
 				this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", error });
-				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
+				throw new AppError(HttpCodesEnum.UNAUTHORIZED, "Error retrieving Session");
 			}
 
 			// Validate sessionEvent Item if its missing some events.
@@ -170,7 +159,7 @@ export class SessionProcessor {
 				}),
 			};
 		} catch (err: any) {
-			return new Response(HttpCodesEnum.SERVER_ERROR, err.message);
+			return new Response(HttpCodesEnum.UNAUTHORIZED, err.message);
 		}
 	}
 
@@ -188,7 +177,7 @@ export class SessionProcessor {
 		try {
 			client_assertion = await this.kmsJwtAdapter.sign(jwtPayload);
 		} catch (error) {
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Failed to sign the accessToken Jwt");
+			throw new AppError(HttpCodesEnum.UNAUTHORIZED, "Failed to sign the client_assertion Jwt");
 		}
 
 		const ENCODED_REDIRECT_URI = encodeURIComponent(this.environmentVariables.returnRedirectUrl());
@@ -201,11 +190,10 @@ export class SessionProcessor {
 				urlEncodedBody,
 				{ headers:{ "Content-Type" : "text/plain" } },
 			);
-
 			return data.id_token;
 		} catch (err: any) {
 			this.logger.error({ message: "An error occurred when retrieving OIDC token response ", err });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, err.message);
+			throw new AppError(HttpCodesEnum.UNAUTHORIZED, err.message);
 		}
 	}
 

@@ -52,6 +52,8 @@ export class ValidationHelper {
 
 		if (!this.isJwtComplete(jwtPayload)) {
 			return "JWT validation/verification failed: Missing mandatory fields in JWT payload";
+		} else if ((jwtPayload.sub == null || jwtPayload.sub === undefined)) {
+			return "JWT validation/verification failed: JWT sub undefined";
 		} else if ((jwtPayload.exp == null) || (absoluteTimeNow() > jwtPayload.exp)) {
 			return "JWT validation/verification failed: JWT expired";
 		} else if (jwtPayload.iat == null || (absoluteTimeNow() < jwtPayload.iat)) {
