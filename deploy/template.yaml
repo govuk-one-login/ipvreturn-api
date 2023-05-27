@@ -60,6 +60,8 @@ Mappings:
   PlatformConfiguration:
     dev:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+      TxMASQS: arn:aws:sqs:eu-west-2:178023842775:self-staging-EC-SQS-Output-Queue-return
+      TxMAKey: arn:aws:kms:eu-west-2:178023842775:key/aba0d7ef-779a-4f6c-9b50-ec91f6cb8b5c
     build:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
     staging:
@@ -336,12 +338,12 @@ Resources:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-key-id"
         - Statement:
-            - Sid: TxMAKMS_Decryptkeys_Policy
+            - Sid: TxMAKMSDecryptkeysPolicy
               Effect: Allow
               Action:
                 - "kms:Decrypt"
               Resource: !FindInMap [PlatformConfiguration, !Ref Environment, TxMAKey]
-            - Sid: TxMASQS_ConsumeEvent_Policy
+            - Sid: TxMASQSConsumeEventPolicy
               Effect: Allow
               Action:
                 - "sqs:DeleteMessage"
@@ -349,15 +351,6 @@ Resources:
                 - "sqs:ChangeMessageVisibility"
                 - "sqs:ReceiveMessage"
               Resource: !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
-      Events:
-        SQSEvent:
-          Type: SQS
-          Properties:
-            Queue: !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
-            BatchSize: 1
-            Enabled: true
-            FunctionResponseTypes:
-              - ReportBatchItemFailures
 
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
@@ -393,6 +386,14 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref PostEventFunction
       Principal: apigateway.amazonaws.com
+
+  PostEventFunctionSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      Enabled: true
+      EventSourceArn: !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
+      FunctionName: !Ref PostEventFunction
 
   GovNotifyFunction:
     Type: AWS::Serverless::Function
