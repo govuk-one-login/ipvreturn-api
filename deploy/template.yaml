@@ -205,11 +205,9 @@ Resources:
     Type: AWS::IAM::OIDCProvider
     Properties:
       ClientIdList:
-        #- !FindInMap [ EnvironmentVariables, !Ref Environment, CLIENTID ]
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
       ThumbprintList:
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-        #- !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCTHUMBPRINT ]
       Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
   ### AssumeRoleWithWebIdentityRole
