@@ -76,30 +76,39 @@ Mappings:
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.dev.account.gov.uk"
+      OIDCURL: "https://oidc.staging.account.gov.uk/"
+      RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.build.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.build.account.gov.uk"
+      OIDCURL: "https://oidc.staging.account.gov.uk/"
+      RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.staging.account.gov.uk"
+      OIDCURL: "https://oidc.staging.account.gov.uk/"
+      RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
     integration:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.integration.account.gov.uk"
+      OIDCURL: "https://oidc.integration.account.gov.uk/"
+      RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
     production:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       RETURNJOURNEYURL: "https://return.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.account.gov.uk"
+      RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
@@ -190,6 +199,47 @@ Resources:
           ToPort: 443
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
+
+  ### OIDC Provider as IAM entity
+  OIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      ClientIdList:
+        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
+      ThumbprintList:
+        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
+      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+
+  ### AssumeRoleWithWebIdentityRole
+  AssumeRoleWithWebIdentityRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: "sts:AssumeRoleWithWebIdentity"
+            Effect: Allow
+            Principal:
+              Federated: !GetAtt OIDCProvider.Arn
+        Version: 2012-10-17
+      Policies:
+        - PolicyName: GetSessionEventPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:GetItem"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
+              - Effect: Allow
+                Action:
+                  - "kms:Decrypt"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
 
   ### Start of API Gateway definition.
   IPVRRestApi:
@@ -549,9 +599,19 @@ Resources:
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: SessionHandler
+          KMS_KEY_ARN:
+            Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
+          SESSION_EVENTS_TABLE:
+            Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+          CLIENT_ID_SSM_PATH: !Sub "/${Environment}/ipvreturn/CLIENT_ID"
+          OIDC_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+          RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
+          ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
       Policies:
         - AWSLambdaBasicExecutionRole
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub "${Environment}/ipvreturn/CLIENT_ID"
         - Statement:
             - Effect: Allow
               Action:
@@ -562,7 +622,14 @@ Resources:
                 - "kms:Encrypt"
                 - "kms:Decrypt"
                 - "kms:GenerateDataKey"
-              Resource: !GetAtt TxMAKMSEncryptionKey.Arn        
+              Resource: !GetAtt TxMAKMSEncryptionKey.Arn
+        - Statement:
+            - Sid: KMSPolicy
+              Effect: Allow
+              Action:
+                - kms:Sign
+              Resource:
+                Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
       Events:
         userInfo:
           Type: Api

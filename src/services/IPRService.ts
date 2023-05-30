@@ -9,6 +9,7 @@ import { SendMessageCommand } from "@aws-sdk/client-sqs";
 import { GovNotifyEvent } from "../utils/GovNotifyEvent";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
+import { SessionEvent } from "../models/SessionEvent";
 
 export class IPRService {
 	readonly tableName: string;
@@ -41,6 +42,27 @@ export class IPRService {
 		}
 		return IPRService.instance;
 	}
+
+	async getSessionBySub(userId: string): Promise<SessionEvent | undefined> {
+		const getSessionCommand = new GetCommand({
+			TableName: this.tableName,
+			Key: {
+				userId,
+			},
+		});
+		let session;
+		try {
+			session = await this.dynamo.send(getSessionCommand);
+		} catch (e: any) {
+			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", e });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
+		}
+
+		if (session.Item) {
+			return session.Item as SessionEvent;
+		}
+	}
+
 
 	async isFlaggedForDeletionOrEventAlreadyProcessed(userId: string, eventType: string): Promise<boolean | undefined> {
 		this.logger.info({ message: "Checking if record is flagged for deletion or already processed", tableName: this.tableName, userId });

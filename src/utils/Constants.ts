@@ -25,4 +25,14 @@ export class Constants {
     static readonly STREAM_PROCESSOR_LOGGER_SVC_NAME = "StreamProcessorHandler";
 
     static readonly IPVRETURN_METRICS_NAMESPACE = "IPVRETURN-CRI";
+
+    static readonly OIDC_TOKEN_ENDPOINT = "token";
+
+    static readonly OIDC_OPENID_CONFIG_ENDPOINT = ".well-known/openid-configuration";
+
+    static readonly CLIENT_ASSERTION_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+
+    static readonly GRANT_TYPE = "authorization_code";
+
+    static readonly ROLE_SESSION_NAME = "AssumeRoleWithWebIdentityRole";
 }

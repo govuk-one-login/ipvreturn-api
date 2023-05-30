@@ -25,6 +25,18 @@ export class EnvironmentVariables {
 
 	private readonly SESSION_RETURN_RECORD_TTL = process.env.SESSION_RETURN_RECORD_TTL;
 
+	private readonly KMS_KEY_ARN = process.env.KMS_KEY_ARN;
+
+	private readonly OIDC_URL = process.env.OIDC_URL;
+
+	private readonly RETURN_REDIRECT_URL = process.env.RETURN_REDIRECT_URL;
+
+	private readonly ASSUMEROLE_WITH_WEB_IDENTITY_ARN = process.env.ASSUMEROLE_WITH_WEB_IDENTITY_ARN;
+
+	private OIDC_JWT_ASSERTION_TOKEN_EXP = process.env.OIDC_JWT_ASSERTION_TOKEN_EXP;
+
+	private readonly CLIENT_ID_SSM_PATH = process.env.CLIENT_ID_SSM_PATH;
+
 	/*
 	 * This function performs validation on env variable values.
 	 * If certain variables have unexpected values the constructor will throw an error and/or log an error message
@@ -67,6 +79,22 @@ export class EnvironmentVariables {
 					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
 					logger.error(`Stream Processor Service - Misconfigured external API's key ${EnvironmentVariables.name}`);
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
+				}
+				break;
+			}
+			case ServicesEnum.GET_SESSION_EVENT_DATA_SERVICE: {
+				if (!this.CLIENT_ID_SSM_PATH || this.CLIENT_ID_SSM_PATH.trim().length === 0 ||
+					!this.KMS_KEY_ARN || this.KMS_KEY_ARN.trim().length === 0 ||
+					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0 ||
+					!this.OIDC_URL || this.OIDC_URL.trim().length === 0 ||
+					!this.RETURN_REDIRECT_URL || this.RETURN_REDIRECT_URL.trim().length === 0 ||
+					!this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN || this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN.trim().length === 0) {
+					logger.error(`Get Session event data Service - Misconfigured external API's key ${EnvironmentVariables.name}`);
+					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
+				}
+				if (!this.OIDC_JWT_ASSERTION_TOKEN_EXP || this.OIDC_JWT_ASSERTION_TOKEN_EXP.trim().length === 0) {
+					this.OIDC_JWT_ASSERTION_TOKEN_EXP = "300";
+					logger.warn("OIDC_JWT_ASSERTION_TOKEN_EXP env var is not set. Setting the expiry to default - 5 minutes.");
 				}
 				break;
 			}
@@ -126,4 +154,27 @@ export class EnvironmentVariables {
 		return this.GOV_NOTIFY_QUEUE_URL;
 	}
 
+	kmsKeyArn(): any {
+		return this.KMS_KEY_ARN;
+	}
+
+	oidcUrl(): any {
+		return this.OIDC_URL;
+	}
+
+	clientIdSsmPath(): any {
+		return this.CLIENT_ID_SSM_PATH;
+	}
+
+	returnRedirectUrl(): any {
+		return this.RETURN_REDIRECT_URL;
+	}
+
+	assumeRoleWithWebIdentityArn(): any {
+		return this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN;
+	}
+
+	oidcJwtAssertionTokenExpiry(): any {
+		return this.OIDC_JWT_ASSERTION_TOKEN_EXP;
+	}
 }
