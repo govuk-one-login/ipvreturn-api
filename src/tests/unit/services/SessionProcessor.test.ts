@@ -79,8 +79,7 @@ describe("SessionProcessor", () => {
 		axios.get.mockResolvedValueOnce(oidcConfig);
 		const credential = {
 			AccessKeyId: "AccessKeyId",
-			// pragma: allowlist secret
-			SecretAccessKey: "SecretAccessKey",
+			SecAccessKey: "SecAccessKey",
 			SessionToken: "SessionToken",
 		};
 		IPRService.getInstance = jest.fn().mockReturnValue(mockIprService);
