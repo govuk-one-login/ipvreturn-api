@@ -31,17 +31,20 @@ export class SessionProcessor {
 
 	private readonly validationHelper: ValidationHelper;
 
-	constructor(logger: Logger, metrics: Metrics) {
+	private CLIENT_ID;
+
+	constructor(logger: Logger, metrics: Metrics, CLIENT_ID: string) {
 		this.logger = logger;
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GET_SESSION_EVENT_DATA_SERVICE);
 		this.kmsJwtAdapter = new KmsJwtAdapter(this.environmentVariables.kmsKeyArn());
 		this.metrics = metrics;
+		this.CLIENT_ID = CLIENT_ID;
 		this.validationHelper = new ValidationHelper();
 	}
 
-	static getInstance(logger: Logger, metrics: Metrics): SessionProcessor {
+	static getInstance(logger: Logger, metrics: Metrics, CLIENT_ID: string): SessionProcessor {
 		if (!SessionProcessor.instance) {
-			SessionProcessor.instance = new SessionProcessor(logger, metrics);
+			SessionProcessor.instance = new SessionProcessor(logger, metrics, CLIENT_ID);
 		}
 		return SessionProcessor.instance;
 	}
@@ -90,7 +93,7 @@ export class SessionProcessor {
 			}
 
 			// Verify Jwt claims
-			const jwtErrors = this.validationHelper.isJwtValid(jwtIdTokenPayload, this.environmentVariables.clientId(), issuer);
+			const jwtErrors = this.validationHelper.isJwtValid(jwtIdTokenPayload, this.CLIENT_ID, issuer);
 			if (jwtErrors.length > 0) {
 				this.logger.error(jwtErrors);
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT validation/verification failed");
@@ -168,8 +171,8 @@ export class SessionProcessor {
 		const jwtPayload = {
 			jti: randomUUID(),
 			aud: oidcTokenUrl,
-			sub: this.environmentVariables.clientId(),
-			iss: this.environmentVariables.clientId(),
+			sub: this.CLIENT_ID,
+			iss: this.CLIENT_ID,
 			iat: absoluteTimeNow(),
 			exp: absoluteTimeNow() + Number(this.environmentVariables.oidcJwtAssertionTokenExpiry()),
 		};

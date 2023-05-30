@@ -4,7 +4,11 @@ import { SessionProcessor } from "../../services/SessionProcessor";
 import { mock } from "jest-mock-extended";
 
 const mockedSessionProcessor = mock<SessionProcessor>();
-
+jest.mock("../../utils/Config", () => {
+	return {
+		getParameter: jest.fn(() => {return "client-id";}),
+	};
+});
 describe("SessionHandler", () => {
 	it("returns an not found response for an invalid resource request", async () => {
 		const response = await lambdaHandler(INVALID_SESSION, "IPR");

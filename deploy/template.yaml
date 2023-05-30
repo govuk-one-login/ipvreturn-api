@@ -76,9 +76,7 @@ Mappings:
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.dev.account.gov.uk"
-      CLIENTID: "ppcQQGGNxghc-QJiqhRyGIJ5Its"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
-      OIDCTHUMBPRINT: "9e99a48a9960b14926bb7f3b02e22da2b0ab7280"
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
@@ -86,9 +84,7 @@ Mappings:
       RETURNJOURNEYURL: "https://return.build.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.build.account.gov.uk"
-      CLIENTID: "v152k0nWrZlHF2h4be0PVMLkUfY"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
-      OIDCTHUMBPRINT: "9e99a48a9960b14926bb7f3b02e22da2b0ab7280"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
@@ -96,9 +92,7 @@ Mappings:
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.staging.account.gov.uk"
-      CLIENTID: "EGGcyKOjEONo3g2iXSxeec51nCY"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
-      OIDCTHUMBPRINT: "9e99a48a9960b14926bb7f3b02e22da2b0ab7280"
       RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
     integration:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
@@ -106,9 +100,7 @@ Mappings:
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.integration.account.gov.uk"
-      CLIENTID: "xdQACfjKkzJW0BWhGGJ4KGbdqwk"
       OIDCURL: "https://oidc.integration.account.gov.uk/"
-      OIDCTHUMBPRINT: "9e99a48a9960b14926bb7f3b02e22da2b0ab7280"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
     production:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
@@ -213,9 +205,11 @@ Resources:
     Type: AWS::IAM::OIDCProvider
     Properties:
       ClientIdList:
-        - !FindInMap [ EnvironmentVariables, !Ref Environment, CLIENTID ]
+        #- !FindInMap [ EnvironmentVariables, !Ref Environment, CLIENTID ]
+        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
       ThumbprintList:
-        - !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCTHUMBPRINT ]
+        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
+        #- !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCTHUMBPRINT ]
       Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
   ### AssumeRoleWithWebIdentityRole
@@ -611,13 +605,15 @@ Resources:
             Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
-          CLIENT_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, CLIENTID ]
+          CLIENT_ID_SSM_PATH: !Sub "/${Environment}/ipvreturn/CLIENT_ID"
           OIDC_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
           RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
           ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
       Policies:
         - AWSLambdaBasicExecutionRole
+        - SSMParameterReadPolicy:
+            ParameterName: !Sub "${Environment}/ipvreturn/CLIENT_ID"
         - Statement:
             - Effect: Allow
               Action:

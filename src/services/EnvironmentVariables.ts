@@ -27,8 +27,6 @@ export class EnvironmentVariables {
 
 	private readonly KMS_KEY_ARN = process.env.KMS_KEY_ARN;
 
-	private readonly CLIENT_ID = process.env.CLIENT_ID;
-
 	private readonly OIDC_URL = process.env.OIDC_URL;
 
 	private readonly RETURN_REDIRECT_URL = process.env.RETURN_REDIRECT_URL;
@@ -36,6 +34,8 @@ export class EnvironmentVariables {
 	private readonly ASSUMEROLE_WITH_WEB_IDENTITY_ARN = process.env.ASSUMEROLE_WITH_WEB_IDENTITY_ARN;
 
 	private OIDC_JWT_ASSERTION_TOKEN_EXP = process.env.OIDC_JWT_ASSERTION_TOKEN_EXP;
+
+	private readonly CLIENT_ID_SSM_PATH = process.env.CLIENT_ID_SSM_PATH;
 
 	/*
 	 * This function performs validation on env variable values.
@@ -83,9 +83,9 @@ export class EnvironmentVariables {
 				break;
 			}
 			case ServicesEnum.GET_SESSION_EVENT_DATA_SERVICE: {
-				if (!this.KMS_KEY_ARN || this.KMS_KEY_ARN.trim().length === 0 ||
+				if (!this.CLIENT_ID_SSM_PATH || this.CLIENT_ID_SSM_PATH.trim().length === 0 ||
+					!this.KMS_KEY_ARN || this.KMS_KEY_ARN.trim().length === 0 ||
 					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0 ||
-					!this.CLIENT_ID || this.CLIENT_ID.trim().length === 0 ||
 					!this.OIDC_URL || this.OIDC_URL.trim().length === 0 ||
 					!this.RETURN_REDIRECT_URL || this.RETURN_REDIRECT_URL.trim().length === 0 ||
 					!this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN || this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN.trim().length === 0) {
@@ -162,8 +162,8 @@ export class EnvironmentVariables {
 		return this.OIDC_URL;
 	}
 
-	clientId(): any {
-		return this.CLIENT_ID;
+	clientIdSsmPath(): any {
+		return this.CLIENT_ID_SSM_PATH;
 	}
 
 	returnRedirectUrl(): any {

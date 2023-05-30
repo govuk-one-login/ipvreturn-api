@@ -47,6 +47,7 @@ const metrics = new Metrics({ namespace: "CIC" });
 jest.mock("axios");
 const mockStsClient = jest.mocked(stsClient);
 const validRequest = VALID_SESSION;
+const CLIENT_ID = "oidc-client-id"
 
 function getMockSessionEventItem(): SessionEvent {
 	const sess: SessionEvent = {
@@ -65,7 +66,7 @@ function getMockSessionEventItem(): SessionEvent {
 describe("SessionProcessor", () => {
 	beforeAll(() => {
 		mockSessionEvent = getMockSessionEventItem();
-		sessionProcessorTest = new SessionProcessor(logger, metrics);
+		sessionProcessorTest = new SessionProcessor(logger, metrics, CLIENT_ID);
 	});
 
 	beforeEach(() => {
@@ -78,6 +79,7 @@ describe("SessionProcessor", () => {
 		axios.get.mockResolvedValueOnce(oidcConfig);
 		const credential = {
 			AccessKeyId: "AccessKeyId",
+			// pragma: allowlist secret
 			SecretAccessKey: "SecretAccessKey",
 			SessionToken: "SessionToken",
 		};
