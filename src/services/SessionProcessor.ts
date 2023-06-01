@@ -8,7 +8,7 @@ import { absoluteTimeNow } from "../utils/DateTimeUtils";
 import { randomUUID } from "crypto";
 import axios from "axios";
 import { AppError } from "../utils/AppError";
-import { createDynamoDbClientWithCreds } from "../utils/DynamoDBFactory";
+import {createDynamoDbClient, createDynamoDbClientWithCreds} from "../utils/DynamoDBFactory";
 import { IPRService } from "./IPRService";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
@@ -98,24 +98,29 @@ export class SessionProcessor {
 				this.logger.error(jwtErrors);
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT validation/verification failed");
 			}
+			let iprService;
+			// Temporarily adding this check to skip the AssumeRoleWithWebIdentity untill the OIDCProvider is deployed via pipeline
+			if(this.environmentVariables.userAssumeRoleWithWebIdentity()) {
+				// Call AssumeRoleWithWebIdentity using the id_token
+				let assumedRole;
+				try {
+					assumedRole = await stsClient.assumeRoleWithWebIdentity({
+						RoleSessionName: Constants.ROLE_SESSION_NAME,
+						WebIdentityToken: idToken,
+						RoleArn: this.environmentVariables.assumeRoleWithWebIdentityArn(),
+					});
+				} catch (err: any) {
+					this.logger.error({message: "An error occurred while assuming the role with WebIdentity ", err});
+					return new Response(HttpCodesEnum.UNAUTHORIZED, err.message);
+				}
 
-			// Call AssumeRoleWithWebIdentity using the id_token
-			let assumedRole;
-			try {
-				assumedRole = await stsClient.assumeRoleWithWebIdentity({
-					RoleSessionName: Constants.ROLE_SESSION_NAME,
-					WebIdentityToken: idToken,
-					RoleArn: this.environmentVariables.assumeRoleWithWebIdentityArn(),
-				});
-			} catch (err: any) {
-				this.logger.error({ message: "An error occurred while assuming the role with WebIdentity ", err });
-				return new Response(HttpCodesEnum.UNAUTHORIZED, err.message);
+				// Dynamo access using the temporary credentials
+				// from the ID token
+				iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClientWithCreds(assumedRole.Credentials));
+			}else{
+				// Access the sessionEvent data directly using the GetItem by giving the dynamoDB access permission to the lambda
+				iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 			}
-
-			// Dynamo access using the temporary credentials
-			// from the ID token
-			const iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClientWithCreds(assumedRole.Credentials));
-
 			// The assumed role only allows access
 			// to rows where the leading key (partition key)
 			// is equal to the sub of the ID.
