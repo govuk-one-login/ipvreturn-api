@@ -30,7 +30,7 @@ describe("GovNotifyHandler", () => {
 	it("returns Bad request when number of records in the SQS message is more than 1", async () => {
 		const event = { "Records": [] };
 		const response = await lambdaHandler(event, "IPR");
-		expect(response).toEqual({ batchItemFailures: [{ itemIdentifier: "" }] });
+		expect(response.batchItemFailures[0].itemIdentifier).toBe("");
 	});
 
 	it("errors when email processor throws AppError", async () => {
@@ -38,7 +38,7 @@ describe("GovNotifyHandler", () => {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "emailSending - failed: got error while sending email.");
 		});
 		const response = await lambdaHandler(VALID_SQS_EVENT, "IPR");
-		expect(response).toEqual({ batchItemFailures: [{ itemIdentifier: "" }] });
+		expect(response.batchItemFailures[0].itemIdentifier).toBe("");
 	});
 
 	it("errors when email processor throws AppError with shouldThrow set to true", async () => {

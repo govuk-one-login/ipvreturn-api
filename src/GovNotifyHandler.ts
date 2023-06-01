@@ -26,10 +26,10 @@ class GovNotifyHandler implements LambdaInterface {
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
 	async handler(event: SQSEvent, _context: any): Promise<SQSBatchResponse> {
+		const batchFailures: BatchItemFailure[] = [];
 		if (event.Records.length === 1) {
 			const record: SQSRecord = event.Records[0];
 			logger.debug("Starting to process record", { record });
-			const batchFailures: BatchItemFailure[] = [];
 
 			try {
 				const body = JSON.parse(record.body);
@@ -66,7 +66,8 @@ class GovNotifyHandler implements LambdaInterface {
 
 					// explicitly  set itemIdentifier to an empty string to fail the whole batch
 					// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-					return { batchItemFailures: [{ itemIdentifier: "" }] };
+					batchFailures.push(new BatchItemFailure(""));
+					return { batchItemFailures: batchFailures };
 				}
 			}
 
@@ -75,7 +76,8 @@ class GovNotifyHandler implements LambdaInterface {
 
 			// explicitly  set itemIdentifier to an empty string to fail the whole batch
 			// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-			return { batchItemFailures: [{ itemIdentifier: "" }] };
+			batchFailures.push(new BatchItemFailure(""));
+			return { batchItemFailures: batchFailures };
 		}
 	}
 

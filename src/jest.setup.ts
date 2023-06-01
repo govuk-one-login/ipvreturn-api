@@ -10,4 +10,5 @@ process.env.CLIENT_ID_SSM_PATH = "oidc-client-id_SSM_PATH";
 process.env.OIDC_URL = "oidc-url";
 process.env.RETURN_REDIRECT_URL = "ipv-return-redirect-url";
 process.env.ASSUMEROLE_WITH_WEB_IDENTITY_ARN = "assume-role-arn";
+process.env.GOVUKNOTIFY_BACKOFF_PERIOD_MS = "5000";
 
