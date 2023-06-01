@@ -68,7 +68,7 @@ export class PostEventProcessor {
 			const returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {
-					if (!userDetails.email || !eventDetails.client_id || !eventDetails.component_id) { 
+					if (!userDetails.email || !eventDetails.client_id || !eventDetails.component_id || eventDetails.component_id === "UNKNOWN") { 
 						this.logger.error({ message: "Missing required fields in event payload", eventDetails, userDetails });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 					}
