@@ -165,6 +165,9 @@ Conditions:
     - Fn::Equals: 
         - !Ref Environment
         - build
+  IsPersonalIdentifiableInformationEnvironment: !Or
+    - !Equals [!Ref Environment, integration]
+    - !Equals [!Ref Environment, production]
       
 Globals:
   Function:
@@ -275,7 +278,18 @@ Resources:
           Parameters:
             Location: "./ipvr-spec.yaml"
         OpenApiVersion: 3.0.1
-
+      MethodSettings:
+        - LoggingLevel: INFO
+          MetricsEnabled: true
+          ThrottlingBurstLimit: 400
+          ThrottlingRateLimit: 200
+          # Disable data trace in production and integration to avoid logging customer sensitive information
+          DataTraceEnabled: !If
+            - IsPersonalIdentifiableInformationEnvironment
+            - false
+            - true
+          HttpMethod: "*"
+          ResourcePath: "/*"
       TracingEnabled: true
       Tags:
         Product: GOV.UK Sign In
