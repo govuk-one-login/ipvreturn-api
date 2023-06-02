@@ -39,13 +39,23 @@ describe("Infra", () => {
 		});
 	});
 
-	it.skip("The template contains two API gateway resource", () => {
+	it("The template contains one API gateway resource", () => {
 		template.resourceCountIs("AWS::Serverless::Api", 1);
 	});
 
-	it.skip("Has tracing enabled on at least one API", () => {
-		template.hasResourceProperties("AWS::Serverless::Api", {
-			TracingEnabled: true,
+	it("Each API Gateway should have TracingEnabled", () => {
+		const apiGateways = template.findResources("AWS::Serverless::Api");
+		const apiGatewayList = Object.keys(apiGateways);
+		apiGatewayList.forEach((apiGatewayId) => {
+			expect(apiGateways[apiGatewayId].Properties.TracingEnabled).toEqual(true);
+		});
+	});
+
+	it("Each API Gateway should have MethodSettings defined", () => {
+		const apiGateways = template.findResources("AWS::Serverless::Api");
+		const apiGatewayList = Object.keys(apiGateways);
+		apiGatewayList.forEach((apiGatewayId) => {
+			expect(apiGateways[apiGatewayId].Properties.MethodSettings).toBeTruthy();
 		});
 	});
 
