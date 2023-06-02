@@ -151,7 +151,14 @@ Conditions:
           - "none"
   CreateProdResources: !Equals [ !Ref Environment, production]
   CreateNonProdResources: !Not [!Condition CreateProdResources]
-
+  IsMockedEnvironment: !Or
+    - Fn::Equals: 
+        - !Ref Environment
+        - dev
+    - Fn::Equals: 
+        - !Ref Environment
+        - build
+      
 Globals:
   Function:
     Runtime: nodejs18.x
@@ -350,7 +357,10 @@ Resources:
                 - "sqs:GetQueueAttributes"
                 - "sqs:ChangeMessageVisibility"
                 - "sqs:ReceiveMessage"
-              Resource: !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
+              Resource: !If
+                - IsMockedEnvironment
+                - !GetAtt MockTxMASQSQueue.Arn
+                - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
 
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
@@ -392,7 +402,10 @@ Resources:
     Properties:
       BatchSize: 1
       Enabled: true
-      EventSourceArn: !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
+      EventSourceArn: !If
+        - IsMockedEnvironment
+        - !GetAtt MockTxMASQSQueue.Arn
+        - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]          
       FunctionName: !Ref PostEventFunction
 
   GovNotifyFunction:
@@ -707,6 +720,21 @@ Resources:
         - !Sub "alias/GovNotifyEncryptionKey-${AWS::StackName}"
         - alias/GovNotifyEncryptionKey
       TargetKeyId: !Ref GovNotifyEncryptionKey
+
+  MockTxMASQSQueue:
+    Type: AWS::SQS::Queue
+    Condition: IsMockedEnvironment
+    Properties:
+      MessageRetentionPeriod:
+        !FindInMap [
+          EnvironmentVariables,
+          !Ref Environment,
+          MESSAGERETENTIONPERIODDAYS,
+        ]
+      VisibilityTimeout: 60
+      # KmsMasterKeyId: !Ref TxMAKeyAlias
+      # KmsMasterKeyAlias: "alias/aws/sqs"
+
 
   TxMASQSQueue:
     Type: AWS::SQS::Queue
