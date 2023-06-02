@@ -60,8 +60,6 @@ Mappings:
   PlatformConfiguration:
     dev:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
-      TxMASQS: arn:aws:sqs:eu-west-2:178023842775:self-staging-EC-SQS-Output-Queue-return
-      TxMAKey: arn:aws:kms:eu-west-2:178023842775:key/aba0d7ef-779a-4f6c-9b50-ec91f6cb8b5c
     build:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
     staging:
@@ -732,9 +730,6 @@ Resources:
           MESSAGERETENTIONPERIODDAYS,
         ]
       VisibilityTimeout: 60
-      # KmsMasterKeyId: !Ref TxMAKeyAlias
-      # KmsMasterKeyAlias: "alias/aws/sqs"
-
 
   TxMASQSQueue:
     Type: AWS::SQS::Queue
