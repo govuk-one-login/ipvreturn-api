@@ -141,6 +141,9 @@ Conditions:
     - !Equals [!Ref Environment, staging]
     - !Equals [!Ref Environment, integration]
     - !Equals [!Ref Environment, production]
+  IsPersonalIdentifiableInformationEnvironment: !Or
+    - !Equals [!Ref Environment, integration]
+    - !Equals [!Ref Environment, production]
   UseCodeSigning:
     Fn::Not:
       - Fn::Equals:
@@ -165,9 +168,6 @@ Conditions:
     - Fn::Equals: 
         - !Ref Environment
         - build
-  IsPersonalIdentifiableInformationEnvironment: !Or
-    - !Equals [!Ref Environment, integration]
-    - !Equals [!Ref Environment, production]
       
 Globals:
   Function:
