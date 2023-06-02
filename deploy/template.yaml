@@ -64,10 +64,16 @@ Mappings:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
     staging:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+      TxMASQS: arn:aws:sqs:eu-west-2:178023842775:self-staging-EC-SQS-Output-Queue-return
+      TxMAKey: arn:aws:kms:eu-west-2:178023842775:key/aba0d7ef-779a-4f6c-9b50-ec91f6cb8b5c
     integration:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+      TxMASQS: arn:aws:sqs:eu-west-2:729485541398:self-integration-EC-SQS-Output-Queue-return
+      TxMAKey: arn:aws:kms:eu-west-2:729485541398:key/e45c19b4-bf7c-4542-95d0-89485c20533c
     production:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+      TxMASQS: arn:aws:sqs:eu-west-2:451773080033:self-production-EC-SQS-Output-Queue-return
+      TxMAKey: arn:aws:kms:eu-west-2:451773080033:key/35e96311-91fd-425e-bb53-b90bc8c3549c
 
   EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
     dev:
@@ -152,7 +158,14 @@ Conditions:
           - "none"
   CreateProdResources: !Equals [ !Ref Environment, production]
   CreateNonProdResources: !Not [!Condition CreateProdResources]
-
+  IsMockedEnvironment: !Or
+    - Fn::Equals: 
+        - !Ref Environment
+        - dev
+    - Fn::Equals: 
+        - !Ref Environment
+        - build
+      
 Globals:
   Function:
     Runtime: nodejs18.x
@@ -383,6 +396,23 @@ Resources:
             KeyId:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-key-id"
+        - Statement:
+            - Sid: TxMAKMSDecryptkeysPolicy
+              Effect: Allow
+              Action:
+                - "kms:Decrypt"
+              Resource: !FindInMap [PlatformConfiguration, !Ref Environment, TxMAKey]
+            - Sid: TxMASQSConsumeEventPolicy
+              Effect: Allow
+              Action:
+                - "sqs:DeleteMessage"
+                - "sqs:GetQueueAttributes"
+                - "sqs:ChangeMessageVisibility"
+                - "sqs:ReceiveMessage"
+              Resource: !If
+                - IsMockedEnvironment
+                - !GetAtt MockTxMASQSQueue.Arn
+                - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
 
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
@@ -418,6 +448,17 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref PostEventFunction
       Principal: apigateway.amazonaws.com
+
+  PostEventFunctionSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      Enabled: true
+      EventSourceArn: !If
+        - IsMockedEnvironment
+        - !GetAtt MockTxMASQSQueue.Arn
+        - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]          
+      FunctionName: !Ref PostEventFunction
 
   GovNotifyFunction:
     Type: AWS::Serverless::Function
@@ -755,6 +796,18 @@ Resources:
         - !Sub "alias/GovNotifyEncryptionKey-${AWS::StackName}"
         - alias/GovNotifyEncryptionKey
       TargetKeyId: !Ref GovNotifyEncryptionKey
+
+  MockTxMASQSQueue:
+    Type: AWS::SQS::Queue
+    Condition: IsMockedEnvironment
+    Properties:
+      MessageRetentionPeriod:
+        !FindInMap [
+          EnvironmentVariables,
+          !Ref Environment,
+          MESSAGERETENTIONPERIODDAYS,
+        ]
+      VisibilityTimeout: 60
 
   TxMASQSQueue:
     Type: AWS::SQS::Queue
