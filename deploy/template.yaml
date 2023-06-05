@@ -60,8 +60,12 @@ Mappings:
   PlatformConfiguration:
     dev:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+      TxMASQS: "mock-sqs"
+      TxMAKey: "mock-kms"
     build:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+      TxMASQS: "mock-sqs"
+      TxMAKey: "mock-kms"
     staging:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
       TxMASQS: arn:aws:sqs:eu-west-2:178023842775:self-staging-EC-SQS-Output-Queue-return
@@ -114,6 +118,7 @@ Mappings:
       RETURNJOURNEYURL: "https://return.account.gov.uk"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.account.gov.uk"
+      OIDCURL: "https://oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
@@ -410,12 +415,15 @@ Resources:
             KeyId:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-key-id"
-        - Statement:
+        - Statement: 
             - Sid: TxMAKMSDecryptkeysPolicy
               Effect: Allow
               Action:
                 - "kms:Decrypt"
-              Resource: !FindInMap [PlatformConfiguration, !Ref Environment, TxMAKey]
+              Resource: !If
+                - IsMockedEnvironment
+                - !GetAtt MockTxMASQSQueue.Arn
+                - !FindInMap [PlatformConfiguration, !Ref Environment, TxMAKey]   
             - Sid: TxMASQSConsumeEventPolicy
               Effect: Allow
               Action:
@@ -426,7 +434,7 @@ Resources:
               Resource: !If
                 - IsMockedEnvironment
                 - !GetAtt MockTxMASQSQueue.Arn
-                - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
+                - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]   
 
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
