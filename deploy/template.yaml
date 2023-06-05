@@ -216,50 +216,50 @@ Resources:
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
 
-#  ### OIDC Provider as IAM entity
-#  OIDCProvider:
-#    Type: AWS::IAM::OIDCProvider
-#    Properties:
-#      ClientIdList:
-#        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-#      ThumbprintList:
-#        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-#      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
-#      PermissionsBoundary: !If
-#        - UsePermissionsBoundary
-#        - !Ref PermissionsBoundary
-#        - !Ref AWS::NoValue
-#
-#  ### AssumeRoleWithWebIdentityRole
-#  AssumeRoleWithWebIdentityRole:
-#    Type: "AWS::IAM::Role"
-#    Properties:
-#      AssumeRolePolicyDocument:
-#        Statement:
-#          - Action: "sts:AssumeRoleWithWebIdentity"
-#            Effect: Allow
-#            Principal:
-#              Federated: !GetAtt OIDCProvider.Arn
-#        Version: 2012-10-17
-#      Policies:
-#        - PolicyName: GetSessionEventPolicy
-#          PolicyDocument:
-#            Version: '2012-10-17'
-#            Statement:
-#              - Effect: Allow
-#                Action:
-#                  - "dynamodb:GetItem"
-#                Resource:
-#                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
-#              - Effect: Allow
-#                Action:
-#                  - "kms:Decrypt"
-#                Resource:
-#                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
-#      PermissionsBoundary: !If
-#        - UsePermissionsBoundary
-#        - !Ref PermissionsBoundary
-#        - !Ref AWS::NoValue
+  ### OIDC Provider as IAM entity
+  OIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      ClientIdList:
+        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
+      ThumbprintList:
+        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
+      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
+
+  ### AssumeRoleWithWebIdentityRole
+  AssumeRoleWithWebIdentityRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: "sts:AssumeRoleWithWebIdentity"
+            Effect: Allow
+            Principal:
+              Federated: !GetAtt OIDCProvider.Arn
+        Version: 2012-10-17
+      Policies:
+        - PolicyName: GetSessionEventPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:GetItem"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
+              - Effect: Allow
+                Action:
+                  - "kms:Decrypt"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
 
   ### Start of API Gateway definition.
   IPVRRestApi:
@@ -665,17 +665,10 @@ Resources:
           CLIENT_ID_SSM_PATH: !Sub "/${Environment}/ipvreturn/CLIENT_ID"
           OIDC_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
           RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
-          #ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
+          ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
       Policies:
         - AWSLambdaBasicExecutionRole
-        - DynamoDBReadPolicy: # Added temporarily, needs to be reverted once the OIDCProvider changes are in
-            TableName:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-name"
-        - KMSDecryptPolicy: # Added temporarily, needs to be reverted once the OIDCProvider changes are in
-            KeyId:
-              Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-id"
         - SSMParameterReadPolicy:
             ParameterName: !Sub "${Environment}/ipvreturn/CLIENT_ID"
         - Statement:

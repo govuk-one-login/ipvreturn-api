@@ -37,8 +37,6 @@ export class EnvironmentVariables {
 
 	private readonly CLIENT_ID_SSM_PATH = process.env.CLIENT_ID_SSM_PATH;
 
-	private USE_ASSUMEROLE_WITH_WEB_IDENTITY = process.env.USE_ASSUMEROLE_WITH_WEB_IDENTITY;
-
 	/*
 	 * This function performs validation on env variable values.
 	 * If certain variables have unexpected values the constructor will throw an error and/or log an error message
@@ -89,18 +87,14 @@ export class EnvironmentVariables {
 					!this.KMS_KEY_ARN || this.KMS_KEY_ARN.trim().length === 0 ||
 					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0 ||
 					!this.OIDC_URL || this.OIDC_URL.trim().length === 0 ||
-					!this.RETURN_REDIRECT_URL || this.RETURN_REDIRECT_URL.trim().length === 0) {
-					//!this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN || this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN.trim().length === 0) {
+					!this.RETURN_REDIRECT_URL || this.RETURN_REDIRECT_URL.trim().length === 0 ||
+					!this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN || this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN.trim().length === 0) {
 					logger.error(`Get Session event data Service - Misconfigured external API's key ${EnvironmentVariables.name}`);
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				if (!this.OIDC_JWT_ASSERTION_TOKEN_EXP || this.OIDC_JWT_ASSERTION_TOKEN_EXP.trim().length === 0) {
 					this.OIDC_JWT_ASSERTION_TOKEN_EXP = "300";
 					logger.warn("OIDC_JWT_ASSERTION_TOKEN_EXP env var is not set. Setting the expiry to default - 5 minutes.");
-				}
-				if (!this.USE_ASSUMEROLE_WITH_WEB_IDENTITY || this.USE_ASSUMEROLE_WITH_WEB_IDENTITY.trim().length === 0) {
-					this.USE_ASSUMEROLE_WITH_WEB_IDENTITY = "false";
-					logger.warn("USE_ASSUMEROLE_WITH_WEB_IDENTITY env var is not set. Setting the value to default - False.");
 				}
 				break;
 			}
@@ -182,9 +176,5 @@ export class EnvironmentVariables {
 
 	oidcJwtAssertionTokenExpiry(): any {
 		return this.OIDC_JWT_ASSERTION_TOKEN_EXP;
-	}
-
-	userAssumeRoleWithWebIdentity(): boolean {
-		return JSON.parse(this.USE_ASSUMEROLE_WITH_WEB_IDENTITY!);
 	}
 }
