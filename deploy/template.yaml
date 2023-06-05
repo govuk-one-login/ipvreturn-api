@@ -230,10 +230,6 @@ Resources:
       ThumbprintList:
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
       Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
-      PermissionsBoundary: !If
-        - UsePermissionsBoundary
-        - !Ref PermissionsBoundary
-        - !Ref AWS::NoValue
 
   ### AssumeRoleWithWebIdentityRole
   AssumeRoleWithWebIdentityRole:
