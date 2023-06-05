@@ -52,29 +52,18 @@ class GovNotifyHandler implements LambdaInterface {
 				return { batchItemFailures: [] };
 
 			} catch (error: any) {
-				// If an appError was thrown at the service level
-				// and it is intended to be thrown (GOV UK errors)
-				if (error.obj?.shouldThrow) {
-					logger.error("Error encountered", { error });
-					error.obj = undefined;
-					batchFailures.push(new BatchItemFailure(record.messageId));
-					const sqsBatchResponse = { batchItemFailures: batchFailures };
-					logger.error("Email could not be sent. Returning batch item failure so it can be retried", { sqsBatchResponse });
-					return sqsBatchResponse;
-				} else {
-					logger.error("Email could not be sent. Returning failed message", "Handler");
+				logger.error("Email could not be sent. Returning failed message", "Handler");
 
-					// explicitly  set itemIdentifier to an empty string to fail the whole batch
-					// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-					batchFailures.push(new BatchItemFailure(""));
-					return { batchItemFailures: batchFailures };
-				}
+				// explicitly set itemIdentifier to an empty string to fail the whole batch
+				// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
+				batchFailures.push(new BatchItemFailure(""));
+				return { batchItemFailures: batchFailures };
 			}
 
 		} else {
 			logger.warn("Unexpected no of records received");
 
-			// explicitly  set itemIdentifier to an empty string to fail the whole batch
+			// explicitly set itemIdentifier to an empty string to fail the whole batch
 			// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
 			batchFailures.push(new BatchItemFailure(""));
 			return { batchItemFailures: batchFailures };

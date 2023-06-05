@@ -101,10 +101,7 @@ export class SendEmailService {
 
     			const appError: any = this.govNotifyErrorMapper.map(err.response.data.status_code, err.response.data.errors[0].message);
 
-    			if (appError.obj!.shouldThrow) {
-    				this.logger.error("sendEmail - Mapped error", SendEmailService.name, appError.message);
-    				throw appError;
-    			} else {
+    			if (appError.obj!.shouldRetry) {
     				this.logger.error(`sendEmail - Mapped error ${SendEmailService.name}`, { appError });
     				if (retryCount < this.environmentVariables.maxRetries() + 1) {
     					this.logger.error(`sendEmail - Retrying to send the email. Sleeping for ${this.environmentVariables.backoffPeriod()} ms ${SendEmailService.name} ${new Date().toISOString()}`, { retryCount });
@@ -112,14 +109,17 @@ export class SendEmailService {
     				} else {
     					break;
     				}
+    			} else {
+    				this.logger.error("sendEmail - Mapped error", SendEmailService.name, appError.message);
+    				throw appError;
     			}
     		}
     	}
 
     	// If the email couldn't be sent after the retries,
     	// an error is thrown
-    	this.logger.error(`sendEmail - cannot send Email ${SendEmailService.name}`);
-    	throw new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot send EMail");
+    	this.logger.error(`sendEmail - cannot send Email even after ${this.environmentVariables.maxRetries()} retries.`);
+    	throw new AppError(HttpCodesEnum.SERVER_ERROR, `Cannot send Email even after ${this.environmentVariables.maxRetries()} retries.`);
     }
 
 }

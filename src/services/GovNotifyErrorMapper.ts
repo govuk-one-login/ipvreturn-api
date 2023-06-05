@@ -24,8 +24,7 @@ export class GovNotifyErrorMapper {
 	map(_statusCode: number, errMessage: string): AppError {
     	const statusCode: number = _statusCode || HttpCodesEnum.SERVER_ERROR;
     	const message: string    = errMessage || "Code error";
-    	//const appCode = find(GovNotifyErrorMapper.errorCodeMap.get(statusCode), (el: AppCodes) => {el.match(message)} );
-    	const shouldThrow = _statusCode === 500 ? true : false;
-    	return new AppError(statusCode, errMessage, { shouldThrow });
+    	const shouldRetry = (_statusCode === 500 || _statusCode === 429) ? true : false;
+    	return new AppError(statusCode, errMessage, { shouldRetry });
 	}
 }

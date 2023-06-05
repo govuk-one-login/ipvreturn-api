@@ -25,7 +25,7 @@ describe("GovNotifyErrorMapper", () => {
 		};
 		const appError: any = govNotifyErrorMapper.map(err.status_code, err.errors[0].message);
 		expect(appError.statusCode).toBe(403);
-		expect(appError.obj.shouldThrow).toBe(false);
+		expect(appError.obj.shouldRetry).toBe(false);
 	});
 
 	it("ShouldThrow to result into false if statusCode is 429", () => {
@@ -40,7 +40,7 @@ describe("GovNotifyErrorMapper", () => {
 		};
 		const appError: any = govNotifyErrorMapper.map(err.status_code, err.errors[0].message);
 		expect(appError.statusCode).toBe(429);
-		expect(appError.obj.shouldThrow).toBe(false);
+		expect(appError.obj.shouldRetry).toBe(true);
 	});
 
 	it("ShouldThrow to result into true if statusCode is 500", () => {
@@ -55,7 +55,7 @@ describe("GovNotifyErrorMapper", () => {
 		};
 		const appError: any = govNotifyErrorMapper.map(err.status_code, err.errors[0].message);
 		expect(appError.statusCode).toBe(500);
-		expect(appError.obj.shouldThrow).toBe(true);
+		expect(appError.obj.shouldRetry).toBe(true);
 	});
 
 });

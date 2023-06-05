@@ -47,7 +47,7 @@ const metrics = new Metrics({ namespace: "CIC" });
 jest.mock("axios");
 const mockStsClient = jest.mocked(stsClient);
 const validRequest = VALID_SESSION;
-const CLIENT_ID = "oidc-client-id"
+const CLIENT_ID = "oidc-client-id";
 
 function getMockSessionEventItem(): SessionEvent {
 	const sess: SessionEvent = {

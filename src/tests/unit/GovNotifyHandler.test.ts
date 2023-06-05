@@ -40,14 +40,4 @@ describe("GovNotifyHandler", () => {
 		const response = await lambdaHandler(VALID_SQS_EVENT, "IPR");
 		expect(response.batchItemFailures[0].itemIdentifier).toBe("");
 	});
-
-	it("errors when email processor throws AppError with shouldThrow set to true", async () => {
-		SendEmailProcessor.getInstance = jest.fn().mockImplementation(() => {
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "GOV UK Notify unable to send email.", { shouldThrow: true });
-		});
-
-		const response = await lambdaHandler(VALID_SQS_EVENT, "IPR");
-		expect(response.batchItemFailures[0].itemIdentifier).toEqual(VALID_SQS_EVENT.Records[0].messageId);
-
-	});
 });
