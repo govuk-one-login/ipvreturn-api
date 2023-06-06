@@ -167,13 +167,13 @@ Conditions:
   CreateProdResources: !Equals [ !Ref Environment, production]
   CreateNonProdResources: !Not [!Condition CreateProdResources]
   IsMockedEnvironment: !Or
-    - Fn::Equals: 
+    - Fn::Equals:
         - !Ref Environment
         - dev
-    - Fn::Equals: 
+    - Fn::Equals:
         - !Ref Environment
         - build
-      
+
 Globals:
   Function:
     Runtime: nodejs18.x
@@ -328,13 +328,7 @@ Resources:
   IPVRApiCustomDomain:
     Type: AWS::ApiGateway::DomainName
     Properties:
-      DomainName: !If
-        - CreateDevResources
-        - !Sub
-          - "api-${AWS::StackName}.${DNSSUFFIX}"
-          - DNSSUFFIX:
-              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
-        - !Sub
+      DomainName: !Sub
           - "api.${DNSSUFFIX}"
           - DNSSUFFIX:
               !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
@@ -347,13 +341,7 @@ Resources:
   IPVRApiCertificateRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      Name: !If
-        - CreateDevResources
-        - !Sub
-          - "api-${AWS::StackName}.${DNSSUFFIX}"
-          - DNSSUFFIX:
-              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
-        - !Sub
+      Name: !Sub
           - "api.${DNSSUFFIX}"
           - DNSSUFFIX:
               !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
@@ -367,13 +355,7 @@ Resources:
     Type: AWS::ApiGateway::BasePathMapping
     DependsOn: IPVRApiCustomDomain
     Properties:
-      DomainName: !If
-        - CreateDevResources
-        - !Sub
-          - "api-${AWS::StackName}.${DNSSUFFIX}"
-          - DNSSUFFIX:
-              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
-        - !Sub
+      DomainName: !Sub
           - "api.${DNSSUFFIX}"
           - DNSSUFFIX:
               !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
@@ -475,7 +457,7 @@ Resources:
       EventSourceArn: !If
         - IsMockedEnvironment
         - !GetAtt MockTxMASQSQueue.Arn
-        - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]          
+        - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
       FunctionName: !Ref PostEventFunction
 
   GovNotifyFunction:
