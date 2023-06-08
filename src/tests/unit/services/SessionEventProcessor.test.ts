@@ -33,6 +33,14 @@ describe("SessionEventProcessor", () => {
 		const response = await sessionEventProcessorTest.processRequest(sessionEvent);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
+		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
+			Message: {
+				emailAddress: "bhavana.hemanth@digital.cabinet-office.gov.uk",
+				firstName: "ANGELA",
+				lastName: "UK SPECIMEN",
+				messageType: "email"
+			}
+		});
 		const updateExpression = "SET notified = :notified";
 		const expressionAttributeValues = {
 			":notified": true,

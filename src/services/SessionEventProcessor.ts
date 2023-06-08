@@ -1,4 +1,5 @@
 import { ValidationHelper } from "../utils/ValidationHelper";
+import { personalIdentityUtils } from "../utils/PersonalIdentityUtils";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { SessionEvent } from "../models/SessionEvent";
@@ -65,7 +66,8 @@ export class SessionEventProcessor {
 
 		// Send SQS message to GovNotify queue to send email to the user.
 		try {
-			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEventData.userEmail, "Given name", "Last name"));
+			const nameParts = personalIdentityUtils.getNames(sessionEventData.nameParts);
+			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEventData.userEmail, nameParts.givenNames[0], nameParts.familyNames[0]));
 		} catch (error) {
 			const userId = sessionEventData.userId;
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
