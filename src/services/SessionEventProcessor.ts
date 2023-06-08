@@ -12,31 +12,31 @@ import { IPRService } from "./IPRService";
 
 export class SessionEventProcessor {
 
-    private static instance: SessionEventProcessor;
+	private static instance: SessionEventProcessor;
 
-    private readonly logger: Logger;
+	private readonly logger: Logger;
 
-    private readonly metrics: Metrics;
+	private readonly metrics: Metrics;
 
-    private readonly validationHelper: ValidationHelper;
+	private readonly validationHelper: ValidationHelper;
 
 	private readonly iprService: IPRService;
 
 	private readonly environmentVariables: EnvironmentVariables;
 
 	constructor(logger: Logger, metrics: Metrics) {
-    	this.logger = logger;
+		this.logger = logger;
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.STREAM_PROCESSOR_SERVICE);
-    	this.validationHelper = new ValidationHelper();
-    	this.metrics = metrics;
+		this.validationHelper = new ValidationHelper();
+		this.metrics = metrics;
 		this.iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics): SessionEventProcessor {
-    	if (!SessionEventProcessor.instance) {
+		if (!SessionEventProcessor.instance) {
 			SessionEventProcessor.instance = new SessionEventProcessor(logger, metrics);
-    	}
-    	return SessionEventProcessor.instance;
+		}
+		return SessionEventProcessor.instance;
 	}
 
 	async processRequest(sessionEvent: any): Promise<Response> {
@@ -86,7 +86,7 @@ export class SessionEventProcessor {
 		} catch (error: any) {
 			return new Response(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
-    	return new Response( HttpCodesEnum.OK, "Success");
+		return new Response( HttpCodesEnum.OK, "Success");
 	}
 }
 

@@ -27,6 +27,7 @@ export class SessionReturnRecord {
 			}
 			case Constants.IPV_F2F_CRI_VC_CONSUMED:{
 				this.readyToResumeOn = data.timestamp;
+				this.nameParts = data.restricted?.nameParts;
 				break;
 			}
 			case Constants.AUTH_DELETE_ACCOUNT:{
@@ -47,7 +48,7 @@ export class SessionReturnRecord {
 
     userEmail?: string;
 
-    nameParts?: PersonName[];
+    nameParts?: NamePart[];
 
     clientName?: string;
 
