@@ -59,14 +59,11 @@ export class SendEmailService {
      * @throws AppError
      */
     async sendEmail(message: Email): Promise<EmailResponse> {
-    	let encoded;
-
     	const personalisation = {
     		"first name": message.firstName,
     		"last name": message.lastName,
     		"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
     	};
-
 
     	const options = {
     		personalisation,
@@ -77,7 +74,7 @@ export class SendEmailService {
 
     	let retryCount = 0;
     	//retry for maxRetry count configured value if fails
-    	while (retryCount++ < this.environmentVariables.maxRetries() + 1) {
+    	while (retryCount <= this.environmentVariables.maxRetries()) {
     		this.logger.debug(`sendEmail - trying to send email message ${SendEmailService.name} ${new Date().toISOString()}`, {
     			templateId: this.environmentVariables.getEmailTemplateId(this.logger),
     			emailAddress: message.emailAddress,
@@ -101,14 +98,11 @@ export class SendEmailService {
 
     			const appError: any = this.govNotifyErrorMapper.map(err.response.data.status_code, err.response.data.errors[0].message);
 
-    			if (appError.obj!.shouldRetry) {
+    			if (appError.obj!.shouldRetry && retryCount < this.environmentVariables.maxRetries()) {
     				this.logger.error(`sendEmail - Mapped error ${SendEmailService.name}`, { appError });
-    				if (retryCount < this.environmentVariables.maxRetries() + 1) {
-    					this.logger.error(`sendEmail - Retrying to send the email. Sleeping for ${this.environmentVariables.backoffPeriod()} ms ${SendEmailService.name} ${new Date().toISOString()}`, { retryCount });
-    					await sleep(this.environmentVariables.backoffPeriod());
-    				} else {
-    					break;
-    				}
+    				this.logger.error(`sendEmail - Retrying to send the email. Sleeping for ${this.environmentVariables.backoffPeriod()} ms ${SendEmailService.name} ${new Date().toISOString()}`, { retryCount });
+					await sleep(this.environmentVariables.backoffPeriod());
+    				retryCount++;
     			} else {
     				this.logger.error("sendEmail - Mapped error", SendEmailService.name, appError.message);
     				throw appError;
