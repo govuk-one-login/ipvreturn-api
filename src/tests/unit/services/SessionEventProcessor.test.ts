@@ -13,7 +13,7 @@ const mockIprService = mock<IPRService>();
 const logger = mock<Logger>();
 const metrics = new Metrics({ namespace: "F2F" });
 let streamEvent: DynamoDBStreamEvent;
-
+jest.spyOn(console, "log").mockImplementation(() => {});
 
 describe("SessionEventProcessor", () => {
 	beforeAll(() => {
@@ -76,11 +76,26 @@ describe("SessionEventProcessor", () => {
 
 	it.each([
 		"userEmail",
+		"nameParts",
 		"clientName",
 		"redirectUri",
-	])("Throws error when session event record is missing necessary attributes", async (attribute) => {
+	])("Throws error when session event record is missing necessary attribute %s", async (attribute) => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		delete sessionEvent[attribute];
+		const response = await sessionEventProcessorTest.processRequest(sessionEvent);
+
+		expect(response.statusCode).toBe(HttpCodesEnum.SERVER_ERROR);
+		expect(response.body).toBe(`Unable to process the DB record as the necessary fields are not populated for userId: ${sessionEvent.userId}`);
+	});
+
+	it.each([
+		"userEmail",
+		"nameParts",
+		"clientName",
+		"redirectUri",
+	])("Throws error when session event record attribute %s is not correct type", async (attribute) => {
+		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
+		sessionEvent[attribute] = 0;
 		const response = await sessionEventProcessorTest.processRequest(sessionEvent);
 
 		expect(response.statusCode).toBe(HttpCodesEnum.SERVER_ERROR);
