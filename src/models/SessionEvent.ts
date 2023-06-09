@@ -42,6 +42,7 @@ export class SessionEvent {
 	@IsNotEmpty()
 	clientName!: string;
 
+	// TODO confirm that this will definitely always have a value
 	@IsArray()
 	@IsNotEmpty()
 	nameParts!: Array<{

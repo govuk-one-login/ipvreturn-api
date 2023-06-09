@@ -59,6 +59,20 @@ function getMockSessionEventItem(): SessionEvent {
 		journeyWentAsyncOn: 1681902002,
 		readyToResumeOn: 1681902003,
 		redirectUri: "http://redirect.url",
+		nameParts: [
+			{
+				type: "GivenName",
+				value: "ANGELA",
+			},
+			{
+				type: "GivenName",
+				value: "ZOE",
+			},
+			{
+				type: "FamilyName",
+				value: "UK SPECIMEN",
+			},
+		],
 	};
 	return sess;
 }

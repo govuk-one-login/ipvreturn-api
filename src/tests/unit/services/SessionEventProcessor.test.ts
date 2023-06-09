@@ -38,8 +38,8 @@ describe("SessionEventProcessor", () => {
 				emailAddress: "bhavana.hemanth@digital.cabinet-office.gov.uk",
 				firstName: "ANGELA",
 				lastName: "UK SPECIMEN",
-				messageType: "email"
-			}
+				messageType: "email",
+			},
 		});
 		const updateExpression = "SET notified = :notified";
 		const expressionAttributeValues = {

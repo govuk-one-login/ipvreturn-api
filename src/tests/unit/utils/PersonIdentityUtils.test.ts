@@ -6,21 +6,21 @@ describe("PersonalIdentityUtils", () => {
 			const nameParts = [
 				{
 					type: "GivenName",
-					value: "ANGELA"
+					value: "ANGELA",
 				},
 				{
 					type: "GivenName",
-					value: "ZOE"
+					value: "ZOE",
 				},
 				{
 					type: "FamilyName",
-					value: "UK SPECIMEN"
-				}
+					value: "UK SPECIMEN",
+				},
 			];
 			const result = personalIdentityUtils.getNames(nameParts);
 			expect(result).toEqual({
 				givenNames: ["ANGELA", "ZOE"],
-				familyNames: ["UK SPECIMEN"]
+				familyNames: ["UK SPECIMEN"],
 			});
 		});
 	});

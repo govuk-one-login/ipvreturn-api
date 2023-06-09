@@ -15,5 +15,5 @@ export const personalIdentityUtils = {
 		}
 
 		return { givenNames, familyNames };
-	}
+	},
 };
