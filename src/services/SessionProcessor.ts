@@ -5,6 +5,7 @@ import { HttpCodesEnum } from "../utils/HttpCodesEnum";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { Response } from "../utils/Response";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
+import { buildCoreEventFields } from "../utils/TxmaEvent";
 import { randomUUID } from "crypto";
 import axios from "axios";
 import { AppError } from "../utils/AppError";
@@ -154,6 +155,13 @@ export class SessionProcessor {
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "User is not yet notified for this session event.");
 			}
 			this.logger.info("User is successfully redirected to : ", session?.redirectUri);
+
+			await iprService.sendToTXMA({
+				event_name: 'IPR_USER_REDIRECTED',
+				// TODO sort out all these things
+				...buildCoreEventFields(session, this.environmentVariables.issuer(), session.clientIpAddress, absoluteTimeNow)
+			});
+
 			return {
 				statusCode: HttpCodesEnum.OK,
 				body: JSON.stringify({

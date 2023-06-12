@@ -52,7 +52,7 @@ export class SendEmailProcessor {
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(email);
 
 		const sessionInfo = await this.iprService.getSessionBySub("");
-		this.iprService.sendToTXMA({
+		await this.iprService.sendToTXMA({
 			event_name: 'IPR_RESULT_NOTIFICATION_EMAILED',
 			// TODO sort out all these things
 			...buildCoreEventFields(sessionInfo, this.environmentVariables.issuer(), sessionInfo.clientIpAddress, absoluteTimeNow)
