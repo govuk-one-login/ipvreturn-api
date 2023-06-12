@@ -1,7 +1,10 @@
 import { mock } from "jest-mock-extended";
+import { SendMessageCommand } from "@aws-sdk/client-sqs";
 import { IPRService } from "../../../services/IPRService";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
+import { sqsClient } from "../../../utils/SqsClient";
+import { TxmaEvent } from "../../../utils/TxmaEvent";
 import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
 import { Constants } from "../../../utils/Constants";
 
@@ -21,10 +24,39 @@ const authRequestedExpressionAttributeValues = {
 	":redirectUri": "UNKNOWN",
 	":expiryDate": 604800 * 1000,
 };
+function getTXMAEventPayload(): TxmaEvent {
+	const txmaEventPayload: TxmaEvent = {
+		event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
+		user: {
+			user_id: "sessionCliendId",
+			transaction_id: "",
+			persistent_session_id: "sessionPersistentSessionId",
+			session_id: "sessionID",
+			govuk_signin_journey_id: "clientSessionId",
+			ip_address: "sourceIp",
+		},
+		client_id: "clientId",
+		timestamp: 123,
+		component_id: "issuer",
+	};
+	return txmaEventPayload;
+}
+
+jest.mock("../../../utils/SqsClient", () => ({
+	sqsClient: {
+		send: jest.fn(),
+	},
+}));
+jest.mock("@aws-sdk/client-sqs", () => ({
+	SendMessageCommand: jest.fn().mockImplementation(() => {}),
+}));
 
 describe("IPR Service", () => {
+	let txmaEventPayload: TxmaEvent;
+
 	beforeAll(() => {
 		jest.clearAllMocks();
+		txmaEventPayload = getTXMAEventPayload();
 	});
 
 	beforeEach(() => {
@@ -148,6 +180,29 @@ describe("IPR Service", () => {
 					statusCode: HttpCodesEnum.SERVER_ERROR,
 				}),
 			);
+		});
+	});
+
+	describe("sendToTXMA", () => {
+		it("Should send event to TXMA with the correct details", async () => {
+			const messageBody = JSON.stringify(txmaEventPayload);
+
+			await iprService.sendToTXMA(txmaEventPayload);
+
+			expect(SendMessageCommand).toHaveBeenCalledWith({
+				MessageBody: messageBody,
+				QueueUrl: process.env.TXMA_QUEUE_URL,
+			});
+			expect(sqsClient.send).toHaveBeenCalled();
+		});
+
+		it("Should throw error if is fails to send to TXMA queue", async () => {
+			sqsClient.send.mockRejectedValueOnce({});
+	
+			await expect(iprService.sendToTXMA(txmaEventPayload)).rejects.toThrow(expect.objectContaining({
+				statusCode: HttpCodesEnum.SERVER_ERROR,
+				message: "sending event to txma queue - failed",
+			}));
 		});
 	});
 });

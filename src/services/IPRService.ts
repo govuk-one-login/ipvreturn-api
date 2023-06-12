@@ -7,6 +7,7 @@ import { Constants } from "../utils/Constants";
 import { sqsClient } from "../utils/SqsClient";
 import { SendMessageCommand } from "@aws-sdk/client-sqs";
 import { GovNotifyEvent } from "../utils/GovNotifyEvent";
+import { TxmaEvent } from "../utils/TxmaEvent";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { SessionEvent } from "../models/SessionEvent";
@@ -124,11 +125,26 @@ export class IPRService {
 			};
 
 			await sqsClient.send(new SendMessageCommand(params));
-			 		this.logger.info("Sent message to Gov Notify");
+			this.logger.info("Sent message to Gov Notify");
 		} catch (error) {
 			this.logger.error({ message: "Error when sending message to GovNotify Queue", error });
-			   		throw new AppError(HttpCodesEnum.SERVER_ERROR, "sending event to govNotify queue - failed ");
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "sending event to govNotify queue - failed ");
 		}
 	}
 
+	async sendToTXMA(event: TxmaEvent): Promise<void> {
+		try {
+			const messageBody = JSON.stringify(event);
+			const params = {
+				MessageBody: messageBody,
+				QueueUrl: process.env.TXMA_QUEUE_URL,
+			};
+			this.logger.info({ message: "Sending message to TxMA", messageBody });
+			await sqsClient.send(new SendMessageCommand(params));
+			this.logger.info("Sent message to TxMA");
+		} catch (error) {
+			this.logger.error({ message: "Error when sending message to TXMA Queue", error });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "sending event to txma queue - failed");
+		}
+	}
 }
