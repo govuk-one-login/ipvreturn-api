@@ -83,6 +83,7 @@ Mappings:
     dev:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
+      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk/resume"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.dev.account.gov.uk"
@@ -91,6 +92,7 @@ Mappings:
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
+      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.build.account.gov.uk/resume"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.build.account.gov.uk"
@@ -99,6 +101,7 @@ Mappings:
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
+      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk/resume"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.staging.account.gov.uk"
@@ -107,6 +110,7 @@ Mappings:
     integration:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
+      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk/resume"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.integration.account.gov.uk"
@@ -115,6 +119,7 @@ Mappings:
     production:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
+      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.account.gov.uk/resume"
       SESSIONRETURNRECORDTTL: 950400 # Default 11 days
       DNSSUFFIX: "return.account.gov.uk"
@@ -798,7 +803,7 @@ Resources:
         !FindInMap [
           EnvironmentVariables,
           !Ref Environment,
-          MESSAGERETENTIONPERIODDAYS,
+          TXMAMESSAGERETENTIONPERIODDAYS,
         ]
       VisibilityTimeout: 60
 
@@ -809,7 +814,7 @@ Resources:
         !FindInMap [
           EnvironmentVariables,
           !Ref Environment,
-          MESSAGERETENTIONPERIODDAYS,
+          TXMAMESSAGERETENTIONPERIODDAYS,
         ]
       VisibilityTimeout: 60
       KmsMasterKeyId: !Ref TxMAKeyAlias
