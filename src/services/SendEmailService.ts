@@ -79,6 +79,7 @@ export class SendEmailService {
     			templateId: this.environmentVariables.getEmailTemplateId(this.logger),
     			emailAddress: message.emailAddress,
     			options,
+    			retryCount,
     		});
 
     		try {
@@ -101,7 +102,7 @@ export class SendEmailService {
     			if (appError.obj!.shouldRetry && retryCount < this.environmentVariables.maxRetries()) {
     				this.logger.error(`sendEmail - Mapped error ${SendEmailService.name}`, { appError });
     				this.logger.error(`sendEmail - Retrying to send the email. Sleeping for ${this.environmentVariables.backoffPeriod()} ms ${SendEmailService.name} ${new Date().toISOString()}`, { retryCount });
-					await sleep(this.environmentVariables.backoffPeriod());
+    				await sleep(this.environmentVariables.backoffPeriod());
     				retryCount++;
     			} else {
     				this.logger.error("sendEmail - Mapped error", SendEmailService.name, appError.message);
