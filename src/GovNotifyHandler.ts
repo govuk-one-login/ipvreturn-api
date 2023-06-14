@@ -1,9 +1,8 @@
-import { SQSBatchResponse, SQSEvent, SQSRecord } from "aws-lambda";
+import { SQSBatchItemFailure, SQSBatchResponse, SQSEvent, SQSRecord } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
 import { Constants } from "./utils/Constants";
-import { BatchItemFailure } from "./utils/BatchItemFailure";
 import { SendEmailProcessor } from "./services/SendEmailProcessor";
 import { getParameter } from "./utils/Config";
 import { EnvironmentVariables } from "./services/EnvironmentVariables";
@@ -26,10 +25,10 @@ class GovNotifyHandler implements LambdaInterface {
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
 	async handler(event: SQSEvent, _context: any): Promise<SQSBatchResponse> {
+		const batchFailures: SQSBatchItemFailure[] = [];
 		if (event.Records.length === 1) {
 			const record: SQSRecord = event.Records[0];
 			logger.debug("Starting to process record", { record });
-			const batchFailures: BatchItemFailure[] = [];
 
 			try {
 				const body = JSON.parse(record.body);
@@ -52,30 +51,21 @@ class GovNotifyHandler implements LambdaInterface {
 				return { batchItemFailures: [] };
 
 			} catch (error: any) {
-				// If an appError was thrown at the service level
-				// and it is intended to be thrown (GOV UK errors)
-				if (error.obj?.shouldThrow) {
-					logger.error("Error encountered", { error });
-					error.obj = undefined;
-					batchFailures.push(new BatchItemFailure(record.messageId));
-					const sqsBatchResponse = { batchItemFailures: batchFailures };
-					logger.error("Email could not be sent. Returning batch item failure so it can be retried", { sqsBatchResponse });
-					return sqsBatchResponse;
-				} else {
-					logger.error("Email could not be sent. Returning failed message", "Handler");
+				logger.error("Email could not be sent. Returning failed message", "Handler");
 
-					// explicitly  set itemIdentifier to an empty string to fail the whole batch
-					// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-					return { batchItemFailures: [{ itemIdentifier: "" }] };
-				}
+				// explicitly set itemIdentifier to an empty string to fail the whole batch
+				// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
+				batchFailures.push({ itemIdentifier: "" });
+				return { batchItemFailures: batchFailures };
 			}
 
 		} else {
 			logger.warn("Unexpected no of records received");
 
-			// explicitly  set itemIdentifier to an empty string to fail the whole batch
+			// explicitly set itemIdentifier to an empty string to fail the whole batch
 			// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-			return { batchItemFailures: [{ itemIdentifier: "" }] };
+			batchFailures.push({ itemIdentifier: "" });
+			return { batchItemFailures: batchFailures };
 		}
 	}
 

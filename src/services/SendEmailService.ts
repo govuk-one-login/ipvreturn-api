@@ -59,14 +59,11 @@ export class SendEmailService {
      * @throws AppError
      */
     async sendEmail(message: Email): Promise<EmailResponse> {
-    	let encoded;
-
     	const personalisation = {
     		"first name": message.firstName,
     		"last name": message.lastName,
     		"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
     	};
-
 
     	const options = {
     		personalisation,
@@ -77,46 +74,45 @@ export class SendEmailService {
 
     	let retryCount = 0;
     	//retry for maxRetry count configured value if fails
-    	while (retryCount++ < this.environmentVariables.maxRetries() + 1) {
+    	while (retryCount <= this.environmentVariables.maxRetries()) {
     		this.logger.debug(`sendEmail - trying to send email message ${SendEmailService.name} ${new Date().toISOString()}`, {
     			templateId: this.environmentVariables.getEmailTemplateId(this.logger),
-    			emailAddress: message.emailAddress,
     			options,
+    			retryCount,
     		});
 
     		try {
     			const emailResponse = await this.govNotify.sendEmail(this.environmentVariables.getEmailTemplateId(this.logger), message.emailAddress, options);
-    			this.logger.debug("sendEmail - response data after sending Email", emailResponse.data);
     			this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
     			return new EmailResponse(new Date().toISOString(), "", emailResponse.status);
     		} catch (err: any) {
     			this.logger.error("sendEmail - GOV UK Notify threw an error");
 
     			if (err.response) {
-    				// err.response.data.status_code 	err.response.data.errors
     				this.logger.error(`GOV UK Notify error ${SendEmailService.name}`, {
     					statusCode: err.response.data.status_code,
     					errors: err.response.data.errors,
     				});
     			}
 
-    			const appError: any = this.govNotifyErrorMapper.map(err);
+    			const appError: any = this.govNotifyErrorMapper.map(err.response.data.status_code, err.response.data.errors[0].message);
 
-    			if (appError.obj!.shouldThrow) {
-    				this.logger.error("sendEmail - Mapped error", SendEmailService.name, appError.message);
-    				throw appError;
-    			} else {
+    			if (appError.obj!.shouldRetry && retryCount < this.environmentVariables.maxRetries()) {
     				this.logger.error(`sendEmail - Mapped error ${SendEmailService.name}`, { appError });
     				this.logger.error(`sendEmail - Retrying to send the email. Sleeping for ${this.environmentVariables.backoffPeriod()} ms ${SendEmailService.name} ${new Date().toISOString()}`, { retryCount });
     				await sleep(this.environmentVariables.backoffPeriod());
+    				retryCount++;
+    			} else {
+    				this.logger.error("sendEmail - Mapped error", SendEmailService.name, appError.message);
+    				throw appError;
     			}
     		}
     	}
 
     	// If the email couldn't be sent after the retries,
     	// an error is thrown
-    	this.logger.error(`sendEmail - cannot send EMail ${SendEmailService.name}`);
-    	throw new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot send EMail");
+    	this.logger.error(`sendEmail - cannot send Email even after ${this.environmentVariables.maxRetries()} retries.`);
+    	throw new AppError(HttpCodesEnum.SERVER_ERROR, `Cannot send Email even after ${this.environmentVariables.maxRetries()} retries.`);
     }
 
 }
