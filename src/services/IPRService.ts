@@ -104,7 +104,7 @@ export class IPRService {
 			ExpressionAttributeValues: expressionAttributeValues,
 		});
 
-		this.logger.debug("UpdateSessionInfoCommand: ", { updateSessionInfoCommand });
+		this.logger.debug("updateExpression: ", { updateExpression });
 		this.logger.info("Updating session record", userId );
 
 		try {
