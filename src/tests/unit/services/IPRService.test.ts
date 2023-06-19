@@ -14,7 +14,7 @@ let iprService: IPRService;
 const tableName = "MYTABLE";
 const userId = "SESSID";
 const mockDynamoDbClient = jest.mocked(createDynamoDbClient());
-const authRequestedUpdatExpression =
+const authRequestedUpdateExpression =
 	"SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
 const authRequestedExpressionAttributeValues = {
 	":ipvStartedOn": 1681902001,
@@ -29,15 +29,8 @@ function getTXMAEventPayload(): TxmaEvent {
 		event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
 		user: {
 			user_id: "sessionCliendId",
-			transaction_id: "",
-			persistent_session_id: "sessionPersistentSessionId",
-			session_id: "sessionID",
-			govuk_signin_journey_id: "clientSessionId",
-			ip_address: "sourceIp",
 		},
-		client_id: "clientId",
 		timestamp: 123,
-		component_id: "issuer",
 	};
 	return txmaEventPayload;
 }
@@ -175,7 +168,7 @@ describe("IPR Service", () => {
 	describe("saveEventData", () => {
 		it("Should throw error if saveEventData fails", async () => {
 			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
-			return expect(iprService.saveEventData(userId, authRequestedUpdatExpression, authRequestedExpressionAttributeValues)).rejects.toThrow(
+			return expect(iprService.saveEventData(userId, authRequestedUpdateExpression, authRequestedExpressionAttributeValues)).rejects.toThrow(
 				expect.objectContaining({
 					statusCode: HttpCodesEnum.SERVER_ERROR,
 				}),

@@ -98,6 +98,13 @@ export class EnvironmentVariables {
 				}
 				break;
 			}
+			case ServicesEnum.SEND_EMAIL_PROCESSOR_SERVICE: {
+				if (!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
+					logger.error("Send email Handler - Missing SESSION_EVENTS_TABLE");
+					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
+				}
+				break;
+			}
 			default:
 				break;
 		}

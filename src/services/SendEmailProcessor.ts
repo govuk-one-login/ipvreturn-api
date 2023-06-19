@@ -4,7 +4,6 @@ import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
 import { buildCoreEventFields } from "../utils/TxmaEvent";
-import { absoluteTimeNow } from "../utils/DateTimeUtils";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { SendEmailService } from "./SendEmailService";
@@ -32,8 +31,7 @@ export class SendEmailProcessor {
 		this.validationHelper = new ValidationHelper();
 		this.metrics = metrics;
 		this.govNotifyService = SendEmailService.getInstance(this.logger, GOVUKNOTIFY_API_KEY);
-		// TODO update the enum
-		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.POST_EVENT_SERVICE);
+		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.SEND_EMAIL_PROCESSOR_SERVICE);
 		this.iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 	}
 
@@ -51,11 +49,9 @@ export class SendEmailProcessor {
 
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(email);
 
-		const sessionInfo = await this.iprService.getSessionBySub("");
 		await this.iprService.sendToTXMA({
-			event_name: 'IPR_RESULT_NOTIFICATION_EMAILED',
-			// TODO sort out all these things
-			...buildCoreEventFields(sessionInfo, this.environmentVariables.issuer(), sessionInfo.clientIpAddress, absoluteTimeNow)
+			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
+			...buildCoreEventFields({}),
 		});
 
 		this.logger.debug("Response after sending Email message", { emailResponse });

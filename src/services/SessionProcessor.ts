@@ -157,9 +157,8 @@ export class SessionProcessor {
 			this.logger.info("User is successfully redirected to : ", session?.redirectUri);
 
 			await iprService.sendToTXMA({
-				event_name: 'IPR_USER_REDIRECTED',
-				// TODO sort out all these things
-				...buildCoreEventFields(session, this.environmentVariables.issuer(), session.clientIpAddress, absoluteTimeNow)
+				event_name: "IPR_USER_REDIRECTED",
+				...buildCoreEventFields({ sub }),
 			});
 
 			return {
