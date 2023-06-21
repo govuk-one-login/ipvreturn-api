@@ -5,7 +5,9 @@ export type TxmaEventName =
 	| "IPR_USER_REDIRECTED";
 
 export interface TxmaUser {
-	"user_id": string;
+	// TODO user_id will be required
+	"user_id"?: string;
+	"email"?: string;
 }
 
 export interface BaseTxmaEvent {
@@ -17,11 +19,11 @@ export interface TxmaEvent extends BaseTxmaEvent {
 	"event_name": TxmaEventName;
 }
 
-export const buildCoreEventFields = ({ sub, getNow = absoluteTimeNow }: { sub?: string; getNow?(): number }): BaseTxmaEvent => {
+export const buildCoreEventFields = (user: TxmaUser, getNow: () => number = absoluteTimeNow): BaseTxmaEvent => {
 	return {
-		...(sub && { user: {
-			user_id: sub,
-		} }),
+		user: {
+			...user,
+		},
 		timestamp: getNow(),
 	};
 };
