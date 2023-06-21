@@ -51,7 +51,7 @@ export class PostEventProcessor {
 			const userDetails = eventDetails.user;
 
 			if (!userDetails.user_id || !eventDetails.timestamp) {
-				this.logger.error({ message: "Missing required fields in event payload", eventDetails, userDetails });
+				this.logger.error({ message: "Missing required fields user_id and timestamp in event payload", eventDetails, userDetails });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
 
@@ -69,8 +69,8 @@ export class PostEventProcessor {
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {
 					if (!userDetails.email || !eventDetails.client_id || !eventDetails.component_id || eventDetails.component_id === "UNKNOWN") { 
-						this.logger.error({ message: "Missing required fields in event payload", eventDetails, userDetails });
-						throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
+						this.logger.error({ message: `Missing fields required for ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event type, or component_id is UNKNOWN`, eventDetails, userDetails });
+						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
 					}
 					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn";
 					expressionAttributeValues = {
