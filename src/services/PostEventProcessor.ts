@@ -44,13 +44,13 @@ export class PostEventProcessor {
 		try {
 			const eventDetails: ReturnSQSEvent = JSON.parse(eventBody);
 			const eventName = eventDetails.event_name;
-			if (!eventDetails.user && !eventName) {
+			if (!this.checkIfValidString(eventDetails.user, eventName)) {
 				this.logger.error({ message: "Missing user details or event name in event", eventDetails });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
 			const userDetails = eventDetails.user;
 
-			if (!userDetails.user_id || !eventDetails.timestamp) {
+			if (!this.checkIfValidString(userDetails.user_id,eventDetails.timestamp)) {
 				this.logger.error({ message: "Missing required fields user_id and timestamp in event payload", eventDetails, userDetails });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
@@ -68,7 +68,7 @@ export class PostEventProcessor {
 			const returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {
-					if (!userDetails.email || !eventDetails.client_id || !eventDetails.component_id || eventDetails.component_id === "UNKNOWN") { 
+					if (!this.checkIfValidString(userDetails.email,eventDetails.client_id,eventDetails.clientLandingPageUrl)) {
 						this.logger.error({ message: `Missing fields required for ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event type, or component_id is UNKNOWN`, eventDetails, userDetails });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
 					}
@@ -118,7 +118,7 @@ export class PostEventProcessor {
 				this.logger.error({ message: "Missing config to update DynamboDB for event:", eventName });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 			}
-			
+
 			const saveEventData = await this.iprService.saveEventData(userId, updateExpression, expressionAttributeValues);
 
 			return {
@@ -130,5 +130,15 @@ export class PostEventProcessor {
 			this.logger.error({ message: "Cannot parse event data", eventBody });
 			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse event data");
 		}
+	}
+
+	checkIfValidString(...params: any): boolean{
+
+		for(let param of params){
+			if(!param || !param.trim()){
+				return false;
+			}
+		}
+		return true;
 	}
 }

@@ -12,7 +12,7 @@ export class SessionReturnRecord {
 		switch (data.event_name) {
 			case Constants.AUTH_IPV_AUTHORISATION_REQUESTED:{
 				this.clientName = data.client_id!;
-				this.redirectUri = data.component_id!;
+				this.redirectUri = data.clientLandingPageUrl!;
 				this.userEmail = data.user.email;
 				this.ipvStartedOn = data.timestamp;
 				this.expiresDate = expiresOn;
