@@ -6,9 +6,6 @@ export interface NamePart {
 	value: string;
 }
 
-export interface PersonName {
-	nameParts: NamePart[];
-}
 export class SessionReturnRecord {
 	constructor(data: ReturnSQSEvent, expiresOn: number) {
 		this.userId = data.user.user_id;
@@ -27,6 +24,7 @@ export class SessionReturnRecord {
 			}
 			case Constants.IPV_F2F_CRI_VC_CONSUMED:{
 				this.readyToResumeOn = data.timestamp;
+				this.nameParts = data.restricted?.nameParts;
 				break;
 			}
 			case Constants.AUTH_DELETE_ACCOUNT:{
@@ -47,7 +45,7 @@ export class SessionReturnRecord {
 
     userEmail?: string;
 
-    nameParts?: PersonName[];
+    nameParts?: NamePart[];
 
     clientName?: string;
 

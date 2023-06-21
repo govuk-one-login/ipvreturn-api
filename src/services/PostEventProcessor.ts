@@ -91,9 +91,10 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_CONSUMED: {
-					updateExpression = "SET readyToResumeOn = :readyToResumeOn";
+					updateExpression = "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts";
 					expressionAttributeValues = {
 						":readyToResumeOn": returnRecord.readyToResumeOn,
+						":nameParts": returnRecord.nameParts,
 					};
 					break;
 				}

@@ -1,4 +1,5 @@
 import { ValidationHelper } from "../utils/ValidationHelper";
+import { personalIdentityUtils } from "../utils/PersonalIdentityUtils";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { SessionEvent } from "../models/SessionEvent";
@@ -12,31 +13,31 @@ import { IPRService } from "./IPRService";
 
 export class SessionEventProcessor {
 
-    private static instance: SessionEventProcessor;
+	private static instance: SessionEventProcessor;
 
-    private readonly logger: Logger;
+	private readonly logger: Logger;
 
-    private readonly metrics: Metrics;
+	private readonly metrics: Metrics;
 
-    private readonly validationHelper: ValidationHelper;
+	private readonly validationHelper: ValidationHelper;
 
 	private readonly iprService: IPRService;
 
 	private readonly environmentVariables: EnvironmentVariables;
 
 	constructor(logger: Logger, metrics: Metrics) {
-    	this.logger = logger;
+		this.logger = logger;
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.STREAM_PROCESSOR_SERVICE);
-    	this.validationHelper = new ValidationHelper();
-    	this.metrics = metrics;
+		this.validationHelper = new ValidationHelper();
+		this.metrics = metrics;
 		this.iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics): SessionEventProcessor {
-    	if (!SessionEventProcessor.instance) {
+		if (!SessionEventProcessor.instance) {
 			SessionEventProcessor.instance = new SessionEventProcessor(logger, metrics);
-    	}
-    	return SessionEventProcessor.instance;
+		}
+		return SessionEventProcessor.instance;
 	}
 
 	async processRequest(sessionEvent: any): Promise<Response> {
@@ -65,7 +66,8 @@ export class SessionEventProcessor {
 
 		// Send SQS message to GovNotify queue to send email to the user.
 		try {
-			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEventData.userEmail, "Given name", "Last name"));
+			const nameParts = personalIdentityUtils.getNames(sessionEventData.nameParts);
+			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEventData.userEmail, nameParts.givenNames[0], nameParts.familyNames[0]));
 		} catch (error) {
 			const userId = sessionEventData.userId;
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
@@ -86,7 +88,7 @@ export class SessionEventProcessor {
 		} catch (error: any) {
 			return new Response(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
-    	return new Response( HttpCodesEnum.OK, "Success");
+		return new Response( HttpCodesEnum.OK, "Success");
 	}
 }
 

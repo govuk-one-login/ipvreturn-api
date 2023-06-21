@@ -20,9 +20,10 @@ class PostEventHandler implements LambdaInterface {
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
 	async handler(event: SQSEvent, context: any): Promise<SQSBatchResponse> {
 		if (event.Records.length === 1) {
-
 			const record: SQSRecord = event.Records[0];
-			logger.debug("Starting to process record", { record });
+
+			const body = JSON.parse(record.body);
+			logger.debug("Starting to process record", { event_name: body.event_name });
 
 			try {
 				await PostEventProcessor.getInstance(logger, metrics).processRequest(record.body);

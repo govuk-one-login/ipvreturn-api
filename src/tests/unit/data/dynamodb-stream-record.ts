@@ -48,6 +48,28 @@ export const VALID_DYNAMODB_STREAM_EVENT = {
 					"readyToResumeOn": {
 						"N": "1681902003",
 					},
+					"nameParts": {
+						"L": [
+							{
+								"M": {
+									"type": { "S": "GivenName" },
+									"value": { "S": "ANGELA" },
+								},
+							},
+							{
+								"M": {
+									"type": { "S": "GivenName" },
+									"value": { "S": "ZOE" },
+								},
+							},
+							{
+								"M": {
+									"type": { "S": "FamilyName" },
+									"value": { "S": "UK SPECIMEN" },
+								},
+							},
+						],
+					},
 				},
 				"SequenceNumber": "13021600000000001596893679",
 				"SizeBytes": 112,

@@ -1,3 +1,5 @@
+import { NamePart } from "./SessionReturnRecord";
+
 export type EventType = "AUTH_IPV_AUTHORISATION_REQUESTED" | "F2F_YOTI_START" | "IPV_F2F_CRI_VC_CONSUMED" | "AUTH_DELETE_ACCOUNT";
 
 export interface ReturnSQSEvent {
@@ -10,6 +12,9 @@ export interface ReturnSQSEvent {
 	user: {
 		user_id: string;
 		email?: string;
+	};
+	restricted?: {
+		nameParts: NamePart[];
 	};
 }
 
