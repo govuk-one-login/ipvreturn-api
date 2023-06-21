@@ -4,11 +4,13 @@ import { SQSEvent } from "aws-lambda";
 import { VALID_SQS_EVENT } from "../data/sqs-events";
 import { SendEmailProcessor } from "../../../services/SendEmailProcessor";
 import { SendEmailService } from "../../../services/SendEmailService";
+import { IPRService } from "../../../services/IPRService";
 import { mock } from "jest-mock-extended";
 import { EmailResponse } from "../../../models/EmailResponse";
 
 let sendEmailProcessorTest: SendEmailProcessor;
 const mockGovNotifyService = mock<SendEmailService>();
+const mockIprService = mock<IPRService>();
 // pragma: allowlist nextline secret
 const GOVUKNOTIFY_API_KEY = "sdhohofsdf";
 const logger = new Logger({
@@ -20,10 +22,11 @@ let sqsEvent: SQSEvent;
 
 describe("SendEmailProcessor", () => {
 	beforeAll(() => {
-
 		sendEmailProcessorTest = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY);
 		// @ts-ignore
 		sendEmailProcessorTest.govNotifyService = mockGovNotifyService;
+		// @ts-ignore
+		sendEmailProcessorTest.iprService = mockIprService;
 		sqsEvent = VALID_SQS_EVENT;
 	});
 

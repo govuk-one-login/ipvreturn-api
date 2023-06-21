@@ -62,7 +62,7 @@ describe("PostEventProcessor", () => {
 	it("Throws error if component_id is 'UNKNOWN'", async () => {
 		const AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_UNKNOWN = "{\n\t\"event_id\":\"588f4a66-f75a-4728-9f7b-8afd865c233c\",\n\t\"client_id\":\"ekwU\",\n\t\"component_id\":\"UNKNOWN\",\n\t\"event_name\":\"AUTH_IPV_AUTHORISATION_REQUESTED\",\n\t\"redirect_uri\":\"www.localhost.com\",\n\t\"rp_name\":\"replay\",\n\t\"timestamp\":\"1681902001\",\n\t\"timestamp_formatted\":\"2023-04-19T11:00:01.000Z\",\n\t\"user\":{\n\t\t \"user_id\":\"01333e01-dde3-412f-a484-5555\",\n\t\t \"email\":\"jest@test.com\"\n\t}\n}";
 		await expect(postEventProcessorMock.processRequest(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_UNKNOWN)).rejects.toThrow(
-      new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data")
-    );
+			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
+		);
 	});
 });
