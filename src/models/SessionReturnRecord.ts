@@ -6,9 +6,6 @@ export interface NamePart {
 	value: string;
 }
 
-export interface PersonName {
-	nameParts: NamePart[];
-}
 export class SessionReturnRecord {
 	constructor(data: ReturnSQSEvent, expiresOn: number) {
 		this.userId = data.user.user_id;
