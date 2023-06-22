@@ -13,7 +13,7 @@ import {
 } from "../models/ReturnSQSEvent";
 import { SessionReturnRecord } from "../models/SessionReturnRecord";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
-import {MessageCodes} from "../models/enums/MessageCodes";
+import { MessageCodes } from "../models/enums/MessageCodes";
 
 
 export class PostEventProcessor {
@@ -48,18 +48,18 @@ export class PostEventProcessor {
 
 			if (!this.checkIfValidString(eventName) || !eventDetails.timestamp) {
 
-				this.logger.error({message: "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event"}, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS});
+				this.logger.error({ message: "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
 
-			if(!eventDetails.user){
-				this.logger.error({message: "Missing user details in the incoming SQS event"}, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS} );
+			if (!eventDetails.user) {
+				this.logger.error({ message: "Missing user details in the incoming SQS event" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS } );
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
 			const userDetails = eventDetails.user;
 
 			if (!this.checkIfValidString(userDetails.user_id)) {
-				this.logger.error({message: "Missing or invalid value for userDetails.user_id in event payload"}, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS});
+				this.logger.error({ message: "Missing or invalid value for userDetails.user_id in event payload" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
 
@@ -67,7 +67,7 @@ export class PostEventProcessor {
 			// Do not process the event if the event is already processed or flagged for deletion
 			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, eventName);
 			if (isFlaggedForDeletionOrEventAlreadyProcessed) {
-				this.logger.info( {message: "Record flagged for deletion or event already processed, skipping update"});
+				this.logger.info( { message: "Record flagged for deletion or event already processed, skipping update" });
 				return "Record flagged for deletion or event already processed, skipping update";
 			}
 
@@ -76,8 +76,8 @@ export class PostEventProcessor {
 			const returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {
-					if (!this.checkIfValidString(userDetails.email,eventDetails.client_id,eventDetails.clientLandingPageUrl)) {
-						this.logger.error( {message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type"}, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS});
+					if (!this.checkIfValidString(userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl)) {
+						this.logger.error( { message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
 					}
 					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn";
@@ -98,9 +98,9 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_CONSUMED: {
-					eventDetails.restricted
+					eventDetails.restricted;
 					if (!eventDetails.restricted || !eventDetails.restricted.nameParts) {
-						this.logger.error( {message: "Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type"}, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS});
+						this.logger.error( { message: "Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
 					}
 					updateExpression = "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts";
@@ -144,10 +144,10 @@ export class PostEventProcessor {
 		}
 	}
 
-	checkIfValidString(...params: any): boolean{
+	checkIfValidString(...params: any): boolean {
 
-		for(let param of params){
-			if(!param || !param.trim()){
+		for (const param of params) {
+			if (!param || !param.trim()) {
 				return false;
 			}
 		}

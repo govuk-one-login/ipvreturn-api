@@ -63,7 +63,7 @@ describe("PostEventProcessor", () => {
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1,{"message":"Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type"},{"messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT"});
+		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 	});
 
 	it("Throws error if clientLandingPageUrl has spaces", async () => {
@@ -72,7 +72,7 @@ describe("PostEventProcessor", () => {
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1,{"message":"Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type"},{"messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT"});
+		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 	});
 
 	it("Throws error if user object is missing", async () => {
@@ -80,7 +80,7 @@ describe("PostEventProcessor", () => {
 		await expect(postEventProcessor.processRequest(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_USER_MISSING)).rejects.toThrow(
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1,{"message": "Missing user details in the incoming SQS event"}, {"messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT"});
+		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "Missing user details in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 
 	});
 
@@ -89,7 +89,7 @@ describe("PostEventProcessor", () => {
 		await expect(postEventProcessor.processRequest(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_NAME_MISSING)).rejects.toThrow(
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1,{"message": "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event"}, {"messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT"});
+		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 	});
 
 	it("Throws error if eventName has spaces", async () => {
@@ -97,7 +97,7 @@ describe("PostEventProcessor", () => {
 		await expect(postEventProcessor.processRequest(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_NAME_SPACES)).rejects.toThrow(
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1,{"message": "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event"}, {"messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT"});
+		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 	});
 
 	it("Throws error if timestamp is missing", async () => {
@@ -106,7 +106,7 @@ describe("PostEventProcessor", () => {
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1,{"message":"Missing or invalid value for any or all of event name, timestamp in the incoming SQS event"},{"messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT"});
+		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 	});
 
 	it("Throws error if restricted is missing", async () => {
@@ -115,6 +115,6 @@ describe("PostEventProcessor", () => {
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1,{"message":"Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type"},{"messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT"});
+		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 	});
 });

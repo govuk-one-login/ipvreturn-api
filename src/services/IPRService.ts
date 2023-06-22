@@ -95,7 +95,7 @@ export class IPRService {
 
 	async saveEventData(userId: string, updateExpression: string, expressionAttributeValues: any): Promise<string | void> {
 
-		this.logger.info({ message: "Saving event data to dynamodb", tableName: this.tableName});
+		this.logger.info({ message: "Saving event data to dynamodb", tableName: this.tableName });
 		const updateSessionInfoCommand = new UpdateCommand({
 			TableName: this.tableName,
 			Key: {
