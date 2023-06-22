@@ -66,7 +66,7 @@ export class IPRService {
 
 
 	async isFlaggedForDeletionOrEventAlreadyProcessed(userId: string, eventType: string): Promise<boolean | undefined> {
-		this.logger.info({ message: "Checking if record is flagged for deletion or already processed", tableName: this.tableName, userId });
+		this.logger.info({ message: "Checking if record is flagged for deletion or already processed", tableName: this.tableName });
 		const getSessionCommand = new GetCommand({
 			TableName: this.tableName,
 			Key: {
@@ -95,7 +95,7 @@ export class IPRService {
 
 	async saveEventData(userId: string, updateExpression: string, expressionAttributeValues: any): Promise<string | void> {
 
-		this.logger.info({ message: "Saving event data to dynamodb", tableName: this.tableName, userId });
+		this.logger.info({ message: "Saving event data to dynamodb", tableName: this.tableName});
 		const updateSessionInfoCommand = new UpdateCommand({
 			TableName: this.tableName,
 			Key: {
@@ -105,8 +105,7 @@ export class IPRService {
 			ExpressionAttributeValues: expressionAttributeValues,
 		});
 
-		this.logger.debug("updateExpression: ", { updateExpression });
-		this.logger.info("Updating session record", userId );
+		this.logger.info("Updating session record" );
 
 		try {
 			await this.dynamo.send(updateSessionInfoCommand);
