@@ -46,7 +46,8 @@ export class PostEventProcessor {
 			const eventDetails: ReturnSQSEvent = JSON.parse(eventBody);
 			const eventName = eventDetails.event_name;
 
-			if (!this.checkIfValidString(eventName) || !eventDetails.timestamp) {
+			this.logger.info({ message: "Received SQS event with eventName ", eventName });
+			if (!this.checkIfValidString([eventName]) || !eventDetails.timestamp) {
 
 				this.logger.error({ message: "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
@@ -58,7 +59,7 @@ export class PostEventProcessor {
 			}
 			const userDetails = eventDetails.user;
 
-			if (!this.checkIfValidString(userDetails.user_id)) {
+			if (!this.checkIfValidString([userDetails.user_id])) {
 				this.logger.error({ message: "Missing or invalid value for userDetails.user_id in event payload" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
@@ -76,7 +77,7 @@ export class PostEventProcessor {
 			const returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {
-					if (!this.checkIfValidString(userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl)) {
+					if (!this.checkIfValidString([userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl])) {
 						this.logger.error( { message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
 					}
@@ -144,12 +145,15 @@ export class PostEventProcessor {
 		}
 	}
 
-	checkIfValidString(...params: any): boolean {
-
-		for (const param of params) {
-			if (!param || !param.trim()) {
-				return false;
-			}
+	/**
+	 * Checks if all string values in the array are defined and do not
+	 * contain only spaces
+	 *
+	 * @param params
+	 */
+	checkIfValidString(params: (string | undefined)[]): boolean {
+		if (params.some((param) => (!param || !param.trim()) )) {
+			return false;
 		}
 		return true;
 	}
