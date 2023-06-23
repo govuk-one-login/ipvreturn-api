@@ -145,12 +145,12 @@ export class PostEventProcessor {
 	}
 
 	/**
-	 * Checks if all string values in the array are defined and do not
-	 * contain only spaces
+	 * Checks if all string values in the array are defined and does not
+	 * contain spaces only
 	 *
 	 * @param params
 	 */
-	checkIfValidString(params: (string | undefined)[]): boolean {
+	checkIfValidString(params: Array<string | undefined>): boolean {
 		if (params.some((param) => (!param || !param.trim()) )) {
 			return false;
 		}

@@ -78,7 +78,7 @@ export class EnvironmentVariables {
 			case ServicesEnum.STREAM_PROCESSOR_SERVICE: {
 				if (!this.GOV_NOTIFY_QUEUE_URL || this.GOV_NOTIFY_QUEUE_URL.trim().length === 0 ||
 					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
-					logger.error("Stream Processor Service - Misconfigured external API's key", { messageCode: MessageCodes.MISSING_CONFIGURATION } );
+					logger.error({ message: "Stream Processor Service - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION } );
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				break;
@@ -124,7 +124,7 @@ export class EnvironmentVariables {
 
 	getEmailTemplateId(logger: Logger): any {
 		if (!this.GOVUKNOTIFY_TEMPLATE_ID || this.GOVUKNOTIFY_TEMPLATE_ID.trim().length === 0) {
-			logger.error("GovNotifyService - Misconfigured external API's key", { messageCode: MessageCodes.MISSING_CONFIGURATION });
+			logger.error({ message: "GovNotifyService - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 		}
 		return this.GOVUKNOTIFY_TEMPLATE_ID;
@@ -156,7 +156,7 @@ export class EnvironmentVariables {
 
 	getGovNotifyQueueURL(logger: Logger): string {
 		if (!this.GOV_NOTIFY_QUEUE_URL || this.GOV_NOTIFY_QUEUE_URL.trim().length === 0) {
-			logger.error("GovNotifyService - Misconfigured external API's key", { messageCode: MessageCodes.MISSING_CONFIGURATION });
+			logger.error({ message: "GovNotifyService - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 		}
 		return this.GOV_NOTIFY_QUEUE_URL;
