@@ -99,7 +99,6 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_CONSUMED: {
-					eventDetails.restricted;
 					if (!eventDetails.restricted || !eventDetails.restricted.nameParts) {
 						this.logger.error( { message: "Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
