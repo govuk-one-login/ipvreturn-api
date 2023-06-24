@@ -234,7 +234,7 @@ Resources:
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
       ThumbprintList:
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+      Url: "https://oidc.ddunford.staging.account.gov.uk/"
 
   ### AssumeRoleWithWebIdentityRole
   AssumeRoleWithWebIdentityRole:
@@ -333,7 +333,13 @@ Resources:
   IPVRApiCustomDomain:
     Type: AWS::ApiGateway::DomainName
     Properties:
-      DomainName: !Sub
+      DomainName: !If
+        - CreateDevResources
+        - !Sub
+          - "api-${AWS::StackName}.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+        - !Sub
           - "api.${DNSSUFFIX}"
           - DNSSUFFIX:
               !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
@@ -346,10 +352,7 @@ Resources:
   IPVRApiCertificateRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      Name: !Sub
-          - "api.${DNSSUFFIX}"
-          - DNSSUFFIX:
-              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+      Name: !Ref IPVRApiCustomDomain
       Type: A
       HostedZoneId: !Sub "{{resolve:ssm:/${Environment}/Platform/Route53/PrimaryZoneID}}"
       AliasTarget:
@@ -360,10 +363,7 @@ Resources:
     Type: AWS::ApiGateway::BasePathMapping
     DependsOn: IPVRApiCustomDomain
     Properties:
-      DomainName: !Sub
-          - "api.${DNSSUFFIX}"
-          - DNSSUFFIX:
-              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+      DomainName: !Ref IPVRApiCustomDomain
       RestApiId: !Ref IPVRRestApi
       Stage: !Sub "${IPVRRestApi.Stage}"
 
