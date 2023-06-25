@@ -2,7 +2,7 @@ import { Logger } from "@aws-lambda-powertools/logger";
 import { SQSEvent } from "aws-lambda";
 // @ts-ignore
 import { NotifyClient } from "notifications-node-client";
-import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT } from "../data/sqs-events";
+import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT } from "../../data/sqs-events";
 import { SendEmailProcessor } from "../../../services/SendEmailProcessor";
 import { SendEmailService } from "../../../services/SendEmailService";
 import { mock } from "jest-mock-extended";

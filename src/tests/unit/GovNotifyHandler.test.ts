@@ -1,7 +1,7 @@
 import { mock } from "jest-mock-extended";
 import { lambdaHandler } from "../../GovNotifyHandler";
 import { SendEmailProcessor } from "../../services/SendEmailProcessor";
-import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT } from "./data/sqs-events";
+import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT } from "../data/sqs-events";
 import { AppError } from "../../utils/AppError";
 import { HttpCodesEnum } from "../../models/enums/HttpCodesEnum";
 

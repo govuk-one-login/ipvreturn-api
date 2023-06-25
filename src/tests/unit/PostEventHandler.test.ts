@@ -1,7 +1,7 @@
 import { mock } from "jest-mock-extended";
 import { lambdaHandler } from "../../PostEventHandler";
 import { PostEventProcessor } from "../../services/PostEventProcessor";
-import { VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT } from "./data/sqs-events";
+import { VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT } from "../data/sqs-events";
 import { AppError } from "../../utils/AppError";
 import { HttpCodesEnum } from "../../models/enums/HttpCodesEnum";
 

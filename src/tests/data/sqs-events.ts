@@ -1,4 +1,4 @@
-import {EventType, ReturnSQSEvent} from "../../../models/ReturnSQSEvent";
+import { ReturnSQSEvent } from "../../models/ReturnSQSEvent";
 
 export const VALID_GOV_NOTIFY_HANDLER_SQS_EVENT = {
   "Records": [
