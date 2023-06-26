@@ -3,6 +3,7 @@ import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { Constants } from "../utils/Constants";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
+import { MessageCodes } from "../models/enums/MessageCodes";
 
 /**
  * Class to read, store, and return environment variables used by this lambda
@@ -46,7 +47,7 @@ export class EnvironmentVariables {
 			case ServicesEnum.GOV_NOTIFY_SERVICE: {
 				if (!this.GOVUKNOTIFY_API_KEY_SSM_PATH || this.GOVUKNOTIFY_API_KEY_SSM_PATH.trim().length === 0 ||
 					!this.RETURN_JOURNEY_URL || this.RETURN_JOURNEY_URL.trim().length === 0) {
-					logger.error(`GovNotifyService - Misconfigured external API's key ${EnvironmentVariables.name}`);
+					logger.error({ message: "GovNotifyService - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 
@@ -55,21 +56,21 @@ export class EnvironmentVariables {
 					|| +this.GOVUKNOTIFY_BACKOFF_PERIOD_MS.trim() === 0
 					|| +this.GOVUKNOTIFY_BACKOFF_PERIOD_MS.trim() >= 60000) {
 					this.GOVUKNOTIFY_BACKOFF_PERIOD_MS = "20000";
-					logger.warn("GOVUKNOTIFY_BACKOFF_PERIOD_MS env var is not set. Setting to default - 20000");
+					logger.warn({ message:"GOVUKNOTIFY_BACKOFF_PERIOD_MS env var is not set. Setting to default - 20000" });
 				}
 
 				if (!this.GOVUKNOTIFY_MAX_RETRIES
 					|| this.GOVUKNOTIFY_MAX_RETRIES.trim().length === 0
 					|| +this.GOVUKNOTIFY_MAX_RETRIES.trim() >= 100) {
 					this.GOVUKNOTIFY_MAX_RETRIES = "3";
-					logger.warn("GOVUKNOTIFY_MAX_RETRIES env var is not set. Setting to default - 3");
+					logger.warn({ message: "GOVUKNOTIFY_MAX_RETRIES env var is not set. Setting to default - 3" });
 				}
 				break;
 			}
 			case ServicesEnum.POST_EVENT_SERVICE: {
 				if (!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0 ||
 					!this.SESSION_RETURN_RECORD_TTL || this.SESSION_RETURN_RECORD_TTL.trim().length === 0) {
-					logger.error("PostEvent Handler - Missing SessionEvents Tablename or SESSION_RETURN_RECORD_TTL");
+					logger.error({ message: "PostEvent Handler - Missing SessionEvents Tablename or SESSION_RETURN_RECORD_TTL" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				break;
@@ -77,7 +78,7 @@ export class EnvironmentVariables {
 			case ServicesEnum.STREAM_PROCESSOR_SERVICE: {
 				if (!this.GOV_NOTIFY_QUEUE_URL || this.GOV_NOTIFY_QUEUE_URL.trim().length === 0 ||
 					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
-					logger.error(`Stream Processor Service - Misconfigured external API's key ${EnvironmentVariables.name}`);
+					logger.error({ message: "Stream Processor Service - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION } );
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				break;
@@ -89,18 +90,18 @@ export class EnvironmentVariables {
 					!this.OIDC_URL || this.OIDC_URL.trim().length === 0 ||
 					!this.RETURN_REDIRECT_URL || this.RETURN_REDIRECT_URL.trim().length === 0 ||
 					!this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN || this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN.trim().length === 0) {
-					logger.error(`Get Session event data Service - Misconfigured external API's key ${EnvironmentVariables.name}`);
+					logger.error({ message: "Get Session event data Service - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				if (!this.OIDC_JWT_ASSERTION_TOKEN_EXP || this.OIDC_JWT_ASSERTION_TOKEN_EXP.trim().length === 0) {
 					this.OIDC_JWT_ASSERTION_TOKEN_EXP = "300";
-					logger.warn("OIDC_JWT_ASSERTION_TOKEN_EXP env var is not set. Setting the expiry to default - 5 minutes.");
+					logger.warn({ message: "OIDC_JWT_ASSERTION_TOKEN_EXP env var is not set. Setting the expiry to default - 5 minutes." });
 				}
 				break;
 			}
 			case ServicesEnum.SEND_EMAIL_PROCESSOR_SERVICE: {
 				if (!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
-					logger.error("Send email Handler - Missing SESSION_EVENTS_TABLE");
+					logger.error({ message: "Send email Handler - Missing SESSION_EVENTS_TABLE" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				break;
@@ -123,7 +124,7 @@ export class EnvironmentVariables {
 
 	getEmailTemplateId(logger: Logger): any {
 		if (!this.GOVUKNOTIFY_TEMPLATE_ID || this.GOVUKNOTIFY_TEMPLATE_ID.trim().length === 0) {
-			logger.error(`GovNotifyService - Misconfigured external API's key ${EnvironmentVariables.name}`);
+			logger.error({ message: "GovNotifyService - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 		}
 		return this.GOVUKNOTIFY_TEMPLATE_ID;
@@ -155,7 +156,7 @@ export class EnvironmentVariables {
 
 	getGovNotifyQueueURL(logger: Logger): string {
 		if (!this.GOV_NOTIFY_QUEUE_URL || this.GOV_NOTIFY_QUEUE_URL.trim().length === 0) {
-			logger.error(`GovNotifyService - Misconfigured external API's key ${EnvironmentVariables.name}`);
+			logger.error({ message: "GovNotifyService - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 		}
 		return this.GOV_NOTIFY_QUEUE_URL;

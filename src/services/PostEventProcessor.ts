@@ -13,6 +13,7 @@ import {
 } from "../models/ReturnSQSEvent";
 import { SessionReturnRecord } from "../models/SessionReturnRecord";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
+import { MessageCodes } from "../models/enums/MessageCodes";
 
 
 export class PostEventProcessor {
@@ -44,14 +45,28 @@ export class PostEventProcessor {
 		try {
 			const eventDetails: ReturnSQSEvent = JSON.parse(eventBody);
 			const eventName = eventDetails.event_name;
-			if (!eventDetails.user && !eventName) {
-				this.logger.error({ message: "Missing user details or event name in event", eventDetails });
+
+			if (!eventDetails.event_id) {
+				this.logger.error({ message: "Missing event_id in the incoming SQS event" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
+			}
+			this.logger.appendKeys({event_id: eventDetails.event_id});
+
+			this.logger.info({ message: "Received SQS event with eventName ", eventName });
+			if (!this.checkIfValidString([eventName]) || !eventDetails.timestamp) {
+
+				this.logger.error({ message: "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
+			}
+
+			if (!eventDetails.user) {
+				this.logger.error({ message: "Missing user details in the incoming SQS event" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS } );
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
 			const userDetails = eventDetails.user;
 
-			if (!userDetails.user_id || !eventDetails.timestamp) {
-				this.logger.error({ message: "Missing required fields user_id and timestamp in event payload", eventDetails, userDetails });
+			if (!this.checkIfValidString([userDetails.user_id])) {
+				this.logger.error({ message: "Missing or invalid value for userDetails.user_id in event payload" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
 
@@ -59,7 +74,7 @@ export class PostEventProcessor {
 			// Do not process the event if the event is already processed or flagged for deletion
 			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, eventName);
 			if (isFlaggedForDeletionOrEventAlreadyProcessed) {
-				this.logger.info({ message: "Record flagged for deletion or event already processed, skipping update", userId });
+				this.logger.info( { message: "Record flagged for deletion or event already processed, skipping update" });
 				return "Record flagged for deletion or event already processed, skipping update";
 			}
 
@@ -68,15 +83,14 @@ export class PostEventProcessor {
 			const returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {
-					if (!userDetails.email || !eventDetails.client_id || !eventDetails.component_id || eventDetails.component_id === "UNKNOWN") { 
-						this.logger.error({ message: `Missing fields required for ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event type, or component_id is UNKNOWN`, eventDetails, userDetails });
+					if (!this.checkIfValidString([userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl])) {
+						this.logger.error( { message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
 					}
-					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn";
+					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn";
 					expressionAttributeValues = {
 						":userEmail": returnRecord.userEmail,
 						":ipvStartedOn": returnRecord.ipvStartedOn,
-						":nameParts": [],
 						":clientName": returnRecord.clientName,
 						":redirectUri": returnRecord.redirectUri,
 						":expiresOn": returnRecord.expiresDate,
@@ -91,6 +105,10 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_CONSUMED: {
+					if (!eventDetails.restricted || !eventDetails.restricted.nameParts) {
+						this.logger.error( { message: "Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
+					}
 					updateExpression = "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts";
 					expressionAttributeValues = {
 						":readyToResumeOn": returnRecord.readyToResumeOn,
@@ -118,7 +136,7 @@ export class PostEventProcessor {
 				this.logger.error({ message: "Missing config to update DynamboDB for event:", eventName });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 			}
-			
+
 			const saveEventData = await this.iprService.saveEventData(userId, updateExpression, expressionAttributeValues);
 
 			return {
@@ -127,8 +145,21 @@ export class PostEventProcessor {
 			};
 
 		} catch (error: any) {
-			this.logger.error({ message: "Cannot parse event data", eventBody });
+			this.logger.error({ message: "Cannot parse event data" });
 			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse event data");
 		}
+	}
+
+	/**
+	 * Checks if all string values in the array are defined and does not
+	 * contain spaces only
+	 *
+	 * @param params
+	 */
+	checkIfValidString(params: Array<string | undefined>): boolean {
+		if (params.some((param) => (!param || !param.trim()) )) {
+			return false;
+		}
+		return true;
 	}
 }
