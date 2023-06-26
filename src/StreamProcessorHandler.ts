@@ -22,14 +22,13 @@ class StreamProcessorHandler implements LambdaInterface {
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
 	async handler(event: DynamoDBStreamEvent, context: any): Promise<DynamoDBBatchResponse> {
-		logger.debug("DB Stream event received", { event });
+		logger.debug("DB Stream event received");
 		if (event.Records.length === 1) {
 			const record: DynamoDBRecord = event.Records[0];
-			logger.debug("Starting to process stream record", { record });
+			logger.info("Starting to process stream record");
 			try {
 				if (record.eventName === "MODIFY") {
 					const sessionEvent = unmarshall(record.dynamodb?.NewImage);
-					logger.debug("Parsed session event", JSON.stringify(sessionEvent));
 					await SessionEventProcessor.getInstance(logger, metrics).processRequest(sessionEvent);
 					return { batchItemFailures:[] };
 				} else {
@@ -37,7 +36,7 @@ class StreamProcessorHandler implements LambdaInterface {
 					return { batchItemFailures:[] };
 				}
 			} catch (error) {
-				logger.error({ message: "An error has occurred. ", error });
+				logger.error({ message: "An error has occurred when processing the session record ", error });
 				return { batchItemFailures:[] };
 			}
 		} else {

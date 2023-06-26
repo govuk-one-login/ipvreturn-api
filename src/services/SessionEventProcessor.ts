@@ -10,6 +10,7 @@ import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
 import { IPRService } from "./IPRService";
+import {AppError} from "../utils/AppError";
 
 export class SessionEventProcessor {
 
@@ -40,28 +41,28 @@ export class SessionEventProcessor {
 		return SessionEventProcessor.instance;
 	}
 
-	async processRequest(sessionEvent: any): Promise<Response> {
+	async processRequest(sessionEvent: any): Promise<void> {
 		const sessionEventData: SessionEvent = SessionEvent.parseRequest(JSON.stringify(sessionEvent));
 
 		// Validate the notified field is set to false
 		if (sessionEventData.notified) {
 			this.logger.warn("User is already notified for this session event.");
-			return new Response(HttpCodesEnum.SERVER_ERROR, "User is already notified for this session event.");
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "User is already notified for this session event.");
 		}
 		// Validate if the record is missing some fields related to the Events and log the details and stop record processing.
 		try {
 			this.validationHelper.validateSessionEventFields(sessionEventData);
 		} catch (error: any) {
 			this.logger.warn(error.message);
-			return new Response(HttpCodesEnum.SERVER_ERROR, error.message);
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 
 		// Validate all necessary fields are populated before processing the data.
 		try {
 			await this.validationHelper.validateModel(sessionEventData, this.logger);
 		} catch (error) {
-			this.logger.error("Unable to process the DB record as the necessary fields are not populated.", sessionEventData.userId);
-			return new Response(HttpCodesEnum.SERVER_ERROR, `Unable to process the DB record as the necessary fields are not populated for userId: ${sessionEventData.userId}`);
+			this.logger.error("Unable to process the DB record as the necessary fields are not populated.");
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated.");
 		}
 
 		// Send SQS message to GovNotify queue to send email to the user.
@@ -71,11 +72,10 @@ export class SessionEventProcessor {
 		} catch (error) {
 			const userId = sessionEventData.userId;
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
-				userId,
 				reason: "Processing Event session data, failed to post message to GovNotify SQS Queue",
 				error,
 			});
-			return new Response(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending message to GovNotify handler");
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending message to GovNotify handler");
 		}
 		// Update the DB table with notified flag set to true
 		try {
@@ -84,11 +84,10 @@ export class SessionEventProcessor {
 				":notified": true,
 			};
 			await this.iprService.saveEventData(sessionEventData.userId, updateExpression, expressionAttributeValues);
-			this.logger.info({ message: "Updated the session event record with notified flag", userId: sessionEventData.userId });
+			this.logger.info({ message: "Updated the session event record with notified flag"});
 		} catch (error: any) {
-			return new Response(HttpCodesEnum.SERVER_ERROR, error.message);
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
-		return new Response( HttpCodesEnum.OK, "Success");
 	}
 }
 
