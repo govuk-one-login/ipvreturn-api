@@ -31,7 +31,7 @@ class PostEventHandler implements LambdaInterface {
 			try {
 				body = JSON.parse(record.body);
 			} catch (error) {
-				logger.error({ message:"Received invalid JSON in the SQS event record.body", error });
+				logger.error({ message:"Received invalid JSON in the SQS event record.body" });
 			}
 
 			logger.debug("Starting to process record", { event_name: body.event_name });
