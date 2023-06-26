@@ -4,7 +4,7 @@
     "strict": true,
     "preserveConstEnums": true,
     "noEmit": true,
-    "sourceMap": true,
+    "sourceMap": false,
     "module": "es2015",
     "moduleResolution": "node",
     "resolveJsonModule": true,
