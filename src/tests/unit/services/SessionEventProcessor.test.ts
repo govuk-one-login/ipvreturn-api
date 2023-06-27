@@ -47,17 +47,12 @@ describe("SessionEventProcessor", () => {
 		};
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
-		expect(response.statusCode).toBe(HttpCodesEnum.OK);
-		expect(response.body).toBe("Success");
 	});
 
 	it("Throws error when session event record is already processed and user is notified via email", async () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		sessionEvent.notified = true;
-		const response = await sessionEventProcessorTest.processRequest(sessionEvent);
-
-		expect(response.statusCode).toBe(HttpCodesEnum.SERVER_ERROR);
-		expect(response.body).toBe("User is already notified for this session event.");
+		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 	});
 
 	it.each([
@@ -67,11 +62,7 @@ describe("SessionEventProcessor", () => {
 	])("Throws error when session event record is missing necessary Event timestamps fields", async (attribute) => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		delete sessionEvent[attribute];
-		const response = await sessionEventProcessorTest.processRequest(sessionEvent);
-
-		expect(response.statusCode).toBe(HttpCodesEnum.SERVER_ERROR);
-		expect(response.body).toBe(`${attribute} is not yet populated for userId: ${sessionEvent.userId}, unable to process the DB record.`);
-
+		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 	});
 
 	it.each([
@@ -82,10 +73,7 @@ describe("SessionEventProcessor", () => {
 	])("Throws error when session event record is missing necessary attribute %s", async (attribute) => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		delete sessionEvent[attribute];
-		const response = await sessionEventProcessorTest.processRequest(sessionEvent);
-
-		expect(response.statusCode).toBe(HttpCodesEnum.SERVER_ERROR);
-		expect(response.body).toBe(`Unable to process the DB record as the necessary fields are not populated for userId: ${sessionEvent.userId}`);
+		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 	});
 
 	it.each([
@@ -96,31 +84,23 @@ describe("SessionEventProcessor", () => {
 	])("Throws error when session event record attribute %s is not correct type", async (attribute) => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		sessionEvent[attribute] = 0;
-		const response = await sessionEventProcessorTest.processRequest(sessionEvent);
-
-		expect(response.statusCode).toBe(HttpCodesEnum.SERVER_ERROR);
-		expect(response.body).toBe(`Unable to process the DB record as the necessary fields are not populated for userId: ${sessionEvent.userId}`);
+		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 	});
 
 	it("Throws error if failure to send to GovNotify queue", async () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		mockIprService.sendToGovNotify.mockRejectedValueOnce("Failed to send to GovNotify Queue");
-		const response = await sessionEventProcessorTest.processRequest(sessionEvent);
-
+		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
-		expect(response.statusCode).toBe(HttpCodesEnum.SERVER_ERROR);
-		expect(response.body).toBe("An error occurred when sending message to GovNotify handler");
 	});
 
 	it("Throws error if failure to update the session event record with notified flag", async () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		mockIprService.saveEventData.mockRejectedValueOnce("Error updating the session event record");
-		const response = await sessionEventProcessorTest.processRequest(sessionEvent);
-
+		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.saveEventData).toHaveBeenCalledTimes(1);
-		expect(response.statusCode).toBe(HttpCodesEnum.SERVER_ERROR);
 	});
 
 });

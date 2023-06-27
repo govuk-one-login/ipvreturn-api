@@ -10,7 +10,7 @@ import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
 import { IPRService } from "./IPRService";
-import {AppError} from "../utils/AppError";
+import { AppError } from "../utils/AppError";
 
 export class SessionEventProcessor {
 
@@ -84,7 +84,7 @@ export class SessionEventProcessor {
 				":notified": true,
 			};
 			await this.iprService.saveEventData(sessionEventData.userId, updateExpression, expressionAttributeValues);
-			this.logger.info({ message: "Updated the session event record with notified flag"});
+			this.logger.info({ message: "Updated the session event record with notified flag" });
 		} catch (error: any) {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
