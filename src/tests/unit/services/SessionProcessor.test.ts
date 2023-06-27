@@ -224,7 +224,7 @@ describe("SessionProcessor", () => {
 		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
 		expect(out.body).toEqual(JSON.stringify({
 			status: SessionEventStatusEnum.PENDING,
-			message: `${attribute} is not yet populated for userId: ${mockSessionEvent.userId}, unable to process the DB record.`,
+			message: `${attribute} is not yet populated, unable to process the DB record.`,
 		}));
 		expect(out.statusCode).toBe(HttpCodesEnum.OK);
 	});

@@ -50,7 +50,7 @@ export class PostEventProcessor {
 				this.logger.error({ message: "Missing event_id in the incoming SQS event" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
-			this.logger.appendKeys({event_id: eventDetails.event_id});
+			this.logger.appendKeys({ event_id: eventDetails.event_id });
 
 			this.logger.info({ message: "Received SQS event with eventName ", eventName });
 			if (!this.checkIfValidString([eventName]) || !eventDetails.timestamp) {
