@@ -18,7 +18,7 @@ export class SendEmailProcessor {
 
 	private readonly metrics: Metrics;
 
-	private readonly environmentVariables: EnvironmentVariables;
+	private readonly sessionEventsTable: string;
 
 	private readonly validationHelper: ValidationHelper;
 
@@ -26,18 +26,18 @@ export class SendEmailProcessor {
 
 	private readonly iprService: IPRService;
 
-	constructor(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string) {
+	constructor(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, sessionEventsTable: string) {
 		this.logger = logger;
 		this.validationHelper = new ValidationHelper();
 		this.metrics = metrics;
 		this.govNotifyService = SendEmailService.getInstance(this.logger, GOVUKNOTIFY_API_KEY);
-		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.SEND_EMAIL_PROCESSOR_SERVICE);
-		this.iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
+		this.sessionEventsTable = sessionEventsTable;
+		this.iprService = IPRService.getInstance(this.sessionEventsTable, this.logger, createDynamoDbClient());
 	}
 
-	static getInstance(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string): SendEmailProcessor {
+	static getInstance(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, sessionEventsTable: string): SendEmailProcessor {
 		if (!SendEmailProcessor.instance) {
-			SendEmailProcessor.instance = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY);
+			SendEmailProcessor.instance = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY, sessionEventsTable);
 		}
 		return SendEmailProcessor.instance;
 	}
@@ -54,7 +54,7 @@ export class SendEmailProcessor {
 			...buildCoreEventFields({ email: email.emailAddress }),
 		});
 
-		this.logger.debug("Response after sending Email message", { emailResponse });
+		this.logger.info("Response after sending Email message", { emailResponse });
 		return emailResponse;
 	}
 }

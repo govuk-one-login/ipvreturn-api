@@ -13,6 +13,7 @@ const mockGovNotifyService = mock<SendEmailService>();
 const mockIprService = mock<IPRService>();
 // pragma: allowlist nextline secret
 const GOVUKNOTIFY_API_KEY = "sdhohofsdf";
+const SESSION_EVENTS_TABLE = "session-table";
 const logger = new Logger({
 	logLevel: "DEBUG",
 	serviceName: "IPR",
@@ -22,7 +23,7 @@ let sqsEvent: SQSEvent;
 
 describe("SendEmailProcessor", () => {
 	beforeAll(() => {
-		sendEmailProcessorTest = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY);
+		sendEmailProcessorTest = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY, SESSION_EVENTS_TABLE);
 		// @ts-ignore
 		sendEmailProcessorTest.govNotifyService = mockGovNotifyService;
 		// @ts-ignore

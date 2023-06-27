@@ -28,11 +28,10 @@ class GovNotifyHandler implements LambdaInterface {
 		const batchFailures: SQSBatchItemFailure[] = [];
 		if (event.Records.length === 1) {
 			const record: SQSRecord = event.Records[0];
-			logger.debug("Starting to process record", { record });
+			logger.info("Starting to process record from SQS");
 
 			try {
 				const body = JSON.parse(record.body);
-				logger.debug("Parsed SQS event body", body);
 				if (!GOVUKNOTIFY_API_KEY) {
 					logger.info({ message: "Fetching GOVUKNOTIFY_API_KEY from SSM" });
 					try {
@@ -42,9 +41,9 @@ class GovNotifyHandler implements LambdaInterface {
 						throw err;
 					}
 				}
-				await SendEmailProcessor.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY).processRequest(body);
+				await SendEmailProcessor.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY, this.environmentVariables.sessionEventsTable()).processRequest(body);
 
-				logger.debug("Finished processing record from SQS");
+				logger.info("Finished processing record from SQS");
 
 				// return an empty batchItemFailures array to mark the batch as a success
 				// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting

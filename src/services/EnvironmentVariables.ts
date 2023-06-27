@@ -38,6 +38,9 @@ export class EnvironmentVariables {
 
 	private readonly CLIENT_ID_SSM_PATH = process.env.CLIENT_ID_SSM_PATH;
 
+	private readonly TXMA_QUEUE_URL = process.env.TXMA_QUEUE_URL;
+
+
 	/*
 	 * This function performs validation on env variable values.
 	 * If certain variables have unexpected values the constructor will throw an error and/or log an error message
@@ -46,7 +49,9 @@ export class EnvironmentVariables {
 		switch (serviceType) {
 			case ServicesEnum.GOV_NOTIFY_SERVICE: {
 				if (!this.GOVUKNOTIFY_API_KEY_SSM_PATH || this.GOVUKNOTIFY_API_KEY_SSM_PATH.trim().length === 0 ||
-					!this.RETURN_JOURNEY_URL || this.RETURN_JOURNEY_URL.trim().length === 0) {
+					!this.RETURN_JOURNEY_URL || this.RETURN_JOURNEY_URL.trim().length === 0 ||
+					!this.TXMA_QUEUE_URL || this.TXMA_QUEUE_URL.trim().length === 0 ||
+					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
 					logger.error({ message: "GovNotifyService - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
@@ -89,20 +94,14 @@ export class EnvironmentVariables {
 					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0 ||
 					!this.OIDC_URL || this.OIDC_URL.trim().length === 0 ||
 					!this.RETURN_REDIRECT_URL || this.RETURN_REDIRECT_URL.trim().length === 0 ||
-					!this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN || this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN.trim().length === 0) {
+					!this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN || this.ASSUMEROLE_WITH_WEB_IDENTITY_ARN.trim().length === 0 ||
+					!this.TXMA_QUEUE_URL || this.TXMA_QUEUE_URL.trim().length === 0) {
 					logger.error({ message: "Get Session event data Service - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				if (!this.OIDC_JWT_ASSERTION_TOKEN_EXP || this.OIDC_JWT_ASSERTION_TOKEN_EXP.trim().length === 0) {
 					this.OIDC_JWT_ASSERTION_TOKEN_EXP = "300";
 					logger.warn({ message: "OIDC_JWT_ASSERTION_TOKEN_EXP env var is not set. Setting the expiry to default - 5 minutes." });
-				}
-				break;
-			}
-			case ServicesEnum.SEND_EMAIL_PROCESSOR_SERVICE: {
-				if (!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
-					logger.error({ message: "Send email Handler - Missing SESSION_EVENTS_TABLE" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
-					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				break;
 			}
