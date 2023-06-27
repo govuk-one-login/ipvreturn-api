@@ -66,7 +66,7 @@ export class IPRService {
 
 
 	async isFlaggedForDeletionOrEventAlreadyProcessed(userId: string, eventType: string): Promise<boolean | undefined> {
-		this.logger.info({ message: "Checking if record is flagged for deletion or already processed", tableName: this.tableName, userId });
+		this.logger.info({ message: "Checking if record is flagged for deletion or already processed", tableName: this.tableName });
 		const getSessionCommand = new GetCommand({
 			TableName: this.tableName,
 			Key: {
@@ -79,9 +79,11 @@ export class IPRService {
 			const eventAttribute = this.eventAttributeMap.get(eventType);
 			// If Event type is AUTH_DELETE_ACCOUNT and no record was found, or flagged for deletion then do not process the event.
 			if (eventType === Constants.AUTH_DELETE_ACCOUNT && (!session.Item || (session.Item && session.Item.accountDeletedOn))) {
+				this.logger.info({ message: "Received AUTH_DELETE_ACCOUNT event and no session with that userId was found OR session was found but accountDeletedOn was already set" });
 				return true;
 			} else if (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!])) {
 				// Do not process the event if the record is flagged for deletion or the event mapped attribute exists.
+				this.logger.info({ message: `Session record with that userId was found with either accountDeletedOn set or with ${eventAttribute} already set` });
 				return true;
 			} else {
 				// Process all events except AUTH_DELETE_ACCOUNT when no record exists.
@@ -105,7 +107,6 @@ export class IPRService {
 			ExpressionAttributeValues: expressionAttributeValues,
 		});
 
-		this.logger.debug("updateExpression: ", { updateExpression });
 		this.logger.info("Updating session record" );
 
 		try {
