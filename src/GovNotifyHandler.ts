@@ -41,7 +41,7 @@ class GovNotifyHandler implements LambdaInterface {
 						throw err;
 					}
 				}
-				await SendEmailProcessor.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY).processRequest(body);
+				await SendEmailProcessor.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY, this.environmentVariables.sessionEventsTable()).processRequest(body);
 
 				logger.info("Finished processing record from SQS");
 
