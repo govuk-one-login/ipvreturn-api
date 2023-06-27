@@ -77,7 +77,6 @@ export class SendEmailService {
     	while (retryCount <= this.environmentVariables.maxRetries()) {
     		this.logger.debug(`sendEmail - trying to send email message ${SendEmailService.name} ${new Date().toISOString()}`, {
     			templateId: this.environmentVariables.getEmailTemplateId(this.logger),
-    			options,
     			retryCount,
     		});
 

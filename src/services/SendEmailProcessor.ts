@@ -31,7 +31,7 @@ export class SendEmailProcessor {
 		this.validationHelper = new ValidationHelper();
 		this.metrics = metrics;
 		this.govNotifyService = SendEmailService.getInstance(this.logger, GOVUKNOTIFY_API_KEY);
-		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.SEND_EMAIL_PROCESSOR_SERVICE);
+		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GOV_NOTIFY_SERVICE);
 		this.iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 	}
 
@@ -54,7 +54,7 @@ export class SendEmailProcessor {
 			...buildCoreEventFields({ email: email.emailAddress }),
 		});
 
-		this.logger.debug("Response after sending Email message", { emailResponse });
+		this.logger.info("Response after sending Email message", { emailResponse });
 		return emailResponse;
 	}
 }
