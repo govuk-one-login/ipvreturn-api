@@ -3,7 +3,7 @@ import { SendMessageCommand, SendMessageCommandOutput, SQSClient } from "@aws-sd
 import { ReturnSQSEvent } from "../../../models/ReturnSQSEvent";
 import { DynamoDBClient, GetItemCommand, GetItemCommandOutput } from "@aws-sdk/client-dynamodb";
 
-const MOCK_TXMA_SQS_URL = "https://sqs.eu-west-2.amazonaws.com/489145412748/backend-ddunford-ipvr-MockTxMASQSQueue-eya9dVlVYRRL";
+const MOCK_TXMA_SQS_URL = process.env['API_TEST_SQS_TXMA_CONSUMER_QUEUE'];
 const AWS_REGION = process.env['AWS_REGION'];
 const SESSION_EVENTS_TABLE = process.env['API_TEST_SESSION_EVENTS_TABLE'];
 
