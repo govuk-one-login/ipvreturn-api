@@ -29,13 +29,12 @@ class Session implements LambdaInterface {
 	@logger.injectLambdaContext()
 	async handler(event: APIGatewayProxyEvent, _context: any): Promise<APIGatewayProxyResult> {
 		logger.debug("metrics is", { metrics });
-		logger.debug("Event received", { event });
 
 		switch (event.resource) {
 			case ResourcesEnum.SESSION:
 				if (event.httpMethod === HttpVerbsEnum.GET) {
 					try {
-						logger.info("Got Session request:", { event });
+						logger.info({ message: "Got Session request:" }, { requestId: event.requestContext.requestId });
 						if (!CLIENT_ID) {
 							logger.info({ message: "Fetching CLIENT_ID from SSM" });
 							try {

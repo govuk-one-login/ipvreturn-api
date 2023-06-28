@@ -188,7 +188,7 @@ describe("SessionProcessor", () => {
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
 
-		expect(out.body).toBe("No session event found with the userId: userId");
+		expect(out.body).toBe("No session event found for this userId");
 		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
 	});
 

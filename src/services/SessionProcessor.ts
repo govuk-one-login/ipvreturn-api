@@ -61,7 +61,7 @@ export class SessionProcessor {
 				this.logger.error("Missing openIdConfiguration values.");
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Missing openIdConfiguration values.");
 			}
-			this.logger.debug("OpenId Configuration data: ", { openIdConfiguration });
+			this.logger.debug("Fetching OpenId Configuration data");
 			issuer = openIdConfiguration.issuer;
 			jwksEndpoint = openIdConfiguration.jwks_uri;
 
@@ -125,10 +125,10 @@ export class SessionProcessor {
 			const sub = jwtIdTokenPayload.sub!;
 			try {
 				session = await iprService.getSessionBySub(sub);
-				this.logger.debug("Session retrieved from DB: ", { session });
+				this.logger.debug("Session retrieved from session store");
 				if (!session) {
-					this.logger.error(`No session event found with the userId: ${sub}`);
-					return new Response(HttpCodesEnum.UNAUTHORIZED, `No session event found with the userId: ${sub}`);
+					this.logger.error("No session event found for this userId");
+					return new Response(HttpCodesEnum.UNAUTHORIZED, "No session event found for this userId");
 				}
 
 			} catch (error) {
@@ -140,7 +140,7 @@ export class SessionProcessor {
 			try {
 				this.validationHelper.validateSessionEventFields(session);
 			} catch (error: any) {
-				this.logger.info(`Some events are missing for the session event with the userId: ${sub}`, error.message);
+				this.logger.info("Some events are missing for the session event for this userId", error.message);
 				return {
 					statusCode: HttpCodesEnum.OK,
 					body: JSON.stringify({
