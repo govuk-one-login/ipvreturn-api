@@ -2,7 +2,7 @@ import {
   VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT,
   VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT,
   VALID_F2F_YOTI_START_TXMA_EVENT,
-} from "../unit/data/sqs-events";
+} from "../data/sqs-events";
 import 'dotenv/config';
 import { randomUUID } from "crypto";
 import { getCompletedDynamoRecord, postMockEvent } from "./utils/ApiTestSteps";
