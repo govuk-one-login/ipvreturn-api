@@ -6,7 +6,6 @@ export interface ReturnSQSEvent {
 	event_id: string;
 	client_id: string;
 	clientLandingPageUrl?: string;
-	component_id?: string;
 	event_name: EventType;
 	timestamp: number;
 	timestamp_formatted: string;
