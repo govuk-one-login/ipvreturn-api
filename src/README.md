@@ -12,6 +12,8 @@ To run all unit tests, run `npm run test:unit`. This will compile and run all th
 
 To run the infra tests, run `npm run test:infra`.
 
+To run the API tests, run `npm run test:api`. Note that these tests need to inject items on to the Mock TXMA consumer queue directly hence need to be run in an environment which has active AWS credentials.
+
 ### How to perform lint checks an individual test file
 
 To check if there are any linting issues, run `npm lint`. If there are any critical errors, this command 
