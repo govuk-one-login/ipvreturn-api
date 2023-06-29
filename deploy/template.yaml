@@ -234,7 +234,7 @@ Resources:
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
       ThumbprintList:
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-      Url: "https://oidc.ddunford.staging.account.gov.uk/"
+      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
   ### AssumeRoleWithWebIdentityRole
   AssumeRoleWithWebIdentityRole:
@@ -898,3 +898,14 @@ Resources:
         - !Sub "alias/TxMAKMSEncryptionKey-${AWS::StackName}"
         - alias/TxMAKMSEncryptionKey
       TargetKeyId: !Ref TxMAKMSEncryptionKey
+
+Outputs:
+  MockTxMASQSQueueUrl:
+    Description: "SQS TXMA Consumer Queue URL"
+    Value: !Ref MockTxMASQSQueue
+    Condition: IsMockedEnvironment
+
+  SessionEventsTable:
+    Description: "SessionEvents Table Name"
+    Value:
+      Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
