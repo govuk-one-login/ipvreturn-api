@@ -8,11 +8,24 @@ From `src` folder run `sam build`
 
 ## How to run tests
 
+### Unit tests
+
 To run all unit tests, run `npm run test:unit`. This will compile and run all the unit tests in the `/tests` directory.
+
+### Infra tests
 
 To run the infra tests, run `npm run test:infra`.
 
+### API tests
+
 To run the API tests, run `npm run test:api`. Note that these tests need to inject items on to the Mock TXMA consumer queue directly hence need to be run in an environment which has active AWS credentials.
+
+The API tests also require the following env vars to be set:
+
+- `API_TEST_SESSION_EVENTS_TABLE` - table name for the Session Events table to check
+- `API_TEST_SQS_TXMA_CONSUMER_QUEUE` - URL of the TXMA mock consumer queue
+
+These are set automatically by `./run-tests-locally.sh <AWS_Stack_Name>`.
 
 ### How to perform lint checks an individual test file
 
