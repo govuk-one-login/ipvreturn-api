@@ -86,6 +86,7 @@ export const VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT: ReturnSQSEvent = {
   "timestamp_formatted": "2023-04-19T11:00:01.000Z",
   "user": {
     "user_id": "01333e01-dde3-412f-a484-4444",
+    // pragma: allowlist nextline secret
     "email": "e914e32172adcdad6c0906f7e5a0f4f43a6e99847c4370df783c7142f71ba454"
   },
   "restricted": {
