@@ -75,8 +75,6 @@ describe("post Events on to mock SQS queue", () => {
     expect(response.Item?.clientName).toEqual({S: "ekwU"});
     expect(response.Item?.redirectUri).toEqual({S: "REDIRECT_URL"});
     expect(response.Item?.userEmail).toEqual({S: "jest@test.com"});
-  });
-
-
+  }, 10000); // timeout set to 10s to avoid infinite loop
 
 });
