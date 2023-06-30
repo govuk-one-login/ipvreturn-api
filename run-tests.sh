@@ -9,10 +9,9 @@ remove_quotes () {
 declare error_code
 # shellcheck disable=SC2154
 #The CFN variables seem to include quotes when used in tests these must be removed before assigning them.
-CFN_MockTxMASQSQueueUrl_NoQuotes=$(remove_quotes "$CFN_MockTxMASQSQueueUrl")
-CFN_SessionEventsTable_NoQuotes=$(remove_quotes "$CFN_SessionEventsTable")
-
 export API_TEST_SESSION_EVENTS_TABLE=$(remove_quotes $CFN_SessionEventsTable)
+# shellcheck disable=SC2154
+#The CFN variables seem to include quotes when used in tests these must be removed before assigning them.
 export API_TEST_SQS_TXMA_CONSUMER_QUEUE=$(remove_quotes $CFN_MockTxMASQSQueueUrl)
 
 cd ./src; npm run test:api
