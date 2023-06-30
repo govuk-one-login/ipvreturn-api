@@ -19,3 +19,4 @@ bin-release/
 
 /.env
 /docker_vars.env
+results/
