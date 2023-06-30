@@ -17,8 +17,6 @@ export API_TEST_SQS_TXMA_CONSUMER_QUEUE=$(remove_quotes $CFN_MockTxMASQSQueueUrl
 cd ./src; npm run test:api
 error_code=$?
 
-pwd
-ls
 cp -rf results $TEST_REPORT_ABSOLUTE_DIR
 
 exit $error_code
