@@ -65,7 +65,6 @@ export const VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT = {
 export const VALID_F2F_YOTI_START_TXMA_EVENT: ReturnSQSEvent = {
   "event_id": "588f4a66-f75a-4728-9f7b-8afd865c233d",
   "client_id": "ekwU",
-  "component_id": "UNKNOWN",
   "event_name": "F2F_YOTI_START",
   "timestamp": 1681902001,
   "timestamp_formatted": "2023-04-19T11:00:01.000Z",
@@ -80,7 +79,6 @@ export const VALID_F2F_YOTI_START_TXMA_EVENT_STRING = JSON.stringify(VALID_F2F_Y
 export const VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT: ReturnSQSEvent = {
   "event_id": "588f4a66-f75a-4728-9f7b-8afd865c233e",
   "client_id": "ekwU",
-  "component_id": "UNKNOWN",
   "event_name": "IPV_F2F_CRI_VC_CONSUMED",
   "timestamp": 1681902001,
   "timestamp_formatted": "2023-04-19T11:00:01.000Z",
