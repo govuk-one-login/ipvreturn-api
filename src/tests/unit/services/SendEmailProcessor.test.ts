@@ -7,6 +7,7 @@ import { SendEmailService } from "../../../services/SendEmailService";
 import { IPRService } from "../../../services/IPRService";
 import { mock } from "jest-mock-extended";
 import { EmailResponse } from "../../../models/EmailResponse";
+import { absoluteTimeNow } from "../../../utils/DateTimeUtils";
 
 let sendEmailProcessorTest: SendEmailProcessor;
 const mockGovNotifyService = mock<SendEmailService>();
@@ -45,6 +46,17 @@ describe("SendEmailProcessor", () => {
 
 		expect(emailResponse.emailSentDateTime).toEqual(expectedDateTime);
 		expect(emailResponse.emailFailureMessage).toBe("");
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		expect(mockIprService.sendToTXMA).toHaveBeenCalledTimes(1);
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		expect(mockIprService.sendToTXMA).toHaveBeenCalledWith({
+			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
+			timestamp: absoluteTimeNow(),
+			user: {
+				email: "test.user@digital.cabinet-office.gov.uk",
+				user_id: "user_id",
+			},
+		});
 	});
 
 	it.each([

@@ -51,7 +51,7 @@ export class SendEmailProcessor {
 
 		await this.iprService.sendToTXMA({
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-			...buildCoreEventFields({ email: email.emailAddress }),
+			...buildCoreEventFields({ email: email.emailAddress, user_id: email.userId }),
 		});
 
 		this.logger.info("Response after sending Email message", { emailResponse });

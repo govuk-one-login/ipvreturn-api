@@ -68,7 +68,7 @@ export class SessionEventProcessor {
 		// Send SQS message to GovNotify queue to send email to the user.
 		try {
 			const nameParts = personalIdentityUtils.getNames(sessionEventData.nameParts);
-			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEventData.userEmail, nameParts.givenNames[0], nameParts.familyNames[0]));
+			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEventData.userId, sessionEventData.userEmail, nameParts.givenNames[0], nameParts.familyNames[0]));
 		} catch (error) {
 			const userId = sessionEventData.userId;
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {

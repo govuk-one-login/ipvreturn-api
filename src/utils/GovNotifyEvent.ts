@@ -1,5 +1,6 @@
 export interface GovNotifyEvent {
 	"Message": {
+		"userId": string;
 		"emailAddress": string;
 		"firstName": string;
 		"lastName": string;
@@ -7,10 +8,11 @@ export interface GovNotifyEvent {
 	};
 }
 
-export const buildGovNotifyEventFields = (email: string, firstName: string, lastName: string): GovNotifyEvent => {
+export const buildGovNotifyEventFields = (userId: string, email: string, firstName: string, lastName: string): GovNotifyEvent => {
 
 	return {
 		Message : {
+			userId,
 			emailAddress: email,
 			firstName,
 			lastName,
