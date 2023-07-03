@@ -9,6 +9,7 @@ import { Metrics } from "@aws-lambda-powertools/metrics";
 import { SendEmailService } from "./SendEmailService";
 import { IPRService } from "./IPRService";
 import { EnvironmentVariables } from "./EnvironmentVariables";
+import { MessageCodes } from "../models/enums/MessageCodes";
 
 export class SendEmailProcessor {
 
@@ -48,11 +49,16 @@ export class SendEmailProcessor {
 		await this.validationHelper.validateModel(email, this.logger);
 
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(email);
-
-		await this.iprService.sendToTXMA({
-			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-			...buildCoreEventFields({ email: email.emailAddress, user_id: email.userId }),
-		});
+		try {
+			await this.iprService.sendToTXMA({
+				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
+				...buildCoreEventFields({ email: email.emailAddress, user_id: email.userId }),
+			});
+		} catch (error) {
+			this.logger.error("Failed to write TXMA event IPR_RESULT_NOTIFICATION_EMAILED to SQS queue.", {
+				messageCode: MessageCodes.FAILED_TO_WRITE_TXMA,
+			});
+		}
 
 		this.logger.info("Response after sending Email message", { emailResponse });
 		return emailResponse;

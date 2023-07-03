@@ -15,11 +15,8 @@ const mockIprService = mock<IPRService>();
 // pragma: allowlist nextline secret
 const GOVUKNOTIFY_API_KEY = "sdhohofsdf";
 const SESSION_EVENTS_TABLE = "session-table";
-const logger = new Logger({
-	logLevel: "DEBUG",
-	serviceName: "IPR",
-});
-const metrics = new Metrics({ namespace: "F2F" });
+const logger = mock<Logger>();
+const metrics = new Metrics({ namespace: "IPR" });
 let sqsEvent: SQSEvent;
 
 describe("SendEmailProcessor", () => {
@@ -69,6 +66,22 @@ describe("SendEmailProcessor", () => {
 		delete eventBodyMessage[attribute];
 		eventBody.Message = eventBodyMessage;
 		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
+	});
+
+	it("Return 200 when write to txMA fails", async () => {
+		const expectedDateTime = new Date().toISOString();
+		const mockEmailResponse = new EmailResponse(expectedDateTime, "", 201);
+		mockGovNotifyService.sendEmail.mockResolvedValue(mockEmailResponse);
+		const eventBody = JSON.parse(sqsEvent.Records[0].body);
+		mockIprService.sendToTXMA.mockRejectedValue({});
+
+		const emailResponse = await sendEmailProcessorTest.processRequest(eventBody);
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		expect(mockIprService.sendToTXMA).toHaveBeenCalledTimes(1);
+
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		expect(logger.error).toHaveBeenCalledWith("Failed to write TXMA event IPR_RESULT_NOTIFICATION_EMAILED to SQS queue.", { "messageCode": "FAILED_TO_WRITE_TXMA" });
+
 	});
 
 });
