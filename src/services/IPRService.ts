@@ -11,6 +11,7 @@ import { TxmaEvent } from "../utils/TxmaEvent";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { SessionEvent } from "../models/SessionEvent";
+import { absoluteTimeNow } from "../utils/DateTimeUtils";
 
 export class IPRService {
 	readonly tableName: string;
@@ -60,6 +61,9 @@ export class IPRService {
 		}
 
 		if (session.Item) {
+			if (session.Item.expiryDate < absoluteTimeNow()) {
+				throw new AppError( HttpCodesEnum.UNAUTHORIZED, `Session with userId: ${userId} has expired`);
+			}
 			return session.Item as SessionEvent;
 		}
 	}
