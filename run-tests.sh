@@ -14,7 +14,7 @@ export API_TEST_SESSION_EVENTS_TABLE=$(remove_quotes $CFN_SessionEventsTable)
 #The CFN variables seem to include quotes when used in tests these must be removed before assigning them.
 export API_TEST_SQS_TXMA_CONSUMER_QUEUE=$(remove_quotes $CFN_MockTxMASQSQueueUrl)
 
-cd ./src; npm run test:api
+cd /src; npm run test:api
 error_code=$?
 
 cp -rf results $TEST_REPORT_ABSOLUTE_DIR
