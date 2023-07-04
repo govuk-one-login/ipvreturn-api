@@ -10,6 +10,10 @@ import { SendEmailService } from "./SendEmailService";
 import { IPRService } from "./IPRService";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { MessageCodes } from "../models/enums/MessageCodes";
+import {AppError} from "../utils/AppError";
+import {HttpCodesEnum} from "../models/enums/HttpCodesEnum";
+import {Response} from "../utils/Response";
+import {SessionEvent} from "../models/SessionEvent";
 
 export class SendEmailProcessor {
 
@@ -45,8 +49,50 @@ export class SendEmailProcessor {
 
 	async processRequest(eventBody: any): Promise<EmailResponse> {
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
+		// Validate Email model
+		try {
+			await this.validationHelper.validateModel(email, this.logger);
+		} catch (error) {
+			this.logger.error("Failed to Validate Email model data", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Failed to Validate Email model data.");
+		}
 
-		await this.validationHelper.validateModel(email, this.logger);
+		//Retrieve session event record for the userId
+		let session;
+		try {
+			session = await this.iprService.getSessionBySub(email.userId);
+			this.logger.debug("Session retrieved from session store");
+			if (!session) {
+				this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "No session event found for this userId");
+			}
+
+		} catch (error) {
+			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", error });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
+		}
+
+		// Validate the notified field is set to true
+		if (!session.notified) {
+			this.logger.error("Notified flag is not set to true for this user session event", { messageCode: MessageCodes.NOTIFIED_FLAG_NOT_SET_TO_TRUE });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Notified flag is not set to true for this user session event");
+		}
+
+		// Validate if the record is missing some fields related to the Events and log the details and do not notify the User.
+		try {
+			this.validationHelper.validateSessionEventFields(session);
+		} catch (error: any) {
+			this.logger.warn(error.message, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
+		}
+		const sessionEventData: SessionEvent = SessionEvent.parseRequest(JSON.stringify(session));
+		// Validate all necessary fields are populated before processing the data.
+		try {
+			await this.validationHelper.validateModel(sessionEventData, this.logger);
+		} catch (error) {
+			this.logger.error("Unable to process the DB record as the necessary fields are not populated.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated.");
+		}
 
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(email);
 		try {
