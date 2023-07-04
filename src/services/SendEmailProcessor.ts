@@ -10,10 +10,10 @@ import { SendEmailService } from "./SendEmailService";
 import { IPRService } from "./IPRService";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { MessageCodes } from "../models/enums/MessageCodes";
-import {AppError} from "../utils/AppError";
-import {HttpCodesEnum} from "../models/enums/HttpCodesEnum";
-import {Response} from "../utils/Response";
-import {SessionEvent} from "../models/SessionEvent";
+import { AppError } from "../utils/AppError";
+import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
+import { Response } from "../utils/Response";
+import { SessionEvent } from "../models/SessionEvent";
 
 export class SendEmailProcessor {
 

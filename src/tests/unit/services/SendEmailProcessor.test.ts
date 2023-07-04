@@ -8,8 +8,8 @@ import { IPRService } from "../../../services/IPRService";
 import { mock } from "jest-mock-extended";
 import { EmailResponse } from "../../../models/EmailResponse";
 import { absoluteTimeNow } from "../../../utils/DateTimeUtils";
-import {unmarshall} from "@aws-sdk/util-dynamodb";
-import {SessionEvent} from "../../../models/SessionEvent";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
+import { SessionEvent } from "../../../models/SessionEvent";
 
 let sendEmailProcessorTest: SendEmailProcessor;
 const mockGovNotifyService = mock<SendEmailService>();
@@ -147,7 +147,8 @@ describe("SendEmailProcessor", () => {
 		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
-		expect(logger.warn).toHaveBeenCalledWith(`${attribute} is not yet populated, unable to process the DB record.` , { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		expect(logger.warn).toHaveBeenCalledWith(`${attribute} is not yet populated, unable to process the DB record.`, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
 
 	});
 
@@ -167,7 +168,8 @@ describe("SendEmailProcessor", () => {
 		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
-		expect(logger.error).toHaveBeenCalledWith("Unable to process the DB record as the necessary fields are not populated." , { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		expect(logger.error).toHaveBeenCalledWith("Unable to process the DB record as the necessary fields are not populated.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
 
 	});
 
@@ -179,7 +181,8 @@ describe("SendEmailProcessor", () => {
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
-		expect(logger.error).toHaveBeenCalledWith("Notified flag is not set to true for this user session event" , { "messageCode": "NOTIFIED_FLAG_NOT_SET_TO_TRUE" });
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		expect(logger.error).toHaveBeenCalledWith("Notified flag is not set to true for this user session event", { "messageCode": "NOTIFIED_FLAG_NOT_SET_TO_TRUE" });
 
 	});
 
@@ -191,7 +194,8 @@ describe("SendEmailProcessor", () => {
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(null);
 		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
-		expect(logger.error).toHaveBeenCalledWith("No session event found for this userId" , { "messageCode": "SESSION_NOT_FOUND" });
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		expect(logger.error).toHaveBeenCalledWith("No session event found for this userId", { "messageCode": "SESSION_NOT_FOUND" });
 
 	});
 
