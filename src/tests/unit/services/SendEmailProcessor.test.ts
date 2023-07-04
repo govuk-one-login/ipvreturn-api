@@ -1,7 +1,7 @@
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SQSEvent } from "aws-lambda";
-import { VALID_SQS_EVENT } from "../data/sqs-events";
+import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT } from "../../data/sqs-events";
 import { SendEmailProcessor } from "../../../services/SendEmailProcessor";
 import { SendEmailService } from "../../../services/SendEmailService";
 import { IPRService } from "../../../services/IPRService";
@@ -56,13 +56,13 @@ describe("SendEmailProcessor", () => {
 		sendEmailProcessorTest.govNotifyService = mockGovNotifyService;
 		// @ts-ignore
 		sendEmailProcessorTest.iprService = mockIprService;
-		sqsEvent = VALID_SQS_EVENT;
+		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		mockSessionEvent = getMockSessionEventItem();
 	});
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		sqsEvent = VALID_SQS_EVENT;
+		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		mockSessionEvent = getMockSessionEventItem();
 	});
 

@@ -1,7 +1,7 @@
 import { mock } from "jest-mock-extended";
 import { lambdaHandler } from "../../PostEventHandler";
 import { PostEventProcessor } from "../../services/PostEventProcessor";
-import { VALID_AUTH_IPV_AUTHORISATION_REQUESTED_EVENT } from "./data/sqs-events";
+import { VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT } from "../data/sqs-events";
 import { AppError } from "../../utils/AppError";
 import { HttpCodesEnum } from "../../models/enums/HttpCodesEnum";
 
@@ -21,7 +21,7 @@ jest.mock("../../utils/Config", () => {
 describe("PostEventHandler", () => {
 	it("returns success response", async () => {
 		PostEventProcessor.getInstance = jest.fn().mockReturnValue(mockPostEventProcessor);
-		await lambdaHandler(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_EVENT, "IPR");
+		await lambdaHandler(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT, "IPR");
 
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockPostEventProcessor.processRequest).toHaveBeenCalledTimes(1);
@@ -37,7 +37,7 @@ describe("PostEventHandler", () => {
 		PostEventProcessor.getInstance = jest.fn().mockImplementation(() => {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 		});
-		const response = await lambdaHandler(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_EVENT, "IPR");
+		const response = await lambdaHandler(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT, "IPR");
 		expect(response.batchItemFailures).toEqual([]);
 	});
 });
