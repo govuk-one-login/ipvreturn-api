@@ -38,6 +38,14 @@ Parameters:
     Type: String
     Default: "ipvreturn-kms"
     Description: The name of the L2 DynamoDB stack deployed.
+  DeployAlarmsInNonProdLikeEnvironment:
+    Description: "Set to the string value `true` to deploy alarms in a DEV environment"
+    Type: String
+    Default: false
+  SupportManualURL:
+    Description: "Link to the IPV Return Journey support manual"
+    Type: String
+    Default: 'https://govukverify.atlassian.net/wiki/spaces/FTFCRI/pages/3626532870/IPR+Support+Documentation'
 
 Mappings:
   EnvironmentConfiguration: # This is where you store per-environment settings.
@@ -89,6 +97,7 @@ Mappings:
       DNSSUFFIX: "return.dev.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
+      LAMBDACONCURRENCYTHRESHOLD: 16
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
@@ -98,6 +107,7 @@ Mappings:
       DNSSUFFIX: "return.build.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
+      LAMBDACONCURRENCYTHRESHOLD: 16
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
@@ -107,6 +117,7 @@ Mappings:
       DNSSUFFIX: "return.staging.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
+      LAMBDACONCURRENCYTHRESHOLD: 16
     integration:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
@@ -116,6 +127,7 @@ Mappings:
       DNSSUFFIX: "return.integration.account.gov.uk"
       OIDCURL: "https://oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
+      LAMBDACONCURRENCYTHRESHOLD: 16
     production:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
@@ -125,6 +137,7 @@ Mappings:
       DNSSUFFIX: "return.account.gov.uk"
       OIDCURL: "https://oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
+      LAMBDACONCURRENCYTHRESHOLD: 16
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
@@ -178,6 +191,9 @@ Conditions:
     - Fn::Equals:
         - !Ref Environment
         - build
+  DeployAlarms: !Or
+    - Condition: IsProdLikeEnvironment
+    - !Equals [!Ref DeployAlarmsInNonProdLikeEnvironment, true]
 
 Globals:
   Function:
@@ -465,6 +481,56 @@ Resources:
         - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
       FunctionName: !Ref PostEventFunction
 
+  PostEventConcurrency80Alarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
+      AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
+      AlarmName: !Sub "${AWS::StackName}-PostEventFunction-concurrency"
+      MetricName: ConcurrentExecutions
+      Namespace: AWS/Lambda
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref PostEventFunction
+      Statistic: Maximum
+      Period: 60 # This is the minimum value for the AWS Namespace
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: !FindInMap [EnvironmentVariables, !Ref Environment, LAMBDACONCURRENCYTHRESHOLD]
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  PostEventThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-critical-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-critical-alert
+      InsufficientDataActions: []
+      AlarmDescription: !Sub "Trigger if the ${PostEventFunction} lambda throttles. ${SupportManualURL}"
+      AlarmName: !Sub "${AWS::StackName}-PostEventFunction-throttles"
+      MetricName: Throttles
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref PostEventFunction
+      TreatMissingData: notBreaching
+      Period: 60 # This is the minimum value for the AWS Namespace
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+
   GovNotifyFunction:
     Type: AWS::Serverless::Function
     DependsOn: GovNotifyFunctionLogGroup
@@ -547,6 +613,56 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref GovNotifyFunction
       Principal: apigateway.amazonaws.com
+
+  GovNotifyConcurrency80Alarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
+      AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
+      AlarmName: !Sub "${AWS::StackName}-GovNotifyFunction-concurrency"
+      MetricName: ConcurrentExecutions
+      Namespace: AWS/Lambda
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref GovNotifyFunction
+      Statistic: Maximum
+      Period: 60 # This is the minimum value for the AWS Namespace
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: !FindInMap [EnvironmentVariables, !Ref Environment, LAMBDACONCURRENCYTHRESHOLD]
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  GovNotifyThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-critical-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-critical-alert
+      InsufficientDataActions: []
+      AlarmDescription: !Sub "Trigger if the ${GovNotifyFunction} lambda throttles. ${SupportManualURL}"
+      AlarmName: !Sub "${AWS::StackName}-GovNotifyFunction-throttles"
+      MetricName: Throttles
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref GovNotifyFunction
+      TreatMissingData: notBreaching
+      Period: 60 # This is the minimum value for the AWS Namespace
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
 
   StreamProcessorFunction:
     Type: AWS::Serverless::Function
@@ -641,6 +757,56 @@ Resources:
       FunctionName: !Ref StreamProcessorFunction
       Principal: apigateway.amazonaws.com
 
+  StreamProcessorConcurrency80Alarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
+      AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
+      AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-concurrency"
+      MetricName: ConcurrentExecutions
+      Namespace: AWS/Lambda
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref StreamProcessorFunction
+      Statistic: Maximum
+      Period: 60 # This is the minimum value for the AWS Namespace
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: !FindInMap [EnvironmentVariables, !Ref Environment, LAMBDACONCURRENCYTHRESHOLD]
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  StreamProcessorThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-critical-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-critical-alert
+      InsufficientDataActions: []
+      AlarmDescription: !Sub "Trigger if the ${StreamProcessorFunction} lambda throttles. ${SupportManualURL}"
+      AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-throttles"
+      MetricName: Throttles
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref StreamProcessorFunction
+      TreatMissingData: notBreaching
+      Period: 60 # This is the minimum value for the AWS Namespace
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+
   ## Session
   SessionFunction:
     Type: AWS::Serverless::Function
@@ -725,6 +891,56 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SessionFunction
       Principal: apigateway.amazonaws.com
+
+  SessionConcurrency80Alarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
+      AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
+      AlarmName: !Sub "${AWS::StackName}-SessionFunction-concurrency"
+      MetricName: ConcurrentExecutions
+      Namespace: AWS/Lambda
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SessionFunction
+      Statistic: Maximum
+      Period: 60 # This is the minimum value for the AWS Namespace
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: !FindInMap [EnvironmentVariables, !Ref Environment, LAMBDACONCURRENCYTHRESHOLD]
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  SessionThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-critical-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-critical-alert
+      InsufficientDataActions: []
+      AlarmDescription: !Sub "Trigger if the ${SessionFunction} lambda throttles. ${SupportManualURL}"
+      AlarmName: !Sub "${AWS::StackName}-SessionFunction-throttles"
+      MetricName: Throttles
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SessionFunction
+      TreatMissingData: notBreaching
+      Period: 60 # This is the minimum value for the AWS Namespace
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
 
   #Gov Notify SQS Queue
   GovNotifySQSQueue:
@@ -898,6 +1114,827 @@ Resources:
         - !Sub "alias/TxMAKMSEncryptionKey-${AWS::StackName}"
         - alias/TxMAKMSEncryptionKey
       TargetKeyId: !Ref TxMAKMSEncryptionKey
+
+  5XXErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-5XXErrorAlarm"
+      AlarmDescription: !Sub "There has been a small proportion of 5XX errors on the backend api-gateway. ${SupportManualURL}"
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      Dimensions: [ ]
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 2
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: errorThreshold
+          Label: errorThreshold
+          ReturnData: true
+          Expression: IF(invocations<10,0,errorPercentage)
+        - Id: invocations
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: Count
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "ipv-return-${AWS::StackName}"
+            Period: 60
+            Stat: Sum
+        - Id: errorPercentage
+          Label: errorPercentage
+          ReturnData: false
+          Expression: (error/invocations)*100
+        - Id: error
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: 5XXError
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "ipv-return-${AWS::StackName}"
+            Period: 60
+            Stat: Sum
+
+  5XXErrorCriticalAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-5XXErrorCriticalAlarm"
+      AlarmDescription: !Sub "There has been a significant proportion of 5XX errors on the backend api-gateway. ${SupportManualURL}"
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-critical-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-critical-alert
+      InsufficientDataActions: [ ]
+      Dimensions: [ ]
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: errorThreshold
+          Label: errorThreshold
+          ReturnData: true
+          Expression: IF(invocations<10,0,errorPercentage)
+        - Id: invocations
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: Count
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "ipv-return-${AWS::StackName}"
+            Period: 60
+            Stat: Sum
+        - Id: errorPercentage
+          Label: errorPercentage
+          ReturnData: false
+          Expression: (error/invocations)*100
+        - Id: error
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: 5XXError
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "ipv-return-${AWS::StackName}"
+            Period: 60
+            Stat: Sum
+
+  Session5XXApiGwErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: DeployAlarms
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-Session5XXApiGwErrorAlarm"
+      AlarmDescription: !Sub "There has been a small proportion of 5XX errors on the Session endpoint. ${SupportManualURL}"
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      Dimensions: [ ]
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 2
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: errorThreshold
+          Label: errorThreshold
+          ReturnData: true
+          Expression: IF(invocations<4 || error<2,0,errorPercentage)
+        - Id: invocations
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: Count
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: Resource
+                  Value: /session
+                - Name: Stage
+                  Value: !Ref Environment
+                - Name: Method
+                  Value: GET
+            Period: 60
+            Stat: Sum
+        - Id: errorPercentage
+          Label: errorPercentage
+          ReturnData: false
+          Expression: (error/invocations)*100
+        - Id: error
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: 5XXError
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: Resource
+                  Value: /session
+                - Name: Stage
+                  Value: !Ref Environment
+                - Name: Method
+                  Value: GET
+            Period: 60
+            Stat: Sum
+
+  Session5XXApiGwErrorCriticalAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: DeployAlarms
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-Session5XXApiGwErrorCriticalAlarm"
+      AlarmDescription: !Sub "There has been a significant proportion of 5XX errors on the Session endpoint. ${SupportManualURL}"
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-critical-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-critical-alert
+      InsufficientDataActions: [ ]
+      Dimensions: [ ]
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: errorThreshold
+          Label: errorThreshold
+          ReturnData: true
+          Expression: IF(invocations<10,0,errorPercentage)
+        - Id: invocations
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: Count
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: Resource
+                  Value: /session
+                - Name: Stage
+                  Value: !Ref Environment
+                - Name: Method
+                  Value: GET
+            Period: 60
+            Stat: Sum
+        - Id: errorPercentage
+          Label: errorPercentage
+          ReturnData: false
+          Expression: (error/invocations)*100
+        - Id: error
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: 5XXError
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: Resource
+                  Value: /session
+                - Name: Stage
+                  Value: !Ref Environment
+                - Name: Method
+                  Value: GET
+            Period: 60
+            Stat: Sum
+
+  Session4XXApiGwErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: DeployAlarms
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-Session4XXApiGwErrorAlarm"
+      AlarmDescription:
+        Fn::Sub: >-
+          >=50% of invocations to the Session endpoint have generated a 4XX error in
+          4 or more out of the last 10 minutes. ${SupportManualURL}
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      Dimensions: [ ]
+      EvaluationPeriods: 10
+      DatapointsToAlarm: 4
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: safePercentage
+          Label: safePercentage
+          ReturnData: true
+          Expression: IF(invocations<5 || error<5,0,errorPercentage)
+        - Id: invocations
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: Count
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: Resource
+                  Value: /session
+                - Name: Stage
+                  Value: !Ref Environment
+                - Name: Method
+                  Value: GET
+            Period: 60
+            Stat: Sum
+        - Id: errorPercentage
+          Label: errorPercentage
+          ReturnData: false
+          Expression: (error/invocations)*100
+        - Id: error
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: 4XXError
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: Resource
+                  Value: /session
+                - Name: Stage
+                  Value: !Ref Environment
+                - Name: Method
+                  Value: GET
+            Period: 60
+            Stat: Sum
+
+  LatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-apiGWLatencyAlarm"
+      AlarmDescription: !Sub "There has been increased latency on backend api-gateway. ${SupportManualURL}"
+      ActionsEnabled: false  # disabled until we're ready for alarm actions to fire
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      Dimensions: [ ]
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 2
+      Threshold: 2500
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: safeLatency
+          Label: safeLatency
+          ReturnData: true
+          Expression: IF(invocations<10,0,maxLatency)
+        - Id: invocations
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: Count
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "ipv-return-${AWS::StackName}"
+            Period: 60
+            Stat: Sum
+        - Id: maxLatency
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApiGateway
+              MetricName: Latency
+              Dimensions:
+                - Name: ApiName
+                  Value: !Sub "ipv-return-${AWS::StackName}"
+            Period: 60
+            Stat: Maximum
+
+  TXMASQSOldMessagesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-TXMASQSOldMessagesAlarm"
+      AlarmDescription: !Sub "Trigger an alarm when the age of the oldest TXMA message is 5 or more minutes. ${SupportManualURL}"
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      MetricName: ApproximateAgeOfOldestMessage
+      Namespace: AWS/SQS
+      Statistic: Maximum
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt TxMASQSQueue.QueueName
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 300
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  TXMADLQMessagesVisibleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-TXMADLQMessagesVisibleAlarm"
+      AlarmDescription: !Sub "Trigger an alarm when message gets added to TXMA DLQ. ${SupportManualURL}"
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Statistic: Maximum
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt TxMASQSQueueDeadLetterQueue.QueueName
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  GovNotifySQSOldMessagesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-GovNotifySQSOldMessagesAlarm"
+      AlarmDescription: !Sub "Trigger an alarm when the age of the oldest TXMA message is 5 or more minutes. ${SupportManualURL}"
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      MetricName: ApproximateAgeOfOldestMessage
+      Namespace: AWS/SQS
+      Statistic: Maximum
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt GovNotifySQSQueue.QueueName
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 300
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  GovNotifyDLQMessagesVisibleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-GovNotifyDLQMessagesVisibleAlarm"
+      AlarmDescription: !Sub "Trigger an alarm when message gets added to GovNotify DLQ. ${SupportManualURL}"
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Statistic: Maximum
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt GovNotifySQSQueueDeadLetterQueue.QueueName
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  LambdaTimeoutAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: DeployAlarms
+    Properties:
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
+      AlarmDescription: Trigger the alarm if any lambda in the account timesout 5 times within 5 minutes.
+      AlarmName: !Sub "${AWS::StackName}-LambdaTimeoutAlarm"
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 5
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: a1
+          Label: AcumulatedLambdaTimeOuts
+          ReturnData: true
+          Expression: (b1 + c1 + d1 + e1) >= 0
+        - Id: b1
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: !Sub "${AWS::StackName}/TimeOutLogMessages"
+              MetricName: VerifyAuthorizeLambdaTimeOut
+            Period: 60
+            Stat: Sum
+        - Id: c1
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: !Sub "${AWS::StackName}/TimeOutLogMessages"
+              MetricName: UserInfoLambdaTimeOut
+            Period: 60
+            Stat: Sum
+        - Id: d1
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: !Sub "${AWS::StackName}/TimeOutLogMessages"
+              MetricName: FetchBioTokenLambdaTimeOut
+            Period: 60
+            Stat: Sum
+        - Id: e1
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: !Sub "${AWS::StackName}/TimeOutLogMessages"
+              MetricName: IssueAccessTokenLambdaTimeOut
+            Period: 60
+            Stat: Sum
+
+  ConcurrencyAlarmDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Condition: DeployAlarms
+    Properties:
+      DashboardName: !Sub '${AWS::StackName}-Concurrency-Alarm-Overview'
+      DashboardBody:
+        Fn::Sub: >
+          {
+            "widgets": [
+              {
+                "height": 6,
+                  "width": 12,
+                  "y": 0,
+                  "x": 0,
+                  "type": "metric",
+                  "properties": {
+                    "title": "Postevent 80% Concurrency - ${AWS::StackName}",
+                    "annotations": {
+                      "alarms": ["${PostEventConcurrency80Alarm.Arn}"]
+                    },
+                    "view": "timeSeries",
+                    "stacked": false
+                  }
+                },
+                {
+                  "height": 6,
+                  "width": 12,
+                  "y": 0,
+                  "x": 12,
+                  "type": "metric",
+                  "properties": {
+                    "title": "GovNotify 80% Concurrency - ${AWS::StackName}",
+                    "annotations": {
+                      "alarms": ["${GovNotifyConcurrency80Alarm.Arn}"]
+                    },
+                    "view": "timeSeries",
+                    "stacked": false
+                  }
+                },
+                {
+                  "height": 6,
+                  "width": 12,
+                  "y": 6,
+                  "x": 0,
+                  "type": "metric",
+                  "properties": {
+                    "title": "Stream processor 80% Concurrency - ${AWS::StackName}",
+                    "annotations": {
+                      "alarms": ["${StreamProcessorConcurrency80Alarm.Arn}"]
+                    },
+                    "view": "timeSeries",
+                    "stacked": false
+                  }
+                },
+                {
+                  "height": 6,
+                  "width": 12,
+                  "y": 6,
+                  "x": 12,
+                  "type": "metric",
+                  "properties": {
+                    "title": "session 80% Concurrency - ${AWS::StackName}",
+                    "annotations": {
+                      "alarms": ["${SessionConcurrency80Alarm.Arn}"]
+                    },
+                    "view": "timeSeries",
+                    "stacked": false
+                  }
+                }
+              ]
+            }
+
+  ThrottlesAlarmDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Condition: DeployAlarms
+    Properties:
+      DashboardName: !Sub '${AWS::StackName}-Throttles-Alarm-Overview'
+      DashboardBody:
+        Fn::Sub: >
+          {
+            "widgets": [
+              {
+                "height": 6,
+                  "width": 12,
+                  "y": 0,
+                  "x": 0,
+                  "type": "metric",
+                  "properties": {
+                    "title": "Post Event throttles - ${AWS::StackName}",
+                    "annotations": {
+                      "alarms": ["${PostEventThrottleAlarm.Arn}"]
+                    },
+                    "view": "timeSeries",
+                    "stacked": false
+                  }
+                },
+                {
+                  "height": 6,
+                  "width": 12,
+                  "y": 0,
+                  "x": 12,
+                  "type": "metric",
+                  "properties": {
+                    "title": "GovNotify Throttles - ${AWS::StackName}",
+                    "annotations": {
+                      "alarms": ["${GovNotifyThrottleAlarm.Arn}"]
+                    },
+                    "view": "timeSeries",
+                    "stacked": false
+                  }
+                },
+                {
+                  "height": 6,
+                  "width": 12,
+                  "y": 6,
+                  "x": 0,
+                  "type": "metric",
+                  "properties": {
+                    "title": "Stream processor Throttles - ${AWS::StackName}",
+                    "annotations": {
+                      "alarms": ["${StreamProcessorThrottleAlarm.Arn}"]
+                    },
+                    "view": "timeSeries",
+                    "stacked": false
+                  }
+                },
+                {
+                  "height": 6,
+                  "width": 12,
+                  "y": 6,
+                  "x": 12,
+                  "type": "metric",
+                  "properties": {
+                    "title": "Session Throttles - ${AWS::StackName}",
+                    "annotations": {
+                      "alarms": ["${SessionThrottleAlarm.Arn}"]
+                    },
+                    "view": "timeSeries",
+                    "stacked": false
+                  }
+                }
+              ]
+            }
+
+  CriticalAlarmDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Condition: DeployAlarms
+    Properties:
+      DashboardName: !Sub '${AWS::StackName}-Critical-Alarm-Overview'
+      DashboardBody:
+        Fn::Sub: >
+          {
+          "widgets": [
+              {
+                "height": 6,
+                "width": 12,
+                "y": 6,
+                "x": 0,
+                "type": "metric",
+                "properties": {
+                  "title": "API Gateway 5XX critical - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${5XXErrorCriticalAlarm.Arn}"]
+                  },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 12,
+                "x": 0,
+                "type": "metric",
+                "properties": {
+                  "title": "Session 5XX critical - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${Session5XXApiGwErrorCriticalAlarm.Arn}"]
+                  },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              }
+            ]
+          }
+
+  WarningAlarmDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Condition: DeployAlarms
+    Properties:
+      DashboardName: !Sub '${AWS::StackName}-Warning-Alarm-Overview'
+      DashboardBody:
+        Fn::Sub: >
+          {
+            "widgets": [
+              {
+                "height": 6,
+                "width": 12,
+                "y": 0,
+                "x": 0,
+                "type": "metric",
+                "properties": {
+                  "title": "Latency Alarm - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${LatencyAlarm.Arn}"]
+                  },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 0,
+                "x": 12,
+                "type": "metric",
+                "properties": {
+                  "title": "200 Success OOH - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${200SuccessAlarm.Arn}"]
+                  },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 6,
+                "x": 12,
+                "type": "metric",
+                "properties": {
+                  "title": "5XX Error Alarm - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${5XXErrorAlarm.Arn}"]
+                  },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 30,
+                "x": 0,
+                "type": "metric",
+                "properties": {
+                  "title": "Session 5XX - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${Session5XXApiGwErrorAlarm.Arn}"]
+                  },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 48,
+                "x": 12,
+                "type": "metric",
+                "properties": {
+                  "title": "Session 4XX - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${Session4XXApiGwErrorAlarm.Arn}"]
+                  },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 66,
+                "x": 0,
+                "type": "metric",
+                "properties": {
+                  "title": "TXMA SQS Old Messages - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${TXMASQSOldMessagesAlarm.Arn}"]
+                     },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 66,
+                "x": 12,
+                "type": "metric",
+                "properties": {
+                  "title": "TXMA DLQ Messages Visible - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${TXMADLQMessagesVisibleAlarm.Arn}"]
+                     },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 72,
+                "x": 12,
+                "type": "metric",
+                "properties": {
+                  "title": "GovNotify SQS Old Messages - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${GovNotifySQSOldMessagesAlarm.Arn}"]
+                     },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 78,
+                "x": 0,
+                "type": "metric",
+                "properties": {
+                  "title": "GovNotify DLQ Messages Visible - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${GovNotifyDLQMessagesVisibleAlarm.Arn}"]
+                     },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              }
+            ]
+          }
 
 Outputs:
   MockTxMASQSQueueUrl:
