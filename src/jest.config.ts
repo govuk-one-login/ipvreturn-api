@@ -20,5 +20,15 @@ export default {
   setupFiles: [
     './jest.setup.ts'
   ],
-  testEnvironment: 'node'
+  collectCoverageFrom: [
+    './**/*.ts',
+    '!./**/tests/**/*.ts',
+    '!./tests/**/*.ts',
+    '!./jest.config.ts'
+  ],
+  testEnvironment: 'node',
+  reporters: [
+    'default',
+    ['jest-junit', { outputDirectory: 'results', outputName: 'report.xml' }]
+  ]
 }

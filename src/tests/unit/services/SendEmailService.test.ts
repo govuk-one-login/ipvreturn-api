@@ -2,7 +2,7 @@ import { Logger } from "@aws-lambda-powertools/logger";
 import { SQSEvent } from "aws-lambda";
 // @ts-ignore
 import { NotifyClient } from "notifications-node-client";
-import { VALID_SQS_EVENT } from "../data/sqs-events";
+import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT } from "../../data/sqs-events";
 import { SendEmailProcessor } from "../../../services/SendEmailProcessor";
 import { SendEmailService } from "../../../services/SendEmailService";
 import { mock } from "jest-mock-extended";
@@ -23,12 +23,12 @@ describe("SendEmailProcessor", () => {
 		sendEmailServiceTest = SendEmailService.getInstance(logger, GOVUKNOTIFY_API_KEY);
 		// @ts-ignore
 		sendEmailServiceTest.govNotify = mockGovNotify;
-		sqsEvent = VALID_SQS_EVENT;
+		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 	});
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		sqsEvent = VALID_SQS_EVENT;
+		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 	});
 
 	it("Returns EmailResponse when email is sent successfully", async () => {

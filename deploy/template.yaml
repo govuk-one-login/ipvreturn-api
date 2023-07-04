@@ -334,9 +334,9 @@ Resources:
     Type: AWS::ApiGateway::DomainName
     Properties:
       DomainName: !Sub
-          - "api.${DNSSUFFIX}"
-          - DNSSUFFIX:
-              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+        - "api.${DNSSUFFIX}"
+        - DNSSUFFIX:
+            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       EndpointConfiguration:
         Types:
           - REGIONAL
@@ -347,9 +347,9 @@ Resources:
     Type: AWS::Route53::RecordSet
     Properties:
       Name: !Sub
-          - "api.${DNSSUFFIX}"
-          - DNSSUFFIX:
-              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+        - "api.${DNSSUFFIX}"
+        - DNSSUFFIX:
+            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       Type: A
       HostedZoneId: !Sub "{{resolve:ssm:/${Environment}/Platform/Route53/PrimaryZoneID}}"
       AliasTarget:
@@ -361,9 +361,9 @@ Resources:
     DependsOn: IPVRApiCustomDomain
     Properties:
       DomainName: !Sub
-          - "api.${DNSSUFFIX}"
-          - DNSSUFFIX:
-              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+        - "api.${DNSSUFFIX}"
+        - DNSSUFFIX:
+            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       RestApiId: !Ref IPVRRestApi
       Stage: !Sub "${IPVRRestApi.Stage}"
 
@@ -898,3 +898,14 @@ Resources:
         - !Sub "alias/TxMAKMSEncryptionKey-${AWS::StackName}"
         - alias/TxMAKMSEncryptionKey
       TargetKeyId: !Ref TxMAKMSEncryptionKey
+
+Outputs:
+  MockTxMASQSQueueUrl:
+    Description: "SQS TXMA Consumer Queue URL"
+    Value: !Ref MockTxMASQSQueue
+    Condition: IsMockedEnvironment
+
+  SessionEventsTable:
+    Description: "SessionEvents Table Name"
+    Value:
+      Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
