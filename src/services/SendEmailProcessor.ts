@@ -48,10 +48,10 @@ export class SendEmailProcessor {
 	}
 
 	async processRequest(eventBody: any): Promise<EmailResponse> {
-		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
+		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		// Validate Email model
 		try {
-			await this.validationHelper.validateModel(email, this.logger);
+			await this.validationHelper.validateModel(message, this.logger);
 		} catch (error) {
 			this.logger.error("Failed to Validate Email model data", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Failed to Validate Email model data.");
@@ -60,7 +60,7 @@ export class SendEmailProcessor {
 		//Retrieve session event record for the userId
 		let session;
 		try {
-			session = await this.iprService.getSessionBySub(email.userId);
+			session = await this.iprService.getSessionBySub(message.userId);
 			this.logger.debug("Session retrieved from session store");
 			if (!session) {
 				this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
@@ -68,7 +68,7 @@ export class SendEmailProcessor {
 			}
 
 		} catch (error) {
-			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", error });
+			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", error }, { messageCode: MessageCodes.ERROR_RETRIEVING_SESSION });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 		}
 
@@ -94,11 +94,11 @@ export class SendEmailProcessor {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated.");
 		}
 
-		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(email);
+		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message);
 		try {
 			await this.iprService.sendToTXMA({
 				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-				...buildCoreEventFields({ email: email.emailAddress, user_id: email.userId }),
+				...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }),
 			});
 		} catch (error) {
 			this.logger.error("Failed to write TXMA event IPR_RESULT_NOTIFICATION_EMAILED to SQS queue.", {
