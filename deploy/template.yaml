@@ -129,7 +129,7 @@ Mappings:
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
       LAMBDACONCURRENCYTHRESHOLD: 16
     production:
-      GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
+      GOVUKNOTIFYTEMPLATEID: "206971e2-d576-4d12-b34f-b0de442d39ab"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.account.gov.uk/resume"
