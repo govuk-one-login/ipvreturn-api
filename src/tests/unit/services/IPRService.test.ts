@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { mock } from "jest-mock-extended";
 import { SendMessageCommand } from "@aws-sdk/client-sqs";
 import { IPRService } from "../../../services/IPRService";
@@ -5,8 +6,11 @@ import { Logger } from "@aws-lambda-powertools/logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
 import { sqsClient } from "../../../utils/SqsClient";
 import { TxmaEvent } from "../../../utils/TxmaEvent";
-import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
+import { AppError } from "../../../utils/AppError";
 import { Constants } from "../../../utils/Constants";
+import { absoluteTimeNow } from "../../../utils/DateTimeUtils";
+import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
+import { MessageCodes } from "../../../models/enums/MessageCodes";
 
 const logger = mock<Logger>();
 
@@ -22,7 +26,7 @@ const authRequestedExpressionAttributeValues = {
 	":nameParts": [{ type: "Firstname", value: "test" }],
 	":clientName": "ekwU",
 	":redirectUri": "UNKNOWN",
-	":expiryDate": 604800 * 1000,
+	":expiresOn": 604800 * 1000,
 };
 function getTXMAEventPayload(): TxmaEvent {
 	const txmaEventPayload: TxmaEvent = {
@@ -196,6 +200,37 @@ describe("IPR Service", () => {
 				statusCode: HttpCodesEnum.SERVER_ERROR,
 				message: "sending event to txma queue - failed",
 			}));
+		});
+	});
+
+	describe("getSessionBySub", () => {
+		it("Should throw error if session has expired", async () => {
+			mockDynamoDbClient.send = jest.fn().mockResolvedValue({
+				Item: {
+					expiresOn: absoluteTimeNow() - 1000,
+				},
+			});
+
+			await expect(iprService.getSessionBySub(userId)).rejects.toThrow(new AppError( HttpCodesEnum.UNAUTHORIZED, `Session with userId: ${userId} has expired`));
+			expect(logger.error).toHaveBeenCalledWith({ message: `Session with userId: ${userId} has expired`, messageCode: MessageCodes.SESSION_EXPIRED });
+		});
+
+		it("Should throw error if dynamo get command fails", async () => {
+			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
+
+			await expect(iprService.getSessionBySub(userId)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session"));
+			expect(logger.error).toHaveBeenCalledWith({ message: "getSessionByUserId - failed executing get from dynamodb:", error: {} });
+		});
+
+		it("Should return the valid session fetched from dynamo", async () => {
+			const Item = {
+				userId,
+				expiresOn: absoluteTimeNow() + 1000,
+				userEmail: "test@digital.cabinet-office.gov.uk",
+			};
+			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
+			const result = await iprService.getSessionBySub(userId);
+			expect(result).toEqual(Item);
 		});
 	});
 });
