@@ -1,11 +1,16 @@
 import { randomUUID } from "crypto";
-import { SendMessageCommand, SendMessageCommandOutput, SQSClient } from "@aws-sdk/client-sqs";
+import { SendMessageCommand, SendMessageCommandOutput, SQSClient, PurgeQueueCommand, ReceiveMessageCommand } from "@aws-sdk/client-sqs";
 import { ReturnSQSEvent } from "../../../models/ReturnSQSEvent";
 import { DynamoDBClient, GetItemCommand, GetItemCommandOutput } from "@aws-sdk/client-dynamodb";
 
+
+const TXMA_SQS_URL = process.env['API_TEST_GOV_NOTIFY_SQS_QUEUE'];
 const MOCK_TXMA_SQS_URL = process.env['API_TEST_SQS_TXMA_CONSUMER_QUEUE'];
+const GOV_NOTIFY_SQS_URL = process.env['API_TEST_GOV_NOTIFY_SQS_QUEUE'];
 const AWS_REGION = process.env['AWS_REGION'];
 const SESSION_EVENTS_TABLE = process.env['API_TEST_SESSION_EVENTS_TABLE'];
+const EMAIL_ADDRESS = process.env['API_TEST_SESSION_EVENTS_TABLE'];
+
 
 const sqsClient = new SQSClient({
   region: AWS_REGION,
@@ -25,6 +30,36 @@ export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string): P
   const command = new SendMessageCommand({
     QueueUrl: MOCK_TXMA_SQS_URL,
     MessageBody: JSON.stringify(event),
+  });
+  return sqsClient.send(command);
+}
+
+export async function postGovNotifyEvent(inputEvent: any): Promise<SendMessageCommandOutput> {
+  const event = structuredClone(inputEvent);
+  event.Message.emailAddress = EMAIL_ADDRESS;
+  console.log(JSON.stringify(event));
+  const command = new SendMessageCommand({
+    QueueUrl: GOV_NOTIFY_SQS_URL,
+    MessageBody: JSON.stringify(event),
+  });
+  return sqsClient.send(command);
+}
+
+export async function purgeTxmaSqsQueue(): Promise<SendMessageCommandOutput> {
+  const command = new PurgeQueueCommand({
+    QueueUrl: TXMA_SQS_URL,
+  });
+  return sqsClient.send(command);
+}
+
+export async function getTxmaSqsEvent(): Promise<any> {
+  const command = new ReceiveMessageCommand({
+    AttributeNames: ["SentTimestamp"],
+    MaxNumberOfMessages: 10,
+    MessageAttributeNames: ["All"],
+    QueueUrl: TXMA_SQS_URL,
+    VisibilityTimeout: 40,
+    WaitTimeSeconds: 20,    
   });
   return sqsClient.send(command);
 }

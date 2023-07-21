@@ -124,3 +124,15 @@ export const VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT = {
 };
 
 export const VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING = JSON.stringify(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT);
+
+
+export const VALID_GOV_NOTIFY_SQS_TXMA_EVENT = {
+  Message: {
+    emailAddress: "jest@test.com",
+    firstName: "Test",
+    lastName: "User",
+    messageType: "email"
+  }
+};
+
+export const VALID_GOV_NOTIFY_SQS_TXMA_EVENTT_STRING = JSON.stringify(VALID_GOV_NOTIFY_SQS_TXMA_EVENT);
