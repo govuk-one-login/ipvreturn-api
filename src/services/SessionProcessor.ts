@@ -125,7 +125,12 @@ export class SessionProcessor {
 			const sub = jwtIdTokenPayload.sub!;
 			try {
 				session = await iprService.getSessionBySub(sub);
-				this.logger.debug("Session retrieved from session store");
+				this.logger.info("Session retrieved from session store");
+				this.logger.appendKeys({ sessionId: session.sessionId });
+				this.logger.info({ message: "Found Session" });
+				this.logger.appendKeys({
+					govuk_signin_journey_id: session?.clientSessionId,
+				});
 				if (!session) {
 					this.logger.error("No session event found for this userId");
 					return new Response(HttpCodesEnum.UNAUTHORIZED, "No session event found for this userId");

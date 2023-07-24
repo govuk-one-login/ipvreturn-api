@@ -10,6 +10,8 @@ import { HttpVerbsEnum } from "./utils/HttpVerbsEnum";
 import { getParameter } from "./utils/Config";
 import { EnvironmentVariables } from "./services/EnvironmentVariables";
 import { ServicesEnum } from "./models/enums/ServicesEnum";
+import { MessageCodes } from "./models/enums/MessageCodes";
+import { AppError } from "./utils/AppError";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : "CIC-CRI";
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : "DEBUG";
@@ -45,8 +47,14 @@ class Session implements LambdaInterface {
 							}
 						}
 						return await SessionProcessor.getInstance(logger, metrics, CLIENT_ID).processRequest(event);
-					} catch (err) {
-						logger.error({ message: "An error has occurred. ", err });
+					} catch (error) {
+						logger.error({ message: "An error has occurred. ",
+							error,
+							messageCode: MessageCodes.SERVER_ERROR,
+						});
+						if (error instanceof AppError) {
+							return new Response(error.statusCode, error.message);
+						}
 						return new Response(HttpCodesEnum.SERVER_ERROR, "An error has occurred");
 					}
 				}
