@@ -11,7 +11,6 @@ const AWS_REGION = process.env['AWS_REGION'];
 const SESSION_EVENTS_TABLE = process.env['API_TEST_SESSION_EVENTS_TABLE'];
 const EMAIL_ADDRESS = process.env['API_TEST_SESSION_EVENTS_TABLE'];
 
-
 const sqsClient = new SQSClient({
   region: AWS_REGION,
 });

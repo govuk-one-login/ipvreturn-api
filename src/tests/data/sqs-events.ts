@@ -80,6 +80,7 @@ export const VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT: ReturnSQSEvent = {
   "event_id": "588f4a66-f75a-4728-9f7b-8afd865c233e",
   "client_id": "ekwU",
   "event_name": "IPV_F2F_CRI_VC_CONSUMED",
+  "clientLandingPageUrl": "REDIRECT_URL",
   "timestamp": 1681902001,
   "timestamp_formatted": "2023-04-19T11:00:01.000Z",
   "user": {
@@ -103,7 +104,6 @@ export const VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT: ReturnSQSEvent = {
       }
     ]
   }
-
 };
 
 export const VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT);
