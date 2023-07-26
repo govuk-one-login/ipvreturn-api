@@ -10,6 +10,8 @@ import { MessageCodes } from "../models/enums/MessageCodes";
  */
 export class EnvironmentVariables {
 
+	private readonly GOVUKNOTIFY_API = process.env.GOVUKNOTIFY_API;
+
 	private readonly GOVUKNOTIFY_TEMPLATE_ID = process.env.GOVUKNOTIFY_TEMPLATE_ID;
 
 	private GOVUKNOTIFY_MAX_RETRIES = process.env.GOVUKNOTIFY_MAX_RETRIES;
@@ -51,7 +53,8 @@ export class EnvironmentVariables {
 				if (!this.GOVUKNOTIFY_API_KEY_SSM_PATH || this.GOVUKNOTIFY_API_KEY_SSM_PATH.trim().length === 0 ||
 					!this.RETURN_JOURNEY_URL || this.RETURN_JOURNEY_URL.trim().length === 0 ||
 					!this.TXMA_QUEUE_URL || this.TXMA_QUEUE_URL.trim().length === 0 ||
-					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
+					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0 ||
+					!this.GOVUKNOTIFY_API || this.GOVUKNOTIFY_API.trim().length === 0) {
 					logger.error({ message: "GovNotifyService - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
@@ -183,5 +186,9 @@ export class EnvironmentVariables {
 
 	oidcJwtAssertionTokenExpiry(): any {
 		return this.OIDC_JWT_ASSERTION_TOKEN_EXP;
+	}
+
+	govukNotifyApiUrl(): any {
+		return this.GOVUKNOTIFY_API;
 	}
 }
