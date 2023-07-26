@@ -51,7 +51,7 @@ function getMockSessionEventItem(): SessionEvent {
 
 describe("SendEmailProcessor", () => {
 	beforeAll(() => {
-		sendEmailProcessorTest = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY, SESSION_EVENTS_TABLE);
+		sendEmailProcessorTest = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY,"serviceId", SESSION_EVENTS_TABLE);
 		// @ts-ignore
 		sendEmailProcessorTest.govNotifyService = mockGovNotifyService;
 		// @ts-ignore
