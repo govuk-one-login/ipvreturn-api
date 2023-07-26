@@ -46,6 +46,18 @@ Parameters:
     Description: "Link to the IPV Return Journey support manual"
     Type: String
     Default: 'https://govukverify.atlassian.net/wiki/spaces/FTFCRI/pages/3626532870/IPR+Support+Documentation'
+  LambdaConcurrency:
+    Description: "Reserved concurrency for Lambdas running in non-DEV environments"
+    Type: Number
+    Default: 20
+  LambdaConcurrencyThreshold:
+    Description: "Threshold for Reserved concurrency running in non-DEV environments"
+    Type: Number
+    Default: 16  #80% of Lambda concurrency
+  ApplyReservedConcurrencyInDev:
+    Description: "Set to true to apply reserved concurrency when deploying in DEV environments"
+    Type: String
+    Default: "false"
 
 Mappings:
   EnvironmentConfiguration: # This is where you store per-environment settings.
@@ -98,7 +110,6 @@ Mappings:
       DNSSUFFIX: "return.dev.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
-      LAMBDACONCURRENCYTHRESHOLD: 16
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
@@ -109,7 +120,6 @@ Mappings:
       DNSSUFFIX: "return.build.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
-      LAMBDACONCURRENCYTHRESHOLD: 16
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
@@ -120,7 +130,6 @@ Mappings:
       DNSSUFFIX: "return.staging.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
-      LAMBDACONCURRENCYTHRESHOLD: 16
     integration:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
@@ -131,7 +140,6 @@ Mappings:
       DNSSUFFIX: "return.integration.account.gov.uk"
       OIDCURL: "https://oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
-      LAMBDACONCURRENCYTHRESHOLD: 16
     production:
       GOVUKNOTIFYTEMPLATEID: "206971e2-d576-4d12-b34f-b0de442d39ab"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
@@ -142,7 +150,6 @@ Mappings:
       DNSSUFFIX: "return.account.gov.uk"
       OIDCURL: "https://oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
-      LAMBDACONCURRENCYTHRESHOLD: 16
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
@@ -165,6 +172,10 @@ Conditions:
   CreateDevResources: !Equals
     - !Ref Environment
     - dev
+  ApplyReservedConcurrency: !Or
+    - !Not
+      - !Condition CreateDevResources
+    - !Equals [!Ref ApplyReservedConcurrencyInDev, "true"]
   IsProdLikeEnvironment: !Or
     - !Equals [!Ref Environment, staging]
     - !Equals [!Ref Environment, integration]
@@ -404,6 +415,10 @@ Resources:
       FunctionName: !Sub "Ipvreturn-PostEvent-${AWS::StackName}"
       Handler: PostEventHandler.lambdaHandler
       CodeUri: ../src/
+      ReservedConcurrentExecutions: !If
+        - ApplyReservedConcurrency
+        - !Ref LambdaConcurrency
+        - !Ref AWS::NoValue
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: PostEventHandler
@@ -514,7 +529,10 @@ Resources:
       Period: 60 # This is the minimum value for the AWS Namespace
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
-      Threshold: !FindInMap [EnvironmentVariables, !Ref Environment, LAMBDACONCURRENCYTHRESHOLD]
+      Threshold: !If
+        - ApplyReservedConcurrency
+        - !Ref LambdaConcurrencyThreshold
+        - !Ref AWS::NoValue
       ComparisonOperator: GreaterThanThreshold
       TreatMissingData: notBreaching
 
@@ -551,6 +569,10 @@ Resources:
       Handler: GovNotifyHandler.lambdaHandler
       CodeUri: ../src/
       Timeout: 300
+      ReservedConcurrentExecutions: !If
+        - ApplyReservedConcurrency
+        - !Ref LambdaConcurrency
+        - !Ref AWS::NoValue
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: GovNotifyHandler
@@ -659,7 +681,10 @@ Resources:
       Period: 60 # This is the minimum value for the AWS Namespace
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
-      Threshold: !FindInMap [EnvironmentVariables, !Ref Environment, LAMBDACONCURRENCYTHRESHOLD]
+      Threshold: !If
+        - ApplyReservedConcurrency
+        - !Ref LambdaConcurrencyThreshold
+        - !Ref AWS::NoValue
       ComparisonOperator: GreaterThanThreshold
       TreatMissingData: notBreaching
 
@@ -695,6 +720,10 @@ Resources:
       FunctionName: !Sub "Ipvreturn-StreamProcessor-${AWS::StackName}"
       Handler: StreamProcessorHandler.lambdaHandler
       CodeUri: ../src/
+      ReservedConcurrentExecutions: !If
+        - ApplyReservedConcurrency
+        - !Ref LambdaConcurrency
+        - !Ref AWS::NoValue
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: StreamProcessorHandler
@@ -802,7 +831,10 @@ Resources:
       Period: 60 # This is the minimum value for the AWS Namespace
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
-      Threshold: !FindInMap [EnvironmentVariables, !Ref Environment, LAMBDACONCURRENCYTHRESHOLD]
+      Threshold: !If
+        - ApplyReservedConcurrency
+        - !Ref LambdaConcurrencyThreshold
+        - !Ref AWS::NoValue
       ComparisonOperator: GreaterThanThreshold
       TreatMissingData: notBreaching
 
@@ -839,6 +871,10 @@ Resources:
       FunctionName: !Sub "Session-${AWS::StackName}"
       Handler: SessionHandler.lambdaHandler
       CodeUri: ../src/
+      ReservedConcurrentExecutions: !If
+        - ApplyReservedConcurrency
+        - !Ref LambdaConcurrency
+        - !Ref AWS::NoValue
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: SessionHandler
@@ -937,7 +973,10 @@ Resources:
       Period: 60 # This is the minimum value for the AWS Namespace
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
-      Threshold: !FindInMap [EnvironmentVariables, !Ref Environment, LAMBDACONCURRENCYTHRESHOLD]
+      Threshold: !If
+        - ApplyReservedConcurrency
+        - !Ref LambdaConcurrencyThreshold
+        - !Ref AWS::NoValue
       ComparisonOperator: GreaterThanThreshold
       TreatMissingData: notBreaching
 
