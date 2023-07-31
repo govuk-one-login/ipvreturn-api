@@ -25,6 +25,7 @@ export class SessionReturnRecord {
 			case Constants.IPV_F2F_CRI_VC_CONSUMED:{
 				this.readyToResumeOn = data.timestamp;
 				this.nameParts = data.restricted?.nameParts;
+				this.clientSessionId = data.user.govuk_signin_journey_id;
 				break;
 			}
 			case Constants.AUTH_DELETE_ACCOUNT:{
@@ -60,4 +61,6 @@ export class SessionReturnRecord {
     accountDeletedOn?: number;
 
     expiresDate?: number;
+
+		clientSessionId?: string;
 }
