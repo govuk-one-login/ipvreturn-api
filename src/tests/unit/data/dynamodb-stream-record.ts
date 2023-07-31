@@ -36,6 +36,9 @@ export const VALID_DYNAMODB_STREAM_EVENT = {
 					"clientName": {
 						"S": "clientName",
 					},
+					"clientSessionId": {
+						"S": "clientSessionId",
+					},
 					"redirectUri": {
 						"S": "redirect_uri",
 					},

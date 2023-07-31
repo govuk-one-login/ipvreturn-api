@@ -8,6 +8,7 @@ export interface TxmaUser {
 	// TODO user_id will be required
 	"user_id"?: string;
 	"email"?: string;
+	"govuk_signin_journey_id"?: string;
 }
 
 export interface BaseTxmaEvent {

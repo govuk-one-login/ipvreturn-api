@@ -77,33 +77,34 @@ export const VALID_F2F_YOTI_START_TXMA_EVENT: ReturnSQSEvent = {
 export const VALID_F2F_YOTI_START_TXMA_EVENT_STRING = JSON.stringify(VALID_F2F_YOTI_START_TXMA_EVENT);
 
 export const VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT: ReturnSQSEvent = {
-	"event_id": "588f4a66-f75a-4728-9f7b-8afd865c233e",
-	"client_id": "ekwU",
-	"event_name": "IPV_F2F_CRI_VC_CONSUMED",
-	"clientLandingPageUrl": "REDIRECT_URL",
-	"timestamp": 1681902001,
-	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
-	"user": {
-		"user_id": "01333e01-dde3-412f-a484-4444",
-		// pragma: allowlist nextline secret
-		"email": "e914e32172adcdad6c0906f7e5a0f4f43a6e99847c4370df783c7142f71ba454",
-	},
-	"restricted": {
-		"nameParts": [
-			{
-				"type": "GivenName",
-				"value": "ANGELA",
-			},
-			{
-				"type": "GivenName",
-				"value": "ZOE",
-			},
-			{
-				"type": "FamilyName",
-				"value": "UK SPECIMEN",
-			},
-		],
-	},
+  "event_id": "588f4a66-f75a-4728-9f7b-8afd865c233e",
+  "client_id": "ekwU",
+  "event_name": "IPV_F2F_CRI_VC_CONSUMED",
+  "clientLandingPageUrl": "REDIRECT_URL",
+  "timestamp": 1681902001,
+  "timestamp_formatted": "2023-04-19T11:00:01.000Z",
+  "user": {
+    "user_id": "01333e01-dde3-412f-a484-4444",
+    // pragma: allowlist nextline secret
+    "email": "e914e32172adcdad6c0906f7e5a0f4f43a6e99847c4370df783c7142f71ba454",
+		"govuk_signin_journey_id": "sdfssg",
+  },
+  "restricted": {
+    "nameParts": [
+      {
+        "type": "GivenName",
+        "value": "ANGELA"
+      },
+      {
+        "type": "GivenName",
+        "value": "ZOE"
+      },
+      {
+        "type": "FamilyName",
+        "value": "UK SPECIMEN"
+      }
+    ]
+  }
 };
 
 export const VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT);
