@@ -125,11 +125,14 @@ export class SessionProcessor {
 			const sub = jwtIdTokenPayload.sub!;
 			try {
 				session = await iprService.getSessionBySub(sub);
-				this.logger.debug("Session retrieved from session store");
 				if (!session) {
 					this.logger.error("No session event found for this userId");
 					return new Response(HttpCodesEnum.UNAUTHORIZED, "No session event found for this userId");
 				}
+				this.logger.appendKeys({
+					govuk_signin_journey_id: session.clientSessionId,
+				});
+				this.logger.debug("Session retrieved from session store");
 
 			} catch (error) {
 				this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", error });
@@ -159,6 +162,9 @@ export class SessionProcessor {
 			await iprService.sendToTXMA({
 				event_name: "IPR_USER_REDIRECTED",
 				...buildCoreEventFields({ user_id: sub }),
+				extensions: {
+					previous_govuk_signin_journey_id: session.clientSessionId,
+				},
 			});
 
 			return {

@@ -119,10 +119,11 @@ export class PostEventProcessor {
 						this.logger.error( { message: "Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
 					}
-					updateExpression = "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts";
+					updateExpression = "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts, clientSessionId = :clientSessionId";
 					expressionAttributeValues = {
 						":readyToResumeOn": returnRecord.readyToResumeOn,
 						":nameParts": returnRecord.nameParts,
+						":clientSessionId": returnRecord.clientSessionId,
 					};
 					break;
 				}
