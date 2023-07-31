@@ -21,6 +21,10 @@ const metrics = new Metrics({ namespace: "F2F" });
 
 describe("PostEventProcessor", () => {
 	beforeAll(() => {
+		jest.useFakeTimers();
+		const fakeTime = 1684933200.123;
+		jest.setSystemTime(new Date(fakeTime * 1000)); // 2023-05-24T13:00:00.123Z
+
 		postEventProcessor = new PostEventProcessor(mockLogger, metrics);
 		// @ts-ignore
 		postEventProcessor.iprService = mockIprService;
@@ -35,15 +39,16 @@ describe("PostEventProcessor", () => {
 
 	it("Calls saveEventData with appropriate payload for AUTH_IPV_AUTHORISATION_REQUESTED event", async () => {
 		await postEventProcessor.processRequest(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT_STRING);
-		const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL!);
+		const expiresOn = absoluteTimeNow() + Number(process.env.INITIAL_SESSION_RECORD_TTL_SECS!);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-5555", "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn", { ":clientName": "ekwU", ":ipvStartedOn": 1681902001, ":redirectUri": "REDIRECT_URL", ":userEmail": "jest@test.com", ":expiresOn": expiresOn });
 	});
 
 	it("Calls saveEventData with appropriate payload for F2F_YOTI_START_EVENT event", async () => {
 		await postEventProcessor.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
+		const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
-		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn", { ":journeyWentAsyncOn": 1681902001 });
+		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn });
 	});
 
 	it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event", async () => {

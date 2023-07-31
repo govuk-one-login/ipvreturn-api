@@ -78,8 +78,16 @@ export class PostEventProcessor {
 				return "Record flagged for deletion or event already processed, skipping update";
 			}
 
-			let updateExpression, expressionAttributeValues;
-			const expiresOn = absoluteTimeNow() + Number(this.environmentVariables.sessionReturnRecordTtl());
+			let updateExpression, expressionAttributeValues, expiresOn;
+
+			//Set default TTL to 12hrs to expire any records not meant for F2F
+			expiresOn = absoluteTimeNow() + this.environmentVariables.initialSessionReturnRecordTtlSecs();
+
+			if (eventName === Constants.F2F_YOTI_START) {
+				//Reset TTL to 11days for F2F journey
+				expiresOn = absoluteTimeNow() + this.environmentVariables.sessionReturnRecordTtlSecs();
+			}
+
 			const returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {
@@ -98,9 +106,10 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.F2F_YOTI_START: {
-					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn";
+					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn";
 					expressionAttributeValues = {
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
+						":expiresOn": returnRecord.expiresDate,
 					};
 					break;
 				}
