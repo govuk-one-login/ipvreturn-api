@@ -159,6 +159,9 @@ export class SessionProcessor {
 			await iprService.sendToTXMA({
 				event_name: "IPR_USER_REDIRECTED",
 				...buildCoreEventFields({ user_id: sub }),
+				extensions: {
+					previous_govuk_signin_journey_id: session.clientSessionId,
+				},
 			});
 
 			return {

@@ -15,8 +15,13 @@ export interface BaseTxmaEvent {
 	"timestamp": number;
 }
 
+export interface ExtensionObject {
+	"previous_govuk_signin_journey_id"?: string;
+}
+
 export interface TxmaEvent extends BaseTxmaEvent {
 	"event_name": TxmaEventName;
+	"extensions"?: ExtensionObject;
 }
 
 export const buildCoreEventFields = (user: TxmaUser, getNow: () => number = absoluteTimeNow): BaseTxmaEvent => {
