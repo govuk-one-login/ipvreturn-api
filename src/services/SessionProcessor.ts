@@ -123,6 +123,7 @@ export class SessionProcessor {
 			//
 			let session;
 			const sub = jwtIdTokenPayload.sub!;
+			console.log("TO BE DELETED USER ID is "+sub);
 			try {
 				session = await iprService.getSessionBySub(sub);
 				if (!session) {
