@@ -123,12 +123,6 @@ describe("PostEventProcessor", () => {
 			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-5555", "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn", { ":clientName": "ekwU", ":ipvStartedOn": 1681902001, ":redirectUri": "REDIRECT_URL", ":userEmail": "jest@test.com", ":expiresOn": expiresOn });
 		});
 
-		// it("Calls saveEventData with appropriate payload for AUTH_IPV_AUTHORISATION_REQUESTED event", async () => {
-		// 	await postEventProcessor.processRequest(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT_STRING);
-		// 	const expiresOn = absoluteTimeNow() + Number(process.env.INITIAL_SESSION_RECORD_TTL_SECS!);
-		// 	// eslint-disable-next-line @typescript-eslint/unbound-method
-		//
-		// });
 		it("Logs a warning if user.email is missing", async () => {
 			const AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_MISSING_EMAIL: ReturnSQSEvent = {
 				event_id: "588f4a66-f75a-4728-9f7b-8afd865c233c",
