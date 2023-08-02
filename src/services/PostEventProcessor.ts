@@ -78,7 +78,7 @@ export class PostEventProcessor {
 				return "Record flagged for deletion or event already processed, skipping update";
 			}
 
-			let updateExpression, expressionAttributeValues, expiresOn;
+			let updateExpression, expressionAttributeValues: { [key: string]: any }, expiresOn;
 
 			//Set default TTL to 12hrs to expire any records not meant for F2F
 			expiresOn = absoluteTimeNow() + this.environmentVariables.initialSessionReturnRecordTtlSecs();
@@ -101,7 +101,6 @@ export class PostEventProcessor {
 						":userEmail": returnRecord.userEmail,
 						":ipvStartedOn": returnRecord.ipvStartedOn,
 						":clientName": returnRecord.clientName,
-						":clientSessionId": returnRecord.clientSessionId,
 						":redirectUri": returnRecord.redirectUri,
 						":expiresOn": returnRecord.expiresDate,
 					};
@@ -124,7 +123,6 @@ export class PostEventProcessor {
 					expressionAttributeValues = {
 						":readyToResumeOn": returnRecord.readyToResumeOn,
 						":nameParts": returnRecord.nameParts,
-						":clientSessionId": returnRecord.clientSessionId,
 					};
 					break;
 				}
@@ -135,7 +133,6 @@ export class PostEventProcessor {
 						":userEmail": returnRecord.userEmail,
 						":nameParts":returnRecord.nameParts,
 						":clientName": returnRecord.clientName,
-						":clientSessionId": returnRecord.clientSessionId,
 						":redirectUri": returnRecord.redirectUri,
 					};
 					break;
@@ -150,8 +147,8 @@ export class PostEventProcessor {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 			}
 
-			if (returnRecord.clientName) {
-				console.log('here', returnRecord.clientName)
+			if (returnRecord.clientSessionId) {
+				console.log('ClientSessionID From Record:', returnRecord.clientSessionId)
 				updateExpression += "clientSessionId = :clientSessionId"
 				expressionAttributeValues[":clientSessionId"] = returnRecord.clientSessionId;
 			} else {
