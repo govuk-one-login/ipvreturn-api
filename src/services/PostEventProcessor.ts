@@ -101,6 +101,7 @@ export class PostEventProcessor {
 						":userEmail": returnRecord.userEmail,
 						":ipvStartedOn": returnRecord.ipvStartedOn,
 						":clientName": returnRecord.clientName,
+						":clientSessionId": returnRecord.clientSessionId,
 						":redirectUri": returnRecord.redirectUri,
 						":expiresOn": returnRecord.expiresDate,
 					};
@@ -119,7 +120,7 @@ export class PostEventProcessor {
 						this.logger.error( { message: "Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
 					}
-					updateExpression = "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts, clientSessionId = :clientSessionId";
+					updateExpression = "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts";
 					expressionAttributeValues = {
 						":readyToResumeOn": returnRecord.readyToResumeOn,
 						":nameParts": returnRecord.nameParts,
@@ -134,6 +135,7 @@ export class PostEventProcessor {
 						":userEmail": returnRecord.userEmail,
 						":nameParts":returnRecord.nameParts,
 						":clientName": returnRecord.clientName,
+						":clientSessionId": returnRecord.clientSessionId,
 						":redirectUri": returnRecord.redirectUri,
 					};
 					break;
@@ -146,6 +148,14 @@ export class PostEventProcessor {
 			if (!updateExpression || !expressionAttributeValues) {
 				this.logger.error({ message: "Missing config to update DynamboDB for event:", eventName });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
+			}
+
+			if (returnRecord.clientName) {
+				console.log('here', returnRecord.clientName)
+				updateExpression += "clientSessionId = :clientSessionId"
+				expressionAttributeValues[":clientSessionId"] = returnRecord.clientSessionId;
+			} else {
+				this.logger.info(`No govuk_signin_journey_id in ${eventName} event`)
 			}
 
 			const saveEventData = await this.iprService.saveEventData(userId, updateExpression, expressionAttributeValues);

@@ -1,5 +1,6 @@
 import { ReturnSQSEvent } from "./ReturnSQSEvent";
 import { Constants } from "../utils/Constants";
+import { Logger } from "@aws-lambda-powertools/logger";
 
 export interface NamePart {
 	type: string;
@@ -9,6 +10,9 @@ export interface NamePart {
 export class SessionReturnRecord {
 	constructor(data: ReturnSQSEvent, expiresOn: number) {
 		this.userId = data.user.user_id;
+		if (data.user.govuk_signin_journey_id && data.user.govuk_signin_journey_id !== "UNKNOWN") {
+			this.clientSessionId = data.user.govuk_signin_journey_id
+		}
 		switch (data.event_name) {
 			case Constants.AUTH_IPV_AUTHORISATION_REQUESTED:{
 				this.clientName = data.client_id!;
@@ -26,11 +30,11 @@ export class SessionReturnRecord {
 			case Constants.IPV_F2F_CRI_VC_CONSUMED:{
 				this.readyToResumeOn = data.timestamp;
 				this.nameParts = data.restricted?.nameParts;
-				this.clientSessionId = data.user.govuk_signin_journey_id;
 				break;
 			}
 			case Constants.AUTH_DELETE_ACCOUNT:{
 				this.accountDeletedOn = data.timestamp;
+				this.clientSessionId = "";
 				this.clientName = "";
 				this.redirectUri = "";
 				this.userEmail = "";
