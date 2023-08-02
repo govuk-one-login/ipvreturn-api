@@ -3,14 +3,14 @@ import {
 } from "../data/sqs-events";
 import "dotenv/config";
 import { postGovNotifyEvent, purgeTxmaSqsQueue, getTxmaSqsEvent } from "./utils/ApiTestSteps";
-  
-  
+
+
 describe("TxMA Events from Gov Notify SQS queue", () => {
 
-	beforeEach(async () => {
+	beforeEach(() => {
 		jest.setTimeout(10000);
 	});
-  
+
 	it("should post an VALID_GOV_NOTIFY_SQS_TXMA_EVENT TxMA event", async () => {
 		await purgeTxmaSqsQueue();
 		const response = await postGovNotifyEvent(VALID_GOV_NOTIFY_SQS_TXMA_EVENT);
@@ -25,4 +25,4 @@ describe("TxMA Events from Gov Notify SQS queue", () => {
 	});
 
 });
-  
+
