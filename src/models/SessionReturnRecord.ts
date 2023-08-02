@@ -20,6 +20,7 @@ export class SessionReturnRecord {
 			}
 			case Constants.F2F_YOTI_START:{
 				this.journeyWentAsyncOn = data.timestamp;
+				this.expiresDate = expiresOn;
 				break;
 			}
 			case Constants.IPV_F2F_CRI_VC_CONSUMED:{
