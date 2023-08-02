@@ -252,7 +252,7 @@ Resources:
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
       Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
-  # ### AssumeRoleWithWebIdentityRole
+  ### AssumeRoleWithWebIdentityRole
   AssumeRoleWithWebIdentityRole:
     Type: "AWS::IAM::Role"
     Properties:
