@@ -32,6 +32,7 @@ class Session implements LambdaInterface {
 		// clear PersistentLogAttributes set by any previous invocation, and add lambda context for this invocation
 		logger.setPersistentLogAttributes({});
 		logger.addContext(context);
+		
 		logger.debug("metrics is", { metrics });
 
 		switch (event.resource) {

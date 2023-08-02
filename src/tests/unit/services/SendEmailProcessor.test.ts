@@ -25,7 +25,6 @@ function getMockSessionEventItem(): SessionEvent {
 	const sess: SessionEvent = {
 		userId: "userId",
 		clientName: "ipv",
-		clientSessionId: "sdfssg",
 		userEmail: "testuser@test.gov.uk",
 		notified: true,
 		ipvStartedOn: 1681902001,
@@ -86,7 +85,6 @@ describe("SendEmailProcessor", () => {
 			timestamp: absoluteTimeNow(),
 			user: {
 				email: "test.user@digital.cabinet-office.gov.uk",
-				govuk_signin_journey_id: "sdfssg",
 				user_id: "user_id",
 			},
 		});
