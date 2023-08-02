@@ -10,8 +10,8 @@ export interface NamePart {
 export class SessionReturnRecord {
 	constructor(data: ReturnSQSEvent, expiresOn: number) {
 		this.userId = data.user.user_id;
-		if (data.user.govuk_signin_journey_id && data.user.govuk_signin_journey_id !== "UNKNOWN") {
-			this.clientSessionId = data.user.govuk_signin_journey_id
+		if (data.user.govuk_signin_journey_id && (data.user.govuk_signin_journey_id).toLowerCase() !== "unknown") {
+			this.clientSessionId = data.user.govuk_signin_journey_id;
 		}
 		switch (data.event_name) {
 			case Constants.AUTH_IPV_AUTHORISATION_REQUESTED:{

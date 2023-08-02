@@ -68,7 +68,7 @@ export class SendEmailProcessor {
 			this.logger.appendKeys({
 				govuk_signin_journey_id: session.clientSessionId,
 			});
-			this.logger.debug("Session retrieved from session store");
+			this.logger.info("Session retrieved from session store");
 
 		} catch (error) {
 			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", error }, { messageCode: MessageCodes.ERROR_RETRIEVING_SESSION });
@@ -101,7 +101,10 @@ export class SendEmailProcessor {
 		try {
 			await this.iprService.sendToTXMA({
 				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-				...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId, govuk_signin_journey_id: session.clientSessionId }),
+				...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId}),
+				extensions: {
+					previous_govuk_signin_journey_id: session.clientSessionId,
+				},
 			});
 		} catch (error) {
 			this.logger.error("Failed to write TXMA event IPR_RESULT_NOTIFICATION_EMAILED to SQS queue.", {

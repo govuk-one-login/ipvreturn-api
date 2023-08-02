@@ -148,11 +148,10 @@ export class PostEventProcessor {
 			}
 
 			if (returnRecord.clientSessionId) {
-				console.log('ClientSessionID From Record:', returnRecord.clientSessionId)
-				updateExpression += "clientSessionId = :clientSessionId"
+				updateExpression += ", clientSessionId = :clientSessionId";
 				expressionAttributeValues[":clientSessionId"] = returnRecord.clientSessionId;
 			} else {
-				this.logger.info(`No govuk_signin_journey_id in ${eventName} event`)
+				this.logger.info(`No govuk_signin_journey_id in ${eventName} event`);
 			}
 
 			const saveEventData = await this.iprService.saveEventData(userId, updateExpression, expressionAttributeValues);
