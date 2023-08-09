@@ -4,13 +4,14 @@ import { ReturnSQSEvent } from "../../../models/ReturnSQSEvent";
 import { DynamoDBClient, GetItemCommand, GetItemCommandOutput } from "@aws-sdk/client-dynamodb";
 import axios from "axios";
 
+
 const TXMA_SQS_URL = process.env['API_TEST_GOV_NOTIFY_SQS_QUEUE'];
 const MOCK_TXMA_SQS_URL = process.env['API_TEST_SQS_TXMA_CONSUMER_QUEUE'];
 const GOV_NOTIFY_SQS_URL = process.env['API_TEST_GOV_NOTIFY_SQS_QUEUE'];
 const AWS_REGION = process.env['AWS_REGION'];
 const SESSION_EVENTS_TABLE = process.env['API_TEST_SESSION_EVENTS_TABLE'];
 const EMAIL_ADDRESS = process.env['API_TEST_SESSION_EVENTS_TABLE'];
-const GOV_NOTIFY_INSTANCE = axios.create({ baseURL:process.env['GOVUKNOTIFYAPI'] });
+const GOV_NOTIFY_INSTANCE = axios.create({ baseURL: process.env['GOVUKNOTIFYAPI'] });
 
 const sqsClient = new SQSClient({
   region: AWS_REGION,
@@ -59,7 +60,7 @@ export async function getTxmaSqsEvent(): Promise<any> {
     MessageAttributeNames: ["All"],
     QueueUrl: TXMA_SQS_URL,
     VisibilityTimeout: 40,
-    WaitTimeSeconds: 20,    
+    WaitTimeSeconds: 20,
   });
   return sqsClient.send(command);
 }
@@ -67,7 +68,7 @@ export async function getTxmaSqsEvent(): Promise<any> {
 export async function getCompletedDynamoRecord(user: string): Promise<GetItemCommandOutput> {
   const command = new GetItemCommand({
     Key: {
-      userId: {"S": user},
+      userId: { "S": user },
     },
     TableName: SESSION_EVENTS_TABLE,
   });
@@ -80,21 +81,20 @@ export async function getCompletedDynamoRecord(user: string): Promise<GetItemCom
 }
 
 export async function postGovNotifyRequest(mockDelimitator: any, userData: any): Promise<any> {
-	const path = "/v2/notifications/email";
-	try {
-		// update email to contain mock delimitator before the @ - this determines the behaviour of the GovNotify mock
-		userData.email_address = insertBeforeLastOccurrence(userData.email_address, "@", mockDelimitator);
-    console.log(userData);
-		const postRequest = await GOV_NOTIFY_INSTANCE.post(path, userData);
-		return postRequest;
-	} catch (error: any) {
-		console.log(`Error response from ${path} endpoint: ${error}`);
-		return error.response;
-	}
+  const path = "/v2/notifications/email";
+  try {
+    // update email to contain mock delimitator before the @ - this determines the behaviour of the GovNotify mock
+    userData.email_address = insertBeforeLastOccurrence(userData.email_address, "@", mockDelimitator);
+    const postRequest = await GOV_NOTIFY_INSTANCE.post(path, userData);
+    return postRequest;
+  } catch (error: any) {
+    console.log(`Error response from ${path} endpoint: ${error}`);
+    return error.response;
+  }
 
   function insertBeforeLastOccurrence(strToSearch: string, strToFind: string, strToInsert: string) {
     var n = strToSearch.lastIndexOf(strToFind);
     if (n < 0) return strToSearch;
-    return strToSearch.substring(0,n) + strToInsert + strToSearch.substring(n);    
+    return strToSearch.substring(0, n) + strToInsert + strToSearch.substring(n);
   }
 }
