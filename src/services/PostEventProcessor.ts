@@ -78,15 +78,24 @@ export class PostEventProcessor {
 				return "Record flagged for deletion or event already processed, skipping update";
 			}
 
-			let updateExpression, expressionAttributeValues;
-			const expiresOn = absoluteTimeNow() + Number(this.environmentVariables.sessionReturnRecordTtl());
+			let updateExpression, expressionAttributeValues, expiresOn;
+
+			//Set default TTL to 12hrs to expire any records not meant for F2F
+			expiresOn = absoluteTimeNow() + this.environmentVariables.initialSessionReturnRecordTtlSecs();
+
+			if (eventName === Constants.F2F_YOTI_START) {
+				//Reset TTL to 11days for F2F journey
+				expiresOn = absoluteTimeNow() + this.environmentVariables.sessionReturnRecordTtlSecs();
+			}
+
 			const returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {
 					if (!this.checkIfValidString([userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl])) {
-						this.logger.error( { message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
-						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
+						this.logger.warn({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+						return `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`;
 					}
+
 					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn";
 					expressionAttributeValues = {
 						":userEmail": returnRecord.userEmail,
@@ -98,9 +107,10 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.F2F_YOTI_START: {
-					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn";
+					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn";
 					expressionAttributeValues = {
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
+						":expiresOn": returnRecord.expiresDate,
 					};
 					break;
 				}
@@ -145,8 +155,8 @@ export class PostEventProcessor {
 			};
 
 		} catch (error: any) {
-			this.logger.error({ message: "Cannot parse event data" });
-			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse event data");
+			this.logger.error({ message: "Cannot parse event data", error });
+			throw new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse event data");
 		}
 	}
 

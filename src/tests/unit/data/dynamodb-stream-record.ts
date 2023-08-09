@@ -28,7 +28,7 @@ export const VALID_DYNAMODB_STREAM_EVENT = {
 				},
 				"NewImage": {
 					"userEmail": {
-						"S": "bhavana.hemanth@digital.cabinet-office.gov.uk",
+						"S": "test.user@digital.cabinet-office.gov.uk",
 					},
 					"userId": {
 						"S": "01333e01-dde3-412f-a484-4444",

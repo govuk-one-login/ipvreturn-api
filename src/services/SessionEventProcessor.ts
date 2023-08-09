@@ -11,6 +11,7 @@ import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
 import { IPRService } from "./IPRService";
 import { AppError } from "../utils/AppError";
+import { MessageCodes } from "../models/enums/MessageCodes";
 
 export class SessionEventProcessor {
 
@@ -46,14 +47,14 @@ export class SessionEventProcessor {
 
 		// Validate the notified field is set to false
 		if (sessionEventData.notified) {
-			this.logger.warn("User is already notified for this session event.");
+			this.logger.warn("User is already notified for this session event.", { messageCode: MessageCodes.USER_ALREADY_NOTIFIED });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "User is already notified for this session event.");
 		}
 		// Validate if the record is missing some fields related to the Events and log the details and stop record processing.
 		try {
 			this.validationHelper.validateSessionEventFields(sessionEventData);
 		} catch (error: any) {
-			this.logger.warn(error.message);
+			this.logger.warn(error.message, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 
@@ -61,20 +62,20 @@ export class SessionEventProcessor {
 		try {
 			await this.validationHelper.validateModel(sessionEventData, this.logger);
 		} catch (error) {
-			this.logger.error("Unable to process the DB record as the necessary fields are not populated.");
+			this.logger.error("Unable to process the DB record as the necessary fields are not populated.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated.");
 		}
 
 		// Send SQS message to GovNotify queue to send email to the user.
 		try {
 			const nameParts = personalIdentityUtils.getNames(sessionEventData.nameParts);
-			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEventData.userEmail, nameParts.givenNames[0], nameParts.familyNames[0]));
+			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEventData.userId, sessionEventData.userEmail, nameParts.givenNames[0], nameParts.familyNames[0]));
 		} catch (error) {
 			const userId = sessionEventData.userId;
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
 				reason: "Processing Event session data, failed to post message to GovNotify SQS Queue",
 				error,
-			});
+			}, { messageCode: MessageCodes.FAILED_TO_WRITE_GOV_NOTIFY });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending message to GovNotify handler");
 		}
 		// Update the DB table with notified flag set to true
