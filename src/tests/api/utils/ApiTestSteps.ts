@@ -109,30 +109,6 @@ export async function getSessionByUserId(userId: string, tableName: string): Pro
 	return session;
 }
 
-export async function getSqsEventList(folder: string, prefix: string, txmaEventSize:number): Promise<any> {
-	let keys: any[];
-	let keyList: any[];
-	let i:any;
-	do {
-		const listObjectsResponse = await HARNESS_API_INSTANCE.get("/bucket/", {
-			params: {
-				prefix: folder + prefix,
-			},
-		});
-		const listObjectsParsedResponse = xmlParser.parse(listObjectsResponse.data);
-		if (!listObjectsParsedResponse?.ListBucketResult?.Contents) {
-			return undefined;
-		}
-		keys = listObjectsParsedResponse?.ListBucketResult?.Contents;
-		console.log(listObjectsParsedResponse?.ListBucketResult?.Contents);
-		keyList = [];
-		for (i = 0; i < keys.length; i++) {
-			keyList.push(listObjectsParsedResponse?.ListBucketResult?.Contents.at(i).Key);
-		} 
-	} while (keys.length < txmaEventSize );
-	return keyList;
-}
-
 export async function postGovNotifyRequest(mockDelimitator: any, userData: any): Promise<any> {
 	const path = "/v2/notifications/email";
 	try {
