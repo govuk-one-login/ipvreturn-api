@@ -24,16 +24,16 @@ tags:
 #       Resource: "execute-api:/*"
 
 paths:
-  getRecordBySessionId/{tableName}/{sessionId}:
+  getRecordByUserId/{tableName}/{userId}:
     get:
       operationId: getRecordById
-      summary: Get a session by sessionId from DynamoDB
+      summary: Get a session by userId from DynamoDB
       description: |
-        Endpoint to get a session from DynamoDB using sessionId as the primary key.
+        Endpoint to get a session from DynamoDB using userId as the primary key.
       parameters:
-        - name: sessionId
+        - name: userId
           in: path
-          description: The value of the sessionId primary key to find the record in DynamoDB
+          description: The value of the userId primary key to find the record in DynamoDB
           required: true
           schema:
             type: string
@@ -67,78 +67,16 @@ paths:
         passthroughBehavior: when_no_match
         requestParameters:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
-          integration.request.path.sessionId: "method.request.path.sessionId"
+          integration.request.path.userId: "method.request.path.userId"
           integration.request.path.tableName: "method.request.path.tableName"
         requestTemplates:
           application/json: |
             {
               "TableName": "$input.params('tableName')",
               "Key": {
-                "sessionId": {
-                  "S": "$input.params('sessionId')"
+                "userId": {
+                  "S": "$input.params('userId')"
                 }
-              }
-            }
-        responses:
-          default:
-            statusCode: "200"
-        type: aws
-
-  getSessionByAuthCode/{tableName}/{authCode}:
-    get:
-      operationId: getSessionByAuthCode
-      summary: Get a session by using authorizationCode-index from DynamoDB
-      description: |
-        Endpoint to get a session from DynamoDB using either authCode as the primary key
-      parameters:
-        - name: tableName
-          in: path
-          description: The name of the table to find the record in DynamoDB
-          required: true
-          schema:
-            type: string
-        - name: authCode
-          in: path
-          description: The value of the secondary index identifier to find the record in DynamoDB
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  session:
-                    type: object
-                    description: The found session from DynamoDB.
-        "401":
-          description: Unauthorized
-        "500":
-          description: Internal Server Error
-      x-amazon-apigateway-request-validator: "requestParamsOnly"
-      x-amazon-apigateway-integration:
-        httpMethod: POST
-        credentials:
-          Fn::GetAtt: [ "DynamoDbAccessRole", "Arn" ]
-        uri: "arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query"
-        passthroughBehavior: when_no_match
-        requestParameters:
-          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
-          integration.request.path.tableName: "method.request.path.tableName"
-          integration.request.path.authCode: "method.request.path.authCode"
-        requestTemplates:
-          application/json: |
-            {
-              "TableName":"$input.params('tableName')",
-              "IndexName":"authorizationCode-index",
-              "KeyConditionExpression": "authorizationCode = :authorizationCode",
-              "ExpressionAttributeValues":{
-                  ":authorizationCode":{
-                    "S":"$input.params('authCode')"
-                  }
               }
             }
         responses:

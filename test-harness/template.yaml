@@ -288,7 +288,6 @@ Resources:
         Name: TestHarnessRestApi
         Source: alphagov/di-devplatform-demo-sam-app/sam-app/template.yaml
 
-
   TestHarnessAPIGatewayAccessLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
