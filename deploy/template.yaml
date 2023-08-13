@@ -110,6 +110,7 @@ Mappings:
       DNSSUFFIX: "return.dev.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
+      TESTHARNESSURL: "ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
@@ -120,6 +121,7 @@ Mappings:
       DNSSUFFIX: "return.build.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
+      TESTHARNESSURL: "ipvreturn-test-harness-testharness.return.build.account.gov.uk"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
@@ -2160,8 +2162,33 @@ Outputs:
     Description: "SQS TXMA Consumer Queue URL"
     Value: !Ref MockTxMASQSQueue
     Condition: IsMockedEnvironment
-
   SessionEventsTable:
     Description: "SessionEvents Table Name"
     Value:
       Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+  TxMASQSQueue: 
+    Description: "Arn of the TxMASQSQueue"
+    Value: !GetAtt TxMASQSQueue.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-TxMASQSQueue-arn
+  TxMAKMSEncryptionKey: 
+    Description: "Arn of the TxMAKMSEncryptionKey"
+    Value: !GetAtt TxMAKMSEncryptionKey.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-TxMAKMSEncryptionKey-arn
+  SessionTableARN: 
+    Description: "Arn of the Session DynamoDB table"
+    Value:
+      Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
+    Export:
+      Name: !Sub ${AWS::StackName}-SessionTable-arn
+  SessionTableEcryptionARN: 
+    Description: "Arn of the SessionTableEncryptionKey"
+    Value:
+      Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
+    Export:
+      Name: !Sub ${AWS::StackName}-SessionTableEncryptionKey-arn
+  IpvreturnTestHarnessURL:
+    Condition: IsNotProdLikeEnvironment
+    Description: "F2F Test Harness"
+    Value: !FindInMap [EnvironmentVariables, !Ref Environment, TESTHARNESSURL]
