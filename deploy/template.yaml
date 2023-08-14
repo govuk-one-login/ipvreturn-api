@@ -110,7 +110,7 @@ Mappings:
       DNSSUFFIX: "return.dev.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
-      TESTHARNESSURL: "ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
+      TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
@@ -121,7 +121,7 @@ Mappings:
       DNSSUFFIX: "return.build.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
-      TESTHARNESSURL: "ipvreturn-test-harness-testharness.return.build.account.gov.uk"
+      TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.build.account.gov.uk"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
