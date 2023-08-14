@@ -1,4 +1,4 @@
-name: Pull Request CI
+name: Pull Request CI - Test harness
 on:
   # Triggers the workflow on push or pull request events but only for the "main" or "develop" branch
   pull_request:
@@ -9,11 +9,8 @@ on:
       - reopened
       - ready_for_review
       - synchronize
-    paths-ignore:
-      - 'infra-l2-dynamo/**'
-      - 'infra-l2-kms/**'
+    paths:
       - 'test-harness/**'
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -32,14 +29,14 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: ./src/
+        working-directory: test-harness/src/
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
         with:
           submodules: true
 
-      - name: Checks if commiting secrets to repo
+      - name: Checks if committing secrets to repo
         uses: pre-commit/action@v3.0.0
         with:
           extra_args: "detect-secrets --all-files"
@@ -65,18 +62,8 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-      - name: Archive lint results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: lint-report
-          path: src/reports/eslint/reportFile.html
-
       - name: Run Tests
         run: npm run test:unit
-
-      - name: Run Infra checks
-        run: npm run test:infra
 
   sam-validate:
     name: SAM Validate
@@ -84,7 +71,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: ./deploy/
+        working-directory: test-harness
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -97,9 +84,9 @@ jobs:
           use-installer: true
 
       - name: Assume temporary AWS role
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ secrets.GH_RETURN_VALIDATE_ROLE_ARN }}
+          role-to-assume: ${{ secrets.GH_DEV_TEST_HARNESS_VALIDATE_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Cache SAM builds
