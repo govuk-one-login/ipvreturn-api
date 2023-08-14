@@ -265,6 +265,7 @@ Resources:
   DynamoDbAccessRole:
     Type: "AWS::IAM::Role"
     Properties:
+      RoleName: !Sub "ipvreturn-test-harness-${AWS::StackName}-apigw"
       AssumeRolePolicyDocument:
         Statement:
           - Action: "sts:AssumeRole"
@@ -303,6 +304,10 @@ Resources:
             - kms:Decrypt
             Resource:
               Fn::ImportValue: !Sub "${BackendStack}-SessionTableEncryptionKey-arn"
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
 
   ### Start of API Gateway definition.
 
