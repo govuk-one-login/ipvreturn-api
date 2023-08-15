@@ -103,7 +103,7 @@ export class SendEmailProcessor {
 				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
 				...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId}),
 				extensions: {
-					govuk_signin_journey_id: session.clientSessionId,
+					previous_govuk_signin_journey_id: session.clientSessionId,
 				},
 			});
 		} catch (error) {

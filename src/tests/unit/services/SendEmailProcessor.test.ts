@@ -89,7 +89,7 @@ describe("SendEmailProcessor", () => {
 				user_id: "user_id",
 			},
 			extensions: {
-				govuk_signin_journey_id: "sdfssg",
+				previous_govuk_signin_journey_id: "sdfssg",
 			},
 		});
 	});

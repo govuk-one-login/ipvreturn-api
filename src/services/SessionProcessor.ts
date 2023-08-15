@@ -163,7 +163,7 @@ export class SessionProcessor {
 				event_name: "IPR_USER_REDIRECTED",
 				...buildCoreEventFields({ user_id: sub }),
 				extensions: {
-					govuk_signin_journey_id: session.clientSessionId,
+					previous_govuk_signin_journey_id: session.clientSessionId,
 				},
 			});
 
