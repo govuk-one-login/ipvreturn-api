@@ -2,14 +2,16 @@ import { randomUUID } from "crypto";
 import { SendMessageCommand, SendMessageCommandOutput, SQSClient, PurgeQueueCommand, ReceiveMessageCommand } from "@aws-sdk/client-sqs";
 import { ReturnSQSEvent } from "../../../models/ReturnSQSEvent";
 import { DynamoDBClient, GetItemCommand, GetItemCommandOutput } from "@aws-sdk/client-dynamodb";
+import { constants } from "./ApiConstants";
 
-
-const TXMA_SQS_URL = process.env.API_TEST_GOV_NOTIFY_SQS_QUEUE;
-const MOCK_TXMA_SQS_URL = process.env.API_TEST_SQS_TXMA_CONSUMER_QUEUE;
-const GOV_NOTIFY_SQS_URL = process.env.API_TEST_GOV_NOTIFY_SQS_QUEUE;
 const AWS_REGION = process.env.AWS_REGION;
-const SESSION_EVENTS_TABLE = process.env.API_TEST_SESSION_EVENTS_TABLE;
-const EMAIL_ADDRESS = process.env.API_TEST_SESSION_EVENTS_TABLE;
+// TODO this is saying that the txma SQS queue should be the gov notify SQS queue
+const TXMA_SQS_URL = constants.API_TEST_GOV_NOTIFY_SQS_QUEUE;
+const MOCK_TXMA_SQS_URL = constants.API_TEST_SQS_TXMA_CONSUMER_QUEUE;
+const GOV_NOTIFY_SQS_URL = constants.API_TEST_GOV_NOTIFY_SQS_QUEUE;
+const SESSION_EVENTS_TABLE = constants.API_TEST_SESSION_EVENTS_TABLE;
+const EMAIL_ADDRESS = constants.API_TEST_SESSION_EVENTS_TABLE;
+
 
 const sqsClient = new SQSClient({
 	region: AWS_REGION,
