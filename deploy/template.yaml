@@ -1954,38 +1954,3 @@ Outputs:
     Description: "SessionEvents Table Name"
     Value:
       Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
-  TxMASQSQueue: 
-    Description: "Arn of the TxMASQSQueue"
-    Value: !GetAtt TxMASQSQueue.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-TxMASQSQueue-arn
-  TxMAKMSEncryptionKey: 
-    Description: "Arn of the TxMAKMSEncryptionKey"
-    Value: !GetAtt TxMAKMSEncryptionKey.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-TxMAKMSEncryptionKey-arn
-  GovNotifySQSQueue: 
-    Description: "Arn of the GovNotifySQSQueue"
-    Value: !GetAtt GovNotifySQSQueue.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-GovNotifySQSQueue-arn
-  GovNotifyEncryptionKey: 
-    Description: "Arn of the GovNotifyEncryptionKey"
-    Value: !GetAtt GovNotifyEncryptionKey.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-GovNotifyEncryptionKey-arn
-  SessionTableARN: 
-    Description: "Arn of the Session DynamoDB table"
-    Value:
-      Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
-    Export:
-      Name: !Sub ${AWS::StackName}-SessionTable-arn
-  SessionTableEcryptionARN: 
-    Description: "Arn of the SessionTableEncryptionKey"
-    Value:
-      Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
-    Export:
-      Name: !Sub ${AWS::StackName}-SessionTableEncryptionKey-arn
-  IpvreturnTestHarnessURL:
-    Description: "F2F Test Harness"
-    Value: !FindInMap [EnvironmentVariables, !Ref Environment, TESTHARNESSURL]
