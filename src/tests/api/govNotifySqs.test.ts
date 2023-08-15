@@ -25,4 +25,3 @@ describe("TxMA Events from Gov Notify SQS queue", () => {
 	});
 
 });
-

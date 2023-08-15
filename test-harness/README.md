@@ -1,6 +1,6 @@
 # Test Harness
 
-This is a test harness that listens to events from TxMA and Gov Notify SQS queues and puts it in the `${AWS::StackName}-ipvreturn-event-test-${Environment}` bucket which can then be accessed using and API.
+This is a test harness that listens to events from the TxMA SQS queue and puts it in the `${AWS::StackName}-ipvreturn-event-test-${Environment}` bucket which can then be accessed using and API.
 
 This test harness is only to be used in dev and build environments
 

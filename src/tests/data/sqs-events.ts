@@ -132,6 +132,7 @@ export const VALID_GOV_NOTIFY_SQS_TXMA_EVENT = {
 		firstName: "Test",
 		lastName: "User",
 		messageType: "email",
+		userId: "1-1333e01-dde3-412f-a484-3333",
 	},
 };
 
