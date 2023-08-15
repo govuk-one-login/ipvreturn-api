@@ -112,6 +112,13 @@ export class PostEventProcessor {
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
 						":expiresOn": returnRecord.expiresDate,
 					};
+					
+					if (returnRecord.clientSessionId) {
+						updateExpression += ", clientSessionId = :clientSessionId";
+						expressionAttributeValues[":clientSessionId"] = returnRecord.clientSessionId;
+					} else {
+						this.logger.info(`No govuk_signin_journey_id in ${eventName} event`);
+					};
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_CONSUMED: {
@@ -145,13 +152,6 @@ export class PostEventProcessor {
 			if (!updateExpression || !expressionAttributeValues) {
 				this.logger.error({ message: "Missing config to update DynamboDB for event:", eventName });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
-			}
-
-			if (returnRecord.clientSessionId) {
-				updateExpression += ", clientSessionId = :clientSessionId";
-				expressionAttributeValues[":clientSessionId"] = returnRecord.clientSessionId;
-			} else {
-				this.logger.info(`No govuk_signin_journey_id in ${eventName} event`);
 			}
 
 			const saveEventData = await this.iprService.saveEventData(userId, updateExpression, expressionAttributeValues);

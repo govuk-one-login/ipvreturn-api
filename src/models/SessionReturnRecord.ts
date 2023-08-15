@@ -10,9 +10,6 @@ export interface NamePart {
 export class SessionReturnRecord {
 	constructor(data: ReturnSQSEvent, expiresOn: number) {
 		this.userId = data.user.user_id;
-		if (data.user.govuk_signin_journey_id && (data.user.govuk_signin_journey_id).toLowerCase() !== "unknown") {
-			this.clientSessionId = data.user.govuk_signin_journey_id;
-		}
 		switch (data.event_name) {
 			case Constants.AUTH_IPV_AUTHORISATION_REQUESTED:{
 				this.clientName = data.client_id!;
@@ -25,6 +22,9 @@ export class SessionReturnRecord {
 			case Constants.F2F_YOTI_START:{
 				this.journeyWentAsyncOn = data.timestamp;
 				this.expiresDate = expiresOn;
+				if (data.user.govuk_signin_journey_id && (data.user.govuk_signin_journey_id).toLowerCase() !== "unknown") {
+					this.clientSessionId = data.user.govuk_signin_journey_id;
+				}
 				break;
 			}
 			case Constants.IPV_F2F_CRI_VC_CONSUMED:{
