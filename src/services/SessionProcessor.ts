@@ -59,7 +59,9 @@ export class SessionProcessor {
 			const openIdConfigEndpoint = `${this.environmentVariables.oidcUrl()}${Constants.OIDC_OPENID_CONFIG_ENDPOINT}`;
 			const openIdConfiguration = (await axios.get(openIdConfigEndpoint)).data;
 			if (openIdConfiguration.issuer == null || openIdConfiguration.jwks_uri == null ) {
-				this.logger.error("Missing openIdConfiguration values.");
+				this.logger.error({ message: "Missing openIdConfiguration values." }, {
+					messageCode: MessageCodes.MISSING_OIDC_CONFIGURATION,
+				});
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Missing openIdConfiguration values.");
 			}
 			this.logger.debug("Fetching OpenId Configuration data");
@@ -68,7 +70,7 @@ export class SessionProcessor {
 
 			// Generate id_token
 			if (authCode == null || authCode.length <= 0) {
-				this.logger.error("Missing authCode to generate id_token");
+				this.logger.error({ message: "Missing authCode to generate id_token" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Missing authCode to generate id_token");
 			}
 			const idToken = await this.generateIdToken(authCode);
@@ -77,7 +79,7 @@ export class SessionProcessor {
 			try {
 				parsedIdTokenJwt = this.kmsJwtAdapter.decode(idToken);
 			} catch (error) {
-				this.logger.error("FAILED_DECODING_JWT", { error });
+				this.logger.error("FAILED_DECODING_JWT", { messageCode: MessageCodes.FAILED_DECODING_JWT, error });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Invalid request: Rejected jwt");
 			}
 			const jwtIdTokenPayload: JwtPayload = parsedIdTokenJwt.payload;
@@ -86,18 +88,18 @@ export class SessionProcessor {
 			try {
 				const payload = await this.kmsJwtAdapter.verifyWithJwks(idToken, jwksEndpoint);
 				if (!payload) {
-					this.logger.error("JWT verification failed");
+					this.logger.error("JWT verification failed", { messageCode: MessageCodes.FAILED_VERIFYING_JWT });
 					return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT verification failed");
 				}
 			} catch (error) {
-				this.logger.debug("UNEXPECTED_ERROR_VERIFYING_JWT", { error });
+				this.logger.error("UNEXPECTED_ERROR_VERIFYING_JWT", { messageCode: MessageCodes.UNEXPECTED_ERROR_VERIFYING_JWT, error });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Invalid request: Could not verify jwt");
 			}
 
 			// Verify Jwt claims
 			const jwtErrors = this.validationHelper.isJwtValid(jwtIdTokenPayload, this.CLIENT_ID, issuer);
 			if (jwtErrors.length > 0) {
-				this.logger.error(jwtErrors);
+				this.logger.error({ message: jwtErrors }, { messageCode: MessageCodes.FAILED_VALIDATING_JWT });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT validation/verification failed");
 			}
 
@@ -109,9 +111,9 @@ export class SessionProcessor {
 					WebIdentityToken: idToken,
 					RoleArn: this.environmentVariables.assumeRoleWithWebIdentityArn(),
 				});
-			} catch (err: any) {
-				this.logger.error({ message: "An error occurred while assuming the role with WebIdentity ", err });
-				return new Response(HttpCodesEnum.UNAUTHORIZED, err.message);
+			} catch (error) {
+				this.logger.error({ message: "An error occurred while assuming the role with WebIdentity" }, { messageCode: MessageCodes.ERROR_ASSUMING_ROLE_WITH_WEB_IDENTITY, error });
+				return new Response(HttpCodesEnum.UNAUTHORIZED, "An error occurred while assuming the role with WebIdentity");
 			}
 
 			// Dynamo access using the temporary credentials
@@ -128,12 +130,12 @@ export class SessionProcessor {
 				session = await iprService.getSessionBySub(sub);
 				this.logger.debug("Session retrieved from session store");
 				if (!session) {
-					this.logger.error("No session event found for this userId");
+					this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
 					return new Response(HttpCodesEnum.UNAUTHORIZED, "No session event found for this userId");
 				}
 
 			} catch (error) {
-				this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", error });
+				this.logger.error({ message: "getSessionByUserId - Error retrieving Session" }, { messageCode: MessageCodes.ERROR_RETRIEVING_SESSION, error });
 				throw new AppError(HttpCodesEnum.UNAUTHORIZED, "Error retrieving Session");
 			}
 
@@ -152,7 +154,7 @@ export class SessionProcessor {
 			}
 			// Validate the notified field is set to true
 			if (!session.notified) {
-				this.logger.error("User is not yet notified for this session event.");
+				this.logger.error("User is not yet notified for this session event.", { messageCode: MessageCodes.USER_NOT_NOTIFIED });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "User is not yet notified for this session event.");
 			}
 			this.logger.info("User is successfully redirected to : ", session?.redirectUri);
@@ -196,6 +198,10 @@ export class SessionProcessor {
 		try {
 			client_assertion = await this.kmsJwtAdapter.sign(jwtPayload);
 		} catch (error) {
+			this.logger.error("Failed to sign the client_assertion Jwt", {
+				error,
+				messageCode: MessageCodes.ERROR_SIGNING_JWT,
+			});
 			throw new AppError(HttpCodesEnum.UNAUTHORIZED, "Failed to sign the client_assertion Jwt");
 		}
 
@@ -210,9 +216,12 @@ export class SessionProcessor {
 				{ headers:{ "Content-Type" : "text/plain" } },
 			);
 			return data.id_token;
-		} catch (err: any) {
-			this.logger.error({ message: "An error occurred when retrieving OIDC token response ", err });
-			throw new AppError(HttpCodesEnum.UNAUTHORIZED, err.message);
+		} catch (error) {
+			this.logger.error("An error occurred when fetching OIDC token response", {
+				error,
+				messageCode: MessageCodes.UNEXPECTED_ERROR_FETCHING_OIDC_TOKEN,
+			});
+			throw new AppError(HttpCodesEnum.UNAUTHORIZED, "An error occurred when fetching OIDC token response");
 		}
 	}
 

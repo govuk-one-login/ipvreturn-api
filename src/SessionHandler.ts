@@ -10,6 +10,8 @@ import { HttpVerbsEnum } from "./utils/HttpVerbsEnum";
 import { getParameter } from "./utils/Config";
 import { EnvironmentVariables } from "./services/EnvironmentVariables";
 import { ServicesEnum } from "./models/enums/ServicesEnum";
+import { MessageCodes } from "./models/enums/MessageCodes";
+import { AppError } from "./utils/AppError";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : "CIC-CRI";
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : "DEBUG";
@@ -44,19 +46,29 @@ class Session implements LambdaInterface {
 							logger.info({ message: "Fetching CLIENT_ID from SSM" });
 							try {
 								CLIENT_ID = await getParameter(this.environmentVariables.clientIdSsmPath());
-							} catch (err) {
-								logger.error(`failed to get param from ssm at ${this.environmentVariables.clientIdSsmPath()}`, { err });
-								throw err;
+							} catch (error) {
+								logger.error({ message:`failed to get param from ssm at ${this.environmentVariables.clientIdSsmPath()}` }, { messageCode: MessageCodes.MISSING_CONFIGURATION, error });
+								return new Response(HttpCodesEnum.SERVER_ERROR, "An error has occurred");
 							}
 						}
 						return await SessionProcessor.getInstance(logger, metrics, CLIENT_ID).processRequest(event);
-					} catch (err) {
-						logger.error({ message: "An error has occurred. ", err });
+					} catch (error) {
+						logger.error({ message: "An error has occurred. ",
+							error,
+							messageCode: MessageCodes.SERVER_ERROR,
+						});
+						if (error instanceof AppError) {
+							return new Response(error.statusCode, error.message);
+						}
 						return new Response(HttpCodesEnum.SERVER_ERROR, "An error has occurred");
 					}
 				}
 				return new Response(HttpCodesEnum.NOT_FOUND, "");
 			default:
+				logger.error("Requested resource does not exist", {
+					messageCode: MessageCodes.RESOURCE_NOT_FOUND,
+					resource: event.resource,
+				});
 				return new Response(HttpCodesEnum.NOT_FOUND, "Resource not found");
 		}
 	}
