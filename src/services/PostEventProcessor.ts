@@ -64,6 +64,7 @@ export class PostEventProcessor {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
 			const userDetails = eventDetails.user;
+			this.logger.appendKeys({ govuk_signin_journey_id: userDetails.govuk_signin_journey_id });
 
 			if (!this.checkIfValidString([userDetails.user_id])) {
 				this.logger.error({ message: "Missing or invalid value for userDetails.user_id in event payload" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });

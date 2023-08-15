@@ -1,6 +1,5 @@
 import { Email } from "../models/Email";
 import { EmailResponse } from "../models/EmailResponse";
-import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
 import { buildCoreEventFields } from "../utils/TxmaEvent";
@@ -8,11 +7,9 @@ import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { SendEmailService } from "./SendEmailService";
 import { IPRService } from "./IPRService";
-import { EnvironmentVariables } from "./EnvironmentVariables";
 import { MessageCodes } from "../models/enums/MessageCodes";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
-import { Response } from "../utils/Response";
 import { SessionEvent } from "../models/SessionEvent";
 
 export class SendEmailProcessor {

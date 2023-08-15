@@ -1,23 +1,24 @@
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
+import { randomUUID } from "crypto";
+import { APIGatewayProxyEvent } from "aws-lambda";
+import axios from "axios";
+import { IPRService } from "./IPRService";
+import { EnvironmentVariables } from "./EnvironmentVariables";
 import { KmsJwtAdapter } from "../utils/KmsJwtAdapter";
 import { HttpCodesEnum } from "../utils/HttpCodesEnum";
-import { APIGatewayProxyEvent } from "aws-lambda";
 import { Response } from "../utils/Response";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
 import { buildCoreEventFields } from "../utils/TxmaEvent";
-import { randomUUID } from "crypto";
-import axios from "axios";
 import { AppError } from "../utils/AppError";
 import { createDynamoDbClientWithCreds } from "../utils/DynamoDBFactory";
-import { IPRService } from "./IPRService";
-import { EnvironmentVariables } from "./EnvironmentVariables";
-import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { Jwt, JwtPayload } from "../utils/IVeriCredential";
 import { Constants } from "../utils/Constants";
-import { SessionEventStatusEnum } from "../models/enums/SessionEventStatusEnum";
 import { stsClient } from "../utils/StsClient";
+import { ServicesEnum } from "../models/enums/ServicesEnum";
+import { SessionEventStatusEnum } from "../models/enums/SessionEventStatusEnum";
+import { MessageCodes } from "../models/enums/MessageCodes";
 
 export class SessionProcessor {
 	private static instance: SessionProcessor;
@@ -159,13 +160,20 @@ export class SessionProcessor {
 			}
 			this.logger.info("User is successfully redirected to : ", session?.redirectUri);
 
-			await iprService.sendToTXMA({
-				event_name: "IPR_USER_REDIRECTED",
-				...buildCoreEventFields({ user_id: sub }),
-				extensions: {
+			try {
+				await iprService.sendToTXMA({
+					event_name: "IPR_USER_REDIRECTED",
+					...buildCoreEventFields({ user_id: sub }),
+          extensions: {
 					govuk_signin_journey_id: session.clientSessionId,
-				},
-			});
+				  },
+				});
+			} catch (error) {
+				this.logger.error("Failed to send IPR_USER_REDIRECTED event to TXMA", {
+					error,
+					messageCode: MessageCodes.FAILED_TO_WRITE_TXMA,
+				});
+			}
 
 			return {
 				statusCode: HttpCodesEnum.OK,
