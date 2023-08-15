@@ -159,13 +159,20 @@ export class SessionProcessor {
 			}
 			this.logger.info("User is successfully redirected to : ", session?.redirectUri);
 
-			await iprService.sendToTXMA({
-				event_name: "IPR_USER_REDIRECTED",
-				...buildCoreEventFields({ user_id: sub }),
-				extensions: {
+			try {
+				await iprService.sendToTXMA({
+					event_name: "IPR_USER_REDIRECTED",
+					...buildCoreEventFields({ user_id: sub }),
+          extensions: {
 					previous_govuk_signin_journey_id: session.clientSessionId,
-				},
-			});
+				  },
+				});
+			} catch (error) {
+				this.logger.error("Failed to send IPR_USER_REDIRECTED event to TXMA", {
+					error,
+					messageCode: MessageCodes.FAILED_TO_WRITE_TXMA,
+				});
+			}
 
 			return {
 				statusCode: HttpCodesEnum.OK,
