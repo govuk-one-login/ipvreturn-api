@@ -18,6 +18,7 @@ import { Jwt, JwtPayload } from "../utils/IVeriCredential";
 import { Constants } from "../utils/Constants";
 import { SessionEventStatusEnum } from "../models/enums/SessionEventStatusEnum";
 import { stsClient } from "../utils/StsClient";
+import { MessageCodes } from "../models/enums/MessageCodes";
 
 export class SessionProcessor {
 	private static instance: SessionProcessor;
