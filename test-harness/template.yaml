@@ -255,6 +255,7 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:s3:::${EventTestBucket}"
                   - !Sub "arn:aws:s3:::${EventTestBucket}/txma/*"
+                  - !Sub "arn:aws:s3:::${EventTestBucket}/gov-notify/*"
       PermissionsBoundary: !If
         - UsePermissionsBoundary
         - !Ref PermissionsBoundary
