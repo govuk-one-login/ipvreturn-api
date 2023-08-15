@@ -22,6 +22,11 @@ class StreamProcessorHandler implements LambdaInterface {
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
 	async handler(event: DynamoDBStreamEvent, context: any): Promise<DynamoDBBatchResponse> {
+
+		// clear PersistentLogAttributes set by any previous invocation, and add lambda context for this invocation
+		logger.setPersistentLogAttributes({});
+		logger.addContext(context);
+		
 		logger.debug("DB Stream event received");
 		if (event.Records.length === 1) {
 			const record: DynamoDBRecord = event.Records[0];
