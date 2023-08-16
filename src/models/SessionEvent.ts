@@ -40,7 +40,6 @@ export class SessionEvent {
 	userId!: string;
 
 	@IsString()
-	@IsNotEmpty()
 	clientSessionId!: string;
 
 	@IsString()
