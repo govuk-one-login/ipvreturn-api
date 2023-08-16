@@ -2166,7 +2166,6 @@ Outputs:
     Description: "SQS TXMA Consumer Queue URL"
     Value: !Ref MockTxMASQSQueue
     Condition: IsMockedEnvironment
-
   SessionEventsTable:
     Description: "SessionEvents Table Name"
     Value:

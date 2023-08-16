@@ -17,7 +17,9 @@ import axios from "axios";
 import { stsClient } from "../../../utils/StsClient";
 import { absoluteTimeNow } from "../../../utils/DateTimeUtils";
 import { JWTPayload } from "jose";
-
+import { MessageCodes } from "../../../models/enums/MessageCodes";
+/* eslint @typescript-eslint/unbound-method: 0 */
+/* eslint jest/unbound-method: error */
 let sessionProcessorTest: SessionProcessor;
 const mockIprService = mock<IPRService>();
 let mockSessionEvent: SessionEvent;
@@ -53,6 +55,7 @@ function getMockSessionEventItem(): SessionEvent {
 	const sess: SessionEvent = {
 		userId: "userId",
 		clientName: "ipv",
+		clientSessionId: "sdfssg",
 		userEmail: "testuser@test.gov.uk",
 		notified: true,
 		ipvStartedOn: 1681902001,
@@ -104,11 +107,15 @@ describe("SessionProcessor", () => {
 
 	it("Return 401 when auth_code is missing in the request", async () => {
 		const out: Response = await sessionProcessorTest.processRequest(MISSING_AUTH_CODE);
-
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		// @ts-ignore
 		expect(out.body).toBe("Missing authCode to generate id_token");
 		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+		expect(logger.error).toHaveBeenCalledTimes(1);
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				messageCode: MessageCodes.MISSING_CONFIGURATION,
+			}),
+		);
 	});
 
 	it("Return 500 ServerError when an error occurred while retrieving id_token from OIDC endpoint", async () => {
@@ -116,10 +123,15 @@ describe("SessionProcessor", () => {
 		axios.post.mockRejectedValueOnce(new Error("error"));
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		// @ts-ignore
-		expect(out.body).toBe("error");
+		expect(out.body).toBe("An error occurred when fetching OIDC token response");
 		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+		expect(logger.error).toHaveBeenCalledTimes(1);
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				messageCode: MessageCodes.UNEXPECTED_ERROR_FETCHING_OIDC_TOKEN,
+			}),
+		);
 	});
 
 	it("Return 500 ServerError when failed to decode the id_token jwt", async () => {
@@ -129,10 +141,15 @@ describe("SessionProcessor", () => {
 		sessionProcessorTest.kmsJwtAdapter = failingKmsJwtDecodeAdapterFactory();
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		// @ts-ignore
 		expect(out.body).toBe("Invalid request: Rejected jwt");
 		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+		expect(logger.error).toHaveBeenCalledTimes(1);
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				messageCode: MessageCodes.FAILED_DECODING_JWT,
+			}),
+		);
 	});
 
 	it("Return 500 ServerError when failed to sign the client_assertion_jwt", async () => {
@@ -140,10 +157,15 @@ describe("SessionProcessor", () => {
 		sessionProcessorTest.kmsJwtAdapter = failingKmsJwtSigningAdapterFactory();
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		// @ts-ignore
 		expect(out.body).toBe("Failed to sign the client_assertion Jwt");
 		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+		expect(logger.error).toHaveBeenCalledTimes(1);
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				messageCode: MessageCodes.ERROR_SIGNING_JWT,
+			}),
+		);
 	});
 
 	it("Return 401 when verification of id_token fails", async () => {
@@ -153,10 +175,15 @@ describe("SessionProcessor", () => {
 		sessionProcessorTest.kmsJwtAdapter = failingKmsJwtAdapterFactory();
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		// @ts-ignore
 		expect(out.body).toBe("JWT verification failed");
 		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+		expect(logger.error).toHaveBeenCalledTimes(1);
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				messageCode: MessageCodes.FAILED_VERIFYING_JWT,
+			}),
+		);
 	});
 
 	it.each([
@@ -173,10 +200,15 @@ describe("SessionProcessor", () => {
 		sessionProcessorTest.kmsJwtAdapter = new MockKmsJwtAdapter(true, wrongPayload);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		// @ts-ignore
 		expect(out.body).toBe("JWT validation/verification failed");
 		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+		expect(logger.error).toHaveBeenCalledTimes(1);
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				messageCode: MessageCodes.FAILED_VALIDATING_JWT,
+			}),
+		);
 	});
 
 	it("Return 401 Unauthorized error when session event not found for a given userId", async () => {
@@ -185,11 +217,17 @@ describe("SessionProcessor", () => {
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(null);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
 
+		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
 		expect(out.body).toBe("No session event found for this userId");
 		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+		expect(logger.error).toHaveBeenCalledTimes(1);
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				messageCode: MessageCodes.SESSION_NOT_FOUND,
+			}),
+		);
 	});
 
 	it("Return successful response with 200 OK when session event data was retrieved and returns redirect_uri", async () => {
@@ -198,7 +236,7 @@ describe("SessionProcessor", () => {
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
+
 		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
 
 		expect(out.body).toEqual(JSON.stringify({
@@ -220,7 +258,7 @@ describe("SessionProcessor", () => {
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
+
 		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
 		expect(out.body).toEqual(JSON.stringify({
 			status: SessionEventStatusEnum.PENDING,
@@ -237,9 +275,16 @@ describe("SessionProcessor", () => {
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
+
 		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
 		expect(out.body).toBe("User is not yet notified for this session event.");
 		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+		expect(logger.error).toHaveBeenCalledTimes(1);
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				messageCode: MessageCodes.USER_NOT_NOTIFIED,
+			}),
+		);
 	});
 });
