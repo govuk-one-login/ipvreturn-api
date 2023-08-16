@@ -10,6 +10,7 @@ export class SessionEvent {
 	constructor(data: Partial<SessionEvent>) {
 		this.userEmail = data.userEmail!;
 		this.userId = data.userId!;
+		this.clientSessionId = data.clientSessionId!;
 		this.clientName = data.clientName!;
 		this.redirectUri = data.redirectUri!;
 		this.nameParts = data.nameParts!;
@@ -37,6 +38,9 @@ export class SessionEvent {
 	@IsString()
 	@IsNotEmpty()
 	userId!: string;
+
+	@IsString()
+	clientSessionId!: string;
 
 	@IsString()
 	@IsNotEmpty()

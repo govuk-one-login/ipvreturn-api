@@ -10,9 +10,9 @@ export interface ReturnSQSEvent {
 	timestamp: number;
 	timestamp_formatted: string;
 	user: {
+		govuk_signin_journey_id?: string;
 		user_id: string;
 		email?: string;
-		govuk_signin_journey_id?: string;
 	};
 	restricted?: {
 		nameParts: NamePart[];

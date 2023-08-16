@@ -55,6 +55,7 @@ function getMockSessionEventItem(): SessionEvent {
 	const sess: SessionEvent = {
 		userId: "userId",
 		clientName: "ipv",
+		clientSessionId: "sdfssg",
 		userEmail: "testuser@test.gov.uk",
 		notified: true,
 		ipvStartedOn: 1681902001,

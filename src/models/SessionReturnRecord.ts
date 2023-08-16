@@ -1,5 +1,6 @@
 import { ReturnSQSEvent } from "./ReturnSQSEvent";
 import { Constants } from "../utils/Constants";
+import { Logger } from "@aws-lambda-powertools/logger";
 
 export interface NamePart {
 	type: string;
@@ -21,6 +22,9 @@ export class SessionReturnRecord {
 			case Constants.F2F_YOTI_START:{
 				this.journeyWentAsyncOn = data.timestamp;
 				this.expiresDate = expiresOn;
+				if (data.user.govuk_signin_journey_id && (data.user.govuk_signin_journey_id).toLowerCase() !== "unknown") {
+					this.clientSessionId = data.user.govuk_signin_journey_id;
+				}
 				break;
 			}
 			case Constants.IPV_F2F_CRI_VC_CONSUMED:{
@@ -30,6 +34,7 @@ export class SessionReturnRecord {
 			}
 			case Constants.AUTH_DELETE_ACCOUNT:{
 				this.accountDeletedOn = data.timestamp;
+				this.clientSessionId = "";
 				this.clientName = "";
 				this.redirectUri = "";
 				this.userEmail = "";
@@ -61,4 +66,6 @@ export class SessionReturnRecord {
     accountDeletedOn?: number;
 
     expiresDate?: number;
+
+    clientSessionId?: string;
 }

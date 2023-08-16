@@ -1,23 +1,23 @@
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
-import { randomUUID } from "crypto";
-import { APIGatewayProxyEvent } from "aws-lambda";
-import axios from "axios";
-import { IPRService } from "./IPRService";
-import { EnvironmentVariables } from "./EnvironmentVariables";
 import { KmsJwtAdapter } from "../utils/KmsJwtAdapter";
 import { HttpCodesEnum } from "../utils/HttpCodesEnum";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import { Response } from "../utils/Response";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
 import { buildCoreEventFields } from "../utils/TxmaEvent";
+import { randomUUID } from "crypto";
+import axios from "axios";
 import { AppError } from "../utils/AppError";
 import { createDynamoDbClientWithCreds } from "../utils/DynamoDBFactory";
+import { IPRService } from "./IPRService";
+import { EnvironmentVariables } from "./EnvironmentVariables";
+import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { Jwt, JwtPayload } from "../utils/IVeriCredential";
 import { Constants } from "../utils/Constants";
-import { stsClient } from "../utils/StsClient";
-import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { SessionEventStatusEnum } from "../models/enums/SessionEventStatusEnum";
+import { stsClient } from "../utils/StsClient";
 import { MessageCodes } from "../models/enums/MessageCodes";
 
 export class SessionProcessor {
@@ -128,11 +128,14 @@ export class SessionProcessor {
 			const sub = jwtIdTokenPayload.sub!;
 			try {
 				session = await iprService.getSessionBySub(sub);
-				this.logger.debug("Session retrieved from session store");
 				if (!session) {
 					this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
 					return new Response(HttpCodesEnum.UNAUTHORIZED, "No session event found for this userId");
 				}
+				this.logger.appendKeys({
+					govuk_signin_journey_id: session.clientSessionId,
+				});
+				this.logger.debug("Session retrieved from session store");
 
 			} catch (error) {
 				this.logger.error({ message: "getSessionByUserId - Error retrieving Session" }, { messageCode: MessageCodes.ERROR_RETRIEVING_SESSION, error });
@@ -163,6 +166,9 @@ export class SessionProcessor {
 				await iprService.sendToTXMA({
 					event_name: "IPR_USER_REDIRECTED",
 					...buildCoreEventFields({ user_id: sub }),
+          extensions: {
+					previous_govuk_signin_journey_id: session.clientSessionId,
+				  },
 				});
 			} catch (error) {
 				this.logger.error("Failed to send IPR_USER_REDIRECTED event to TXMA", {
@@ -170,7 +176,6 @@ export class SessionProcessor {
 					messageCode: MessageCodes.FAILED_TO_WRITE_TXMA,
 				});
 			}
-
 
 			return {
 				statusCode: HttpCodesEnum.OK,

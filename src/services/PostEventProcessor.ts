@@ -79,7 +79,7 @@ export class PostEventProcessor {
 				return "Record flagged for deletion or event already processed, skipping update";
 			}
 
-			let updateExpression, expressionAttributeValues, expiresOn;
+			let updateExpression, expressionAttributeValues: { [key: string]: any }, expiresOn;
 
 			//Set default TTL to 12hrs to expire any records not meant for F2F
 			expiresOn = absoluteTimeNow() + this.environmentVariables.initialSessionReturnRecordTtlSecs();
@@ -112,6 +112,13 @@ export class PostEventProcessor {
 					expressionAttributeValues = {
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
 						":expiresOn": returnRecord.expiresDate,
+					};
+					
+					if (returnRecord.clientSessionId) {
+						updateExpression += ", clientSessionId = :clientSessionId";
+						expressionAttributeValues[":clientSessionId"] = returnRecord.clientSessionId;
+					} else {
+						this.logger.info(`No govuk_signin_journey_id in ${eventName} event`);
 					};
 					break;
 				}
