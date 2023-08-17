@@ -20,7 +20,7 @@ let sqsEvent: SQSEvent;
 
 describe("SendEmailProcessor", () => {
 	beforeAll(() => {
-		sendEmailServiceTest = SendEmailService.getInstance(logger, GOVUKNOTIFY_API_KEY);
+		sendEmailServiceTest = SendEmailService.getInstance(logger, GOVUKNOTIFY_API_KEY, "serviceId");
 		// @ts-ignore
 		sendEmailServiceTest.govNotify = mockGovNotify;
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;

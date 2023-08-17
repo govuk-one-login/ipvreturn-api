@@ -28,18 +28,18 @@ export class SendEmailProcessor {
 
 	private readonly iprService: IPRService;
 
-	constructor(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, sessionEventsTable: string) {
+	constructor(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string) {
 		this.logger = logger;
 		this.validationHelper = new ValidationHelper();
 		this.metrics = metrics;
-		this.govNotifyService = SendEmailService.getInstance(this.logger, GOVUKNOTIFY_API_KEY);
+		this.govNotifyService = SendEmailService.getInstance(this.logger, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
 		this.sessionEventsTable = sessionEventsTable;
 		this.iprService = IPRService.getInstance(this.sessionEventsTable, this.logger, createDynamoDbClient());
 	}
 
-	static getInstance(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, sessionEventsTable: string): SendEmailProcessor {
+	static getInstance(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string): SendEmailProcessor {
 		if (!SendEmailProcessor.instance) {
-			SendEmailProcessor.instance = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY, sessionEventsTable);
+			SendEmailProcessor.instance = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId, sessionEventsTable);
 		}
 		return SendEmailProcessor.instance;
 	}
