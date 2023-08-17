@@ -46,7 +46,14 @@ class GovNotifyHandler implements LambdaInterface {
 						throw err;
 					}
 				}
-				const govnotifyServiceId = GOVUKNOTIFY_API_KEY.substring(GOVUKNOTIFY_API_KEY.length - 73, GOVUKNOTIFY_API_KEY.length - 37);
+				let govnotifyServiceId;
+				try {
+					govnotifyServiceId = GOVUKNOTIFY_API_KEY.substring(GOVUKNOTIFY_API_KEY.length - 73, GOVUKNOTIFY_API_KEY.length - 37);
+				}catch (error) {
+					logger.error("failed to extract govnotifyServiceId from the GOVUKNOTIFY_API_KEY", { error });
+					batchFailures.push({ itemIdentifier: "" });
+					return { batchItemFailures: batchFailures };
+				}
 				await SendEmailProcessor.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId, this.environmentVariables.sessionEventsTable()).processRequest(body);
 
 				logger.info("Finished processing record from SQS");
