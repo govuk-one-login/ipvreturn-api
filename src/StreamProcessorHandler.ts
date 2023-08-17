@@ -41,7 +41,7 @@ class StreamProcessorHandler implements LambdaInterface {
 					return { batchItemFailures:[] };
 				}
 			} catch (error) {
-				logger.error({ message: "An error has occurred when processing the session record ", error });
+				logger.info({ message: "An error has occurred when processing the session record ", error });
 				return { batchItemFailures:[] };
 			}
 		} else {
