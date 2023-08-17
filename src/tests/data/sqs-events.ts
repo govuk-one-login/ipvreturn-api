@@ -34,6 +34,7 @@ export const VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT: ReturnSQSEvent =
 	user: {
 		user_id: "01333e01-dde3-412f-a484-5555",
 		email: "jest@test.com",
+		govuk_signin_journey_id: "testing",
 	},
 };
 
@@ -71,6 +72,7 @@ export const VALID_F2F_YOTI_START_TXMA_EVENT: ReturnSQSEvent = {
 	"user": {
 		"user_id": "01333e01-dde3-412f-a484-4444",
 		"email": "jest@test.com",
+		"govuk_signin_journey_id": "testing",
 	},
 };
 
@@ -87,6 +89,7 @@ export const VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT: ReturnSQSEvent = {
 		"user_id": "01333e01-dde3-412f-a484-4444",
 		// pragma: allowlist nextline secret
 		"email": "e914e32172adcdad6c0906f7e5a0f4f43a6e99847c4370df783c7142f71ba454",
+		"govuk_signin_journey_id": "testing",
 	},
 	"restricted": {
 		"nameParts": [
