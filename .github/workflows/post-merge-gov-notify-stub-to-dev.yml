@@ -47,6 +47,6 @@ jobs:
         uses: alphagov/di-devplatform-upload-action@v3
         with:
             artifact-bucket-name: ${{ secrets.DEV_GOV_NOTIFY_STUB_ARTIFACT_SOURCE_BUCKET_NAME }}
-            signing-profile-name: ${{ secrets.BUILD_RETURN_SIGNING_PROFILE_NAME }}
+            signing-profile-name: ${{ secrets.DEV_RETURN_SIGNING_PROFILE_NAME }}
             working-directory: gov-notify-stub
             template-file: template.yaml
