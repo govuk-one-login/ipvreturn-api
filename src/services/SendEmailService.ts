@@ -32,16 +32,16 @@ export class SendEmailService {
      * @param environmentVariables
      * @private
      */
-    private constructor(logger: Logger, GOVUKNOTIFY_API_KEY: string) {
+    private constructor(logger: Logger, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string) {
     	this.logger = logger;
     	this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GOV_NOTIFY_SERVICE);
-    	this.govNotify = new NotifyClient(GOVUKNOTIFY_API_KEY);
+    	this.govNotify = new NotifyClient(this.environmentVariables.govukNotifyApiUrl(), govnotifyServiceId, GOVUKNOTIFY_API_KEY);
     	this.govNotifyErrorMapper = new GovNotifyErrorMapper();
     }
 
-    static getInstance(logger: Logger, GOVUKNOTIFY_API_KEY: string): SendEmailService {
+    static getInstance(logger: Logger, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string): SendEmailService {
     	if (!this.instance) {
-    		this.instance = new SendEmailService(logger, GOVUKNOTIFY_API_KEY);
+    		this.instance = new SendEmailService(logger, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
     	}
     	return this.instance;
     }
@@ -81,6 +81,7 @@ export class SendEmailService {
     		});
 
     		try {
+				this.logger.info("govNotify URL: " +this.environmentVariables.govukNotifyApiUrl());
     			const emailResponse = await this.govNotify.sendEmail(this.environmentVariables.getEmailTemplateId(this.logger), message.emailAddress, options);
     			this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
     			return new EmailResponse(new Date().toISOString(), "", emailResponse.status);

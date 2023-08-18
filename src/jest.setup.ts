@@ -13,4 +13,6 @@ process.env.OIDC_URL = "oidc-url";
 process.env.RETURN_REDIRECT_URL = "ipv-return-redirect-url";
 process.env.ASSUMEROLE_WITH_WEB_IDENTITY_ARN = "assume-role-arn";
 process.env.GOVUKNOTIFY_BACKOFF_PERIOD_MS = "10";
+process.env.GOVUKNOTIFY_API = "https://test-govnotify-stub";
+
 

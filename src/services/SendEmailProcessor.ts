@@ -1,6 +1,5 @@
 import { Email } from "../models/Email";
 import { EmailResponse } from "../models/EmailResponse";
-import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
 import { buildCoreEventFields } from "../utils/TxmaEvent";
@@ -8,11 +7,9 @@ import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { SendEmailService } from "./SendEmailService";
 import { IPRService } from "./IPRService";
-import { EnvironmentVariables } from "./EnvironmentVariables";
 import { MessageCodes } from "../models/enums/MessageCodes";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
-import { Response } from "../utils/Response";
 import { SessionEvent } from "../models/SessionEvent";
 
 export class SendEmailProcessor {
@@ -31,18 +28,18 @@ export class SendEmailProcessor {
 
 	private readonly iprService: IPRService;
 
-	constructor(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, sessionEventsTable: string) {
+	constructor(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string) {
 		this.logger = logger;
 		this.validationHelper = new ValidationHelper();
 		this.metrics = metrics;
-		this.govNotifyService = SendEmailService.getInstance(this.logger, GOVUKNOTIFY_API_KEY);
+		this.govNotifyService = SendEmailService.getInstance(this.logger, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
 		this.sessionEventsTable = sessionEventsTable;
 		this.iprService = IPRService.getInstance(this.sessionEventsTable, this.logger, createDynamoDbClient());
 	}
 
-	static getInstance(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, sessionEventsTable: string): SendEmailProcessor {
+	static getInstance(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string): SendEmailProcessor {
 		if (!SendEmailProcessor.instance) {
-			SendEmailProcessor.instance = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY, sessionEventsTable);
+			SendEmailProcessor.instance = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId, sessionEventsTable);
 		}
 		return SendEmailProcessor.instance;
 	}
@@ -61,11 +58,14 @@ export class SendEmailProcessor {
 		let session;
 		try {
 			session = await this.iprService.getSessionBySub(message.userId);
-			this.logger.debug("Session retrieved from session store");
 			if (!session) {
 				this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "No session event found for this userId");
 			}
+			this.logger.appendKeys({
+				govuk_signin_journey_id: session.clientSessionId,
+			});
+			this.logger.info("Session retrieved from session store");
 
 		} catch (error) {
 			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", error }, { messageCode: MessageCodes.ERROR_RETRIEVING_SESSION });
@@ -98,7 +98,10 @@ export class SendEmailProcessor {
 		try {
 			await this.iprService.sendToTXMA({
 				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-				...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }),
+				...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId}),
+				extensions: {
+					previous_govuk_signin_journey_id: session.clientSessionId,
+				},
 			});
 		} catch (error) {
 			this.logger.error("Failed to write TXMA event IPR_RESULT_NOTIFICATION_EMAILED to SQS queue.", {
