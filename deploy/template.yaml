@@ -122,6 +122,7 @@ Mappings:
       DNSSUFFIX: "return.build.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
+      TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.build.account.gov.uk"
       TESTEMAILADDRESS: "zac.mohamoud@digital.cabinet-office.gov.uk"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
@@ -183,6 +184,8 @@ Conditions:
     - !Equals [!Ref Environment, staging]
     - !Equals [!Ref Environment, integration]
     - !Equals [!Ref Environment, production]
+  IsNotProdLikeEnvironment: !Not
+    - !Condition IsProdLikeEnvironment
   IsPersonalIdentifiableInformationEnvironment: !Or
     - !Equals [!Ref Environment, integration]
     - !Equals [!Ref Environment, production]
@@ -2200,9 +2203,10 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-SessionTableEncryptionKey-arn
   IpvReturnTestHarnessURL:
+    Condition: IsNotProdLikeEnvironment
     Description: "IPR Test Harness"
     Value: !FindInMap [EnvironmentVariables, !Ref Environment, TESTHARNESSURL]
   TestEmailAddress:
+    Condition: IsNotProdLikeEnvironment
     Description: "IPR Test Email Address"
     Value: !FindInMap [EnvironmentVariables, !Ref Environment, TESTEMAILADDRESS]  
-
