@@ -112,7 +112,6 @@ Mappings:
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
-      TESTEMAILADDRESS: "zac.mohamoud@digital.cabinet-office.gov.uk"
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYAPI: "https://ipr-govnotify-stub-govnotifystub.return.build.account.gov.uk/govnotify"
@@ -124,7 +123,7 @@ Mappings:
       DNSSUFFIX: "return.build.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
-      TESTEMAILADDRESS: "zac.mohamoud@digital.cabinet-office.gov.uk"
+      TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.build.account.gov.uk"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
@@ -2211,7 +2210,4 @@ Outputs:
     Condition: IsNotProdLikeEnvironment
     Description: "IPR Test Harness"
     Value: !FindInMap [EnvironmentVariables, !Ref Environment, TESTHARNESSURL]
-  TestEmailAddress:
-    Description: "IPR Test Email Address"
-    Value: !FindInMap [EnvironmentVariables, !Ref Environment, TESTEMAILADDRESS]  
 
