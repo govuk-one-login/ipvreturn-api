@@ -4,5 +4,5 @@ export const constants = {
 	API_TEST_SESSION_EVENTS_TABLE: process.env.API_TEST_SESSION_EVENTS_TABLE,
 	DEV_IPR_TEST_HARNESS_URL: process.env.DEV_IPR_TEST_HARNESS_URL,
 	DEV_IPR_API_URL: process.env.DEV_IPR_API_URL,
-	API_TEST_EMAIL_ADDRESS: process.env.API_TEST_EMAIL_ADDRESS,
+	API_TEST_EMAIL_ADDRESS: "zac.mohamoud@digital.cabinet-office.gov.uk",
 };
