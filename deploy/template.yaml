@@ -113,7 +113,7 @@ Mappings:
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
-      GOVUKNOTIFYAPI: "https://ipvr-gov-notify-stub-govnotifystub.return.build.account.gov.uk/govnotify"
+      GOVUKNOTIFYAPI: "https://govnotifystub.return.build.account.gov.uk/govnotify"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.build.account.gov.uk/resume"
