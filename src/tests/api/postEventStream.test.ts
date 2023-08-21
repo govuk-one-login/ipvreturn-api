@@ -17,12 +17,6 @@ describe("post event processor", () => {
 		console.log("userId: ", userId);
 	});
 
-	it("should post an AUTH_IPV_AUTHORISATION_REQUESTED TxMA event", async () => {
-		const response = await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, user);
-		console.log(response);
-		expect(response.MessageId).toBeTruthy();
-	});
-
 	it("when all 3 events are sent, a Dynamo record with the details of all three events populated", async () => {
     	await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);
 		await postMockEvent(VALID_F2F_YOTI_START_TXMA_EVENT, userId, false);
