@@ -123,7 +123,7 @@ Mappings:
       DNSSUFFIX: "return.build.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
-      TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.build.account.gov.uk"
+      TESTHARNESSURL: "https://testharness.return.build.account.gov.uk"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
