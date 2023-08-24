@@ -8,7 +8,6 @@ import { SessionEvent } from "../../../models/SessionEvent";
 import { constants } from "./ApiConstants";
 
 const AWS_REGION = process.env.AWS_REGION;
-const TXMA_SQS_URL = constants.API_TEST_GOV_NOTIFY_SQS_QUEUE;
 const MOCK_TXMA_SQS_URL = constants.API_TEST_SQS_TXMA_CONSUMER_QUEUE;
 const GOV_NOTIFY_SQS_URL = constants.API_TEST_GOV_NOTIFY_SQS_QUEUE;
 const EMAIL_ADDRESS = constants.API_TEST_EMAIL_ADDRESS;
@@ -59,7 +58,7 @@ export async function postGovNotifyEvent(inputEvent: any): Promise<SendMessageCo
 
 export async function purgeTxmaSqsQueue(): Promise<SendMessageCommandOutput> {
 	const command = new PurgeQueueCommand({
-		QueueUrl: TXMA_SQS_URL,
+		QueueUrl: MOCK_TXMA_SQS_URL,
 	});
 	return sqsClient.send(command);
 }
@@ -69,7 +68,7 @@ export async function getTxmaSqsEvent(): Promise<any> {
 		AttributeNames: ["SentTimestamp"],
 		MaxNumberOfMessages: 10,
 		MessageAttributeNames: ["All"],
-		QueueUrl: TXMA_SQS_URL,
+		QueueUrl: MOCK_TXMA_SQS_URL,
 		VisibilityTimeout: 40,
 		WaitTimeSeconds: 20,
 	});
