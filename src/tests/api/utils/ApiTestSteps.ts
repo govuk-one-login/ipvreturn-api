@@ -8,7 +8,6 @@ import { SessionEvent } from "../../../models/SessionEvent";
 import { constants } from "./ApiConstants";
 
 const AWS_REGION = process.env.AWS_REGION;
-// TODO this is saying that the txma SQS queue should be the gov notify SQS queue
 const TXMA_SQS_URL = constants.API_TEST_GOV_NOTIFY_SQS_QUEUE;
 const MOCK_TXMA_SQS_URL = constants.API_TEST_SQS_TXMA_CONSUMER_QUEUE;
 const GOV_NOTIFY_SQS_URL = constants.API_TEST_GOV_NOTIFY_SQS_QUEUE;
