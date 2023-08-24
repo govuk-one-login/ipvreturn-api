@@ -111,6 +111,7 @@ Mappings:
       DNSSUFFIX: "return.dev.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
+      TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYAPI: "https://govnotifystub.return.build.account.gov.uk/govnotify"
@@ -122,6 +123,7 @@ Mappings:
       DNSSUFFIX: "return.build.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
+      TESTHARNESSURL: "https://testharness.return.build.account.gov.uk"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
@@ -185,6 +187,8 @@ Conditions:
     - !Equals [!Ref Environment, staging]
     - !Equals [!Ref Environment, integration]
     - !Equals [!Ref Environment, production]
+  IsNotProdLikeEnvironment: !Not
+    - !Condition IsProdLikeEnvironment
   IsPersonalIdentifiableInformationEnvironment: !Or
     - !Equals [!Ref Environment, integration]
     - !Equals [!Ref Environment, production]
@@ -2170,3 +2174,40 @@ Outputs:
     Description: "SessionEvents Table Name"
     Value:
       Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+  TxMASQSQueue: 
+    Description: "Arn of the TxMASQSQueue"
+    Value: !GetAtt TxMASQSQueue.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-TxMASQSQueue-arn
+  TxMAKMSEncryptionKey: 
+    Description: "Arn of the TxMAKMSEncryptionKey"
+    Value: !GetAtt TxMAKMSEncryptionKey.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-TxMAKMSEncryptionKey-arn
+  GovNotifySQSQueue: 
+    Description: "Arn of the GovNotifySQSQueue"
+    Value: !GetAtt GovNotifySQSQueue.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-GovNotifySQSQueue-arn
+  GovNotifyEncryptionKey: 
+    Description: "Arn of the GovNotifyEncryptionKey"
+    Value: !GetAtt GovNotifyEncryptionKey.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-GovNotifyEncryptionKey-arn
+  SessionTableARN: 
+    Description: "Arn of the Session DynamoDB table"
+    Value:
+      Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
+    Export:
+      Name: !Sub ${AWS::StackName}-SessionTable-arn
+  SessionTableEcryptionARN: 
+    Description: "Arn of the SessionTableEncryptionKey"
+    Value:
+      Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
+    Export:
+      Name: !Sub ${AWS::StackName}-SessionTableEncryptionKey-arn
+  IpvReturnTestHarnessURL:
+    Condition: IsNotProdLikeEnvironment
+    Description: "IPR Test Harness"
+    Value: !FindInMap [EnvironmentVariables, !Ref Environment, TESTHARNESSURL]
+
