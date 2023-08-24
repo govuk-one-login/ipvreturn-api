@@ -598,9 +598,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue platform-alarm-topic-critical-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
       AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
       AlarmName: !Sub "${AWS::StackName}-PostEventFunction-concurrency"
@@ -784,9 +784,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue platform-alarm-topic-critical-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
       AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
       AlarmName: !Sub "${AWS::StackName}-GovNotifyFunction-concurrency"
@@ -967,9 +967,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue platform-alarm-topic-critical-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
       AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
       AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-concurrency"
@@ -1142,9 +1142,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue platform-alarm-topic-critical-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
       AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
       AlarmName: !Sub "${AWS::StackName}-SessionFunction-concurrency"
