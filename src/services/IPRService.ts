@@ -11,6 +11,7 @@ import { TxmaEvent } from "../utils/TxmaEvent";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { SessionEvent } from "../models/SessionEvent";
+import { MessageCodes } from "../models/enums/MessageCodes";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
 
 export class IPRService {
@@ -55,13 +56,14 @@ export class IPRService {
 		let session;
 		try {
 			session = await this.dynamo.send(getSessionCommand);
-		} catch (e: any) {
-			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", e });
+		} catch (error: any) {
+			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", error });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 		}
 
 		if (session.Item) {
-			if (session.Item.expiryDate < absoluteTimeNow()) {
+			if (session.Item.expiresOn < absoluteTimeNow()) {
+				this.logger.error({ message: `Session with userId: ${userId} has expired`, messageCode: MessageCodes.SESSION_EXPIRED });
 				throw new AppError( HttpCodesEnum.UNAUTHORIZED, `Session with userId: ${userId} has expired`);
 			}
 			return session.Item as SessionEvent;
