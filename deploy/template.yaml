@@ -222,6 +222,7 @@ Conditions:
   DeployConcurrencyAlarms: !And
     - Condition: DeployAlarms
     - Condition: ApplyReservedConcurrency
+  PerformanceTestEnv: !Equals [ !Ref Environment, build]
 
 Globals:
   Function:
@@ -1269,6 +1270,81 @@ Resources:
           TXMAMESSAGERETENTIONPERIODDAYS,
         ]
       VisibilityTimeout: 60
+      KmsMasterKeyId: !Ref MockTxMAKeyAlias
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt:
+            - "MockTxMASQSQueueDeadLetterQueue"
+            - "Arn"
+        maxReceiveCount: 5
+
+  MockTxMASQSQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Condition: IsMockedEnvironment
+    Properties:
+      Queues:
+        - !Ref MockTxMASQSQueue
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - "sqs:SendMessage"
+            Resource:
+              - !GetAtt MockTxMASQSQueue.Arn
+            Principal:
+              AWS: arn:aws:iam::330163506186:root
+
+  MockTxMASQSQueueDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Condition: IsMockedEnvironment
+    Properties:
+      MessageRetentionPeriod: 259200 # three days
+      KmsMasterKeyId: !Sub TxMAKMSEncryptionKey
+
+  MockTxMAKMSEncryptionKey:
+    Type: AWS::KMS::Key
+    Condition: IsMockedEnvironment
+    Properties:
+      Description: A KMS Key for encrypting the SQS Queue for Mock TxMA
+      Enabled: true
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "kms:*"
+            Resource:
+              - "*"
+          - Effect: Allow
+            Principal:
+              AWS: arn:aws:iam::330163506186:root
+            Action:
+              - "kms:Decrypt"
+              - "kms:GenerateDataKey"
+            Resource:
+              - "*"
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      MultiRegion: false
+      PendingWindowInDays: 7
+      Tags:
+        - Key: KeyType
+          Value: Encryption Key
+        - Key: Environment
+          Value: !Sub ${Environment}
+
+  MockTxMAKeyAlias:
+    Type: AWS::KMS::Alias
+    Condition: IsMockedEnvironment
+    Properties:
+      AliasName: !If
+        - CreateDevResources
+        - !Sub "alias/MockTxMAKMSEncryptionKey-${AWS::StackName}"
+        - alias/MockTxMAKMSEncryptionKey
+      TargetKeyId: !Ref MockTxMAKMSEncryptionKey
 
   TxMASQSQueue:
     Type: AWS::SQS::Queue
@@ -1307,6 +1383,7 @@ Resources:
             Principal:
               AWS:
                 - !FindInMap [TxMAAccounts, !Ref Environment, EVENTS]
+                - !If [ PerformanceTestEnv, arn:aws:iam::330163506186:root, !Ref AWS::NoValue ]
 
   TxMASQSQueueDeadLetterQueue:
     Type: AWS::SQS::Queue
@@ -1333,7 +1410,9 @@ Resources:
               - "*"
           - Effect: Allow
             Principal:
-              AWS: !FindInMap [TxMAAccounts, !Ref Environment, EVENTS]
+              AWS:
+                - !FindInMap [TxMAAccounts, !Ref Environment, EVENTS]
+                - !If [ PerformanceTestEnv, arn:aws:iam::330163506186:root, !Ref AWS::NoValue ]
             Action:
               - "kms:Encrypt"
               - "kms:Decrypt"
@@ -2166,10 +2245,16 @@ Resources:
           }
 
 Outputs:
-  MockTxMASQSQueueUrl:
-    Description: "SQS TXMA Consumer Queue URL"
+  MockTxMASQSQueue:
+    Description: "SQS TXMA Consumer Queue"
     Value: !Ref MockTxMASQSQueue
     Condition: IsMockedEnvironment
+  MockTxMAKMSEncryptionKey:
+    Condition: IsMockedEnvironment
+    Description: "Arn of the MockTxMAKMSEncryptionKey"
+    Value: !GetAtt MockTxMAKMSEncryptionKey.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-MockTxMAKMSEncryptionKey-arn
   SessionEventsTable:
     Description: "SessionEvents Table Name"
     Value:
