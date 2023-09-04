@@ -45,6 +45,8 @@ export class SessionEventProcessor {
 	async processRequest(sessionEvent: any): Promise<void> {
 		const sessionEventData: SessionEvent = SessionEvent.parseRequest(JSON.stringify(sessionEvent));
 
+		this.logger.appendKeys({ govuk_signin_journey_id: sessionEventData.clientSessionId });
+
 		// Validate the notified field is set to false
 		if (sessionEventData.notified) {
 			this.logger.warn("User is already notified for this session event.", { messageCode: MessageCodes.USER_ALREADY_NOTIFIED });

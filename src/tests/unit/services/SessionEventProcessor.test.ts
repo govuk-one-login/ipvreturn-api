@@ -1,10 +1,10 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SessionEventProcessor } from "../../../services/SessionEventProcessor";
 import { mock } from "jest-mock-extended";
 import { DynamoDBStreamEvent } from "aws-lambda";
 import { VALID_DYNAMODB_STREAM_EVENT } from "../data/dynamodb-stream-record";
-import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
 import { IPRService } from "../../../services/IPRService";
 const { unmarshall } = require("@aws-sdk/util-dynamodb");
 
@@ -28,12 +28,16 @@ describe("SessionEventProcessor", () => {
 		streamEvent = VALID_DYNAMODB_STREAM_EVENT;
 	});
 
-	it("Returns success response when all the necessary fields are populated in the session Event record", async () => {
+	it("When all the necessary fields are populated in the session Event record, sends email and updates notified flag", async () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
-		const response = await sessionEventProcessorTest.processRequest(sessionEvent);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
+		const updateExpression = "SET notified = :notified";
+		const expressionAttributeValues = {
+			":notified": true,
+		};
+
+		await sessionEventProcessorTest.processRequest(sessionEvent);
+
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
 			Message: {
 				userId: "01333e01-dde3-412f-a484-4444",
@@ -43,12 +47,8 @@ describe("SessionEventProcessor", () => {
 				messageType: "email",
 			},
 		});
-		const updateExpression = "SET notified = :notified";
-		const expressionAttributeValues = {
-			":notified": true,
-		};
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
+		expect(logger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
 	});
 
 	it("Throws error when session event record is already processed and user is notified via email", async () => {
@@ -93,7 +93,6 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		mockIprService.sendToGovNotify.mockRejectedValueOnce("Failed to send to GovNotify Queue");
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
 	});
 
@@ -101,8 +100,6 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		mockIprService.saveEventData.mockRejectedValueOnce("Error updating the session event record");
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.saveEventData).toHaveBeenCalledTimes(1);
 	});
-
 });
