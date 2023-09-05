@@ -11,7 +11,7 @@ import { AppError } from "../../../utils/AppError";
 import { Constants } from "../../../utils/Constants";
 import {
 	VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING,
-	VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT_STRING,
+	VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT_STRING, VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT,
 	VALID_F2F_YOTI_START_TXMA_EVENT_STRING,
 	VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING,
 } from "../../data/sqs-events";
@@ -246,6 +246,55 @@ describe("PostEventProcessor", () => {
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
 		});
+	});
+
+	describe("F2F_DOCUMENT_UPLOADED event", () => {
+		it("Calls saveEventData with appropriate payload for F2F_DOCUMENT_UPLOADED event", async () => {
+			await postEventProcessor.processRequest(JSON.stringify(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT));
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails", { ":documentUploadedOn": 1681902001, ":postOfficeVisitDetails": [{ "post_office_date_of_visit": "1985-01-25", "post_office_time_of_visit": 1688477191 }] });
+		});
+
+		it("Throws error if post_office_visit_details is missing", async () => {
+			const F2F_DOCUMENT_UPLOADED_EVENT_INVALID = {
+				event_id: "588f4a66-f75a-4728-9f7b-8afd865c233e",
+				client_id: "ekwU",
+				event_name: "F2F_DOCUMENT_UPLOADED",
+				clientLandingPageUrl: "REDIRECT_URL",
+				timestamp: 1681902001,
+				timestamp_formatted: "2023-04-19T11:00:01.000Z",
+				user: {
+					user_id: "01333e01-dde3-412f-a484-4444",
+				},
+				extensions: {},
+			};
+			await expect(postEventProcessor.processRequest(JSON.stringify(F2F_DOCUMENT_UPLOADED_EVENT_INVALID))).rejects.toThrow(
+				new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
+			);
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing post_office_visit_details fields required for F2F_DOCUMENT_UPLOADED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+		});
+
+		it("Throws error if extensions is missing", async () => {
+			const F2F_DOCUMENT_UPLOADED_EVENT_INVALID = {
+				event_id: "588f4a66-f75a-4728-9f7b-8afd865c233e",
+				client_id: "ekwU",
+				event_name: "F2F_DOCUMENT_UPLOADED",
+				clientLandingPageUrl: "REDIRECT_URL",
+				timestamp: 1681902001,
+				timestamp_formatted: "2023-04-19T11:00:01.000Z",
+				user: {
+					user_id: "01333e01-dde3-412f-a484-4444",
+				},
+			};
+			await expect(postEventProcessor.processRequest(JSON.stringify(F2F_DOCUMENT_UPLOADED_EVENT_INVALID))).rejects.toThrow(
+				new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
+			);
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing post_office_visit_details fields required for F2F_DOCUMENT_UPLOADED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+		});
+
+
 	});
 	
 });

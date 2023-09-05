@@ -1,10 +1,14 @@
 import { ReturnSQSEvent } from "./ReturnSQSEvent";
 import { Constants } from "../utils/Constants";
-import { Logger } from "@aws-lambda-powertools/logger";
 
 export interface NamePart {
 	type: string;
 	value: string;
+}
+
+export interface PostOfficeVisitDetails {
+	post_office_date_of_visit: string;
+	post_office_time_of_visit: number;
 }
 
 export class SessionReturnRecord {
@@ -32,6 +36,11 @@ export class SessionReturnRecord {
 				this.nameParts = data.restricted?.nameParts;
 				break;
 			}
+			case Constants.F2F_DOCUMENT_UPLOADED:{
+				this.documentUploadedOn = data.timestamp;
+				this.postOfficeVisitDetails = data.extensions?.post_office_visit_details;
+				break;
+			}
 			case Constants.AUTH_DELETE_ACCOUNT:{
 				this.accountDeletedOn = data.timestamp;
 				this.clientSessionId = "";
@@ -53,6 +62,8 @@ export class SessionReturnRecord {
 
     nameParts?: NamePart[];
 
+	postOfficeVisitDetails?: PostOfficeVisitDetails[];
+
     clientName?: string;
 
     redirectUri?: string;
@@ -62,6 +73,8 @@ export class SessionReturnRecord {
     journeyWentAsyncOn?: number;
 
     readyToResumeOn?: number;
+
+	documentUploadedOn?: number;
 
     accountDeletedOn?: number;
 

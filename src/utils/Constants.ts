@@ -18,6 +18,8 @@ export class Constants {
 
     static readonly IPV_F2F_CRI_VC_CONSUMED = "IPV_F2F_CRI_VC_CONSUMED";
 
+    static readonly F2F_DOCUMENT_UPLOADED = "F2F_DOCUMENT_UPLOADED";
+
     static readonly AUTH_DELETE_ACCOUNT = "AUTH_DELETE_ACCOUNT";
 
     static readonly POSTEVENT_LOGGER_SVC_NAME = "PostEventHandler";
