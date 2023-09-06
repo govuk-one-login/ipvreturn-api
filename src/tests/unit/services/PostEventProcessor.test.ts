@@ -11,9 +11,12 @@ import { AppError } from "../../../utils/AppError";
 import { Constants } from "../../../utils/Constants";
 import {
 	VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING,
-	VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT_STRING, VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT,
-	VALID_F2F_YOTI_START_TXMA_EVENT_STRING,
+	VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT_STRING,
+	VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT,
+	VALID_F2F_YOTI_START_TXMA_EVENT,
+	VALID_F2F_YOTI_START_TXMA_EVENT_STRING, VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT,
 	VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING,
+	VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT_STRING,
 } from "../../data/sqs-events";
 
 let postEventProcessor: PostEventProcessor;
@@ -184,6 +187,9 @@ describe("PostEventProcessor", () => {
 			await postEventProcessor.processRequest(VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
+			// Check if it logs about docExpiryDate missing
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockLogger.info).toHaveBeenNthCalledWith(2, "No docExpiryDate in IPV_F2F_CRI_VC_CONSUMED event");
 		});
 
 		it("Throws error if restricted is missing", async () => {
@@ -205,6 +211,12 @@ describe("PostEventProcessor", () => {
 			);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+		});
+
+		it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event with docExpiryDate field", async () => {
+			await postEventProcessor.processRequest(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT_STRING);
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts, documentExpiryDate = :documentExpiryDate", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }], ":documentExpiryDate": "2030-01-01" });
 		});
 	});
 
@@ -293,8 +305,53 @@ describe("PostEventProcessor", () => {
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing post_office_visit_details fields required for F2F_DOCUMENT_UPLOADED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 		});
+	});
 
+	describe("F2F_YOTI_START event", () => {
+		it("Calls saveEventData with appropriate payload for F2F_YOTI_START event", async () => {
+			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
+			await postEventProcessor.processRequest(JSON.stringify(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT));
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, postOfficeInfo = :postOfficeInfo, documentType = :documentType", { ":journeyWentAsyncOn": 1681902001,
+				":expiresOn": expiresOn,
+				":postOfficeInfo": [
+					{
+						"name": "Post Office Name",
+						"address": "1 The Street, Funkytown",
+						"location": [
+							{
+								"latitude": 0.34322,
+								"longitude": -42.48372,
+							},
+						],
+						"post_code": "N1 2AA",
+					},
+				],
+				":documentType": "PASSPORT",
+			});
+		});
 
+		it("Logs if post_office_details is missing", async () => {
+			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
+			const yotiStartEvent = VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT;
+			delete yotiStartEvent.extensions;
+			await postEventProcessor.processRequest(JSON.stringify(yotiStartEvent));
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, documentType = :documentType", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":documentType": "PASSPORT" });
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockLogger.info).toHaveBeenNthCalledWith(2, "No post_office_details in F2F_YOTI_START event");
+		});
+
+		it("Logs if post_office_details and document_details is missing", async () => {
+			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
+			await postEventProcessor.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn });
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockLogger.info).toHaveBeenNthCalledWith(2, "No post_office_details in F2F_YOTI_START event");
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No document_details in F2F_YOTI_START event");
+		});
 	});
 	
 });

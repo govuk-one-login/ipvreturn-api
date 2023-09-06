@@ -108,6 +108,40 @@ export const VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT: ReturnSQSEvent = {
 
 export const VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT);
 
+export const VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT: ReturnSQSEvent = {
+	"event_id": "588f4a66-f75a-4728-9f7b-8afd865c233e",
+	"client_id": "ekwU",
+	"event_name": "IPV_F2F_CRI_VC_CONSUMED",
+	"clientLandingPageUrl": "REDIRECT_URL",
+	"timestamp": 1681902001,
+	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
+	"user": {
+		"user_id": "01333e01-dde3-412f-a484-4444",
+		// pragma: allowlist nextline secret
+		"email": "e914e32172adcdad6c0906f7e5a0f4f43a6e99847c4370df783c7142f71ba454",
+	},
+	"restricted": {
+		"nameParts": [
+			{
+				"type": "GivenName",
+				"value": "ANGELA",
+			},
+			{
+				"type": "GivenName",
+				"value": "ZOE",
+			},
+			{
+				"type": "FamilyName",
+				"value": "UK SPECIMEN",
+			},
+		],
+		"docExpiryDate": "2030-01-01",
+	},
+};
+
+export const VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT);
+
+
 export const VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT = {
 	event_id: "588f4a66-f75a-4728-9f7b-8afd865c233f",
 	client_id: "ekwU",
@@ -152,6 +186,40 @@ export const VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT: ReturnSQSEvent = {
 			{
 				"post_office_date_of_visit": "1985-01-25",
 				"post_office_time_of_visit": 1688477191,
+			},
+		],
+	},
+};
+
+export const VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT: ReturnSQSEvent = {
+	"event_id": "588f4a66-f75a-4728-9f7b-8afd865c233d",
+	"client_id": "ekwU",
+	"event_name": "F2F_YOTI_START",
+	"timestamp": 1681902001,
+	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
+	"user": {
+		"user_id": "01333e01-dde3-412f-a484-4444",
+		"email": "jest@test.com",
+	},
+	"extensions": {
+		"post_office_details": [
+			{
+				"name": "Post Office Name",
+				"address": "1 The Street, Funkytown",
+				"location": [
+					{
+						"latitude": 0.34322,
+						"longitude": -42.48372,
+					},
+				],
+				"post_code": "N1 2AA",
+			},
+		],
+	},
+	"restricted": {
+		"document_details": [
+			{
+				"documentType": "PASSPORT",
 			},
 		],
 	},

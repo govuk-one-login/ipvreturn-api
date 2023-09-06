@@ -11,6 +11,22 @@ export interface PostOfficeVisitDetails {
 	post_office_time_of_visit: number;
 }
 
+export interface PostOfficeInfo {
+	name?: string;
+	address: string;
+	post_code: string;
+	location: [
+		{
+			latitude: number;
+			longitude: number;
+		},
+	];
+}
+
+export interface DocumentDetails {
+	documentType?: string;
+}
+
 export class SessionReturnRecord {
 	constructor(data: ReturnSQSEvent, expiresOn: number) {
 		this.userId = data.user.user_id;
@@ -29,11 +45,16 @@ export class SessionReturnRecord {
 				if (data.user.govuk_signin_journey_id && (data.user.govuk_signin_journey_id).toLowerCase() !== "unknown") {
 					this.clientSessionId = data.user.govuk_signin_journey_id;
 				}
+				this.postOfficeInfo = data.extensions?.post_office_details;
+				data.restricted?.document_details?.map(doc => {
+					this.documentType = doc.documentType;
+				});
 				break;
 			}
 			case Constants.IPV_F2F_CRI_VC_CONSUMED:{
 				this.readyToResumeOn = data.timestamp;
 				this.nameParts = data.restricted?.nameParts;
+				this.documentExpiryDate = data.restricted?.docExpiryDate;
 				break;
 			}
 			case Constants.F2F_DOCUMENT_UPLOADED:{
@@ -64,6 +85,8 @@ export class SessionReturnRecord {
 
 	postOfficeVisitDetails?: PostOfficeVisitDetails[];
 
+	postOfficeInfo?: PostOfficeInfo[];
+
     clientName?: string;
 
     redirectUri?: string;
@@ -81,4 +104,8 @@ export class SessionReturnRecord {
     expiresDate?: number;
 
     clientSessionId?: string;
+
+	documentType?: string;
+
+	documentExpiryDate?: string;
 }

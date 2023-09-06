@@ -113,6 +113,20 @@ export class PostEventProcessor {
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
 						":expiresOn": returnRecord.expiresDate,
 					};
+
+					if (returnRecord.postOfficeInfo) {
+						updateExpression += ", postOfficeInfo = :postOfficeInfo";
+						expressionAttributeValues[":postOfficeInfo"] = returnRecord.postOfficeInfo;
+					} else {
+						this.logger.info(`No post_office_details in ${eventName} event`);
+					}
+
+					if (returnRecord.documentType) {
+						updateExpression += ", documentType = :documentType";
+						expressionAttributeValues[":documentType"] = returnRecord.documentType;
+					} else {
+						this.logger.info(`No document_details in ${eventName} event`);
+					}
 					
 					if (returnRecord.clientSessionId) {
 						updateExpression += ", clientSessionId = :clientSessionId";
@@ -132,6 +146,13 @@ export class PostEventProcessor {
 						":readyToResumeOn": returnRecord.readyToResumeOn,
 						":nameParts": returnRecord.nameParts,
 					};
+
+					if (returnRecord.documentExpiryDate) {
+						updateExpression += ", documentExpiryDate = :documentExpiryDate";
+						expressionAttributeValues[":documentExpiryDate"] = returnRecord.documentExpiryDate;
+					} else {
+						this.logger.info(`No docExpiryDate in ${eventName} event`);
+					}
 					break;
 				}
 				case Constants.F2F_DOCUMENT_UPLOADED: {
