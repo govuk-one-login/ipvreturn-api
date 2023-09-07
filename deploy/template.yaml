@@ -497,7 +497,7 @@ Resources:
                 - "kms:Decrypt"
               Resource: !If
                 - IsMockedEnvironment
-                - !GetAtt MockTxMASQSQueue.Arn
+                - !GetAtt MockTxMAKMSEncryptionKey.Arn
                 - !FindInMap [PlatformConfiguration, !Ref Environment, TxMAKey]
             - Sid: TxMASQSConsumeEventPolicy
               Effect: Allow
@@ -1322,6 +1322,7 @@ Resources:
             Principal:
               AWS: arn:aws:iam::330163506186:root
             Action:
+              - "kms:Encrypt"
               - "kms:Decrypt"
               - "kms:GenerateDataKey"
             Resource:
