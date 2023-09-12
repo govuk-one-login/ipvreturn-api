@@ -79,9 +79,9 @@ export class SessionEvent {
 export class ExtSessionEvent extends SessionEvent {
 	constructor(data: Partial<ExtSessionEvent>) {
 		super(data);
-        this.documentUploadedOn = data.documentUploadedOn!;
-        this.documentType = data.documentType!;		
-        this.documentExpiryDate = data.documentExpiryDate!;
+		this.documentUploadedOn = data.documentUploadedOn!;
+		this.documentType = data.documentType!;		
+		this.documentExpiryDate = data.documentExpiryDate!;
 		this.postOfficeVisitDetails = data.postOfficeVisitDetails!;
 		this.postOfficeInfo = data.postOfficeInfo!;
 	}

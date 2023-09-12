@@ -185,7 +185,7 @@ export const VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT: ReturnSQSEvent = {
 		"post_office_visit_details": [
 			{
 				"post_office_date_of_visit": "1985-01-25",
-				"post_office_time_of_visit": 1688477191,
+				"post_office_time_of_visit": "1688477191",
 			},
 		],
 	},

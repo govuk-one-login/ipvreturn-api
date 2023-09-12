@@ -61,13 +61,12 @@ export class SessionEventProcessor {
 		}
 
 		let sendNewEmail = true;
-		console.log("NewSessionEvent: " + JSON.stringify(sessionEventData));
 
 		// Validate if documentUploadedOn exists
 		if (!sessionEventData.documentUploadedOn || !(sessionEventData.documentUploadedOn > 0)) {
 			this.logger.info({ message: "documentUploadedOn is not yet populated, sending the old template email." });
 			sendNewEmail = false;			
-		} else{ 
+		} else { 
 			// Validate all necessary fields are populated before processing the data.
 			try {
 				await this.validationHelper.validateModel(sessionEventData, this.logger);				
@@ -77,23 +76,23 @@ export class SessionEventProcessor {
 			}
 		}
 
-		if(sendNewEmail){
+		if (sendNewEmail) {
 			// Send SQS message to GovNotify queue to send new template email to the user.
 			try {
 				const nameParts = personalIdentityUtils.getNames(sessionEventData.nameParts);
 				await this.iprService.sendToGovNotify(buildNewGovNotifyEventFields(sessionEventData.userId, sessionEventData.userEmail, nameParts.givenNames[0], nameParts.familyNames[0], sessionEventData.documentType, sessionEventData.documentExpiryDate, sessionEventData.postOfficeInfo[0], sessionEventData.postOfficeVisitDetails[0]));
 			} catch (error) {
 				this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
-					reason: "Processing Event session data, failed to post message to GovNotify SQS Queue",
+					reason: "Processing Event session data, failed to post new email message to GovNotify SQS Queue",
 					error,
 				}, { messageCode: MessageCodes.FAILED_TO_WRITE_GOV_NOTIFY });
-				throw new AppError(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending message to GovNotify handler");
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending new email message to GovNotify handler");
 			}
-		} else{
-			try{
+		} else {
+			try {
 				// Send the old template email
 				const oldSessionEvent : SessionEvent = new SessionEvent(sessionEvent);			
-				await this.sendOldTemplateEmail (oldSessionEvent);
+				await this.sendOldTemplateEmail(oldSessionEvent);
 			} catch (error) {
 				this.logger.error("FAILED_TO_SEND_EMAIL", {
 					reason: "Processing Event session data, failed to post message to GovNotify SQS Queue",
@@ -117,14 +116,13 @@ export class SessionEventProcessor {
 		}
 	}
 
-	async sendOldTemplateEmail(oldSessionEvent: SessionEvent) {
-		console.log("OldSessionEvent: " + JSON.stringify(oldSessionEvent));
+	async sendOldTemplateEmail(oldSessionEvent: SessionEvent): Promise<void> {
 		// Validate all necessary fields are populated before processing the data.
 		try {
 			await this.validationHelper.validateModel(oldSessionEvent, this.logger);
 		} catch (error) {
-			this.logger.error("Unable to process the DB record as the necessary fields are not populated.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated.");
+			this.logger.error("Unable to process the DB record as the necessary fields are not populated to send the old template email.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated to send the old template email.");
 		}
 		// Send SQS message to GovNotify queue to send email to the user.
 		try {
@@ -132,13 +130,11 @@ export class SessionEventProcessor {
 			await this.iprService.sendToGovNotify(buildOldGovNotifyEventFields(oldSessionEvent.userId, oldSessionEvent.userEmail, nameParts.givenNames[0], nameParts.familyNames[0]));
 		} catch (error) {
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
-				reason: "Processing Event session data, failed to post message to GovNotify SQS Queue",
+				reason: "Processing Event session data, failed to post old email message to GovNotify SQS Queue",
 				error,
 			}, { messageCode: MessageCodes.FAILED_TO_WRITE_GOV_NOTIFY });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending message to GovNotify handler");
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending old email message to GovNotify handler");
 		}
 	}
 }
-
-
 
