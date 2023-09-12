@@ -29,7 +29,7 @@ export const buildOldGovNotifyEventFields = (userId: string, email: string, firs
 	
 };
 
-export const buildNewGovNotifyEventFields = (userId: string, email: string, firstName: string, lastName: string, documentType: string , documentExpiryDate: string, poInfo: PostOfficeInfo , poVisitDetails: PostOfficeVisitDetails ): GovNotifyEvent => {
+export const buildNewGovNotifyEventFields = (userId: string, email: string, firstName: string, lastName: string, documentType: string, documentExpiryDate: string, poInfo: PostOfficeInfo, poVisitDetails: PostOfficeVisitDetails ): GovNotifyEvent => {
 	
 	return {
 		Message : {

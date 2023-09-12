@@ -124,7 +124,6 @@ export class IPRService {
 	}
 
 	async sendToGovNotify(event: GovNotifyEvent): Promise<void> {
-		console.log ("GovNotify SQS message: " + JSON.stringify(event));
 		try {
 			const messageBody = JSON.stringify(event);
 			const params = {
