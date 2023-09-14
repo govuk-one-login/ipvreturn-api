@@ -264,7 +264,7 @@ describe("PostEventProcessor", () => {
 		it("Calls saveEventData with appropriate payload for F2F_DOCUMENT_UPLOADED event", async () => {
 			await postEventProcessor.processRequest(JSON.stringify(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails", { ":documentUploadedOn": 1681902001, ":postOfficeVisitDetails": [{ "post_office_date_of_visit": "1985-01-25", "post_office_time_of_visit": 1688477191 }] });
+			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails", { ":documentUploadedOn": 1681902001, ":postOfficeVisitDetails": [{ "post_office_date_of_visit": "1985-01-25", "post_office_time_of_visit": "1688477191" }] });
 		});
 
 		it("Throws error if post_office_visit_details is missing", async () => {
