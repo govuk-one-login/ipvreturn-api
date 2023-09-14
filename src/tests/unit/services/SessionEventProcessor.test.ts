@@ -68,7 +68,6 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		delete sessionEvent[attribute];
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockLogger.warn).toHaveBeenNthCalledWith(1, `${attribute} is not yet populated, unable to process the DB record.`, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
 	});
 
@@ -81,7 +80,6 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		delete sessionEvent[attribute];
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockLogger.error).toHaveBeenNthCalledWith(1, "Unable to process the DB record as the necessary fields are not populated to send the old template email.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
 	});
 
@@ -94,7 +92,6 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		sessionEvent[attribute] = 0;
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockLogger.error).toHaveBeenNthCalledWith(1, "Unable to process the DB record as the necessary fields are not populated to send the old template email.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
 	});
 
@@ -103,7 +100,6 @@ describe("SessionEventProcessor", () => {
 		mockIprService.sendToGovNotify.mockRejectedValueOnce("Failed to send to GovNotify Queue");
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockLogger.error).toHaveBeenNthCalledWith(1, "FAILED_TO_WRITE_GOV_NOTIFY", { "error": "Failed to send to GovNotify Queue", "reason": "Processing Event session data, failed to post oldEmail type message to GovNotify SQS Queue" }, { "messageCode": "FAILED_TO_WRITE_GOV_NOTIFY_SQS" });
 
 	});
@@ -118,9 +114,7 @@ describe("SessionEventProcessor", () => {
 	it("Returns success response when all the necessary fields to send new template email are populated in the session Event record", async () => {
 		const sessionEvent = unmarshall(streamEventWithPoDetails.Records[0].dynamodb?.NewImage);
 		await sessionEventProcessorTest.processRequest(sessionEvent);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
 			Message: {
 				userId: "01333e01-dde3-412f-a484-4444",
@@ -140,7 +134,6 @@ describe("SessionEventProcessor", () => {
 		const expressionAttributeValues = {
 			":notified": true,
 		};
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
 	});
 
@@ -148,11 +141,8 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEventWithPoDetails.Records[0].dynamodb?.NewImage);
 		delete sessionEvent.documentUploadedOn;
 		await sessionEventProcessorTest.processRequest(sessionEvent);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockLogger.info).toHaveBeenNthCalledWith(1, { "message":"documentUploadedOn is not yet populated, sending the old template email." });
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
 			Message: {
 				userId: "01333e01-dde3-412f-a484-4444",
@@ -166,7 +156,6 @@ describe("SessionEventProcessor", () => {
 		const expressionAttributeValues = {
 			":notified": true,
 		};
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
 	});
 
@@ -179,11 +168,8 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEventWithPoDetails.Records[0].dynamodb?.NewImage);
 		delete sessionEvent[attribute];
 		await sessionEventProcessorTest.processRequest(sessionEvent);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockLogger.info).toHaveBeenNthCalledWith(1, "Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { "messageCode": "MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT" });
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
 			Message: {
 				userId: "01333e01-dde3-412f-a484-4444",
@@ -197,7 +183,6 @@ describe("SessionEventProcessor", () => {
 		const expressionAttributeValues = {
 			":notified": true,
 		};
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
 	});
 
