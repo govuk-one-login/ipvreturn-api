@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SessionEventProcessor } from "../../../services/SessionEventProcessor";
@@ -31,12 +32,16 @@ describe("SessionEventProcessor", () => {
 		streamEventWithPoDetails = VALID_DYNAMODB_STREAM_EVENT_WITH_PO_DETAILS;
 	});
 
-	it("Returns success response when all the necessary fields are populated in the session Event record", async () => {
+	it("When all the necessary fields are populated in the session Event record, sends email and updates notified flag", async () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
-		const response = await sessionEventProcessorTest.processRequest(sessionEvent);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
+		const updateExpression = "SET notified = :notified";
+		const expressionAttributeValues = {
+			":notified": true,
+		};
+
+		await sessionEventProcessorTest.processRequest(sessionEvent);
+
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
 			Message: {
 				userId: "01333e01-dde3-412f-a484-4444",
@@ -46,12 +51,8 @@ describe("SessionEventProcessor", () => {
 				messageType: "oldEmail",
 			},
 		});
-		const updateExpression = "SET notified = :notified";
-		const expressionAttributeValues = {
-			":notified": true,
-		};
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
+		expect(logger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
 	});
 
 	it("Throws error when session event record is already processed and user is notified via email", async () => {
@@ -102,7 +103,6 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		mockIprService.sendToGovNotify.mockRejectedValueOnce("Failed to send to GovNotify Queue");
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockLogger.error).toHaveBeenNthCalledWith(1, "FAILED_TO_WRITE_GOV_NOTIFY", { "error": "Failed to send to GovNotify Queue", "reason": "Processing Event session data, failed to post old email message to GovNotify SQS Queue" }, { "messageCode": "FAILED_TO_WRITE_GOV_NOTIFY_SQS" });
@@ -113,7 +113,6 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		mockIprService.saveEventData.mockRejectedValueOnce("Error updating the session event record");
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.saveEventData).toHaveBeenCalledTimes(1);
 	});
 
