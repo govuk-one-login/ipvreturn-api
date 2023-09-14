@@ -5,7 +5,6 @@ import { SessionEventProcessor } from "../../../services/SessionEventProcessor";
 import { mock } from "jest-mock-extended";
 import { DynamoDBStreamEvent } from "aws-lambda";
 import { VALID_DYNAMODB_STREAM_EVENT, VALID_DYNAMODB_STREAM_EVENT_WITH_PO_DETAILS } from "../data/dynamodb-stream-record";
-import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
 import { IPRService } from "../../../services/IPRService";
 const { unmarshall } = require("@aws-sdk/util-dynamodb");
 
