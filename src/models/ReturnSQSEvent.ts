@@ -1,6 +1,6 @@
-import { NamePart } from "./SessionReturnRecord";
+import { NamePart, PostOfficeVisitDetails, PostOfficeInfo, DocumentDetails } from "./SessionReturnRecord";
 
-export type EventType = "AUTH_IPV_AUTHORISATION_REQUESTED" | "F2F_YOTI_START" | "IPV_F2F_CRI_VC_CONSUMED" | "AUTH_DELETE_ACCOUNT";
+export type EventType = "AUTH_IPV_AUTHORISATION_REQUESTED" | "F2F_YOTI_START" | "IPV_F2F_CRI_VC_CONSUMED" | "AUTH_DELETE_ACCOUNT" | "F2F_DOCUMENT_UPLOADED";
 
 
 export interface ReturnSQSEvent {
@@ -16,7 +16,13 @@ export interface ReturnSQSEvent {
 		email?: string;
 	};
 	restricted?: {
-		nameParts: NamePart[];
+		nameParts?: NamePart[];
+		document_details?: DocumentDetails[];
+		docExpiryDate?: string;
+	};
+	extensions?: {
+		post_office_visit_details?: PostOfficeVisitDetails[];
+		post_office_details?: PostOfficeInfo[];
 	};
 }
 

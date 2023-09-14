@@ -113,13 +113,27 @@ export class PostEventProcessor {
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
 						":expiresOn": returnRecord.expiresDate,
 					};
+
+					if (returnRecord.postOfficeInfo) {
+						updateExpression += ", postOfficeInfo = :postOfficeInfo";
+						expressionAttributeValues[":postOfficeInfo"] = returnRecord.postOfficeInfo;
+					} else {
+						this.logger.info(`No post_office_details in ${eventName} event`);
+					}
+
+					if (returnRecord.documentType) {
+						updateExpression += ", documentType = :documentType";
+						expressionAttributeValues[":documentType"] = returnRecord.documentType;
+					} else {
+						this.logger.info(`No document_details in ${eventName} event`);
+					}
 					
 					if (returnRecord.clientSessionId) {
 						updateExpression += ", clientSessionId = :clientSessionId";
 						expressionAttributeValues[":clientSessionId"] = returnRecord.clientSessionId;
 					} else {
 						this.logger.info(`No govuk_signin_journey_id in ${eventName} event`);
-					};
+					}
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_CONSUMED: {
@@ -131,6 +145,25 @@ export class PostEventProcessor {
 					expressionAttributeValues = {
 						":readyToResumeOn": returnRecord.readyToResumeOn,
 						":nameParts": returnRecord.nameParts,
+					};
+
+					if (returnRecord.documentExpiryDate) {
+						updateExpression += ", documentExpiryDate = :documentExpiryDate";
+						expressionAttributeValues[":documentExpiryDate"] = returnRecord.documentExpiryDate;
+					} else {
+						this.logger.info(`No docExpiryDate in ${eventName} event`);
+					}
+					break;
+				}
+				case Constants.F2F_DOCUMENT_UPLOADED: {
+					if (!eventDetails.extensions || !eventDetails.extensions.post_office_visit_details) {
+						this.logger.error( { message: "Missing post_office_visit_details fields required for F2F_DOCUMENT_UPLOADED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.F2F_DOCUMENT_UPLOADED} event`);
+					}
+					updateExpression = "SET documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails";
+					expressionAttributeValues = {
+						":documentUploadedOn": returnRecord.documentUploadedOn,
+						":postOfficeVisitDetails": returnRecord.postOfficeVisitDetails,
 					};
 					break;
 				}
