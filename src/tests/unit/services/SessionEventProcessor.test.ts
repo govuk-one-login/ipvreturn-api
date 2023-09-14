@@ -51,7 +51,7 @@ describe("SessionEventProcessor", () => {
 			},
 		});
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
-		expect(logger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
+		expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
 	});
 
 	it("Throws error when session event record is already processed and user is notified via email", async () => {
