@@ -2296,4 +2296,8 @@ Outputs:
     Condition: IsNotProdLikeEnvironment
     Description: "IPR Test Harness"
     Value: !FindInMap [EnvironmentVariables, !Ref Environment, TESTHARNESSURL]
+  GovNotifyAPIURL:
+    Condition: IsNotProdLikeEnvironment
+    Description: "Gov Notify Stub"
+    Value: !FindInMap [EnvironmentVariables, !Ref Environment, GOVUKNOTIFYAPI]
 
