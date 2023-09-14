@@ -74,7 +74,7 @@ export class SessionEvent {
 }
 
 /**
- * Object to represent data contained in SessionEvent messages sent by this lambda
+ * Object to represent new data containing additional post_office related details and docType, docExpiryData required to send new template email.
  */
 export class ExtSessionEvent extends SessionEvent {
 	constructor(data: Partial<ExtSessionEvent>) {

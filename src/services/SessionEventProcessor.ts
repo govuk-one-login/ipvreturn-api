@@ -4,14 +4,14 @@ import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
-import { Response } from "../utils/Response";
-import { buildNewGovNotifyEventFields, buildOldGovNotifyEventFields } from "../utils/GovNotifyEvent";
+import { buildGovNotifyEventFields } from "../utils/GovNotifyEvent";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
 import { IPRService } from "./IPRService";
 import { AppError } from "../utils/AppError";
 import { MessageCodes } from "../models/enums/MessageCodes";
+import { Constants } from "../utils/Constants";
 
 export class SessionEventProcessor {
 
@@ -43,7 +43,8 @@ export class SessionEventProcessor {
 	}
 
 	async processRequest(sessionEvent: any): Promise<void> {
-		const sessionEventData: ExtSessionEvent = ExtSessionEvent.parseRequest(JSON.stringify(sessionEvent));
+		let sessionEventData;
+		sessionEventData = ExtSessionEvent.parseRequest(JSON.stringify(sessionEvent));
 
 		this.logger.appendKeys({ govuk_signin_journey_id: sessionEventData.clientSessionId });
 
@@ -60,80 +61,70 @@ export class SessionEventProcessor {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 
-		let sendNewEmail = true;
+		let emailType = Constants.NEW_EMAIL;
 
 		// Validate if documentUploadedOn exists
 		if (!sessionEventData.documentUploadedOn || !(sessionEventData.documentUploadedOn > 0)) {
 			this.logger.info({ message: "documentUploadedOn is not yet populated, sending the old template email." });
-			sendNewEmail = false;			
-		} else { 
-			// Validate all necessary fields are populated before processing the data.
-			try {
-				await this.validationHelper.validateModel(sessionEventData, this.logger);				
-			} catch (error) {
-				this.logger.info("Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT });
-				sendNewEmail = false;
-			}
-		}
-
-		if (sendNewEmail) {
-			// Send SQS message to GovNotify queue to send new template email to the user.
-			try {
-				const nameParts = personalIdentityUtils.getNames(sessionEventData.nameParts);
-				await this.iprService.sendToGovNotify(buildNewGovNotifyEventFields(sessionEventData.userId, sessionEventData.userEmail, nameParts.givenNames[0], nameParts.familyNames[0], sessionEventData.documentType, sessionEventData.documentExpiryDate, sessionEventData.postOfficeInfo[0], sessionEventData.postOfficeVisitDetails[0]));
-			} catch (error) {
-				this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
-					reason: "Processing Event session data, failed to post new email message to GovNotify SQS Queue",
-					error,
-				}, { messageCode: MessageCodes.FAILED_TO_WRITE_GOV_NOTIFY });
-				throw new AppError(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending new email message to GovNotify handler");
-			}
-		} else {
-			try {
-				// Send the old template email
-				const oldSessionEvent : SessionEvent = new SessionEvent(sessionEvent);			
-				await this.sendOldTemplateEmail(oldSessionEvent);
-			} catch (error) {
-				this.logger.error("FAILED_TO_SEND_EMAIL", {
-					reason: "Processing Event session data, failed to post message to GovNotify SQS Queue",
-					error,
-				}, { messageCode: MessageCodes.FAILED_TO_SEND_EMAIL });
-				throw new AppError(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending message to GovNotify handler");
-			
-			}
-		}
+			// Send the old template email
+			emailType = Constants.OLD_EMAIL;
+			sessionEventData = new SessionEvent(sessionEventData);	
+		} 	
 		
+		// Validate for fields and confirm the emailType
+		const data = await this.validateSessionEvent(sessionEventData, emailType);		
+		
+		// Send the new template email
+		await this.sendEmailMessageToGovNotify(data.sessionEvent, data.emailType);	
+
 		// Update the DB table with notified flag set to true
 		try {
 			const updateExpression = "SET notified = :notified";
 			const expressionAttributeValues = {
 				":notified": true,
 			};
-			await this.iprService.saveEventData(sessionEventData.userId, updateExpression, expressionAttributeValues);
+			await this.iprService.saveEventData(data.sessionEvent.userId, updateExpression, expressionAttributeValues);
 			this.logger.info({ message: "Updated the session event record with notified flag" });
 		} catch (error: any) {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 	}
 
-	async sendOldTemplateEmail(oldSessionEvent: SessionEvent): Promise<void> {
-		// Validate all necessary fields are populated before processing the data.
+	async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent; emailType: string }> {
+		console.log("event object: " + JSON.stringify(sessionEvent));
+		//Validate all necessary fields are populated required to send the email before processing the data.
 		try {
-			await this.validationHelper.validateModel(oldSessionEvent, this.logger);
+			await this.validationHelper.validateModel(sessionEvent, this.logger);				
 		} catch (error) {
-			this.logger.error("Unable to process the DB record as the necessary fields are not populated to send the old template email.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated to send the old template email.");
+			if (emailType === Constants.NEW_EMAIL) {
+				this.logger.info("Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT });
+				// Send the old template email
+				sessionEvent = new SessionEvent(sessionEvent);		
+				emailType = Constants.OLD_EMAIL;
+				// Validate feilds required for sending the old email
+				await this.validateSessionEvent(sessionEvent, emailType);
+			} else {
+				this.logger.error("Unable to process the DB record as the necessary fields are not populated to send the old template email.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated to send the old template email.");			
+
+			}			
 		}
+		return { sessionEvent, emailType };
+	}
+
+	async sendEmailMessageToGovNotify(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string): Promise<void> {		
+		
 		// Send SQS message to GovNotify queue to send email to the user.
 		try {
-			const nameParts = personalIdentityUtils.getNames(oldSessionEvent.nameParts);
-			await this.iprService.sendToGovNotify(buildOldGovNotifyEventFields(oldSessionEvent.userId, oldSessionEvent.userEmail, nameParts.givenNames[0], nameParts.familyNames[0]));
+			this.logger.info({ message: `Trying to send  ${emailType} type message to GovNotify handler` });
+			const nameParts = personalIdentityUtils.getNames(sessionEvent.nameParts);
+			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(nameParts, sessionEvent, emailType));
 		} catch (error) {
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
-				reason: "Processing Event session data, failed to post old email message to GovNotify SQS Queue",
+				reason: `Processing Event session data, failed to post ${emailType} type message to GovNotify SQS Queue`,
 				error,
 			}, { messageCode: MessageCodes.FAILED_TO_WRITE_GOV_NOTIFY });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending old email message to GovNotify handler");
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, `An error occurred when sending ${emailType} type message to GovNotify handler`);
 		}
 	}
 }
