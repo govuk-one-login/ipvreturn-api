@@ -1,6 +1,9 @@
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
+import { MessageCodes } from "../models/enums/MessageCodes";
 import { AppError } from "./AppError";
+import { Constants } from "./Constants";
 import { HttpCodesEnum } from "./HttpCodesEnum";
+import { Logger } from "@aws-lambda-powertools/logger";
 
 export interface GovNotifyEvent {
 	"Message": {
@@ -17,10 +20,10 @@ export interface GovNotifyEvent {
 	};
 }
 
-export const buildGovNotifyEventFields = (nameParts: { givenNames: string[]; familyNames: string[] }, sessionEvent: ExtSessionEvent | SessionEvent, emailType: string): GovNotifyEvent => {
+export const buildGovNotifyEventFields = (nameParts: { givenNames: string[]; familyNames: string[] }, sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger ): GovNotifyEvent => {
 	
 	switch (emailType) {					
-		case "oldEmail":
+		case Constants.OLD_EMAIL:
 			return {
 				Message : {
 					userId: sessionEvent.userId,
@@ -30,7 +33,7 @@ export const buildGovNotifyEventFields = (nameParts: { givenNames: string[]; fam
 					messageType: "oldEmail",
 				},
 			};
-		case "newEmail":{
+		case Constants.NEW_EMAIL:{
 			const newSessionEvent: ExtSessionEvent = new ExtSessionEvent(sessionEvent);
 			return {
 				Message : {
@@ -48,7 +51,8 @@ export const buildGovNotifyEventFields = (nameParts: { givenNames: string[]; fam
 			};
 		}
 		default:
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, `An error occurred when sending ${emailType} type message to GovNotify handler`);
+			logger.error(`Unrecognised emailType ${emailType}, unable to build Gov Notify message.`);
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, `Could not build Gov Notify fields for ${emailType} emailType.`, { messageCode: MessageCodes.UNRECOGNISED_EMAIL_TYPE_UNABLE_TO_BUILD_GOVNOTIFY_MESSAGE });
 		
 	}
 };

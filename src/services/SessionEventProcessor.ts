@@ -43,8 +43,7 @@ export class SessionEventProcessor {
 	}
 
 	async processRequest(sessionEvent: any): Promise<void> {
-		let sessionEventData;
-		sessionEventData = ExtSessionEvent.parseRequest(JSON.stringify(sessionEvent));
+		let sessionEventData: any = ExtSessionEvent.parseRequest(JSON.stringify(sessionEvent));
 
 		this.logger.appendKeys({ govuk_signin_journey_id: sessionEventData.clientSessionId });
 
@@ -91,7 +90,6 @@ export class SessionEventProcessor {
 	}
 
 	async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent; emailType: string }> {
-		console.log("event object: " + JSON.stringify(sessionEvent));
 		//Validate all necessary fields are populated required to send the email before processing the data.
 		try {
 			await this.validationHelper.validateModel(sessionEvent, this.logger);				
@@ -118,7 +116,7 @@ export class SessionEventProcessor {
 		try {
 			this.logger.info({ message: `Trying to send  ${emailType} type message to GovNotify handler` });
 			const nameParts = personalIdentityUtils.getNames(sessionEvent.nameParts);
-			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(nameParts, sessionEvent, emailType));
+			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(nameParts, sessionEvent, emailType, this.logger));
 		} catch (error) {
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
 				reason: `Processing Event session data, failed to post ${emailType} type message to GovNotify SQS Queue`,
