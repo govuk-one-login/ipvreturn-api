@@ -31,7 +31,7 @@ describe("SessionEventProcessor", () => {
 		streamEventWithPoDetails = VALID_DYNAMODB_STREAM_EVENT_WITH_PO_DETAILS;
 	});
 
-	it("When all the necessary fields are populated in the session Event record, sends email and updates notified flag", async () => {
+	it("When all the necessary fields are populated in the session Event record, sends old email and updates notified flag", async () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		const updateExpression = "SET notified = :notified";
 		const expressionAttributeValues = {
