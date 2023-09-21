@@ -71,7 +71,7 @@ export class SessionEventProcessor {
 		} 	
 		
 		// Validate for fields and confirm the emailType
-		const data = await this.validateSessionEvent(sessionEventData, emailType);		
+		const data = await this.validationHelper.validateSessionEvent(sessionEventData, emailType, this.logger);		
 		
 		// Send the new template email
 		await this.sendEmailMessageToGovNotify(data.sessionEvent, data.emailType);	
@@ -89,26 +89,26 @@ export class SessionEventProcessor {
 		}
 	}
 
-	async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent; emailType: string }> {
-		//Validate all necessary fields are populated required to send the email before processing the data.
-		try {
-			await this.validationHelper.validateModel(sessionEvent, this.logger);				
-		} catch (error) {
-			if (emailType === Constants.NEW_EMAIL) {
-				this.logger.info("Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT });
-				// Send the old template email
-				sessionEvent = new SessionEvent(sessionEvent);		
-				emailType = Constants.OLD_EMAIL;
-				// Validate feilds required for sending the old email
-				await this.validateSessionEvent(sessionEvent, emailType);
-			} else {
-				this.logger.error("Unable to process the DB record as the necessary fields are not populated to send the old template email.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
-				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated to send the old template email.");			
+	// async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent; emailType: string }> {
+	// 	//Validate all necessary fields are populated required to send the email before processing the data.
+	// 	try {
+	// 		await this.validationHelper.validateModel(sessionEvent, this.logger);				
+	// 	} catch (error) {
+	// 		if (emailType === Constants.NEW_EMAIL) {
+	// 			this.logger.info("Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT });
+	// 			// Send the old template email
+	// 			sessionEvent = new SessionEvent(sessionEvent);		
+	// 			emailType = Constants.OLD_EMAIL;
+	// 			// Validate feilds required for sending the old email
+	// 			await this.validateSessionEvent(sessionEvent, emailType);
+	// 		} else {
+	// 			this.logger.error("Unable to process the DB record as the necessary fields are not populated to send the old template email.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
+	// 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated to send the old template email.");			
 
-			}			
-		}
-		return { sessionEvent, emailType };
-	}
+	// 		}			
+	// 	}
+	// 	return { sessionEvent, emailType };
+	// }
 
 	async sendEmailMessageToGovNotify(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string): Promise<void> {		
 		

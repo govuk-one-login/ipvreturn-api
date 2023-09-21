@@ -10,6 +10,7 @@ import { EmailResponse } from "../../../models/EmailResponse";
 import { Email } from "../../../models/Email";
 import { AppError } from "../../../utils/AppError";
 import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
+import { Constants } from "../../../utils/Constants";
 
 const mockGovNotify = mock<NotifyClient>();
 let sendEmailServiceTest: SendEmailService;
@@ -36,7 +37,7 @@ describe("SendEmailProcessor", () => {
 		mockGovNotify.sendEmail.mockResolvedValue(mockEmailResponse);
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
-		const emailResponse = await sendEmailServiceTest.sendEmail(email);
+		const emailResponse = await sendEmailServiceTest.sendEmail(email, Constants.OLD_EMAIL);
 
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(1);
 		expect(emailResponse.emailFailureMessage).toBe("");
@@ -59,7 +60,7 @@ describe("SendEmailProcessor", () => {
 		});
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
-		await expect(sendEmailServiceTest.sendEmail(email)).rejects.toThrow();
+		await expect(sendEmailServiceTest.sendEmail(email, Constants.OLD_EMAIL)).rejects.toThrow();
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(1);
 	});
 
@@ -81,7 +82,7 @@ describe("SendEmailProcessor", () => {
 
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
-		await expect(sendEmailServiceTest.sendEmail(email)).rejects.toThrow();
+		await expect(sendEmailServiceTest.sendEmail(email, Constants.OLD_EMAIL)).rejects.toThrow();
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(4);
 	});
 
@@ -103,7 +104,7 @@ describe("SendEmailProcessor", () => {
 
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
-		await expect(sendEmailServiceTest.sendEmail(email)).rejects.toThrow();
+		await expect(sendEmailServiceTest.sendEmail(email, Constants.OLD_EMAIL)).rejects.toThrow();
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(4);
 	});
 

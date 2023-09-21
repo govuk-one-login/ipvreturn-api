@@ -10,6 +10,7 @@ import { EmailResponse } from "../../../models/EmailResponse";
 import { absoluteTimeNow } from "../../../utils/DateTimeUtils";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { SessionEvent } from "../../../models/SessionEvent";
+import { Email } from "../../../models/Email";
 
 let sendEmailProcessorTest: SendEmailProcessor;
 const mockGovNotifyService = mock<SendEmailService>();
@@ -67,14 +68,15 @@ describe("SendEmailProcessor", () => {
 		mockSessionEvent = getMockSessionEventItem();
 	});
 
-	it("Returns success response when all required Email attributes exists", async () => {
+	it("Returns success response when all required Email attributes exists to send oldEmail messageType", async () => {
 		const expectedDateTime = new Date().toISOString();
 		const mockEmailResponse = new EmailResponse(expectedDateTime, "", 201);
 		mockGovNotifyService.sendEmail.mockResolvedValue(mockEmailResponse);
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-		const emailResponse = await sendEmailProcessorTest.processRequest(eventBody);
+		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
+		const emailResponse = await sendEmailProcessorTest.processRequest(message);
 
 		expect(emailResponse.emailSentDateTime).toEqual(expectedDateTime);
 		expect(emailResponse.emailFailureMessage).toBe("");
@@ -99,12 +101,13 @@ describe("SendEmailProcessor", () => {
 		"firstName",
 		"lastName",
 		"emailAddress",
-	])("Throws error when event body message is missing required attributes", async (attribute) => {
+	])("Throws error when event body message is missing required attributes to send oldEmail", async (attribute) => {
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const eventBodyMessage = eventBody.Message;
 		delete eventBodyMessage[attribute];
 		eventBody.Message = eventBodyMessage;
-		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
+		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
+		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
 	});
 
 	it.each([
@@ -120,14 +123,15 @@ describe("SendEmailProcessor", () => {
 		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
 	});
 
-	it("Return 200 when write to txMA fails", async () => {
+	it("when write to txMA fails", async () => {
 		const expectedDateTime = new Date().toISOString();
 		const mockEmailResponse = new EmailResponse(expectedDateTime, "", 201);
 		mockGovNotifyService.sendEmail.mockResolvedValue(mockEmailResponse);
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		mockIprService.sendToTXMA.mockRejectedValue({});
 
-		const emailResponse = await sendEmailProcessorTest.processRequest(eventBody);
+		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
+		const emailResponse = await sendEmailProcessorTest.processRequest(message);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.sendToTXMA).toHaveBeenCalledTimes(1);
 
@@ -148,7 +152,8 @@ describe("SendEmailProcessor", () => {
 		delete mockSessionEvent[attribute];
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
+		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
+		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -161,7 +166,7 @@ describe("SendEmailProcessor", () => {
 		"nameParts",
 		"clientName",
 		"redirectUri",
-	])("Throws error when session event record is missing necessary fields %s", async (attribute) => {
+	])("Throws error when session event record is missing necessary field %s required to send oldEmail", async (attribute) => {
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const eventBodyMessage = eventBody.Message;
 		eventBody.Message = eventBodyMessage;
@@ -169,11 +174,12 @@ describe("SendEmailProcessor", () => {
 		delete mockSessionEvent[attribute];
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
+		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
+		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
-		expect(logger.error).toHaveBeenCalledWith("Unable to process the DB record as the necessary fields are not populated.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
+		expect(logger.error).toHaveBeenCalledWith("Unable to process the DB record as the necessary fields are not populated to send the old template email.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
 
 	});
 
@@ -184,7 +190,8 @@ describe("SendEmailProcessor", () => {
 		mockSessionEvent.notified = false;
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
+		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
+		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(logger.error).toHaveBeenCalledWith("Notified flag is not set to true for this user session event", { "messageCode": "NOTIFIED_FLAG_NOT_SET_TO_TRUE" });
 
@@ -197,7 +204,8 @@ describe("SendEmailProcessor", () => {
 		mockSessionEvent.notified = false;
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(null);
-		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
+		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
+		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
 		// eslint-disable-next-line @typescript-eslint/unbound-method
 		expect(logger.error).toHaveBeenCalledWith("No session event found for this userId", { "messageCode": "SESSION_NOT_FOUND" });
 

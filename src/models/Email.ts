@@ -14,6 +14,7 @@ export class Email {
 		this.emailAddress = data.emailAddress!;
 		this.firstName = data.firstName!;
 		this.lastName = data.lastName!;
+		this.messageType = data.messageType!;
 		this.referenceId = randomUUID();
 	}
 
@@ -47,5 +48,55 @@ export class Email {
     @IsString()
     @IsNotEmpty()
     referenceId!: string;
+
+	@IsString()
+    @IsNotEmpty()
+    messageType!: string;	
+
+}
+
+/**
+ * Object to represent data contained in email messages sent by this lambda
+ */
+export class NewEmail extends Email {
+
+	constructor(data: Partial<NewEmail>) {
+		super(data);
+		this.documentType = data.documentType!;
+		this.poAddress = data.poAddress!;
+		this.poVisitDate = data.poVisitDate!;
+		this.poVisitTime = data.poVisitTime!;
+		this.documentExpiryDate = data.documentExpiryDate!;
+	}
+
+	static parseRequest(data: any): Email {
+		try {
+			const obj = JSON.parse(data);
+			return new NewEmail(obj);
+		} catch (error: any) {
+			console.log("Cannot parse NewEmail data", Email.name, "parseBody", { data });
+			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse NewEmail data");
+		}
+	}
+
+	@IsString()
+	@IsNotEmpty()
+	documentType!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    poAddress!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    poVisitDate!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	poVisitTime!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    documentExpiryDate!: string;
 
 }
