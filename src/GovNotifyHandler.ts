@@ -51,7 +51,7 @@ class GovNotifyHandler implements LambdaInterface {
 				let govnotifyServiceId;
 				try {
 					govnotifyServiceId = GOVUKNOTIFY_API_KEY.substring(GOVUKNOTIFY_API_KEY.length - 73, GOVUKNOTIFY_API_KEY.length - 37);
-				}catch (error) {
+				} catch (error) {
 					logger.error("failed to extract govnotifyServiceId from the GOVUKNOTIFY_API_KEY", { error });
 					batchFailures.push({ itemIdentifier: "" });
 					return { batchItemFailures: batchFailures };
@@ -59,7 +59,7 @@ class GovNotifyHandler implements LambdaInterface {
 				// Check for messageType and reject it if it doesnt match the required types.
 				const messageType = body.Message.messageType;
 				let message;
-				switch (messageType){
+				switch (messageType) {
 					case Constants.OLD_EMAIL: {
 						message = Email.parseRequest(JSON.stringify(body.Message));
 						break;

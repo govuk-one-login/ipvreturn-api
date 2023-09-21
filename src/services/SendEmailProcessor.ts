@@ -86,16 +86,16 @@ export class SendEmailProcessor {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 		
-		let sessionEventData = message instanceof NewEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
+		const sessionEventData = message instanceof NewEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
 		
 		// Validate all necessary fields are populated in the session store before processing the data.
-		const data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType ,this.logger);
+		const data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
 
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
 		try {
 			await this.iprService.sendToTXMA({
 				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-				...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId}),
+				...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }),
 				extensions: {
 					previous_govuk_signin_journey_id: session.clientSessionId,
 				},

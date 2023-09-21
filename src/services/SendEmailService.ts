@@ -1,8 +1,6 @@
 // @ts-ignore
 import { NotifyClient } from "notifications-node-client";
-
 import { EmailResponse } from "../models/EmailResponse";
-import { Email, NewEmail } from "../models/Email";
 import { GovNotifyErrorMapper } from "./GovNotifyErrorMapper";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { Logger } from "@aws-lambda-powertools/logger";
@@ -60,41 +58,42 @@ export class SendEmailService {
      * @returns EmailResponse
      * @throws AppError
      */
-    async sendEmail(message: any, emailType : string): Promise<EmailResponse> {
-		let templateId;
-		let personalisation;
-		switch (emailType){
-			case Constants.OLD_EMAIL: {
-				// Send Old template email
-				personalisation = {
-					"first name": message.firstName,
-					"last name": message.lastName,
-					"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
-				};
-				templateId = this.environmentVariables.getEmailTemplateId();
-				break;
 
-			}
-			case Constants.NEW_EMAIL: {				
-				// Send New template email
-				personalisation = {
-					"first name": message.firstName,
-					"last name": message.lastName,
-					"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
-					"chosen_photo_ID": DocumentTypes[message.documentType as keyof typeof DocumentTypes],
-					"id_expiry_date": this.getFullFormattedDate(message.documentExpiryDate),
-					"branch_name_and_address": message.poAddress,
-					"date": message.poVisitDate,
-					"time": message.poVisitTime
-				};
-				templateId = this.environmentVariables.getNewEmailTemplateId();
-				break;
-			}
-			default: {
-				this.logger.error(`Unrecognised emailType: ${emailType}, unable to send the email.`);
-				throw new AppError(HttpCodesEnum.SERVER_ERROR, `Unrecognised emailType: ${emailType}, unable to send the email.`);
-			}
-		} 	
+    async sendEmail(message: any, emailType : string): Promise<EmailResponse> {
+    	let templateId;
+    	let personalisation;
+    	switch (emailType) {
+    		case Constants.OLD_EMAIL: {
+    			// Send Old template email
+    			personalisation = {
+    				"first name": message.firstName,
+    				"last name": message.lastName,
+    				"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
+    			};
+    			templateId = this.environmentVariables.getEmailTemplateId();
+    			break;
+
+    		}
+    		case Constants.NEW_EMAIL: {				
+    			// Send New template email
+    			personalisation = {
+    				"first name": message.firstName,
+    				"last name": message.lastName,
+    				"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
+    				"chosen_photo_ID": DocumentTypes[message.documentType as keyof typeof DocumentTypes],
+    				"id_expiry_date": this.getFullFormattedDate(message.documentExpiryDate),
+    				"branch_name_and_address": message.poAddress,
+    				"date": message.poVisitDate,
+    				"time": message.poVisitTime.replace(/\s/g, ""),
+    			};
+    			templateId = this.environmentVariables.getNewEmailTemplateId();
+    			break;
+    		}
+    		default: {
+    			this.logger.error(`Unrecognised emailType: ${emailType}, unable to send the email.`);
+    			throw new AppError(HttpCodesEnum.SERVER_ERROR, `Unrecognised emailType: ${emailType}, unable to send the email.`);
+    		}
+    	} 
 
     	const options = {
     		personalisation,
@@ -107,12 +106,12 @@ export class SendEmailService {
     	//retry for maxRetry count configured value if fails
     	while (retryCount <= this.environmentVariables.maxRetries()) {
     		this.logger.debug(`sendEmail - trying to send ${emailType} message ${SendEmailService.name} ${new Date().toISOString()}`, {
-    			templateId: templateId,
+    			templateId,
     			retryCount,
     		});
 
     		try {
-				this.logger.info("govNotify URL: " +this.environmentVariables.govukNotifyApiUrl());
+    			this.logger.info("govNotify URL: " + this.environmentVariables.govukNotifyApiUrl());
     			const emailResponse = await this.govNotify.sendEmail(templateId, message.emailAddress, options);
     			this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
     			return new EmailResponse(new Date().toISOString(), "", emailResponse.status);
@@ -146,12 +145,10 @@ export class SendEmailService {
     	throw new AppError(HttpCodesEnum.SERVER_ERROR, `Cannot send Email even after ${this.environmentVariables.maxRetries()} retries.`);
     }
 
-	getFullFormattedDate(date: any): String {
-		const dateObject = new Date(date);
-    	const formattedDate = dateObject.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric"});
-		return formattedDate;
-	}
+    getFullFormattedDate(date: any): string {
+    	const dateObject = new Date(date);
+    	const formattedDate = dateObject.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    	return formattedDate;
+    }
 
 }
-
-
