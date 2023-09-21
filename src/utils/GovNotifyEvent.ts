@@ -52,7 +52,7 @@ export const buildGovNotifyEventFields = (nameParts: { givenNames: string[]; fam
 		}
 		default:
 			logger.error(`Unrecognised emailType ${emailType}, unable to build Gov Notify message.`);
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, `Could not build Gov Notify fields for ${emailType} emailType.`, { messageCode: MessageCodes.UNRECOGNISED_EMAIL_TYPE_UNABLE_TO_BUILD_GOVNOTIFY_MESSAGE });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, `Could not build Gov Notify fields for ${emailType} emailType.`, { messageCode: MessageCodes.UNRECOGNISED_EMAIL_TYPE });
 		
 	}
 };
