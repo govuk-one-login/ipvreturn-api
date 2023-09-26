@@ -18,14 +18,13 @@ x-amazon-apigateway-policy:
   Version: "2012-10-17"
   Statement:
     - Effect: "Allow"
-      Principal:
-        AWS:  "*"
+      Principal: "*"
       Action: "execute-api:Invoke"
       Resource: "execute-api:/*"
-      # Condition:
-      #   StringEquals:
-      #     "aws:PrincipalAccount": 
-      #       - 489145412748
+      Condition:
+        StringEquals:
+          "aws:PrincipalAccount": 
+            - "489145412748"
 
 paths:
   getRecordByUserId/{tableName}/{userId}:
@@ -63,7 +62,7 @@ paths:
         "500":
           description: Internal Server Error
         security:
-          - SigV4Reference: []
+          - sigv4Reference: []
       x-amazon-apigateway-request-validator: "requestParamsOnly"
       x-amazon-apigateway-integration:
         httpMethod: POST
@@ -112,7 +111,7 @@ paths:
         "500":
           description: Internal Server Error
         security:
-          - SigV4Reference: []
+          - sigv4Reference: []
       x-amazon-apigateway-request-validator: "requestParamsOnly"
       x-amazon-apigateway-integration:
         httpMethod: GET
@@ -169,7 +168,7 @@ paths:
         "500":
           description: Internal Server Error
         security:
-          - SigV4Reference: []
+          - sigv4Reference: []
       x-amazon-apigateway-request-validator: "requestParamsOnly"
       x-amazon-apigateway-integration:
         httpMethod: GET
