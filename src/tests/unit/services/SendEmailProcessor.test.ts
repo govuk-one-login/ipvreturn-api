@@ -2,7 +2,7 @@
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SQSEvent } from "aws-lambda";
-import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_NEW_EMAIL } from "../../data/sqs-events";
+import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL } from "../../data/sqs-events";
 import { SendEmailProcessor } from "../../../services/SendEmailProcessor";
 import { SendEmailService } from "../../../services/SendEmailService";
 import { IPRService } from "../../../services/IPRService";
@@ -10,7 +10,7 @@ import { mock } from "jest-mock-extended";
 import { EmailResponse } from "../../../models/EmailResponse";
 import { absoluteTimeNow } from "../../../utils/DateTimeUtils";
 import { ExtSessionEvent, SessionEvent } from "../../../models/SessionEvent";
-import { Email, NewEmail } from "../../../models/Email";
+import { Email, DynamicEmail } from "../../../models/Email";
 import { Constants } from "../../../utils/Constants";
 
 let sendEmailProcessorTest: SendEmailProcessor;
@@ -115,7 +115,7 @@ describe("SendEmailProcessor", () => {
 		// @ts-ignore
 		sendEmailProcessorTest.iprService = mockIprService;
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
-		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_NEW_EMAIL;
+		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
 		mockSessionEvent = getMockSessionEventItem();
 		mockExtSessionEvent = getMockExtSessionEventItem();
 	});
@@ -123,7 +123,7 @@ describe("SendEmailProcessor", () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
-		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_NEW_EMAIL;
+		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
 		mockSessionEvent = getMockSessionEventItem();
 		mockExtSessionEvent = getMockExtSessionEventItem();
 	});
@@ -268,10 +268,10 @@ describe("SendEmailProcessor", () => {
 		const eventBody = JSON.parse(sqsEventNewEmail.Records[0].body);
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(mockExtSessionEvent);
-		const newEmailmessage = NewEmail.parseRequest(JSON.stringify(eventBody.Message));
+		const newEmailmessage = DynamicEmail.parseRequest(JSON.stringify(eventBody.Message));
 		const emailResponse = await sendEmailProcessorTest.processRequest(newEmailmessage);
 
-		expect(mockGovNotifyService.sendEmail).toHaveBeenCalledWith(newEmailmessage, Constants.NEW_EMAIL);
+		expect(mockGovNotifyService.sendEmail).toHaveBeenCalledWith(newEmailmessage, Constants.VIST_PO_EMAIL_DYNAMIC);
 
 		expect(emailResponse.emailSentDateTime).toEqual(expectedDateTime);
 		expect(emailResponse.emailFailureMessage).toBe("");
@@ -305,12 +305,12 @@ describe("SendEmailProcessor", () => {
 		delete mockExtSessionEvent[attribute];
 		// @ts-ignore
 		mockIprService.getSessionBySub.mockReturnValue(mockExtSessionEvent);
-		const newEmailmessage = NewEmail.parseRequest(JSON.stringify(eventBody.Message));
+		const newEmailmessage = DynamicEmail.parseRequest(JSON.stringify(eventBody.Message));
 		const emailResponse = await sendEmailProcessorTest.processRequest(newEmailmessage);
 
 		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
 		expect(logger.info).toHaveBeenNthCalledWith(2, "Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { "messageCode": "MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT" });
-		expect(mockGovNotifyService.sendEmail).toHaveBeenCalledWith(newEmailmessage, Constants.OLD_EMAIL);
+		expect(mockGovNotifyService.sendEmail).toHaveBeenCalledWith(newEmailmessage, Constants.VIST_PO_EMAIL_STATIC);
 
 		expect(emailResponse.emailSentDateTime).toEqual(expectedDateTime);
 		expect(emailResponse.emailFailureMessage).toBe("");

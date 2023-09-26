@@ -63,7 +63,7 @@ export class SendEmailService {
     	let templateId;
     	let personalisation;
     	switch (emailType) {
-    		case Constants.OLD_EMAIL: {
+    		case Constants.VIST_PO_EMAIL_STATIC: {
     			// Send Old template email
     			personalisation = {
     				"first name": message.firstName,
@@ -74,7 +74,7 @@ export class SendEmailService {
     			break;
 
     		}
-    		case Constants.NEW_EMAIL: {				
+    		case Constants.VIST_PO_EMAIL_DYNAMIC: {				
     			// Send New template email
     			personalisation = {
     				"first name": message.firstName,

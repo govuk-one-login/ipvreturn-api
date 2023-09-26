@@ -152,7 +152,7 @@ Mappings:
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
     production:
       GOVUKNOTIFYTEMPLATEID: "206971e2-d576-4d12-b34f-b0de442d39ab"
-      GOVUKNOTIFYNEWTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85" # TODO get the prod templateID and update it here.
+      GOVUKNOTIFYNEWTEMPLATEID: "f62672d4-ff45-470e-8506-956482061f54"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days

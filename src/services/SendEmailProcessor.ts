@@ -1,4 +1,4 @@
-import { Email, NewEmail } from "../models/Email";
+import { Email, DynamicEmail } from "../models/Email";
 import { EmailResponse } from "../models/EmailResponse";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
@@ -44,7 +44,7 @@ export class SendEmailProcessor {
 		return SendEmailProcessor.instance;
 	}
 
-	async processRequest(message: Email | NewEmail): Promise<EmailResponse> {
+	async processRequest(message: Email | DynamicEmail): Promise<EmailResponse> {
 		//const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		// Validate Email model
 		try {
@@ -86,7 +86,7 @@ export class SendEmailProcessor {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 		
-		const sessionEventData = message instanceof NewEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
+		const sessionEventData = message instanceof DynamicEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
 		
 		// Validate all necessary fields are populated in the session store before processing the data.
 		const data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);

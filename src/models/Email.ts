@@ -58,9 +58,9 @@ export class Email {
 /**
  * Object to represent data contained in email messages sent by this lambda
  */
-export class NewEmail extends Email {
+export class DynamicEmail extends Email {
 
-	constructor(data: Partial<NewEmail>) {
+	constructor(data: Partial<DynamicEmail>) {
 		super(data);
 		this.documentType = data.documentType!;
 		this.poAddress = data.poAddress!;
@@ -72,7 +72,7 @@ export class NewEmail extends Email {
 	static parseRequest(data: any): Email {
 		try {
 			const obj = JSON.parse(data);
-			return new NewEmail(obj);
+			return new DynamicEmail(obj);
 		} catch (error: any) {
 			console.log("Cannot parse NewEmail data", Email.name, "parseBody", { data });
 			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse NewEmail data");

@@ -23,17 +23,17 @@ export interface GovNotifyEvent {
 export const buildGovNotifyEventFields = (nameParts: { givenNames: string[]; familyNames: string[] }, sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger ): GovNotifyEvent => {
 	
 	switch (emailType) {					
-		case Constants.OLD_EMAIL:
+		case Constants.VIST_PO_EMAIL_STATIC:
 			return {
 				Message : {
 					userId: sessionEvent.userId,
 					emailAddress: sessionEvent.userEmail,
 					firstName: nameParts.givenNames[0],
 					lastName: nameParts.familyNames[0],
-					messageType: "oldEmail",
+					messageType: Constants.VIST_PO_EMAIL_STATIC,
 				},
 			};
-		case Constants.NEW_EMAIL:{
+		case Constants.VIST_PO_EMAIL_DYNAMIC:{
 			const newSessionEvent: ExtSessionEvent = new ExtSessionEvent(sessionEvent);
 			return {
 				Message : {
@@ -46,7 +46,7 @@ export const buildGovNotifyEventFields = (nameParts: { givenNames: string[]; fam
 					poVisitDate: newSessionEvent.postOfficeVisitDetails[0].post_office_date_of_visit,
 					poVisitTime: newSessionEvent.postOfficeVisitDetails[0].post_office_time_of_visit,
 					documentExpiryDate: newSessionEvent.documentExpiryDate,
-					messageType: "newEmail",
+					messageType: Constants.VIST_PO_EMAIL_DYNAMIC,
 				},
 			};
 		}

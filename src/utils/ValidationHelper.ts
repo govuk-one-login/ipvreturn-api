@@ -48,11 +48,11 @@ export class ValidationHelper {
 		try {
 			await this.validateModel(sessionEvent, logger);				
 		} catch (error) {
-			if (emailType === Constants.NEW_EMAIL) {
+			if (emailType === Constants.VIST_PO_EMAIL_DYNAMIC) {
 				logger.info("Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT });
 				// Send the old template email
 				sessionEvent = new SessionEvent(sessionEvent);		
-				emailType = Constants.OLD_EMAIL;
+				emailType = Constants.VIST_PO_EMAIL_STATIC;
 				// Validate feilds required for sending the old email
 				await this.validateSessionEvent(sessionEvent, emailType, logger);
 			} else {
