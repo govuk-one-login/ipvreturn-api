@@ -15,10 +15,6 @@ const GOV_NOTIFY_INSTANCE = axios.create({ baseURL: process.env.GOVUKNOTIFYAPI }
 
 const HARNESS_API_INSTANCE : AxiosInstance = axios.create({ baseURL: constants.DEV_IPR_TEST_HARNESS_URL });
 
-console.log("process.env.AWS_ACCESS_KEY_ID", process.env.AWS_ACCESS_KEY_ID);
-console.log("process.env.AWS_SECRET_ACCESS_KEY", process.env.AWS_SECRET_ACCESS_KEY);
-console.log("process.env.AWS_SESSION_TOKEN", process.env.AWS_SESSION_TOKEN);
-
 const awsSigv4Interceptor = aws4Interceptor({
 	options: {
 		region: "eu-west-2",
@@ -102,8 +98,6 @@ export async function getSessionByUserId(userId: string, tableName: string): Pro
 
 	try {
 		do {
-			console.log("path", `getRecordByUserId/${tableName}/${userId}`);
-
 			response = await HARNESS_API_INSTANCE.get<{ Item: OriginalSessionItem }>(`getRecordByUserId/${tableName}/${userId}`, {});
 		} while (!(response.data.Item?.notified && response.data.Item.notified.BOOL));
 		const originalSession = response.data.Item;
@@ -112,8 +106,7 @@ export async function getSessionByUserId(userId: string, tableName: string): Pro
 			Object.entries(originalSession).map(([key, value]) => [key, value.N ?? value.S ?? value.L ?? value.BOOL]),
 		) as unknown as SessionEvent;
 	} catch (e: any) {
-		console.error({ message: "res", error: e?.response });
-		console.error({ message: "req", error: e?.request });
+		console.error({ message: "getSessionByUserId - failed getting session from Dynamo", e });
 	}
 
 	console.log("getSessionByUserId Response", session);

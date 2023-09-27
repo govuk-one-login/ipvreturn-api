@@ -17,14 +17,20 @@ tags:
 x-amazon-apigateway-policy:
   Version: "2012-10-17"
   Statement:
-    - Effect: "Allow"
-      Principal: "*"
-      Action: "execute-api:Invoke"
-      Resource: "execute-api:/*"
-      Condition:
-        StringEquals:
-          "aws:PrincipalAccount": 
-            - "489145412748"
+  - Effect: "Deny"
+    Principal:
+      AWS:  "*"
+    Action: "execute-api:Invoke"
+    Resource: "execute-api:/*"
+    Condition:
+      StringNotEquals:
+        "aws:PrincipalAccount":
+          - "489145412748"
+  - Effect: "Allow"
+    Principal:
+      AWS:  "*"
+    Action: "execute-api:Invoke"
+    Resource: "execute-api:/*"
 
 paths:
   getRecordByUserId/{tableName}/{userId}:
@@ -61,8 +67,8 @@ paths:
           description: Unauthorized
         "500":
           description: Internal Server Error
-        security:
-          - sigv4Reference: []
+      security:
+        - sigv4Reference: []
       x-amazon-apigateway-request-validator: "requestParamsOnly"
       x-amazon-apigateway-integration:
         httpMethod: POST
@@ -110,8 +116,8 @@ paths:
           description: Unauthorized
         "500":
           description: Internal Server Error
-        security:
-          - sigv4Reference: []
+      security:
+        - sigv4Reference: []
       x-amazon-apigateway-request-validator: "requestParamsOnly"
       x-amazon-apigateway-integration:
         httpMethod: GET
@@ -167,8 +173,8 @@ paths:
           description: Unauthorized
         "500":
           description: Internal Server Error
-        security:
-          - sigv4Reference: []
+      security:
+        - sigv4Reference: []
       x-amazon-apigateway-request-validator: "requestParamsOnly"
       x-amazon-apigateway-integration:
         httpMethod: GET
