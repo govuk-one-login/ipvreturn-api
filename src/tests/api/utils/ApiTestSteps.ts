@@ -20,11 +20,6 @@ const awsSigv4Interceptor = aws4Interceptor({
 		region: "eu-west-2",
 		service: "execute-api",
 	},
-	credentials: {
-		accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-		sessionToken: process.env.AWS_SESSION_TOKEN!,
-	},
 });
 HARNESS_API_INSTANCE.interceptors.request.use(awsSigv4Interceptor);
 const xmlParser = new XMLParser();
@@ -125,7 +120,7 @@ export async function postGovNotifyRequest(mockDelimitator: any, userData: any):
 		return error.response;
 	}
 
-	function insertBeforeLastOccurrence(strToSearch: string, strToFind: string, strToInsert: string) {
+	function insertBeforeLastOccurrence(strToSearch: string, strToFind: string, strToInsert: string): string {
 		const n = strToSearch.lastIndexOf(strToFind);
 		if (n < 0) return strToSearch;
 		return strToSearch.substring(0, n) + strToInsert + strToSearch.substring(n);
