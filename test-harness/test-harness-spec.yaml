@@ -25,7 +25,7 @@ x-amazon-apigateway-policy:
     Condition:
       StringNotEquals:
         "aws:PrincipalAccount":
-          - "489145412748"
+          - "${AWS::AccountId}"
   - Effect: "Allow"
     Principal:
       AWS:  "*"
