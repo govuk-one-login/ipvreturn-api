@@ -7,7 +7,7 @@ import { ReturnSQSEvent } from "../../../models/ReturnSQSEvent";
 import { SessionEvent } from "../../../models/SessionEvent";
 import { constants } from "./ApiConstants";
 
-const AWS_REGION = process.env.AWS_REGION || "eu-west-2";
+const AWS_REGION = process.env.AWS_REGION ?? "eu-west-2";
 const MOCK_TXMA_SQS_URL = constants.API_TEST_SQS_TXMA_CONSUMER_QUEUE;
 const GOV_NOTIFY_SQS_URL = constants.API_TEST_GOV_NOTIFY_SQS_QUEUE;
 const EMAIL_ADDRESS = constants.API_TEST_EMAIL_ADDRESS;
