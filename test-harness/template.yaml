@@ -235,7 +235,7 @@ Resources:
             Statement:
             - Effect: Allow
               Action:
-              - "s3:SendMessage"
+              - "sqs:SendMessage"
               Resource:
                 Fn::ImportValue: !Sub "${BackendStack}-MockTxMASQSQueue-arn"
             - Effect: Allow
