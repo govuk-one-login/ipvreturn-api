@@ -102,7 +102,7 @@ Mappings:
   EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
     dev:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
-      GOVUKNOTIFYNEWTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
+      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYAPI: "https://ipvr-gov-notify-stub-govnotifystub.return.dev.account.gov.uk/govnotify"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
@@ -115,7 +115,7 @@ Mappings:
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
     build:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
-      GOVUKNOTIFYNEWTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
+      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYAPI: "https://govnotifystub.return.build.account.gov.uk/govnotify"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
@@ -128,7 +128,7 @@ Mappings:
       TESTHARNESSURL: "https://testharness.return.build.account.gov.uk"
     staging:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
-      GOVUKNOTIFYNEWTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
+      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
@@ -140,7 +140,7 @@ Mappings:
       RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
     integration:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
-      GOVUKNOTIFYNEWTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
+      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
@@ -152,7 +152,7 @@ Mappings:
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
     production:
       GOVUKNOTIFYTEMPLATEID: "206971e2-d576-4d12-b34f-b0de442d39ab"
-      GOVUKNOTIFYNEWTEMPLATEID: "f62672d4-ff45-470e-8506-956482061f54"
+      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "f62672d4-ff45-470e-8506-956482061f54"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
@@ -665,7 +665,7 @@ Resources:
           POWERTOOLS_SERVICE_NAME: GovNotifyHandler
           GOVUKNOTIFY_API: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYAPI ]
           GOVUKNOTIFY_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYTEMPLATEID ]
-          GOVUKNOTIFY_NEW_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYNEWTEMPLATEID ]
+          GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYDYNAMICEMAILTEMPLATEID ]
           GOVUKNOTIFY_API_KEY_SSM_PATH: !Sub "/${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY"
           RETURN_JOURNEY_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNJOURNEYURL ]
           TXMA_QUEUE_URL: !Ref TxMASQSQueue

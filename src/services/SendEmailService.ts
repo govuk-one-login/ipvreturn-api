@@ -86,7 +86,7 @@ export class SendEmailService {
     				"date": message.poVisitDate,
     				"time": message.poVisitTime.replace(/\s/g, ""),
     			};
-    			templateId = this.environmentVariables.getNewEmailTemplateId();
+    			templateId = this.environmentVariables.getDynamicEmailTemplateId();
     			break;
     		}
     		default: {
