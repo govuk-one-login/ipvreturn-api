@@ -28,7 +28,7 @@ const sqsClient = new SQSClient({
 	region: AWS_REGION,
 });
 
-export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, emailAddress: any): Promise<SendMessageCommandOutput> {
+export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, emailAddress: any): Promise<any> {
 	const event = structuredClone(inputEvent);
 	event.event_id = randomUUID();
 	event.user.user_id = user;
@@ -39,11 +39,13 @@ export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, em
 	if (emailAddress) {
 		event.user.email = EMAIL_ADDRESS;
 	}
-	const command = new SendMessageCommand({
-		QueueUrl: MOCK_TXMA_SQS_URL,
-		MessageBody: JSON.stringify(event),
-	});
-	return sqsClient.send(command);
+
+	try {
+		const response = await HARNESS_API_INSTANCE.post("/send-mock-txma-message", event);
+		return response;
+	} catch (error: any) {
+		console.error({ message: "postMockEvent - failed sending message to mock TxMA queue", error });
+	}
 }
 
 export async function postGovNotifyEvent(inputEvent: any): Promise<SendMessageCommandOutput> {
