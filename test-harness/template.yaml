@@ -191,7 +191,7 @@ Resources:
             Status: Enabled
             ExpirationInDays: 1
 
-  AccessTestHarnessRole:
+  AccessTestHarnessBucketRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -202,7 +202,7 @@ Resources:
               Service: apigateway.amazonaws.com
         Version: 2012-10-17
       Policies:
-        - PolicyName: AccessTestHarnessBucket
+        - PolicyName: AccessTestHarnessBucketPolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -213,6 +213,38 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:s3:::${EventTestBucket}"
                   - !Sub "arn:aws:s3:::${EventTestBucket}/txma/*"
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
+
+  MockTxMAQueueRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: "sts:AssumeRole"
+            Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+        Version: 2012-10-17
+      Policies:
+        - PolicyName: MockTxMAQueuePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+            - Effect: Allow
+              Action:
+              - "s3:SendMessage"
+              Resource:
+                Fn::ImportValue: !Sub "${BackendStack}-MockTxMASQSQueue-arn"
+            - Effect: Allow
+              Action:
+              - "kms:Encrypt"
+              - "kms:Decrypt"
+              - "kms:GenerateDataKey"
+              Resource:
+                Fn::ImportValue: !Sub "${BackendStack}-MockTxMAKMSEncryptionKey-arn"
       PermissionsBoundary: !If
         - UsePermissionsBoundary
         - !Ref PermissionsBoundary
