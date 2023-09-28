@@ -25,7 +25,7 @@ HARNESS_API_INSTANCE.interceptors.request.use(awsSigv4Interceptor);
 const xmlParser = new XMLParser();
 
 const sqsClient = new SQSClient({
-	region: AWS_REGION,
+	region: "eu-west-2",
 });
 
 export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, emailAddress: any): Promise<SendMessageCommandOutput> {

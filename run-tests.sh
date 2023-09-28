@@ -9,6 +9,10 @@ remove_quotes () {
 declare error_code
 # shellcheck disable=SC2154
 #The CFN variables seem to include quotes when used in tests these must be removed before assigning them.
+export API_TEST_SESSION_EVENTS_TABLE=$(remove_quotes $CFN_SessionEventsTable)
+# shellcheck disable=SC2154
+#The CFN variables seem to include quotes when used in tests these must be removed before assigning them.
+export API_TEST_SQS_TXMA_CONSUMER_QUEUE=$(remove_quotes $CFN_MockTxMASQSQueueUrl)
 export GOVUKNOTIFYAPI=$(remove_quotes $CFN_GovNotifyAPIURL)
 export API_TEST_SQS_TXMA_CONSUMER_QUEUE=$(remove_quotes $CFN_MockTxMASQSQueue)
 export API_TEST_GOV_NOTIFY_SQS_QUEUE=$(remove_quotes $CFN_GovNotifySQSQueue)
