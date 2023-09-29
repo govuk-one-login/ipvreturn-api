@@ -172,8 +172,13 @@ paths:
           Fn::GetAtt:
             - MockTxMAQueueRole
             - Arn
-        #  TODO
-        uri: "arn:aws:apigateway:${AWS::Region}:sqs:path/${AWS::AccountId}/ipvreturn-api-MockTxMASQSQueue-aatZfh4yWq90"
+        uri:
+          Fn::Sub:
+            - "arn:aws:apigateway:${AWS::Region}:sqs:path/${AWS::AccountId}/${QueueName}"
+            - QueueName: !Ref "ipvreturn-api-MockTxMASQSQueue-aatZfh4yWq90"
+                # Fn::ImportValue: !Sub "${BackendStack}-MockTxMASQSQueue-name"
+            # - QueueName: !Ref "ipvreturn-api-MockTxMASQSQueue-aatZfh4yWq90"
+              # Fn::ImportValue: "${BackendStack}-MockTxMASQSQueue-name"
         passthroughBehavior: "when_no_match"
         requestParameters:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
@@ -243,7 +248,6 @@ paths:
 
 components:
   schemas:
-    # TODO
     SendMockTxMAMessageRequest:
       description: "payload to send message to mock txma queue"
       required:
@@ -276,7 +280,7 @@ components:
         timestamp:
           type: number
           description: "Timestamp of event"
-          example: ""
+          example: "1588867971443"
         timestamp_formatted:
           type: string
           description: "Formatted timestamp of event"
