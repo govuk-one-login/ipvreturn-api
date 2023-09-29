@@ -175,10 +175,9 @@ paths:
         uri:
           Fn::Sub:
             - "arn:aws:apigateway:${AWS::Region}:sqs:path/${AWS::AccountId}/${QueueName}"
-            - QueueName: !Ref "ipvreturn-api-MockTxMASQSQueue-aatZfh4yWq90"
-                # Fn::ImportValue: !Sub "${BackendStack}-MockTxMASQSQueue-name"
-            # - QueueName: !Ref "ipvreturn-api-MockTxMASQSQueue-aatZfh4yWq90"
-              # Fn::ImportValue: "${BackendStack}-MockTxMASQSQueue-name"
+            - QueueName:
+                Fn::ImportValue:
+                  "Fn::Sub": "${BackendStack}-MockTxMASQSQueue-name"
         passthroughBehavior: "when_no_match"
         requestParameters:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
