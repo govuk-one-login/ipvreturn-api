@@ -21,6 +21,11 @@ const awsSigv4Interceptor = aws4Interceptor({
 		service: "execute-api",
 	},
 });
+
+console.log("AWS_ACCESS_KEY_ID", process.env.AWS_ACCESS_KEY_ID);
+console.log("AWS_SECRET_ACCESS_KEY", process.env.AWS_SECRET_ACCESS_KEY);
+console.log("AWS_SESSION_TOKEN", process.env.AWS_SESSION_TOKEN);
+
 HARNESS_API_INSTANCE.interceptors.request.use(awsSigv4Interceptor);
 const xmlParser = new XMLParser();
 
@@ -40,11 +45,13 @@ export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, em
 		event.user.email = EMAIL_ADDRESS;
 	}
 
+	console.log("SENDING POST MESSAGE TO TEST HARNESS");
+
 	try {
 		const response = await HARNESS_API_INSTANCE.post("/send-mock-txma-message", event);
 		return response;
 	} catch (error: any) {
-		console.error({ message: "postMockEvent - failed sending message to mock TxMA queue", error });
+		console.error({ message: "postMockEvent - failed sending message to mock TxMA queue", error, data: error?.response?.data });
 	}
 }
 
@@ -103,7 +110,7 @@ export async function getSessionByUserId(userId: string, tableName: string): Pro
 			Object.entries(originalSession).map(([key, value]) => [key, value.N ?? value.S ?? value.L ?? value.BOOL]),
 		) as unknown as SessionEvent;
 	} catch (e: any) {
-		console.error({ message: "getSessionByUserId - failed getting session from Dynamo", e });
+		console.error({ message: "getSessionByUserId - failed getting session from Dynamo", e, data: e.response.data });
 	}
 
 	console.log("getSessionByUserId Response", session);
