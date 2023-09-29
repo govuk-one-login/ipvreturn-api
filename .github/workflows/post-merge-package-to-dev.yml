@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - KIWI-1263-test-harness-update
     paths-ignore:
       - 'infra-l2-dynamo/**'
       - 'infra-l2-kms/**'
@@ -37,6 +38,7 @@ jobs:
 
       - name: Assume temporary AWS role
         uses: aws-actions/configure-aws-credentials@v1-node16
+        id: assume_role
         with:
           role-to-assume: ${{ secrets.DEV_RETURN_GH_ACTIONS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
