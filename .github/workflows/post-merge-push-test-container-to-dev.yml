@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - KIWI-1263-test-harness-update
     paths-ignore:
       - 'infra-l2-dynamo/**'
       - 'infra-l2-kms/**'

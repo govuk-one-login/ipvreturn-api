@@ -2,7 +2,7 @@ version = 0.1
 [dev]
 [dev.deploy]
 [dev.deploy.parameters]
-stack_name = "ipvreturn-test-harness-ccooling-1"
+stack_name = "ipvreturn-test-harness"
 s3_prefix = "ipvreturn-test-harness"
 region = "eu-west-2"
 confirm_changeset = false
