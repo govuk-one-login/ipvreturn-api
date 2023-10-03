@@ -9,13 +9,9 @@ export class SessionEvent {
 	constructor(data: Partial<SessionEvent>) {
 		this.userEmail = data.userEmail!;
 		this.userId = data.userId!;
-		this.documentExpiryDate = data.documentExpiryDate!;
-		this.documentType = data.documentType!;
 		this.clientSessionId = data.clientSessionId!;
 		this.clientName = data.clientName!;
 		this.redirectUri = data.redirectUri!;
-		this.postOfficeInfo = data.postOfficeInfo!;
-		this.postOfficeVisitDetails = data.postOfficeVisitDetails!;
 		this.nameParts = data.nameParts!;
 		this.ipvStartedOn = data.ipvStartedOn!;
 		this.journeyWentAsyncOn = data.journeyWentAsyncOn!;
@@ -46,32 +42,12 @@ export class SessionEvent {
 	clientSessionId!: string;
 
 	@IsString()
-	documentExpiryDate!: string;
-
-	@IsString()
-	documentType!: string;
-
-	@IsString()
 	@IsNotEmpty()
 	clientName!: string;
 
 	@IsArray()
 	@IsNotEmpty()
 	nameParts!: Array<{
-		type: string;
-		value: string;
-	}>;
-
-	@IsArray()
-	@IsNotEmpty()
-	postOfficeInfo!: Array<{
-		type: string;
-		value: string;
-	}>;
-
-	@IsArray()
-	@IsNotEmpty()
-	postOfficeVisitDetails!: Array<{
 		type: string;
 		value: string;
 	}>;
