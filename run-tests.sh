@@ -17,6 +17,7 @@ export API_TEST_SESSION_EVENTS_TABLE=$(remove_quotes $CFN_SessionEventsTable)
 export DEV_IPR_TEST_HARNESS_URL="https://ipvreturn-test-harness-ccooling-1-testharness.return.dev.account.gov.uk"
 
 aws sts get-caller-identity
+env
 
 
 cd /src; npm run test:api
