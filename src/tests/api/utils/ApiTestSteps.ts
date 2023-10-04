@@ -1,4 +1,5 @@
 import { SendMessageCommand, SendMessageCommandOutput, SQSClient, PurgeQueueCommand, ReceiveMessageCommand } from "@aws-sdk/client-sqs";
+import { fromNodeProviderChain } from "@aws-sdk/credential-providers"; 
 import axios, { AxiosInstance } from "axios";
 import { aws4Interceptor } from "aws4-axios";
 import { randomUUID } from "crypto";
@@ -15,11 +16,19 @@ const GOV_NOTIFY_INSTANCE = axios.create({ baseURL: process.env.GOVUKNOTIFYAPI }
 
 const HARNESS_API_INSTANCE : AxiosInstance = axios.create({ baseURL: constants.DEV_IPR_TEST_HARNESS_URL });
 
+const customCredentialsProvider = {
+	getCredentials: fromNodeProviderChain({
+		timeout: 1000,
+		maxRetries: 0,
+	}),
+};
+
 const awsSigv4Interceptor = aws4Interceptor({
 	options: {
 		region: AWS_REGION,
 		service: "execute-api",
 	},
+	credentials: customCredentialsProvider,
 });
 HARNESS_API_INSTANCE.interceptors.request.use(awsSigv4Interceptor);
 const xmlParser = new XMLParser();
