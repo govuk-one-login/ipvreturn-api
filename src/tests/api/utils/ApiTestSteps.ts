@@ -78,7 +78,7 @@ export async function getTxmaSqsEvent(): Promise<any> {
 	return sqsClient.send(command);
 }
 
-export async function getSessionByUserId(userId: string, tableName: string): Promise<SessionEvent | undefined> {
+	export async function getSessionByUserId(userId: string, tableName: string): Promise< ExtSessionEvent | undefined > {
 	interface OriginalValue {
 		N?: string;
 		S?: string;
@@ -101,7 +101,7 @@ export async function getSessionByUserId(userId: string, tableName: string): Pro
 
 		session = Object.fromEntries(
 			Object.entries(originalSession).map(([key, value]) => [key, value.N ?? value.S ?? value.L ?? value.BOOL]),
-		) as unknown as SessionEvent | ExtSessionEvent;
+		) as unknown as ExtSessionEvent;
 	} catch (e: any) {
 		console.error({ message: "getSessionByUserId - failed getting session from Dynamo", e });
 	}
