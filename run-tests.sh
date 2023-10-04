@@ -19,9 +19,10 @@ export DEV_IPR_TEST_HARNESS_URL="https://ipvreturn-test-harness-ccooling-1-testh
 aws sts get-caller-identity
 env
 
+cd /src
 npm run test-script
+npm run test:api
 
-cd /src; npm run test:api
 error_code=$?
 
 cp -rf results $TEST_REPORT_ABSOLUTE_DIR
