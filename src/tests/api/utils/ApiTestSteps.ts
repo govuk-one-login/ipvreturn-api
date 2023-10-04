@@ -18,14 +18,14 @@ const GOV_NOTIFY_INSTANCE = axios.create({ baseURL: process.env.GOVUKNOTIFYAPI }
 
 const HARNESS_API_INSTANCE : AxiosInstance = axios.create({ baseURL: constants.DEV_IPR_TEST_HARNESS_URL });
 
-const client = new IAMClient({});
+// const client = new IAMClient({});
 
-const command = new GetRoleCommand({
-	RoleName: "PL-ipvreturn-api-pipeline-TestRole-06178d7cb0b2",
-});
+// const command = new GetRoleCommand({
+// 	RoleName: "PL-ipvreturn-api-pipeline-TestRole-06178d7cb0b2",
+// });
 
-const role  = client.send(command);
-console.log("role fetched from IAM Client: ", role);
+// const role  = client.send(command);
+// console.log("role fetched from IAM Client: ", role);
 
 const awsSigv4Interceptor = aws4Interceptor({
 	options: {
