@@ -19,6 +19,7 @@ export DEV_IPR_TEST_HARNESS_URL="https://ipvreturn-test-harness-ccooling-1-testh
 aws sts get-caller-identity
 env
 
+npm run test-script
 
 cd /src; npm run test:api
 error_code=$?

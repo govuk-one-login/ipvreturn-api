@@ -34,7 +34,8 @@
     "test:e2e": "./node_modules/.bin/jest --testMatch '**/e2e/?(*.)test.ts' --passWithNoTests",
     "test:infra": "./node_modules/.bin/jest --testMatch '**/infra/?(*.)test.ts' ",
     "api": "./node_modules/.bin/jest --testPathPattern=tests/api/",
-    "test:api": "npm run compile && npm run api"
+    "test:api": "npm run compile && npm run api",
+    "test-script": "node ./testing.js"
   },
   "devDependencies": {
     "@aws-cdk/assertions": "^1.172.0",
