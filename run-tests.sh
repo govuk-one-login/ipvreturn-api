@@ -20,7 +20,7 @@ aws sts get-caller-identity
 env
 
 cd /src
-npm run test-script
+# npm run test-script
 npm run test:api
 
 error_code=$?

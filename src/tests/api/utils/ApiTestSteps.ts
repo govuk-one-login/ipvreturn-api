@@ -1,4 +1,5 @@
 import { SendMessageCommand, SendMessageCommandOutput, SQSClient, PurgeQueueCommand, ReceiveMessageCommand } from "@aws-sdk/client-sqs";
+import { fromNodeProviderChain } from "@aws-sdk/credential-providers"; 
 import axios, { AxiosInstance } from "axios";
 import { aws4Interceptor } from "aws4-axios";
 import { randomUUID } from "crypto";
@@ -6,9 +7,6 @@ import { XMLParser } from "fast-xml-parser";
 import { ReturnSQSEvent } from "../../../models/ReturnSQSEvent";
 import { SessionEvent } from "../../../models/SessionEvent";
 import { constants } from "./ApiConstants";
-
-import { GetRoleCommand, IAMClient } from "@aws-sdk/client-iam";
-
 
 const AWS_REGION = process.env.AWS_REGION ?? "eu-west-2";
 const MOCK_TXMA_SQS_URL = constants.API_TEST_SQS_TXMA_CONSUMER_QUEUE;
@@ -18,25 +16,31 @@ const GOV_NOTIFY_INSTANCE = axios.create({ baseURL: process.env.GOVUKNOTIFYAPI }
 
 const HARNESS_API_INSTANCE : AxiosInstance = axios.create({ baseURL: constants.DEV_IPR_TEST_HARNESS_URL });
 
-// const client = new IAMClient({});
-
-// const command = new GetRoleCommand({
-// 	RoleName: "PL-ipvreturn-api-pipeline-TestRole-06178d7cb0b2",
+// const credentialsFunction = fromNodeProviderChain({
+// 	timeout: 1000,
+// 	maxRetries: 0,
 // });
 
-// const role  = client.send(command);
-// console.log("role fetched from IAM Client: ", role);
+// const { accessKeyId, secretAccessKey, sessionToken } = await credentialsFunction();
+
+// console.log("accessKeyId", accessKeyId);
+// console.log("secretAccessKey", secretAccessKey);
+// console.log("sessionToken", sessionToken);
+
+const customCredentialsProvider = {
+	getCredentials: fromNodeProviderChain({
+		timeout: 1000,
+		maxRetries: 0,
+	}),
+};
 
 const awsSigv4Interceptor = aws4Interceptor({
 	options: {
 		region: AWS_REGION,
 		service: "execute-api",
 	},
+	credentials: customCredentialsProvider,
 });
-
-console.log("AWS_ACCESS_KEY_ID", process.env.AWS_ACCESS_KEY_ID);
-console.log("AWS_SECRET_ACCESS_KEY", process.env.AWS_SECRET_ACCESS_KEY);
-console.log("AWS_SESSION_TOKEN", process.env.AWS_SESSION_TOKEN);
 
 HARNESS_API_INSTANCE.interceptors.request.use(awsSigv4Interceptor);
 const xmlParser = new XMLParser();
