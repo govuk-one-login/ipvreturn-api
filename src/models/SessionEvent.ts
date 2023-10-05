@@ -1,5 +1,4 @@
 import { IsString, IsNotEmpty, IsEmail, IsBoolean, IsNumber, IsArray } from "class-validator";
-
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "./enums/HttpCodesEnum";
 
@@ -71,4 +70,63 @@ export class SessionEvent {
 
 	@IsBoolean()
 	notified!: boolean;
+
+}
+
+/**
+ * Object to represent new data containing additional post_office related details and docType, docExpiryData required to send new template email.
+ */
+export class ExtSessionEvent extends SessionEvent {
+	constructor(data: Partial<ExtSessionEvent>) {
+		super(data);
+		this.documentUploadedOn = data.documentUploadedOn!;
+		this.documentType = data.documentType!;		
+		this.documentExpiryDate = data.documentExpiryDate!;
+		this.postOfficeVisitDetails = data.postOfficeVisitDetails!;
+		this.postOfficeInfo = data.postOfficeInfo!;
+	}
+
+	static parseRequest(data: string): ExtSessionEvent {
+		try {
+			const obj = JSON.parse(data);
+			return new ExtSessionEvent(obj);
+		} catch (error: any) {
+			console.log("Cannot parse ExtSessionEvent data", SessionEvent.name, "parseBody", { data });
+			throw new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse ExtSessionEvent data");
+		}
+	}
+	
+
+	@IsNumber()
+	@IsNotEmpty()
+	documentUploadedOn!: number;
+
+	@IsString()
+	@IsNotEmpty()
+	documentType!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	documentExpiryDate!: string;
+
+	@IsArray()
+	@IsNotEmpty()
+	postOfficeInfo!: Array<{
+		name?: string;
+		address: string;
+		post_code: string;
+		location: [
+			{
+				latitude: number;
+				longitude: number;
+			},
+		];
+	}>;
+
+	@IsArray()
+	@IsNotEmpty()
+	postOfficeVisitDetails!: Array<{
+		post_office_date_of_visit: string;
+		post_office_time_of_visit: string;
+	}>;
 }

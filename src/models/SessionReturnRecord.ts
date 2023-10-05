@@ -8,7 +8,7 @@ export interface NamePart {
 
 export interface PostOfficeVisitDetails {
 	post_office_date_of_visit: string;
-	post_office_time_of_visit: number;
+	post_office_time_of_visit: string;
 }
 
 export interface PostOfficeInfo {

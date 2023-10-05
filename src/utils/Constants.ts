@@ -37,4 +37,8 @@ export class Constants {
     static readonly GRANT_TYPE = "authorization_code";
 
     static readonly ROLE_SESSION_NAME = "AssumeRoleWithWebIdentityRole";
+
+    static readonly OLD_EMAIL = "oldEmail";
+
+    static readonly NEW_EMAIL = "newEmail";
 }

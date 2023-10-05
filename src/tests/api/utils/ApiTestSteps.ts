@@ -4,7 +4,7 @@ import { aws4Interceptor } from "aws4-axios";
 import { randomUUID } from "crypto";
 import { XMLParser } from "fast-xml-parser";
 import { ReturnSQSEvent } from "../../../models/ReturnSQSEvent";
-import { SessionEvent } from "../../../models/SessionEvent";
+import { ExtSessionEvent, SessionEvent } from "../../../models/SessionEvent";
 import { constants } from "./ApiConstants";
 
 const AWS_REGION = process.env.AWS_REGION ?? "eu-west-2";
@@ -78,7 +78,7 @@ export async function getTxmaSqsEvent(): Promise<any> {
 	return sqsClient.send(command);
 }
 
-export async function getSessionByUserId(userId: string, tableName: string): Promise<SessionEvent | undefined> {
+	export async function getSessionByUserId(userId: string, tableName: string): Promise< ExtSessionEvent | undefined > {
 	interface OriginalValue {
 		N?: string;
 		S?: string;
@@ -101,7 +101,7 @@ export async function getSessionByUserId(userId: string, tableName: string): Pro
 
 		session = Object.fromEntries(
 			Object.entries(originalSession).map(([key, value]) => [key, value.N ?? value.S ?? value.L ?? value.BOOL]),
-		) as unknown as SessionEvent;
+		) as unknown as ExtSessionEvent;
 	} catch (e: any) {
 		console.error({ message: "getSessionByUserId - failed getting session from Dynamo", e });
 	}
