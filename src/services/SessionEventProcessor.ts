@@ -3,7 +3,6 @@ import { personalIdentityUtils } from "../utils/PersonalIdentityUtils";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
-import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { buildGovNotifyEventFields } from "../utils/GovNotifyEvent";
 import { EnvironmentVariables } from "./EnvironmentVariables";
