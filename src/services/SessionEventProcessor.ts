@@ -47,6 +47,8 @@ export class SessionEventProcessor {
 
 		this.logger.appendKeys({ govuk_signin_journey_id: sessionEventData.clientSessionId });
 
+		this.logger.info('sessionEventData', {sessionEventData});
+
 		// Validate the notified field is set to false
 		if (sessionEventData.notified) {
 			this.logger.warn("User is already notified for this session event.", { messageCode: MessageCodes.USER_ALREADY_NOTIFIED });

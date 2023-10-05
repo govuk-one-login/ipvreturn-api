@@ -116,6 +116,7 @@ export class IPRService {
 		this.logger.info("Updating session record" );
 
 		try {
+			this.logger.info("Updating SessionCommand", {updateSessionInfoCommand});
 			await this.dynamo.send(updateSessionInfoCommand);
 		} catch (e: any) {
 			this.logger.error({ message: "Failed to update session record in dynamo", e });

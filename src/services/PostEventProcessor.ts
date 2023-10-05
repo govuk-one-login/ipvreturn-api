@@ -188,6 +188,9 @@ export class PostEventProcessor {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 			}
 
+			this.logger.info("userId", {userId})
+			this.logger.info("updateExpression", {updateExpression})
+			this.logger.info("expressionAttributeValues", {expressionAttributeValues})
 			const saveEventData = await this.iprService.saveEventData(userId, updateExpression, expressionAttributeValues);
 
 			return {
