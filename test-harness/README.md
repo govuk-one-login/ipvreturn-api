@@ -13,6 +13,10 @@ To test SQS events:
 3. Trigger the events that you are looking for 
 4. Call the `/bucket/` endpoint with a prefix (eg `txma/`) to get all event objects from S3. Alternatively call the `/object/{object-key}` to get a specific event object from S3
 
+To write SQS events:
+
+3. Make a call to `/send-mock-txma-message` with the message body that you would like. Note this this will only send messages to the MockTxMAQueue
+
 To test DynamoDB changes:
 
 3. Make change to DB item that you are looking for
