@@ -4,19 +4,20 @@ import { aws4Interceptor } from "aws4-axios";
 import { randomUUID } from "crypto";
 import { XMLParser } from "fast-xml-parser";
 import { ReturnSQSEvent } from "../../../models/ReturnSQSEvent";
-import { SessionEvent } from "../../../models/SessionEvent";
+import { ExtSessionEvent, SessionEvent } from "../../../models/SessionEvent";
 import { constants } from "./ApiConstants";
 
-const AWS_REGION = process.env.AWS_REGION;
+const AWS_REGION = process.env.AWS_REGION ?? "eu-west-2";
 const MOCK_TXMA_SQS_URL = constants.API_TEST_SQS_TXMA_CONSUMER_QUEUE;
 const GOV_NOTIFY_SQS_URL = constants.API_TEST_GOV_NOTIFY_SQS_QUEUE;
 const EMAIL_ADDRESS = constants.API_TEST_EMAIL_ADDRESS;
 const GOV_NOTIFY_INSTANCE = axios.create({ baseURL: process.env.GOVUKNOTIFYAPI });
 
 const HARNESS_API_INSTANCE : AxiosInstance = axios.create({ baseURL: constants.DEV_IPR_TEST_HARNESS_URL });
+
 const awsSigv4Interceptor = aws4Interceptor({
 	options: {
-		region: "eu-west-2",
+		region: AWS_REGION,
 		service: "execute-api",
 	},
 });
@@ -27,7 +28,7 @@ const sqsClient = new SQSClient({
 	region: AWS_REGION,
 });
 
-export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, emailAddress: any): Promise<SendMessageCommandOutput> {
+export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, emailAddress: any): Promise<any> {
 	const event = structuredClone(inputEvent);
 	event.event_id = randomUUID();
 	event.user.user_id = user;
@@ -38,11 +39,13 @@ export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, em
 	if (emailAddress) {
 		event.user.email = EMAIL_ADDRESS;
 	}
-	const command = new SendMessageCommand({
-		QueueUrl: MOCK_TXMA_SQS_URL,
-		MessageBody: JSON.stringify(event),
-	});
-	return sqsClient.send(command);
+
+	try {
+		const response = await HARNESS_API_INSTANCE.post("/send-mock-txma-message", event);
+		return response;
+	} catch (error: any) {
+		console.error({ message: "postMockEvent - failed sending message to mock TxMA queue", error });
+	}
 }
 
 export async function postGovNotifyEvent(inputEvent: any): Promise<SendMessageCommandOutput> {
@@ -75,7 +78,7 @@ export async function getTxmaSqsEvent(): Promise<any> {
 	return sqsClient.send(command);
 }
 
-export async function getSessionByUserId(userId: string, tableName: string): Promise<SessionEvent | undefined> {
+	export async function getSessionByUserId(userId: string, tableName: string): Promise< ExtSessionEvent | undefined > {
 	interface OriginalValue {
 		N?: string;
 		S?: string;
@@ -98,7 +101,7 @@ export async function getSessionByUserId(userId: string, tableName: string): Pro
 
 		session = Object.fromEntries(
 			Object.entries(originalSession).map(([key, value]) => [key, value.N ?? value.S ?? value.L ?? value.BOOL]),
-		) as unknown as SessionEvent;
+		) as unknown as ExtSessionEvent;
 	} catch (e: any) {
 		console.error({ message: "getSessionByUserId - failed getting session from Dynamo", e });
 	}
@@ -119,7 +122,7 @@ export async function postGovNotifyRequest(mockDelimitator: any, userData: any):
 		return error.response;
 	}
 
-	function insertBeforeLastOccurrence(strToSearch: string, strToFind: string, strToInsert: string) {
+	function insertBeforeLastOccurrence(strToSearch: string, strToFind: string, strToInsert: string): string {
 		const n = strToSearch.lastIndexOf(strToFind);
 		if (n < 0) return strToSearch;
 		return strToSearch.substring(0, n) + strToInsert + strToSearch.substring(n);

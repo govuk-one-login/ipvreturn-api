@@ -14,14 +14,24 @@ tags:
   - name: Testing - API to enable automation
     description: Endpoint implemented to enable testing
 
-x-amazon-apigateway-policy:
-  Version: "2012-10-17"
-  Statement:
-    - Effect: "Allow"
-      Principal:
-        AWS: "${AWS::AccountId}"
-      Action: "execute-api:Invoke"
-      Resource: "execute-api:/*"
+# To be re-added in KIWI-1105
+# x-amazon-apigateway-policy:
+#   Version: "2012-10-17"
+#   Statement:
+#   - Effect: "Deny"
+#     Principal:
+#       AWS:  "*"
+#     Action: "execute-api:Invoke"
+#     Resource: "execute-api:/*"
+#     Condition:
+#       StringNotEquals:
+#         "aws:PrincipalAccount":
+#           - "${AWS::AccountId}"
+#   - Effect: "Allow"
+#     Principal:
+#       AWS:  "*"
+#     Action: "execute-api:Invoke"
+#     Resource: "execute-api:/*"
 
 paths:
   getRecordByUserId/{tableName}/{userId}:
@@ -58,6 +68,8 @@ paths:
           description: Unauthorized
         "500":
           description: Internal Server Error
+      # security:
+      #   - sigv4Reference: []
       x-amazon-apigateway-request-validator: "requestParamsOnly"
       x-amazon-apigateway-integration:
         httpMethod: POST
@@ -105,12 +117,14 @@ paths:
           description: Unauthorized
         "500":
           description: Internal Server Error
+      # security:
+      #   - sigv4Reference: []
       x-amazon-apigateway-request-validator: "requestParamsOnly"
       x-amazon-apigateway-integration:
         httpMethod: GET
         credentials:
           Fn::GetAtt:
-            - AccessTestHarnessRole
+            - AccessTestHarnessBucketRole
             - Arn
         uri:
           Fn::Sub: "arn:aws:apigateway:${AWS::Region}:s3:path/${EventTestBucket}/"
@@ -122,6 +136,58 @@ paths:
           default:
             statusCode: "200"
         type: aws
+
+  /send-mock-txma-message:
+    post:
+      operationId: postSendMockTxMAMessage
+      summary: send message to mock TxMA queue
+      description: >-
+        Endpoint sends given message to mock TxMA queue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMockTxMAMessageRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:
+                    type: object
+                    description: Success
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+      # security:
+        # - sigv4Reference: []
+      x-amazon-apigateway-request-validator: "both"
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        credentials:
+          Fn::GetAtt:
+            - MockTxMAQueueRole
+            - Arn
+        uri:
+          Fn::Sub:
+            - "arn:aws:apigateway:${AWS::Region}:sqs:path/${AWS::AccountId}/${QueueName}"
+            - QueueName:
+                Fn::ImportValue:
+                  "Fn::Sub": "${BackendStack}-MockTxMASQSQueue-name"
+        passthroughBehavior: "when_no_match"
+        requestParameters:
+          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+        requestTemplates:
+          application/json: "Action=SendMessage&MessageBody=$input.body"
+        responses:
+          default:
+            statusCode: "200"
+        type: "aws"
 
   /object/{object-key+}:
     get:
@@ -160,12 +226,14 @@ paths:
           description: Unauthorized
         "500":
           description: Internal Server Error
+      # security:
+        # - sigv4Reference: []
       x-amazon-apigateway-request-validator: "requestParamsOnly"
       x-amazon-apigateway-integration:
         httpMethod: GET
         credentials:
           Fn::GetAtt:
-            - AccessTestHarnessRole
+            - AccessTestHarnessBucketRole
             - Arn
         uri:
           Fn::Sub: "arn:aws:apigateway:${AWS::Region}:s3:path/${EventTestBucket}/{key}"
@@ -179,9 +247,74 @@ paths:
         type: aws
 
 components:
-  securitySchemes:
-    SigV4Reference:
-      type: apiKey
-      name: Authorization
-      in: header
-      x-amazon-apigateway-authtype: awsSigv4
+  schemas:
+    SendMockTxMAMessageRequest:
+      description: "payload to send message to mock txma queue"
+      required:
+        - event_id
+        - client_id
+        - event_name
+      additionalProperties: true
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: "event_id of the SQS message"
+          example: "11111111-1111-1111-1111-111111111111"
+        client_id: 
+          type: string
+          description: "the OAuth client identifier which has been registered with F2F"
+          example: "ekwU"
+        event_name:
+          type: string
+          enum:
+            - "IPV_F2F_CRI_VC_CONSUMED"
+            - "F2F_YOTI_START"
+            - "AUTH_IPV_AUTHORISATION_REQUESTED"
+          description: name of the event
+          example: "IPV_F2F_CRI_VC_CONSUMED"
+        clientLandingPageUrl:
+          type: string
+          description: "user redirect URL"
+          example: "REDIRECT_URL"
+        timestamp:
+          type: number
+          description: "Timestamp of event"
+          example: "1588867971443"
+        timestamp_formatted:
+          type: string
+          description: "Formatted timestamp of event"
+          example: "2023-04-19T11:00:01.000Z"
+        user:
+          type: object
+          properties:
+            user_id:
+              type: string
+            email:
+              type: string
+          description: "user details"
+        restricted:
+          type: object
+          properties:
+            nameParts:
+              type: array
+          description: "additional details"
+
+  # To be re-added in KIWI-1105
+  # securitySchemes:
+  #   sigv4Reference:
+  #     type: apiKey
+  #     name: Authorization
+  #     in: header
+  #     x-amazon-apigateway-authtype: awsSigv4
+
+x-amazon-apigateway-request-validators:
+    both:
+      validateRequestBody: true
+      validateRequestParameters: true
+    requestBodyOnly:
+      validateRequestBody: true
+      validateRequestParameters: false
+    requestParamsOnly:
+      validateRequestBody: false
+      validateRequestParameters: true

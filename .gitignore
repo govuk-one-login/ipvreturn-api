@@ -20,3 +20,4 @@ bin-release/
 /.env
 /docker_vars.env
 results/
+cf-output.txt
