@@ -18,7 +18,7 @@ describe("post event processor", () => {
 	});
 
 	it("when all 3 events are sent, a Dynamo record with the details of all three events populated", async () => {
-    	await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);
+		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);
 		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
 		await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
 		await postMockEvent(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT, userId, false);
@@ -67,42 +67,42 @@ describe("post event processor", () => {
 			{
 				"M": {
 					"address": {
-						"S": "1 The Street, Funkytown"
+						"S": "1 The Street, Funkytown",
 					},
 					"location": {
 						"L": [
 							{
 								"M": {
 									"latitude": {
-										"N": "0.34322"
+										"N": "0.34322",
 									},
 									"longitude": {
-										"N": "-42.48372"
-									}
-								}
-							}
-						]
+										"N": "-42.48372",
+									},
+								},
+							},
+						],
 					},
 					"name": {
-						"S": "Post Office Name"
+						"S": "Post Office Name",
 					},
 					"post_code": {
-						"S": "N1 2AA"
-					}
-				}
-			}
+						"S": "N1 2AA",
+					},
+				},
+			},
 		]);
 		expect(response?.postOfficeVisitDetails).toEqual([
 			{
 				"M": {
 					"post_office_date_of_visit": {
-						"S": "7 September 2023"
+						"S": "7 September 2023",
 					},
 					"post_office_time_of_visit": {
-						"S": "4:43 pm"
-					}
-				}
-			}
+						"S": "4:43 pm",
+					},
+				},
+			},
 		]);
 	}, 10000); // timeout set to 10s to avoid infinite loop
 });

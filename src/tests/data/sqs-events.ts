@@ -200,6 +200,7 @@ export const VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT: ReturnSQSEvent
 	"user": {
 		"user_id": "01333e01-dde3-412f-a484-4444",
 		"email": "jest@test.com",
+		"govuk_signin_journey_id": "asdfadsfasdf",
 	},
 	"extensions": {
 		"post_office_details": [
