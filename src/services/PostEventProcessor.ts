@@ -167,18 +167,6 @@ export class PostEventProcessor {
 					};
 					break;
 				}
-				case Constants.F2F_DOCUMENT_UPLOADED: {
-					if (!eventDetails.extensions || !eventDetails.extensions.post_office_visit_details) {
-						this.logger.error( { message: "Missing post_office_visit_details fields required for F2F_DOCUMENT_UPLOADED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
-						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.F2F_DOCUMENT_UPLOADED} event`);
-					}
-					updateExpression = "SET documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails";
-					expressionAttributeValues = {
-						":documentUploadedOn": returnRecord.documentUploadedOn,
-						":postOfficeVisitDetails": returnRecord.postOfficeVisitDetails,
-					};
-					break;
-				}
 				case Constants.AUTH_DELETE_ACCOUNT: {
 					updateExpression = "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
 					expressionAttributeValues = {
