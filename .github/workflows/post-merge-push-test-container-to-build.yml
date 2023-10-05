@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'build-issues'
     paths-ignore:
       - 'infra-l2-dynamo/**'
       - 'infra-l2-kms/**'
