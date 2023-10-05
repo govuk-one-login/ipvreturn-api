@@ -312,7 +312,7 @@ describe("PostEventProcessor", () => {
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			await postEventProcessor.processRequest(JSON.stringify(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, postOfficeInfo = :postOfficeInfo, documentType = :documentType", { ":journeyWentAsyncOn": 1681902001,
+			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, postOfficeInfo = :postOfficeInfo, documentType = :documentType, clientSessionId = :clientSessionId", { ":journeyWentAsyncOn": 1681902001,
 				":expiresOn": expiresOn,
 				":postOfficeInfo": [
 					{
@@ -328,6 +328,7 @@ describe("PostEventProcessor", () => {
 					},
 				],
 				":documentType": "PASSPORT",
+				":clientSessionId": "asdfadsfasdf",
 			});
 		});
 
@@ -337,7 +338,7 @@ describe("PostEventProcessor", () => {
 			delete yotiStartEvent.extensions;
 			await postEventProcessor.processRequest(JSON.stringify(yotiStartEvent));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, documentType = :documentType", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":documentType": "PASSPORT" });
+			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, documentType = :documentType, clientSessionId = :clientSessionId", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":documentType": "PASSPORT", ":clientSessionId": "asdfadsfasdf" });
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockLogger.info).toHaveBeenNthCalledWith(2, "No post_office_details in F2F_YOTI_START event");
 		});
