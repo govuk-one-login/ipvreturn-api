@@ -10,7 +10,7 @@ import { GovNotifyEvent } from "../utils/GovNotifyEvent";
 import { TxmaEvent } from "../utils/TxmaEvent";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
-import { SessionEvent } from "../models/SessionEvent";
+import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
 import { MessageCodes } from "../models/enums/MessageCodes";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
 
@@ -46,7 +46,7 @@ export class IPRService {
 		return IPRService.instance;
 	}
 
-	async getSessionBySub(userId: string): Promise<SessionEvent | undefined> {
+	async getSessionBySub(userId: string): Promise<ExtSessionEvent | undefined> {
 		const getSessionCommand = new GetCommand({
 			TableName: this.tableName,
 			Key: {
@@ -66,7 +66,7 @@ export class IPRService {
 				this.logger.error({ message: `Session with userId: ${userId} has expired`, messageCode: MessageCodes.SESSION_EXPIRED });
 				throw new AppError( HttpCodesEnum.UNAUTHORIZED, `Session with userId: ${userId} has expired`);
 			}
-			return session.Item as SessionEvent;
+			return session.Item as ExtSessionEvent;
 		}
 	}
 

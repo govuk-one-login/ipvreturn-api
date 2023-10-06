@@ -2,9 +2,11 @@ import { validateOrReject } from "class-validator";
 import { AppError } from "./AppError";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
-import { SessionEvent } from "../models/SessionEvent";
+import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
 import { JwtPayload } from "./IVeriCredential";
 import { absoluteTimeNow } from "./DateTimeUtils";
+import { Constants } from "./Constants";
+import { MessageCodes } from "../models/enums/MessageCodes";
 
 export class ValidationHelper {
 
@@ -39,6 +41,27 @@ export class ValidationHelper {
 		} else if (!sessionEventData.readyToResumeOn || !(sessionEventData.readyToResumeOn > 0)) {
 			throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, "readyToResumeOn is not yet populated, unable to process the DB record.");
 		}
+	}
+
+	async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent; emailType: string }> {
+		//Validate all necessary fields are populated required to send the email before processing the data.
+		try {
+			await this.validateModel(sessionEvent, logger);				
+		} catch (error) {
+			if (emailType === Constants.VIST_PO_EMAIL_DYNAMIC) {
+				logger.info("Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT });
+				// Send the old template email
+				sessionEvent = new SessionEvent(sessionEvent);		
+				emailType = Constants.VIST_PO_EMAIL_STATIC;
+				// Validate feilds required for sending the old email
+				await this.validateSessionEvent(sessionEvent, emailType, logger);
+			} else {
+				logger.error("Unable to process the DB record as the necessary fields are not populated to send the old template email.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated to send the old template email.");			
+
+			}			
+		}
+		return { sessionEvent, emailType };
 	}
 
 	isJwtComplete = (payload: JwtPayload): boolean => {

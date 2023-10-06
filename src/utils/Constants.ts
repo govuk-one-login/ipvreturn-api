@@ -38,7 +38,7 @@ export class Constants {
 
     static readonly ROLE_SESSION_NAME = "AssumeRoleWithWebIdentityRole";
 
-    static readonly OLD_EMAIL = "oldEmail";
+    static readonly VIST_PO_EMAIL_STATIC = "VIST_PO_EMAIL_STATIC";
 
-    static readonly NEW_EMAIL = "newEmail";
+    static readonly VIST_PO_EMAIL_DYNAMIC = "VIST_PO_EMAIL_DYNAMIC";
 }

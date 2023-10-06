@@ -1,4 +1,4 @@
-import { Email } from "../models/Email";
+import { Email, DynamicEmail } from "../models/Email";
 import { EmailResponse } from "../models/EmailResponse";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
@@ -10,7 +10,7 @@ import { IPRService } from "./IPRService";
 import { MessageCodes } from "../models/enums/MessageCodes";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
-import { SessionEvent } from "../models/SessionEvent";
+import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
 
 export class SendEmailProcessor {
 
@@ -44,8 +44,8 @@ export class SendEmailProcessor {
 		return SendEmailProcessor.instance;
 	}
 
-	async processRequest(eventBody: any): Promise<EmailResponse> {
-		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
+	async processRequest(message: Email | DynamicEmail): Promise<EmailResponse> {
+		//const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		// Validate Email model
 		try {
 			await this.validationHelper.validateModel(message, this.logger);
@@ -85,20 +85,17 @@ export class SendEmailProcessor {
 			this.logger.warn(error.message, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
-		const sessionEventData: SessionEvent = SessionEvent.parseRequest(JSON.stringify(session));
-		// Validate all necessary fields are populated before processing the data.
-		try {
-			await this.validationHelper.validateModel(sessionEventData, this.logger);
-		} catch (error) {
-			this.logger.error("Unable to process the DB record as the necessary fields are not populated.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated.");
-		}
+		
+		const sessionEventData = message instanceof DynamicEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
+		
+		// Validate all necessary fields are populated in the session store before processing the data.
+		const data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
 
-		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message);
+		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
 		try {
 			await this.iprService.sendToTXMA({
 				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-				...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId}),
+				...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }),
 				extensions: {
 					previous_govuk_signin_journey_id: session.clientSessionId,
 				},
