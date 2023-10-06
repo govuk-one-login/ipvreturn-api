@@ -2251,11 +2251,13 @@ Outputs:
     Value: !Ref MockTxMASQSQueue
     Condition: IsMockedEnvironment
   MockTxMASQSQueueArn:
+    Condition: IsMockedEnvironment
     Description: "Arn of SQS TXMA Consumer Queue"
     Value: !GetAtt MockTxMASQSQueue.Arn
     Export:
       Name: !Sub ${AWS::StackName}-MockTxMASQSQueue-arn
   MockTxMASQSQueueName:
+    Condition: IsMockedEnvironment
     Description: "Name SQS TXMA Consumer Queue"
     Value: !GetAtt MockTxMASQSQueue.QueueName
     Export:
