@@ -63,8 +63,8 @@ export class IPRService {
 
 		if (session.Item) {
 			if (session.Item.expiresOn < absoluteTimeNow()) {
-				this.logger.error({ message: `Session with userId: ${userId} has expired`, messageCode: MessageCodes.SESSION_EXPIRED });
-				throw new AppError( HttpCodesEnum.UNAUTHORIZED, `Session with userId: ${userId} has expired`);
+				this.logger.error({ message: "Session has expired", messageCode: MessageCodes.SESSION_EXPIRED });
+				throw new AppError( HttpCodesEnum.UNAUTHORIZED, "Session has expired");
 			}
 			return session.Item as ExtSessionEvent;
 		}
