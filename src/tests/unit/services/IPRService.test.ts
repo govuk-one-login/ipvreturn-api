@@ -211,8 +211,8 @@ describe("IPR Service", () => {
 				},
 			});
 
-			await expect(iprService.getSessionBySub(userId)).rejects.toThrow(new AppError( HttpCodesEnum.UNAUTHORIZED, `Session with userId: ${userId} has expired`));
-			expect(logger.error).toHaveBeenCalledWith({ message: `Session with userId: ${userId} has expired`, messageCode: MessageCodes.SESSION_EXPIRED });
+			await expect(iprService.getSessionBySub(userId)).rejects.toThrow(new AppError( HttpCodesEnum.UNAUTHORIZED, "Session has expired"));
+			expect(logger.error).toHaveBeenCalledWith({ message: "Session has expired", messageCode: MessageCodes.SESSION_EXPIRED });
 		});
 
 		it("Should throw error if dynamo get command fails", async () => {
