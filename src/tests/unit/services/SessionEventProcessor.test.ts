@@ -82,7 +82,7 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		delete sessionEvent[attribute];
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1, "Unable to process the DB record as the necessary fields are not populated to send the old template email.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
+		expect(mockLogger.error).toHaveBeenNthCalledWith(2, "Unable to process the DB record as the necessary fields are not populated to send the old template email.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
 	});
 
 	it.each([
@@ -94,7 +94,7 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		sessionEvent[attribute] = 0;
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1, "Unable to process the DB record as the necessary fields are not populated to send the old template email.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
+		expect(mockLogger.error).toHaveBeenNthCalledWith(2, "Unable to process the DB record as the necessary fields are not populated to send the old template email.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
 	});
 
 	it("Throws error if failure to send to GovNotify queue", async () => {
@@ -169,7 +169,7 @@ describe("SessionEventProcessor", () => {
 	])("Logs Info message when session event record is missing necessary attribute -  %s, to send new template email and hence falls back to sending old template email", async (attribute) => {
 		const sessionEvent = unmarshall(streamEventWithPoDetails.Records[0].dynamodb?.NewImage);
 		delete sessionEvent[attribute];
-		await sessionEventProcessorTest.processRequest(sessionEvent);
+		await sessionEventProcessorTest.processRequest(sessionEvent);	
 		expect(mockLogger.info).toHaveBeenNthCalledWith(1, "Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { "messageCode": "MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT" });
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
