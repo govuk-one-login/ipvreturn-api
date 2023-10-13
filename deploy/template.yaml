@@ -1,66 +1,67 @@
-AWSTemplateFormatVersion: "2010-09-09"
-Transform: "AWS::Serverless-2016-10-31"
-Description: "Digital Identity IPV CRI IPR API"
-
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Digital Identity IPV CRI IPR API
 Parameters:
   CodeSigningConfigArn:
     Type: String
-    Default: "none"
-    Description: >
-      The ARN of the Code Signing Config to use, provided by the deployment pipeline
+    Default: none
+    Description: 'The ARN of the Code Signing Config to use, provided by the deployment
+      pipeline
+
+      '
   Environment:
-    Description: "The environment type"
-    Type: "String"
-    AllowedValues:
-      - "dev"
-      - "build"
-      - "staging"
-      - "integration"
-      - "production"
-    ConstraintDescription: Ensure environment variable is set to one of dev, build, staging, integration or production.
-  PermissionsBoundary:
-    Description: "The ARN of the permissions boundary to apply when creating IAM roles"
+    Description: The environment type
     Type: String
-    Default: "none"
+    AllowedValues:
+    - dev
+    - build
+    - staging
+    - integration
+    - production
+    ConstraintDescription: Ensure environment variable is set to one of dev, build,
+      staging, integration or production.
+  PermissionsBoundary:
+    Description: The ARN of the permissions boundary to apply when creating IAM roles
+    Type: String
+    Default: none
   SecretPrefix:
     Type: String
-    Default: "none"
+    Default: none
     Description: Secrets name prefix
   VpcStackName:
     Type: String
-    Default: "vpc-cri"
+    Default: vpc-cri
     Description: The name of the VPC stack deployed.
   L2DynamoStackName:
     Type: String
-    Default: "ipvreturn-ddb"
+    Default: ipvreturn-ddb
     Description: The name of the L2 DynamoDB stack deployed.
   L2KMSStackName:
     Type: String
-    Default: "ipvreturn-kms"
+    Default: ipvreturn-kms
     Description: The name of the L2 DynamoDB stack deployed.
   DeployAlarmsInNonProdLikeEnvironment:
-    Description: "Set to the string value `true` to deploy alarms in a DEV environment"
+    Description: Set to the string value `true` to deploy alarms in a DEV environment
     Type: String
     Default: true
   SupportManualURL:
-    Description: "Link to the IPV Return Journey support manual"
+    Description: Link to the IPV Return Journey support manual
     Type: String
-    Default: 'https://govukverify.atlassian.net/wiki/spaces/FTFCRI/pages/3626532870/IPR+Support+Documentation'
+    Default: https://govukverify.atlassian.net/wiki/spaces/FTFCRI/pages/3626532870/IPR+Support+Documentation
   LambdaConcurrency:
-    Description: "Reserved concurrency for Lambdas running in non-DEV environments"
+    Description: Reserved concurrency for Lambdas running in non-DEV environments
     Type: Number
     Default: 20
   LambdaConcurrencyThreshold:
-    Description: "Threshold for Reserved concurrency running in non-DEV environments"
+    Description: Threshold for Reserved concurrency running in non-DEV environments
     Type: Number
-    Default: 16  #80% of Lambda concurrency
+    Default: 16
   ApplyReservedConcurrencyInDev:
-    Description: "Set to true to apply reserved concurrency when deploying in DEV environments"
+    Description: Set to true to apply reserved concurrency when deploying in DEV environments
     Type: String
-    Default: "false"
-
+    Default: 'false'
 Mappings:
-  EnvironmentConfiguration: # This is where you store per-environment settings.
+  EnvironmentConfiguration:
     dev:
       logretentionindays: 3
       apiTracingEnabled: true
@@ -76,16 +77,15 @@ Mappings:
     production:
       logretentionindays: 30
       apiTracingEnabled: false
-
   PlatformConfiguration:
     dev:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
-      TxMASQS: "mock-sqs"
-      TxMAKey: "mock-kms"
+      TxMASQS: mock-sqs
+      TxMAKey: mock-kms
     build:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
-      TxMASQS: "mock-sqs"
-      TxMAKey: "mock-kms"
+      TxMASQS: mock-sqs
+      TxMAKey: mock-kms
     staging:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
       TxMASQS: arn:aws:sqs:eu-west-2:178023842775:self-staging-EC-SQS-Output-Queue-return
@@ -98,72 +98,70 @@ Mappings:
       CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
       TxMASQS: arn:aws:sqs:eu-west-2:451773080033:self-production-EC-SQS-Output-Queue-return
       TxMAKey: arn:aws:kms:eu-west-2:451773080033:key/35e96311-91fd-425e-bb53-b90bc8c3549c
-
-  EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
+  EnvironmentVariables:
     dev:
-      GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
-      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
-      GOVUKNOTIFYAPI: "https://ipvr-gov-notify-stub-govnotifystub.return.dev.account.gov.uk/govnotify"
-      MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
-      RETURNJOURNEYURL: "https://return.dev.account.gov.uk/resume"
-      SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
-      DNSSUFFIX: "return.dev.account.gov.uk"
-      OIDCURL: "https://oidc.staging.account.gov.uk/"
-      RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
-      TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
+      GOVUKNOTIFYTEMPLATEID: 3baf3b59-2396-44c8-b7a4-b5a981fad5e8
+      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85
+      GOVUKNOTIFYAPI: https://ipvr-gov-notify-stub-govnotifystub.return.dev.account.gov.uk/govnotify
+      MESSAGERETENTIONPERIODDAYS: 345600
+      TXMAMESSAGERETENTIONPERIODDAYS: 604800
+      RETURNJOURNEYURL: https://return.dev.account.gov.uk/resume
+      SESSIONRETURNRECORDTTLINSECS: 950400
+      INITIALSESSIONRECORDTTLINSECS: 43200
+      DNSSUFFIX: return.dev.account.gov.uk
+      OIDCURL: https://oidc.staging.account.gov.uk/
+      RETURNREDIRECTURL: https://return.dev.account.gov.uk/callback
+      TESTHARNESSURL: https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk
     build:
-      GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
-      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
-      GOVUKNOTIFYAPI: "https://govnotifystub.return.build.account.gov.uk/govnotify"
-      MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
-      RETURNJOURNEYURL: "https://return.build.account.gov.uk/resume"
-      SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
-      DNSSUFFIX: "return.build.account.gov.uk"
-      OIDCURL: "https://oidc.staging.account.gov.uk/"
-      RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
-      TESTHARNESSURL: "https://testharness.return.build.account.gov.uk"
+      GOVUKNOTIFYTEMPLATEID: 3baf3b59-2396-44c8-b7a4-b5a981fad5e8
+      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85
+      GOVUKNOTIFYAPI: https://govnotifystub.return.build.account.gov.uk/govnotify
+      MESSAGERETENTIONPERIODDAYS: 345600
+      TXMAMESSAGERETENTIONPERIODDAYS: 604800
+      RETURNJOURNEYURL: https://return.build.account.gov.uk/resume
+      SESSIONRETURNRECORDTTLINSECS: 950400
+      INITIALSESSIONRECORDTTLINSECS: 43200
+      DNSSUFFIX: return.build.account.gov.uk
+      OIDCURL: https://oidc.staging.account.gov.uk/
+      RETURNREDIRECTURL: https://return.build.account.gov.uk/callback
+      TESTHARNESSURL: https://testharness.return.build.account.gov.uk
     staging:
-      GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
-      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
-      GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
-      MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
-      RETURNJOURNEYURL: "https://return.staging.account.gov.uk/resume"
-      SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
-      DNSSUFFIX: "return.staging.account.gov.uk"
-      OIDCURL: "https://oidc.staging.account.gov.uk/"
-      RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
+      GOVUKNOTIFYTEMPLATEID: 3baf3b59-2396-44c8-b7a4-b5a981fad5e8
+      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85
+      GOVUKNOTIFYAPI: https://api.notifications.service.gov.uk
+      MESSAGERETENTIONPERIODDAYS: 345600
+      TXMAMESSAGERETENTIONPERIODDAYS: 604800
+      RETURNJOURNEYURL: https://return.staging.account.gov.uk/resume
+      SESSIONRETURNRECORDTTLINSECS: 950400
+      INITIALSESSIONRECORDTTLINSECS: 43200
+      DNSSUFFIX: return.staging.account.gov.uk
+      OIDCURL: https://oidc.staging.account.gov.uk/
+      RETURNREDIRECTURL: https://return.staging.account.gov.uk/callback
     integration:
-      GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
-      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
-      GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
-      MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
-      RETURNJOURNEYURL: "https://return.integration.account.gov.uk/resume"
-      SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
-      DNSSUFFIX: "return.integration.account.gov.uk"
-      OIDCURL: "https://oidc.integration.account.gov.uk/"
-      RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
+      GOVUKNOTIFYTEMPLATEID: 3baf3b59-2396-44c8-b7a4-b5a981fad5e8
+      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85
+      GOVUKNOTIFYAPI: https://api.notifications.service.gov.uk
+      MESSAGERETENTIONPERIODDAYS: 345600
+      TXMAMESSAGERETENTIONPERIODDAYS: 604800
+      RETURNJOURNEYURL: https://return.integration.account.gov.uk/resume
+      SESSIONRETURNRECORDTTLINSECS: 950400
+      INITIALSESSIONRECORDTTLINSECS: 43200
+      DNSSUFFIX: return.integration.account.gov.uk
+      OIDCURL: https://oidc.integration.account.gov.uk/
+      RETURNREDIRECTURL: https://return.integration.account.gov.uk/callback
     production:
-      GOVUKNOTIFYTEMPLATEID: "206971e2-d576-4d12-b34f-b0de442d39ab"
-      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "f62672d4-ff45-470e-8506-956482061f54"
-      GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
-      MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
-      RETURNJOURNEYURL: "https://return.account.gov.uk/resume"
-      SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
-      DNSSUFFIX: "return.account.gov.uk"
-      OIDCURL: "https://oidc.account.gov.uk/"
-      RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
+      GOVUKNOTIFYTEMPLATEID: 206971e2-d576-4d12-b34f-b0de442d39ab
+      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: f62672d4-ff45-470e-8506-956482061f54
+      GOVUKNOTIFYAPI: https://api.notifications.service.gov.uk
+      MESSAGERETENTIONPERIODDAYS: 345600
+      TXMAMESSAGERETENTIONPERIODDAYS: 604800
+      RETURNJOURNEYURL: https://return.account.gov.uk/resume
+      SESSIONRETURNRECORDTTLINSECS: 950400
+      INITIALSESSIONRECORDTTLINSECS: 43200
+      DNSSUFFIX: return.account.gov.uk
+      OIDCURL: https://oidc.account.gov.uk/
+      RETURNREDIRECTURL: https://return.account.gov.uk/callback
   TxMAAccounts:
-    # EVENTS is used to egress to TxMA.
     dev:
       AUDIT: arn:aws:iam::725018305812:root
       EVENTS: arn:aws:iam::248098332657:root
@@ -179,1135 +177,1445 @@ Mappings:
     production:
       AUDIT: arn:aws:iam::348043515437:root
       EVENTS: arn:aws:iam::451773080033:root
-
 Conditions:
-  CreateDevResources: !Equals
-    - !Ref Environment
+  CreateDevResources:
+    Fn::Equals:
+    - Ref: Environment
     - dev
-  ApplyReservedConcurrency: !Or
-    - !Not
-      - !Condition CreateDevResources
-    - !Equals [!Ref ApplyReservedConcurrencyInDev, "true"]
-  IsProdLikeEnvironment: !Or
-    - !Equals [!Ref Environment, staging]
-    - !Equals [!Ref Environment, integration]
-    - !Equals [!Ref Environment, production]
-  IsNotProdLikeEnvironment: !Not
-    - !Condition IsProdLikeEnvironment
-  IsPersonalIdentifiableInformationEnvironment: !Or
-    - !Equals [!Ref Environment, integration]
-    - !Equals [!Ref Environment, production]
+  ApplyReservedConcurrency:
+    Fn::Or:
+    - Fn::Not:
+      - Condition: CreateDevResources
+    - Fn::Equals:
+      - Ref: ApplyReservedConcurrencyInDev
+      - 'true'
+  IsProdLikeEnvironment:
+    Fn::Or:
+    - Fn::Equals:
+      - Ref: Environment
+      - staging
+    - Fn::Equals:
+      - Ref: Environment
+      - integration
+    - Fn::Equals:
+      - Ref: Environment
+      - production
+  IsNotProdLikeEnvironment:
+    Fn::Not:
+    - Condition: IsProdLikeEnvironment
+  IsPersonalIdentifiableInformationEnvironment:
+    Fn::Or:
+    - Fn::Equals:
+      - Ref: Environment
+      - integration
+    - Fn::Equals:
+      - Ref: Environment
+      - production
   UseCodeSigning:
     Fn::Not:
-      - Fn::Equals:
-          - !Ref CodeSigningConfigArn
-          - "none"
+    - Fn::Equals:
+      - Ref: CodeSigningConfigArn
+      - none
   UsePermissionsBoundary:
     Fn::Not:
-      - Fn::Equals:
-          - !Ref PermissionsBoundary
-          - "none"
+    - Fn::Equals:
+      - Ref: PermissionsBoundary
+      - none
   UseSecretPrefix:
     Fn::Not:
-      - Fn::Equals:
-          - !Ref SecretPrefix
-          - "none"
-  CreateProdResources: !Equals [ !Ref Environment, production]
-  CreateNonProdResources: !Not [!Condition CreateProdResources]
-  IsMockedEnvironment: !Or
     - Fn::Equals:
-        - !Ref Environment
-        - dev
+      - Ref: SecretPrefix
+      - none
+  CreateProdResources:
+    Fn::Equals:
+    - Ref: Environment
+    - production
+  CreateNonProdResources:
+    Fn::Not:
+    - Condition: CreateProdResources
+  IsMockedEnvironment:
+    Fn::Or:
     - Fn::Equals:
-        - !Ref Environment
-        - build
-  DeployAlarms: !Or
+      - Ref: Environment
+      - dev
+    - Fn::Equals:
+      - Ref: Environment
+      - build
+  DeployAlarms:
+    Fn::Or:
     - Condition: IsProdLikeEnvironment
-    - !Equals [!Ref DeployAlarmsInNonProdLikeEnvironment, true]
-  DeployConcurrencyAlarms: !And
+    - Fn::Equals:
+      - Ref: DeployAlarmsInNonProdLikeEnvironment
+      - true
+  DeployConcurrencyAlarms:
+    Fn::And:
     - Condition: DeployAlarms
     - Condition: ApplyReservedConcurrency
-  PerformanceTestEnv: !Equals [ !Ref Environment, build]
-
+  PerformanceTestEnv:
+    Fn::Equals:
+    - Ref: Environment
+    - build
 Globals:
   Function:
     Runtime: nodejs18.x
     VpcConfig:
       SecurityGroupIds:
-        - !GetAtt LambdaEgressSecurityGroup.GroupId
+      - Fn::GetAtt:
+        - LambdaEgressSecurityGroup
+        - GroupId
       SubnetIds:
-        - Fn::ImportValue:
-            "Fn::Sub": "${VpcStackName}-ProtectedSubnetIdA"
-        - Fn::ImportValue:
-            "Fn::Sub": "${VpcStackName}-ProtectedSubnetIdB"
-    PermissionsBoundary: !If
+      - Fn::ImportValue:
+          Fn::Sub: ${VpcStackName}-ProtectedSubnetIdA
+      - Fn::ImportValue:
+          Fn::Sub: ${VpcStackName}-ProtectedSubnetIdB
+    PermissionsBoundary:
+      Fn::If:
       - UsePermissionsBoundary
-      - !Ref PermissionsBoundary
-      - !Ref AWS::NoValue
-    CodeSigningConfigArn: !If
+      - Ref: PermissionsBoundary
+      - Ref: AWS::NoValue
+    CodeSigningConfigArn:
+      Fn::If:
       - UseCodeSigning
-      - !Ref CodeSigningConfigArn
-      - !Ref AWS::NoValue
-    Timeout: 30 # seconds
+      - Ref: CodeSigningConfigArn
+      - Ref: AWS::NoValue
+    Timeout: 30
     Tracing: Active
     MemorySize: 1024
     Architectures:
-      - arm64
+    - arm64
     Environment:
       Variables:
-        # These should always be alphabetically organised.
-        AWS_STACK_NAME: !Sub ${AWS::StackName} # The AWS Stack Name, as passed into the template.
-        POWERTOOLS_LOG_LEVEL: DEBUG # The LogLevel for the AWS PowerTools LogHelper
-        POWERTOOLS_METRICS_NAMESPACE: IPR-CRI # The Metric Namespace for the AWS PowerTools MetricHelper
+        AWS_STACK_NAME:
+          Fn::Sub: ${AWS::StackName}
+        POWERTOOLS_LOG_LEVEL: DEBUG
+        POWERTOOLS_METRICS_NAMESPACE: IPR-CRI
     AutoPublishAlias: live
-
 Resources:
+
+  # Log metric filter and alarm for S3 bucket policy changes
+  S3BucketActivityEventMetricFilter:
+    Type: 'AWS::Logs::MetricFilter'
+    Properties:
+      LogGroupName: !Ref SessionFunctionLogGroup
+      FilterPattern: '{ ($.eventSource = s3.amazonaws.com) && (($.eventName = PutBucketAcl) || ($.eventName = PutBucketPolicy) || ($.eventName = PutBucketCors) || ($.eventName = PutBucketLifecycle) || ($.eventName = PutBucketReplication) || ($.eventName = DeleteBucketPolicy) || ($.eventName = DeleteBucketCors) || ($.eventName = DeleteBucketLifecycle) || ($.eventName = DeleteBucketReplication)) }'
+      MetricTransformations:
+        - MetricValue: '1'
+          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
+          MetricName: S3BucketActivityEventChanges
+
+  S3BucketActivityEventErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-S3Bucket-changes"
+      AlarmDescription: A CloudWatch Alarm that triggers when changes are made to S3 Bucket.
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      MetricName: S3BucketActivityEventChanges
+      Namespace: AWS/S3
+      Statistic: Sum
+      Dimensions: [ ]
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  # Log metric filter and alarm for changes to network gateways
+  InternetGatewayEventMetricFilter:
+    Type: 'AWS::Logs::MetricFilter'
+    Properties: 
+      LogGroupName: !Ref SessionFunctionLogGroup
+      FilterPattern: '{ ($.eventName = CreateCustomerGateway) || ($.eventName = DeleteCustomerGateway) || ($.eventName = AttachInternetGateway) || ($.eventName = CreateInternetGateway) || ($.eventName = DeleteInternetGateway) || ($.eventName = DetachInternetGateway) }'
+      MetricTransformations:
+        - MetricValue: '1'
+          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
+          MetricName: IGatewayActivityEvent
+
+  InternetGatewayActivityEventErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties: 
+      AlarmName: !Sub "${AWS::StackName}-IGW-changes"
+      AlarmDescription: Triggers CloudWatch Alarm when changes are made to an Internet Gateway in a VPC.
+      MetricName: IGatewayActivityEvent
+      Namespace: !Sub "${AWS::StackName}/LogMessages"
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: '1'
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      TreatMissingData: notBreaching
+
+  # Log metric filter and alarm for route table changes
+  RouteTableChangesMetricFilter:
+    Type: 'AWS::Logs::MetricFilter'
+    Properties:
+      LogGroupName: !Ref SessionFunctionLogGroup
+      FilterPattern: '{ ($.eventName = AssociateRouteTable) || ($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DeleteRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation) || ($.eventName = DisassociateRouteTable) }'
+      MetricTransformations:
+        - MetricValue: '1'
+          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
+          MetricName: VPCRouteTableEvent
+  RouteTableChangesEventErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-vpc-route-changes"
+      AlarmDescription: A CloudWatch Alarm that triggers when changes are made to a VPC's Route Table.
+      MetricName: VpcRouteTableEvent
+      Namespace: !Sub "${AWS::StackName}/LogMessages"
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: '1'
+      Threshold: '1'
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      TreatMissingData: notBreaching
+
+  # Log metric filter and alarm when changes are made to VPC.
+  VpcChangesEventMetricFilter:
+    Type: 'AWS::Logs::MetricFilter'
+    Properties:
+      LogGroupName: !Ref SessionFunctionLogGroup
+      FilterPattern: '{ ($.eventName = CreateVpc) || ($.eventName = DeleteVpc) || ($.eventName = ModifyVpcAttribute) || ($.eventName = AcceptVpcPeeringConnection) || ($.eventName = CreateVpcPeeringConnection) || ($.eventName = DeleteVpcPeeringConnection) || ($.eventName = RejectVpcPeeringConnection) || ($.eventName = AttachClassicLinkVpc) || ($.eventName = DetachClassicLinkVpc) || ($.eventName = DisableVpcClassicLink) || ($.eventName = EnableVpcClassicLink) }'
+      MetricTransformations:
+        - MetricValue: '1'
+          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
+          MetricName: VpcEventChanges
+  VpcChangesEventAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-vpc-changes"
+      AlarmDescription: A CloudWatch Alarm that triggers when changes are made to a VPC.
+      MetricName: VpcEventChanges
+      Namespace: !Sub "${AWS::StackName}/LogMessages"
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: '1'
+      Threshold: '1'
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      TreatMissingData: notBreaching
+
+  # Log metric and alarm when changes are made to AWS Organisations.
+  OrganisationChangesEventMetricFilter:
+    Type: 'AWS::Logs::MetricFilter'
+    Properties:
+      LogGroupName: !Ref SessionFunctionLogGroup
+      FilterPattern: '{ ($.eventSource = organizations.amazonaws.com) && (($.eventName = AcceptHandshake) || ($.eventName = AttachPolicy) || ($.eventName = CreateAccount) || ($.eventName = CreateOrganizationalUnit) || ($.eventName = CreatePolicy) || ($.eventName = DeclineHandshake) || ($.eventName = DeleteOrganization) || ($.eventName = DeleteOrganizationalUnit) || ($.eventName = DeletePolicy) || ($.eventName = DetachPolicy) || ($.eventName = DisablePolicyType) || ($.eventName = EnablePolicyType) || ($.eventName = InviteAccountToOrganization) || ($.eventName = LeaveOrganization) || ($.eventName = MoveAccount) || ($.eventName = RemoveAccountFromOrganization) || ($.eventName = UpdatePolicy) || ($.eventName = UpdateOrganizationalUnit)) }'
+      MetricTransformations:
+        - MetricValue: '1'
+          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
+          MetricName: OrganisationsEventChange
+  OrganisationChangesEventAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-organisations-changes"
+      AlarmDescription: A CloudWatch Alarm that triggers when changes are made to AWS Organisations.
+      MetricName: OrganisationsEventChange
+      Namespace: !Sub "${AWS::StackName}/LogMessages"
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: '1'
+      Threshold: '1'
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      ActionsEnabled: true
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      TreatMissingData: notBreaching
+
   LambdaEgressSecurityGroup:
-    Type: "AWS::EC2::SecurityGroup"
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: >-
-        Permits outbound on port 443 from within the VPC to the internet.
+      GroupDescription: Permits outbound on port 443 from within the VPC to the internet.
       SecurityGroupEgress:
-        - CidrIp: 0.0.0.0/0
-          Description: Allow to the wider internet on port 443
-          FromPort: 443
-          IpProtocol: tcp
-          ToPort: 443
+      - CidrIp: '0.0.0.0/0'
+        Description: Allow to the wider internet on port 443
+        FromPort: 443
+        IpProtocol: tcp
+        ToPort: 443
       VpcId:
-        Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
-
-  ### OIDC Provider as IAM entity
-  OIDCProvider:
-    Type: AWS::IAM::OIDCProvider
-    Properties:
-      ClientIdList:
-        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-      ThumbprintList:
-        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
-
-  ### AssumeRoleWithWebIdentityRole
-  AssumeRoleWithWebIdentityRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action: "sts:AssumeRoleWithWebIdentity"
-            Effect: Allow
-            Principal:
-              Federated: !GetAtt OIDCProvider.Arn
-        Version: 2012-10-17
-      Policies:
-        - PolicyName: GetSessionEventPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "dynamodb:GetItem"
-                Resource:
-                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
-              - Effect: Allow
-                Action:
-                  - "kms:Decrypt"
-                Resource:
-                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
-      PermissionsBoundary: !If
-        - UsePermissionsBoundary
-        - !Ref PermissionsBoundary
-        - !Ref AWS::NoValue
-
-  ### Start of API Gateway definition.
+        Fn::ImportValue:
+          Fn::Sub: ${VpcStackName}-VpcId
+    Metadata:
+      SamResourceId: LambdaEgressSecurityGroup
   IPVRRestApi:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: !Ref Environment
+      StageName:
+        Ref: Environment
       OpenApiVersion: 3.0.1
       AccessLogSetting:
-        Format: "$context.requestId $context.httpMethod $context.path"
-        DestinationArn: !GetAtt IPVRAPIGatewayAccessLogGroup.Arn
+        Format: $context.requestId $context.httpMethod $context.path
+        DestinationArn:
+          Fn::GetAtt:
+          - IPVRAPIGatewayAccessLogGroup
+          - Arn
       EndpointConfiguration:
         Type: REGIONAL
       DefinitionBody:
         Fn::Transform:
           Name: AWS::Include
           Parameters:
-            Location: "./ipvr-spec.yaml"
+            Location: s3://aws-sam-cli-managed-default-samclisourcebucket-aihin9yi11b7/backend-api-1310/4f6e3dbb0119add039adbce1a804e49f
         OpenApiVersion: 3.0.1
       MethodSettings:
-        - LoggingLevel: INFO
-          MetricsEnabled: true
-          ThrottlingBurstLimit: 400
-          ThrottlingRateLimit: 200
-          # Disable data trace in production and integration to avoid logging customer sensitive information
-          DataTraceEnabled: !If
-            - IsPersonalIdentifiableInformationEnvironment
-            - false
-            - true
-          HttpMethod: "*"
-          ResourcePath: "/*"
+      - LoggingLevel: INFO
+        MetricsEnabled: true
+        ThrottlingBurstLimit: 400
+        ThrottlingRateLimit: 200
+        DataTraceEnabled:
+          Fn::If:
+          - IsPersonalIdentifiableInformationEnvironment
+          - false
+          - true
+        HttpMethod: '*'
+        ResourcePath: /*
       TracingEnabled: true
       Tags:
         Product: GOV.UK Sign In
         System: F2F
-        Environment: !Ref Environment
+        Environment:
+          Ref: Environment
         Service: backend
         Name: CICRestApi
         Source: alphagov/di-devplatform-demo-sam-app/sam-app/template.yaml
-
+    Metadata:
+      SamResourceId: IPVRRestApi
   IPVRAPIGatewayAccessLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       RetentionInDays:
-        !FindInMap [
-          EnvironmentConfiguration,
-          !Ref Environment,
-          logretentionindays,
-        ]
+        Fn::FindInMap:
+        - EnvironmentConfiguration
+        - Ref: Environment
+        - logretentionindays
       Tags:
-        - Key: Product
-          Value: GOV.UK Sign In
-        - Key: System
-          Value: Dev Platform
-        - Key: Environment
-          Value: Demo
-        - Key: Service
-          Value: backend
-        - Key: Name
-          Value: APIGatewayAccessLogGroup
-
+      - Key: Product
+        Value: GOV.UK Sign In
+      - Key: System
+        Value: Dev Platform
+      - Key: Environment
+        Value: Demo
+      - Key: Service
+        Value: backend
+      - Key: Name
+        Value: APIGatewayAccessLogGroup
+    Metadata:
+      SamResourceId: IPVRAPIGatewayAccessLogGroup
   IPVRAPIGatewayFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
     Properties:
-      LogGroupName: !Ref IPVRAPIGatewayAccessLogGroup
+      LogGroupName:
+        Ref: IPVRAPIGatewayAccessLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
       MetricTransformations:
-        -
-          MetricValue: "1"
-          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
-          MetricName: "IPVRAPIGateway-Fatalerror"
-
+      - MetricValue: '1'
+        MetricNamespace:
+          Fn::Sub: ${AWS::StackName}/LogMessages
+        MetricName: IPVRAPIGateway-Fatalerror
+    Metadata:
+      SamResourceId: IPVRAPIGatewayFatalErorMetricFilter
   IPVRAPIGatewayFatalErrorAlarm:
     DependsOn:
-      - "IPVRAPIGatewayFatalErorMetricFilter"
+    - IPVRAPIGatewayFatalErorMetricFilter
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-IPVRAPIGateway-FatalErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fatal Error occurs. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-IPVRAPIGateway-FatalErrorAlarm
+      AlarmDescription:
+        Fn::Sub: Trigger an alarm when Fatal Error occurs. ${SupportManualURL}
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
       MetricName: IPVRAPIGateway-Fatalerror
-      Namespace: !Sub "${AWS::StackName}/LogMessages"
+      Namespace:
+        Fn::Sub: ${AWS::StackName}/LogMessages
       Statistic: Sum
-      Dimensions: [ ]
+      Dimensions: []
       Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-
-  ### End of API Gateway definition.
-
+    Metadata:
+      SamResourceId: IPVRAPIGatewayFatalErrorAlarm
   WAFv2ACLAssociation:
     Type: AWS::WAFv2::WebACLAssociation
     Properties:
-      ResourceArn: !Sub "arn:aws:apigateway:${AWS::Region}::/restapis/${IPVRRestApi}/stages/${IPVRRestApi.Stage}"
-      WebACLArn: !Sub "{{resolve:ssm:/${Environment}/Platform/Security/Block/WafArn}}"
-
-  ### API Gateway Custom Domain definition
-
-  IPVRApiCustomDomain:
-    Type: AWS::ApiGateway::DomainName
-    Properties:
-      DomainName: !Sub
-        - "api.${DNSSUFFIX}"
-        - DNSSUFFIX:
-            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
-      RegionalCertificateArn: !Sub "{{resolve:ssm:/${Environment}/Platform/ACM/PrimaryZoneWildcardCertificateARN}}"
-      SecurityPolicy: TLS_1_2
-
-  IPVRApiCertificateRecord:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      Name: !Sub
-        - "api.${DNSSUFFIX}"
-        - DNSSUFFIX:
-            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
-      Type: A
-      HostedZoneId: !Sub "{{resolve:ssm:/${Environment}/Platform/Route53/PrimaryZoneID}}"
-      AliasTarget:
-        DNSName: !GetAtt IPVRApiCustomDomain.RegionalDomainName
-        HostedZoneId: !GetAtt IPVRApiCustomDomain.RegionalHostedZoneId
-
-  IPVRApiMapping:
-    Type: AWS::ApiGateway::BasePathMapping
-    DependsOn: IPVRApiCustomDomain
-    Properties:
-      DomainName: !Sub
-        - "api.${DNSSUFFIX}"
-        - DNSSUFFIX:
-            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
-      RestApiId: !Ref IPVRRestApi
-      Stage: !Sub "${IPVRRestApi.Stage}"
-
-  ### End of API Gateway Custom Domain definition
-
-  ### Function Definition
+      ResourceArn:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}::/restapis/${IPVRRestApi}/stages/${IPVRRestApi.Stage}
+      WebACLArn:
+        Fn::Sub: '{{resolve:ssm:/${Environment}/Platform/Security/Block/WafArn}}'
+    Metadata:
+      SamResourceId: WAFv2ACLAssociation
   PostEventFunction:
     Type: AWS::Serverless::Function
     DependsOn: PostEventFunctionLogGroup
     Properties:
-      FunctionName: !Sub "Ipvreturn-PostEvent-${AWS::StackName}"
+      FunctionName:
+        Fn::Sub: Ipvreturn-PostEvent-${AWS::StackName}
       Handler: PostEventHandler.lambdaHandler
-      CodeUri: ../src/
-      ReservedConcurrentExecutions: !If
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-aihin9yi11b7/backend-api-1310/3ae480ecdb1d9894c46d0910c91d8570
+      ReservedConcurrentExecutions:
+        Fn::If:
         - ApplyReservedConcurrency
-        - !Ref LambdaConcurrency
-        - !Ref AWS::NoValue
+        - Ref: LambdaConcurrency
+        - Ref: AWS::NoValue
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: PostEventHandler
           SESSION_EVENTS_TABLE:
-            Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
-          SESSION_RETURN_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, SESSIONRETURNRECORDTTLINSECS ]
-          INITIAL_SESSION_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, INITIALSESSIONRECORDTTLINSECS ]
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-name
+          SESSION_RETURN_RECORD_TTL_SECS:
+            Fn::FindInMap:
+            - EnvironmentVariables
+            - Ref: Environment
+            - SESSIONRETURNRECORDTTLINSECS
+          INITIAL_SESSION_RECORD_TTL_SECS:
+            Fn::FindInMap:
+            - EnvironmentVariables
+            - Ref: Environment
+            - INITIALSESSIONRECORDTTLINSECS
       Policies:
-        - AWSLambdaBasicExecutionRole
-        - AWSXrayWriteOnlyAccess
-        - DynamoDBWritePolicy:
-            TableName:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-name"
-        - DynamoDBReadPolicy:
-            TableName:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-name"
-        - KMSDecryptPolicy:
-            KeyId:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-key-id"
-        - Statement:
-            - Sid: TxMAKMSDecryptkeysPolicy
-              Effect: Allow
-              Action:
-                - "kms:Decrypt"
-              Resource: !If
-                - IsMockedEnvironment
-                - !GetAtt MockTxMAKMSEncryptionKey.Arn
-                - !FindInMap [PlatformConfiguration, !Ref Environment, TxMAKey]
-            - Sid: TxMASQSConsumeEventPolicy
-              Effect: Allow
-              Action:
-                - "sqs:DeleteMessage"
-                - "sqs:GetQueueAttributes"
-                - "sqs:ChangeMessageVisibility"
-                - "sqs:ReceiveMessage"
-              Resource: !If
-                - IsMockedEnvironment
-                - !GetAtt MockTxMASQSQueue.Arn
-                - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
-
-    Metadata: # Manage esbuild properties
+      - AWSLambdaBasicExecutionRole
+      - AWSXrayWriteOnlyAccess
+      - DynamoDBWritePolicy:
+          TableName:
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-name
+      - DynamoDBReadPolicy:
+          TableName:
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-name
+      - KMSDecryptPolicy:
+          KeyId:
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-key-id
+      - Statement:
+        - Sid: TxMAKMSDecryptkeysPolicy
+          Effect: Allow
+          Action:
+          - kms:Decrypt
+          Resource:
+            Fn::If:
+            - IsMockedEnvironment
+            - Fn::GetAtt:
+              - MockTxMAKMSEncryptionKey
+              - Arn
+            - Fn::FindInMap:
+              - PlatformConfiguration
+              - Ref: Environment
+              - TxMAKey
+        - Sid: TxMASQSConsumeEventPolicy
+          Effect: Allow
+          Action:
+          - sqs:DeleteMessage
+          - sqs:GetQueueAttributes
+          - sqs:ChangeMessageVisibility
+          - sqs:ReceiveMessage
+          Resource:
+            Fn::If:
+            - IsMockedEnvironment
+            - Fn::GetAtt:
+              - MockTxMASQSQueue
+              - Arn
+            - Fn::FindInMap:
+              - PlatformConfiguration
+              - Ref: Environment
+              - TxMASQS
+    Metadata:
       BuildMethod: esbuild
       BuildProperties:
-        Minify: true
-        Target: "es2020"
-        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
-          - PostEventHandler.ts
-
+        - PostEventHandler.ts
+        Minify: true
+        Sourcemap: false
+        Target: es2020
+      SamResourceId: PostEventFunction
   PostEventFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/lambda/Ipvreturn-PostEvent-${AWS::StackName}"
+      LogGroupName:
+        Fn::Sub: /aws/lambda/Ipvreturn-PostEvent-${AWS::StackName}
       RetentionInDays:
-        !FindInMap [
-          EnvironmentConfiguration,
-          !Ref Environment,
-          logretentionindays,
-        ]
-
+        Fn::FindInMap:
+        - EnvironmentConfiguration
+        - Ref: Environment
+        - logretentionindays
+    Metadata:
+      SamResourceId: PostEventFunctionLogGroup
   PostEventFunctionLogsSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsProdLikeEnvironment
     Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
-      FilterPattern: ""
-      LogGroupName: !Ref PostEventFunctionLogGroup
-
+      DestinationArn: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+      FilterPattern: ''
+      LogGroupName:
+        Ref: PostEventFunctionLogGroup
+    Metadata:
+      SamResourceId: PostEventFunctionLogsSubscriptionFilterCSLS
   PostEventFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref PostEventFunction
+      FunctionName:
+        Ref: PostEventFunction
       Principal: apigateway.amazonaws.com
-
+    Metadata:
+      SamResourceId: PostEventFunctionPermission
   PostEventFunctionSourceMapping:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       BatchSize: 1
       Enabled: true
-      EventSourceArn: !If
+      EventSourceArn:
+        Fn::If:
         - IsMockedEnvironment
-        - !GetAtt MockTxMASQSQueue.Arn
-        - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
-      FunctionName: !Ref PostEventFunction
-
+        - Fn::GetAtt:
+          - MockTxMASQSQueue
+          - Arn
+        - Fn::FindInMap:
+          - PlatformConfiguration
+          - Ref: Environment
+          - TxMASQS
+      FunctionName:
+        Ref: PostEventFunction
+    Metadata:
+      SamResourceId: PostEventFunctionSourceMapping
   PostEventFunctionFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
     Properties:
-      LogGroupName: !Ref PostEventFunctionLogGroup
+      LogGroupName:
+        Ref: PostEventFunctionLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
       MetricTransformations:
-        -
-          MetricValue: "1"
-          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
-          MetricName: "PostEventFunction-Fatalerror"
-
+      - MetricValue: '1'
+        MetricNamespace:
+          Fn::Sub: ${AWS::StackName}/LogMessages
+        MetricName: PostEventFunction-Fatalerror
+    Metadata:
+      SamResourceId: PostEventFunctionFatalErorMetricFilter
   PostEventFunctionnFatalErrorAlarm:
     DependsOn:
-      - "PostEventFunctionFatalErorMetricFilter"
+    - PostEventFunctionFatalErorMetricFilter
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-PostEventFunctionn-FatalErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fatal Error occurs. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-PostEventFunctionn-FatalErrorAlarm
+      AlarmDescription:
+        Fn::Sub: Trigger an alarm when Fatal Error occurs. ${SupportManualURL}
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
       MetricName: PostEventFunction-Fatalerror
-      Namespace: !Sub "${AWS::StackName}/LogMessages"
+      Namespace:
+        Fn::Sub: ${AWS::StackName}/LogMessages
       Statistic: Sum
-      Dimensions: [ ]
+      Dimensions: []
       Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-
+    Metadata:
+      SamResourceId: PostEventFunctionnFatalErrorAlarm
   PostEventConcurrency80Alarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployConcurrencyAlarms"
+    Condition: DeployConcurrencyAlarms
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
-      AlarmName: !Sub "${AWS::StackName}-PostEventFunction-concurrency"
+      AlarmDescription:
+        Fn::Sub: Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-PostEventFunction-concurrency
       MetricName: ConcurrentExecutions
       Namespace: AWS/Lambda
       Dimensions:
-        - Name: FunctionName
-          Value: !Ref PostEventFunction
+      - Name: FunctionName
+        Value:
+          Ref: PostEventFunction
       Statistic: Maximum
-      Period: 60 # This is the minimum value for the AWS Namespace
+      Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
-      Threshold: !Ref LambdaConcurrencyThreshold
+      Threshold:
+        Ref: LambdaConcurrencyThreshold
       ComparisonOperator: GreaterThanThreshold
       TreatMissingData: notBreaching
-
+    Metadata:
+      SamResourceId: PostEventConcurrency80Alarm
   PostEventThrottleAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger if the ${PostEventFunction} lambda throttles. ${SupportManualURL}"
-      AlarmName: !Sub "${AWS::StackName}-PostEventFunction-throttles"
+      AlarmDescription:
+        Fn::Sub: Trigger if the ${PostEventFunction} lambda throttles. ${SupportManualURL}
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-PostEventFunction-throttles
       MetricName: Throttles
       Namespace: AWS/Lambda
       Statistic: Sum
       Dimensions:
-        - Name: FunctionName
-          Value: !Ref PostEventFunction
+      - Name: FunctionName
+        Value:
+          Ref: PostEventFunction
       TreatMissingData: notBreaching
-      Period: 60 # This is the minimum value for the AWS Namespace
+      Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
-
+    Metadata:
+      SamResourceId: PostEventThrottleAlarm
   GovNotifyFunction:
     Type: AWS::Serverless::Function
     DependsOn: GovNotifyFunctionLogGroup
     Properties:
-      FunctionName: !Sub "Ipvreturn-GovNotify-${AWS::StackName}"
+      FunctionName:
+        Fn::Sub: Ipvreturn-GovNotify-${AWS::StackName}
       Handler: GovNotifyHandler.lambdaHandler
-      CodeUri: ../src/
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-aihin9yi11b7/backend-api-1310/ccb12948035be8c0094e2f3cf6e86335
       Timeout: 300
-      ReservedConcurrentExecutions: !If
+      ReservedConcurrentExecutions:
+        Fn::If:
         - ApplyReservedConcurrency
-        - !Ref LambdaConcurrency
-        - !Ref AWS::NoValue
+        - Ref: LambdaConcurrency
+        - Ref: AWS::NoValue
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: GovNotifyHandler
-          GOVUKNOTIFY_API: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYAPI ]
-          GOVUKNOTIFY_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYTEMPLATEID ]
-          GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYDYNAMICEMAILTEMPLATEID ]
-          GOVUKNOTIFY_API_KEY_SSM_PATH: !Sub "/${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY"
-          RETURN_JOURNEY_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNJOURNEYURL ]
-          TXMA_QUEUE_URL: !Ref TxMASQSQueue
+          GOVUKNOTIFY_API:
+            Fn::FindInMap:
+            - EnvironmentVariables
+            - Ref: Environment
+            - GOVUKNOTIFYAPI
+          GOVUKNOTIFY_TEMPLATE_ID:
+            Fn::FindInMap:
+            - EnvironmentVariables
+            - Ref: Environment
+            - GOVUKNOTIFYTEMPLATEID
+          GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID:
+            Fn::FindInMap:
+            - EnvironmentVariables
+            - Ref: Environment
+            - GOVUKNOTIFYDYNAMICEMAILTEMPLATEID
+          GOVUKNOTIFY_API_KEY_SSM_PATH:
+            Fn::Sub: /${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY
+          RETURN_JOURNEY_URL:
+            Fn::FindInMap:
+            - EnvironmentVariables
+            - Ref: Environment
+            - RETURNJOURNEYURL
+          TXMA_QUEUE_URL:
+            Ref: TxMASQSQueue
           SESSION_EVENTS_TABLE:
-            Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-name
       Policies:
-        - AWSLambdaBasicExecutionRole
-        - AWSXrayWriteOnlyAccess
-        - DynamoDBWritePolicy:
-            TableName:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-name"
-        - DynamoDBReadPolicy:
-            TableName:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-name"
-        - KMSDecryptPolicy:
-            KeyId:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-key-id"
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub "${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY"
-        - Statement:
-            - Effect: Allow
-              Action:
-                - "kms:Decrypt"
-              Resource: !GetAtt GovNotifyEncryptionKey.Arn
-        - Statement:
-            - Effect: Allow
-              Action:
-                - "sqs:SendMessage"
-              Resource: !GetAtt TxMASQSQueue.Arn
-            - Effect: Allow
-              Action:
-                - "kms:Encrypt"
-                - "kms:Decrypt"
-                - "kms:GenerateDataKey"
-              Resource: !GetAtt TxMAKMSEncryptionKey.Arn
-
+      - AWSLambdaBasicExecutionRole
+      - AWSXrayWriteOnlyAccess
+      - DynamoDBWritePolicy:
+          TableName:
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-name
+      - DynamoDBReadPolicy:
+          TableName:
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-name
+      - KMSDecryptPolicy:
+          KeyId:
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-key-id
+      - SSMParameterReadPolicy:
+          ParameterName:
+            Fn::Sub: ${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY
+      - Statement:
+        - Effect: Allow
+          Action:
+          - kms:Decrypt
+          Resource:
+            Fn::GetAtt:
+            - GovNotifyEncryptionKey
+            - Arn
+      - Statement:
+        - Effect: Allow
+          Action:
+          - sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - TxMASQSQueue
+            - Arn
+        - Effect: Allow
+          Action:
+          - kms:Encrypt
+          - kms:Decrypt
+          - kms:GenerateDataKey
+          Resource:
+            Fn::GetAtt:
+            - TxMAKMSEncryptionKey
+            - Arn
       Events:
         SQSEvent:
           Type: SQS
           Properties:
-            Queue: !GetAtt GovNotifySQSQueue.Arn
+            Queue:
+              Fn::GetAtt:
+              - GovNotifySQSQueue
+              - Arn
             BatchSize: 1
             Enabled: true
             FunctionResponseTypes:
-              - ReportBatchItemFailures
-    Metadata: # Manage esbuild properties
+            - ReportBatchItemFailures
+    Metadata:
       BuildMethod: esbuild
       BuildProperties:
-        Minify: true
-        Target: "es2020"
-        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
-          - GovNotifyHandler.ts
-
+        - GovNotifyHandler.ts
+        Minify: true
+        Sourcemap: false
+        Target: es2020
+      SamResourceId: GovNotifyFunction
   GovNotifyFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/lambda/Ipvreturn-GovNotify-${AWS::StackName}"
+      LogGroupName:
+        Fn::Sub: /aws/lambda/Ipvreturn-GovNotify-${AWS::StackName}
       RetentionInDays:
-        !FindInMap [
-          EnvironmentConfiguration,
-          !Ref Environment,
-          logretentionindays,
-        ]
-
+        Fn::FindInMap:
+        - EnvironmentConfiguration
+        - Ref: Environment
+        - logretentionindays
+    Metadata:
+      SamResourceId: GovNotifyFunctionLogGroup
   GovNotifyFunctionLogsSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsProdLikeEnvironment
     Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
-      FilterPattern: ""
-      LogGroupName: !Ref GovNotifyFunctionLogGroup
-
+      DestinationArn: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+      FilterPattern: ''
+      LogGroupName:
+        Ref: GovNotifyFunctionLogGroup
+    Metadata:
+      SamResourceId: GovNotifyFunctionLogsSubscriptionFilterCSLS
   GovNotifyFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref GovNotifyFunction
+      FunctionName:
+        Ref: GovNotifyFunction
       Principal: apigateway.amazonaws.com
-
+    Metadata:
+      SamResourceId: GovNotifyFunctionPermission
   GovNotifyFunctionFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
     Properties:
-      LogGroupName: !Ref GovNotifyFunctionLogGroup
+      LogGroupName:
+        Ref: GovNotifyFunctionLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
       MetricTransformations:
-        -
-          MetricValue: "1"
-          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
-          MetricName: "GovNotifyFunction-Fatalerror"
-
+      - MetricValue: '1'
+        MetricNamespace:
+          Fn::Sub: ${AWS::StackName}/LogMessages
+        MetricName: GovNotifyFunction-Fatalerror
+    Metadata:
+      SamResourceId: GovNotifyFunctionFatalErorMetricFilter
   GovNotifyFunctionnFatalErrorAlarm:
     DependsOn:
-      - "GovNotifyFunctionFatalErorMetricFilter"
+    - GovNotifyFunctionFatalErorMetricFilter
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-GovNotifyFunctionn-FatalErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fatal Error occurs. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-GovNotifyFunctionn-FatalErrorAlarm
+      AlarmDescription:
+        Fn::Sub: Trigger an alarm when Fatal Error occurs. ${SupportManualURL}
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
       MetricName: GovNotifyFunction-Fatalerror
-      Namespace: !Sub "${AWS::StackName}/LogMessages"
+      Namespace:
+        Fn::Sub: ${AWS::StackName}/LogMessages
       Statistic: Sum
-      Dimensions: [ ]
+      Dimensions: []
       Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-
+    Metadata:
+      SamResourceId: GovNotifyFunctionnFatalErrorAlarm
   GovNotifyConcurrency80Alarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployConcurrencyAlarms"
+    Condition: DeployConcurrencyAlarms
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
-      AlarmName: !Sub "${AWS::StackName}-GovNotifyFunction-concurrency"
+      AlarmDescription:
+        Fn::Sub: Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-GovNotifyFunction-concurrency
       MetricName: ConcurrentExecutions
       Namespace: AWS/Lambda
       Dimensions:
-        - Name: FunctionName
-          Value: !Ref GovNotifyFunction
+      - Name: FunctionName
+        Value:
+          Ref: GovNotifyFunction
       Statistic: Maximum
-      Period: 60 # This is the minimum value for the AWS Namespace
+      Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
-      Threshold: !Ref LambdaConcurrencyThreshold
+      Threshold:
+        Ref: LambdaConcurrencyThreshold
       ComparisonOperator: GreaterThanThreshold
       TreatMissingData: notBreaching
-
+    Metadata:
+      SamResourceId: GovNotifyConcurrency80Alarm
   GovNotifyThrottleAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger if the ${GovNotifyFunction} lambda throttles. ${SupportManualURL}"
-      AlarmName: !Sub "${AWS::StackName}-GovNotifyFunction-throttles"
+      AlarmDescription:
+        Fn::Sub: Trigger if the ${GovNotifyFunction} lambda throttles. ${SupportManualURL}
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-GovNotifyFunction-throttles
       MetricName: Throttles
       Namespace: AWS/Lambda
       Statistic: Sum
       Dimensions:
-        - Name: FunctionName
-          Value: !Ref GovNotifyFunction
+      - Name: FunctionName
+        Value:
+          Ref: GovNotifyFunction
       TreatMissingData: notBreaching
-      Period: 60 # This is the minimum value for the AWS Namespace
+      Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
-
+    Metadata:
+      SamResourceId: GovNotifyThrottleAlarm
   StreamProcessorFunction:
     Type: AWS::Serverless::Function
     DependsOn: StreamProcessorFunctionLogGroup
     Properties:
-      FunctionName: !Sub "Ipvreturn-StreamProcessor-${AWS::StackName}"
+      FunctionName:
+        Fn::Sub: Ipvreturn-StreamProcessor-${AWS::StackName}
       Handler: StreamProcessorHandler.lambdaHandler
-      CodeUri: ../src/
-      ReservedConcurrentExecutions: !If
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-aihin9yi11b7/backend-api-1310/5ff7bdae04cdbb41b07826a1810934b1
+      ReservedConcurrentExecutions:
+        Fn::If:
         - ApplyReservedConcurrency
-        - !Ref LambdaConcurrency
-        - !Ref AWS::NoValue
+        - Ref: LambdaConcurrency
+        - Ref: AWS::NoValue
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: StreamProcessorHandler
-          GOV_NOTIFY_QUEUE_URL: !Ref GovNotifySQSQueue
+          GOV_NOTIFY_QUEUE_URL:
+            Ref: GovNotifySQSQueue
           SESSION_EVENTS_TABLE:
-            Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-name
       Policies:
-        - AWSLambdaBasicExecutionRole
-        - AWSXrayWriteOnlyAccess
-        - DynamoDBWritePolicy:
-            TableName:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-name"
-        - DynamoDBReadPolicy:
-            TableName:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-name"
-        - KMSDecryptPolicy:
-            KeyId:
-              Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-id"
-        - Statement:
-            - Effect: Allow
-              Action:
-                - "sqs:SendMessage"
-              Resource: !GetAtt GovNotifySQSQueue.Arn
-            - Effect: Allow
-              Action:
-                - "kms:Encrypt"
-                - "kms:Decrypt"
-                - "kms:GenerateDataKey"
-              Resource: !GetAtt GovNotifyEncryptionKey.Arn
-            - Effect: Allow #allow lambda to read from the event stream
-              Action:
-                - "dynamodb:DescribeStream"
-                - "dynamodb:GetRecords"
-                - "dynamodb:GetShardIterator"
-                - "dynamodb:ListStreams"
-              Resource:
-                Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-stream-arn"
-    Metadata: # Manage esbuild properties
+      - AWSLambdaBasicExecutionRole
+      - AWSXrayWriteOnlyAccess
+      - DynamoDBWritePolicy:
+          TableName:
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-name
+      - DynamoDBReadPolicy:
+          TableName:
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-name
+      - KMSDecryptPolicy:
+          KeyId:
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-key-id
+      - Statement:
+        - Effect: Allow
+          Action:
+          - sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - GovNotifySQSQueue
+            - Arn
+        - Effect: Allow
+          Action:
+          - kms:Encrypt
+          - kms:Decrypt
+          - kms:GenerateDataKey
+          Resource:
+            Fn::GetAtt:
+            - GovNotifyEncryptionKey
+            - Arn
+        - Effect: Allow
+          Action:
+          - dynamodb:DescribeStream
+          - dynamodb:GetRecords
+          - dynamodb:GetShardIterator
+          - dynamodb:ListStreams
+          Resource:
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-stream-arn
+    Metadata:
       BuildMethod: esbuild
       BuildProperties:
-        Minify: true
-        Target: "es2020"
-        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
-          - StreamProcessorHandler.ts
-
+        - StreamProcessorHandler.ts
+        Minify: true
+        Sourcemap: false
+        Target: es2020
+      SamResourceId: StreamProcessorFunction
   SessionEventsTableStream:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
-      # The maximum number of DB items to send to Lambda
       BatchSize: 1
-      Enabled: True
+      Enabled: true
       EventSourceArn:
-        Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-stream-arn"
-      FunctionName: !Ref StreamProcessorFunction
-      # Always start at the tail of the Stream
+        Fn::ImportValue:
+          Fn::Sub: ${L2DynamoStackName}-session-events-table-stream-arn
+      FunctionName:
+        Ref: StreamProcessorFunction
       StartingPosition: LATEST
-
+    Metadata:
+      SamResourceId: SessionEventsTableStream
   StreamProcessorFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/lambda/Ipvreturn-StreamProcessor-${AWS::StackName}"
+      LogGroupName:
+        Fn::Sub: /aws/lambda/Ipvreturn-StreamProcessor-${AWS::StackName}
       RetentionInDays:
-        !FindInMap [
-          EnvironmentConfiguration,
-          !Ref Environment,
-          logretentionindays,
-        ]
-
+        Fn::FindInMap:
+        - EnvironmentConfiguration
+        - Ref: Environment
+        - logretentionindays
+    Metadata:
+      SamResourceId: StreamProcessorFunctionLogGroup
   StreamProcessorFunctionLogsSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
     Condition: IsProdLikeEnvironment
     Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
-      FilterPattern: ""
-      LogGroupName: !Ref StreamProcessorFunctionLogGroup
-
+      DestinationArn: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
+      FilterPattern: ''
+      LogGroupName:
+        Ref: StreamProcessorFunctionLogGroup
+    Metadata:
+      SamResourceId: StreamProcessorFunctionLogsSubscriptionFilterCSLS
   StreamProcessorFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref StreamProcessorFunction
+      FunctionName:
+        Ref: StreamProcessorFunction
       Principal: apigateway.amazonaws.com
-
+    Metadata:
+      SamResourceId: StreamProcessorFunctionPermission
   StreamProcessorFunctionFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
     Properties:
-      LogGroupName: !Ref StreamProcessorFunctionLogGroup
+      LogGroupName:
+        Ref: StreamProcessorFunctionLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
       MetricTransformations:
-        -
-          MetricValue: "1"
-          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
-          MetricName: "StreamProcessorFunction-Fatalerror"
-
+      - MetricValue: '1'
+        MetricNamespace:
+          Fn::Sub: ${AWS::StackName}/LogMessages
+        MetricName: StreamProcessorFunction-Fatalerror
+    Metadata:
+      SamResourceId: StreamProcessorFunctionFatalErorMetricFilter
   StreamProcessorFunctionFatalErrorAlarm:
     DependsOn:
-      - "StreamProcessorFunctionFatalErorMetricFilter"
+    - StreamProcessorFunctionFatalErorMetricFilter
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunctionn-FatalErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fatal Error occurs. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-StreamProcessorFunctionn-FatalErrorAlarm
+      AlarmDescription:
+        Fn::Sub: Trigger an alarm when Fatal Error occurs. ${SupportManualURL}
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
       MetricName: StreamProcessorFunction-Fatalerror
-      Namespace: !Sub "${AWS::StackName}/LogMessages"
+      Namespace:
+        Fn::Sub: ${AWS::StackName}/LogMessages
       Statistic: Sum
-      Dimensions: [ ]
+      Dimensions: []
       Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-
+    Metadata:
+      SamResourceId: StreamProcessorFunctionFatalErrorAlarm
   StreamProcessorConcurrency80Alarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployConcurrencyAlarms"
+    Condition: DeployConcurrencyAlarms
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
-      AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-concurrency"
+      AlarmDescription:
+        Fn::Sub: Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-StreamProcessorFunction-concurrency
       MetricName: ConcurrentExecutions
       Namespace: AWS/Lambda
       Dimensions:
-        - Name: FunctionName
-          Value: !Ref StreamProcessorFunction
+      - Name: FunctionName
+        Value:
+          Ref: StreamProcessorFunction
       Statistic: Maximum
-      Period: 60 # This is the minimum value for the AWS Namespace
+      Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
-      Threshold: !Ref LambdaConcurrencyThreshold
+      Threshold:
+        Ref: LambdaConcurrencyThreshold
       ComparisonOperator: GreaterThanThreshold
       TreatMissingData: notBreaching
-
+    Metadata:
+      SamResourceId: StreamProcessorConcurrency80Alarm
   StreamProcessorThrottleAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger if the ${StreamProcessorFunction} lambda throttles. ${SupportManualURL}"
-      AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-throttles"
+      AlarmDescription:
+        Fn::Sub: Trigger if the ${StreamProcessorFunction} lambda throttles. ${SupportManualURL}
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-StreamProcessorFunction-throttles
       MetricName: Throttles
       Namespace: AWS/Lambda
       Statistic: Sum
       Dimensions:
-        - Name: FunctionName
-          Value: !Ref StreamProcessorFunction
+      - Name: FunctionName
+        Value:
+          Ref: StreamProcessorFunction
       TreatMissingData: notBreaching
-      Period: 60 # This is the minimum value for the AWS Namespace
+      Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
-
-  ## Session
+    Metadata:
+      SamResourceId: StreamProcessorThrottleAlarm
   SessionFunction:
     Type: AWS::Serverless::Function
     DependsOn: SessionFunctionLogGroup
     Properties:
-      FunctionName: !Sub "Session-${AWS::StackName}"
+      FunctionName:
+        Fn::Sub: Session-${AWS::StackName}
       Handler: SessionHandler.lambdaHandler
-      CodeUri: ../src/
-      ReservedConcurrentExecutions: !If
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-aihin9yi11b7/backend-api-1310/de29ccaa0ef8525151d1ad813cfcc334
+      ReservedConcurrentExecutions:
+        Fn::If:
         - ApplyReservedConcurrency
-        - !Ref LambdaConcurrency
-        - !Ref AWS::NoValue
+        - Ref: LambdaConcurrency
+        - Ref: AWS::NoValue
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: SessionHandler
           KMS_KEY_ARN:
-            Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
+            Fn::ImportValue:
+              Fn::Sub: ${L2KMSStackName}-auth-signing-key
           SESSION_EVENTS_TABLE:
-            Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
-          CLIENT_ID_SSM_PATH: !Sub "/${Environment}/ipvreturn/CLIENT_ID"
-          OIDC_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
-          RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
-          ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
-          TXMA_QUEUE_URL: !Ref TxMASQSQueue
+            Fn::ImportValue:
+              Fn::Sub: ${L2DynamoStackName}-session-events-table-name
+          CLIENT_ID_SSM_PATH:
+            Fn::Sub: /${Environment}/ipvreturn/CLIENT_ID
+          OIDC_URL:
+            Fn::FindInMap:
+            - EnvironmentVariables
+            - Ref: Environment
+            - OIDCURL
+          RETURN_REDIRECT_URL:
+            Fn::FindInMap:
+            - EnvironmentVariables
+            - Ref: Environment
+            - RETURNREDIRECTURL
+          TXMA_QUEUE_URL:
+            Ref: TxMASQSQueue
       Policies:
-        - AWSLambdaBasicExecutionRole
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub "${Environment}/ipvreturn/CLIENT_ID"
-        - Statement:
-            - Effect: Allow
-              Action:
-                - "sqs:SendMessage"
-              Resource: !GetAtt TxMASQSQueue.Arn
-            - Effect: Allow
-              Action:
-                - "kms:Encrypt"
-                - "kms:Decrypt"
-                - "kms:GenerateDataKey"
-              Resource: !GetAtt TxMAKMSEncryptionKey.Arn
-        - Statement:
-            - Sid: KMSPolicy
-              Effect: Allow
-              Action:
-                - kms:Sign
-              Resource:
-                Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
+      - AWSLambdaBasicExecutionRole
+      - SSMParameterReadPolicy:
+          ParameterName:
+            Fn::Sub: ${Environment}/ipvreturn/CLIENT_ID
+      - Statement:
+        - Effect: Allow
+          Action:
+          - sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - TxMASQSQueue
+            - Arn
+        - Effect: Allow
+          Action:
+          - kms:Encrypt
+          - kms:Decrypt
+          - kms:GenerateDataKey
+          Resource:
+            Fn::GetAtt:
+            - TxMAKMSEncryptionKey
+            - Arn
+      - Statement:
+        - Sid: KMSPolicy
+          Effect: Allow
+          Action:
+          - kms:Sign
+          Resource:
+            Fn::ImportValue:
+              Fn::Sub: ${L2KMSStackName}-auth-signing-key
       Events:
         userInfo:
           Type: Api
           Properties:
             Path: /session
             Method: get
-            RestApiId: !Ref IPVRRestApi
-    Metadata: # Manage esbuild properties
+            RestApiId:
+              Ref: IPVRRestApi
+    Metadata:
       BuildMethod: esbuild
       BuildProperties:
-        Minify: true
-        Target: "es2020"
-        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
-          - SessionHandler.ts
-
+        - SessionHandler.ts
+        Minify: true
+        Sourcemap: false
+        Target: es2020
+      SamResourceId: SessionFunction
   SessionFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/lambda/Session-${AWS::StackName}"
+      LogGroupName:
+        Fn::Sub: /aws/lambda/Session-${AWS::StackName}
       RetentionInDays:
-        !FindInMap [
-          EnvironmentConfiguration,
-          !Ref Environment,
-          logretentionindays,
-        ]
-
+        Fn::FindInMap:
+        - EnvironmentConfiguration
+        - Ref: Environment
+        - logretentionindays
+    Metadata:
+      SamResourceId: SessionFunctionLogGroup
   SessionFunctionLogsSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
-    # Condition: IsProdLikeEnvironment
     Properties:
       DestinationArn:
-        !FindInMap [PlatformConfiguration, !Ref Environment, CSLSEGRESS]
-      FilterPattern: ""
-      LogGroupName: !Ref SessionFunctionLogGroup
-
+        Fn::FindInMap:
+        - PlatformConfiguration
+        - Ref: Environment
+        - CSLSEGRESS
+      FilterPattern: ''
+      LogGroupName:
+        Ref: SessionFunctionLogGroup
+    Metadata:
+      SamResourceId: SessionFunctionLogsSubscriptionFilterCSLS
   SessionFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref SessionFunction
+      FunctionName:
+        Ref: SessionFunction
       Principal: apigateway.amazonaws.com
-
+    Metadata:
+      SamResourceId: SessionFunctionPermission
   SessionFunctionFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
     Properties:
-      LogGroupName: !Ref SessionFunctionLogGroup
+      LogGroupName:
+        Ref: SessionFunctionLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
       MetricTransformations:
-        -
-          MetricValue: "1"
-          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
-          MetricName: "SessionFunction-Fatalerror"
-
+      - MetricValue: '1'
+        MetricNamespace:
+          Fn::Sub: ${AWS::StackName}/LogMessages
+        MetricName: SessionFunction-Fatalerror
+    Metadata:
+      SamResourceId: SessionFunctionFatalErorMetricFilter
   SessionFunctionnFatalErrorAlarm:
     DependsOn:
-      - "SessionFunctionFatalErorMetricFilter"
+    - SessionFunctionFatalErorMetricFilter
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-SessionFunctionn-FatalErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fatal Error occurs. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-SessionFunctionn-FatalErrorAlarm
+      AlarmDescription:
+        Fn::Sub: Trigger an alarm when Fatal Error occurs. ${SupportManualURL}
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
       MetricName: SessionFunction-Fatalerror
-      Namespace: !Sub "${AWS::StackName}/LogMessages"
+      Namespace:
+        Fn::Sub: ${AWS::StackName}/LogMessages
       Statistic: Sum
-      Dimensions: [ ]
+      Dimensions: []
       Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-
+    Metadata:
+      SamResourceId: SessionFunctionnFatalErrorAlarm
   SessionConcurrency80Alarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployConcurrencyAlarms"
+    Condition: DeployConcurrencyAlarms
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
-      AlarmName: !Sub "${AWS::StackName}-SessionFunction-concurrency"
+      AlarmDescription:
+        Fn::Sub: Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-SessionFunction-concurrency
       MetricName: ConcurrentExecutions
       Namespace: AWS/Lambda
       Dimensions:
-        - Name: FunctionName
-          Value: !Ref SessionFunction
+      - Name: FunctionName
+        Value:
+          Ref: SessionFunction
       Statistic: Maximum
-      Period: 60 # This is the minimum value for the AWS Namespace
+      Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
-      Threshold: !Ref LambdaConcurrencyThreshold
+      Threshold:
+        Ref: LambdaConcurrencyThreshold
       ComparisonOperator: GreaterThanThreshold
       TreatMissingData: notBreaching
-
+    Metadata:
+      SamResourceId: SessionConcurrency80Alarm
   SessionThrottleAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger if the ${SessionFunction} lambda throttles. ${SupportManualURL}"
-      AlarmName: !Sub "${AWS::StackName}-SessionFunction-throttles"
+      AlarmDescription:
+        Fn::Sub: Trigger if the ${SessionFunction} lambda throttles. ${SupportManualURL}
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-SessionFunction-throttles
       MetricName: Throttles
       Namespace: AWS/Lambda
       Statistic: Sum
       Dimensions:
-        - Name: FunctionName
-          Value: !Ref SessionFunction
+      - Name: FunctionName
+        Value:
+          Ref: SessionFunction
       TreatMissingData: notBreaching
-      Period: 60 # This is the minimum value for the AWS Namespace
+      Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
-
-  #Gov Notify SQS Queue
+    Metadata:
+      SamResourceId: SessionThrottleAlarm
   GovNotifySQSQueue:
-    Type: "AWS::SQS::Queue"
+    Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: !FindInMap [EnvironmentVariables, !Ref Environment, MESSAGERETENTIONPERIODDAYS]
-      VisibilityTimeout: 1800 #Setting this to 6 times the GovNotify lambda timeout
-      KmsMasterKeyId: !Ref GovNotifyKeyAlias
+      MessageRetentionPeriod:
+        Fn::FindInMap:
+        - EnvironmentVariables
+        - Ref: Environment
+        - MESSAGERETENTIONPERIODDAYS
+      VisibilityTimeout: 1800
+      KmsMasterKeyId:
+        Ref: GovNotifyKeyAlias
       RedrivePolicy:
         deadLetterTargetArn:
           Fn::GetAtt:
-            - "GovNotifySQSQueueDeadLetterQueue"
-            - "Arn"
+          - GovNotifySQSQueueDeadLetterQueue
+          - Arn
         maxReceiveCount: 2
-
+    Metadata:
+      SamResourceId: GovNotifySQSQueue
   GovNotifySQSQueueDeadLetterQueue:
-    Type: "AWS::SQS::Queue"
+    Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 259200 # three days
-      KmsMasterKeyId: !Sub GovNotifyEncryptionKey
-
+      MessageRetentionPeriod: 259200
+      KmsMasterKeyId:
+        Fn::Sub: GovNotifyEncryptionKey
+    Metadata:
+      SamResourceId: GovNotifySQSQueueDeadLetterQueue
   GovNotifySQSQueuePolicy:
-    Type: "AWS::SQS::QueuePolicy"
+    Type: AWS::SQS::QueuePolicy
     Properties:
       Queues:
-        - !Ref GovNotifySQSQueue
+      - Ref: GovNotifySQSQueue
       PolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
-          - Effect: "Allow"
-            Principal:
-              Service: "lambda.amazonaws.com"
-            Action:
-              - "sqs:ReceiveMessage"
-              - "sqs:DeleteMessage"
-            Resource: !GetAtt GovNotifySQSQueue.Arn
-
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action:
+          - sqs:ReceiveMessage
+          - sqs:DeleteMessage
+          Resource:
+            Fn::GetAtt:
+            - GovNotifySQSQueue
+            - Arn
+    Metadata:
+      SamResourceId: GovNotifySQSQueuePolicy
   GovNotifyEncryptionKey:
     Type: AWS::KMS::Key
-    # KMS Key manually rotated.
-    # checkov:skip=CKV_AWS_7: KMS Key manually rotated.
     Properties:
       Description: A KMS Key for encrypting the SQS Queue for GovNotify
       Enabled: true
       KeyPolicy:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
-            Action:
-              - "kms:*"
-            Resource:
-              - "*"
+        - Effect: Allow
+          Principal:
+            AWS:
+              Fn::Sub: arn:aws:iam::${AWS::AccountId}:root
+          Action:
+          - kms:*
+          Resource:
+          - '*'
       KeySpec: SYMMETRIC_DEFAULT
       KeyUsage: ENCRYPT_DECRYPT
       MultiRegion: false
       PendingWindowInDays: 7
       Tags:
-        - Key: KeyType
-          Value: Encryption Key
-        - Key: Environment
-          Value: !Sub ${Environment}
-
+      - Key: KeyType
+        Value: Encryption Key
+      - Key: Environment
+        Value:
+          Fn::Sub: ${Environment}
+    Metadata:
+      SamResourceId: GovNotifyEncryptionKey
   GovNotifyKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !If
+      AliasName:
+        Fn::If:
         - CreateDevResources
-        - !Sub "alias/GovNotifyEncryptionKey-${AWS::StackName}"
+        - Fn::Sub: alias/GovNotifyEncryptionKey-${AWS::StackName}
         - alias/GovNotifyEncryptionKey
-      TargetKeyId: !Ref GovNotifyEncryptionKey
-
+      TargetKeyId:
+        Ref: GovNotifyEncryptionKey
+    Metadata:
+      SamResourceId: GovNotifyKeyAlias
   MockTxMASQSQueue:
     Type: AWS::SQS::Queue
     Condition: IsMockedEnvironment
     Properties:
       MessageRetentionPeriod:
-        !FindInMap [
-          EnvironmentVariables,
-          !Ref Environment,
-          TXMAMESSAGERETENTIONPERIODDAYS,
-        ]
+        Fn::FindInMap:
+        - EnvironmentVariables
+        - Ref: Environment
+        - TXMAMESSAGERETENTIONPERIODDAYS
       VisibilityTimeout: 60
-      KmsMasterKeyId: !Ref MockTxMAKeyAlias
+      KmsMasterKeyId:
+        Ref: MockTxMAKeyAlias
       RedrivePolicy:
         deadLetterTargetArn:
           Fn::GetAtt:
-            - "MockTxMASQSQueueDeadLetterQueue"
-            - "Arn"
+          - MockTxMASQSQueueDeadLetterQueue
+          - Arn
         maxReceiveCount: 5
-
+    Metadata:
+      SamResourceId: MockTxMASQSQueue
   MockTxMASQSQueuePolicy:
     Type: AWS::SQS::QueuePolicy
     Condition: IsMockedEnvironment
     Properties:
       Queues:
-        - !Ref MockTxMASQSQueue
+      - Ref: MockTxMASQSQueue
       PolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
-          - Effect: "Allow"
-            Action:
-              - "sqs:SendMessage"
-            Resource:
-              - !GetAtt MockTxMASQSQueue.Arn
-            Principal:
-              AWS: arn:aws:iam::330163506186:root
-
+        - Effect: Allow
+          Action:
+          - sqs:SendMessage
+          Resource:
+          - Fn::GetAtt:
+            - MockTxMASQSQueue
+            - Arn
+          Principal:
+            AWS: arn:aws:iam::330163506186:root
+    Metadata:
+      SamResourceId: MockTxMASQSQueuePolicy
   MockTxMASQSQueueDeadLetterQueue:
     Type: AWS::SQS::Queue
     Condition: IsMockedEnvironment
     Properties:
-      MessageRetentionPeriod: 259200 # three days
-      KmsMasterKeyId: !Sub TxMAKMSEncryptionKey
-
+      MessageRetentionPeriod: 259200
+      KmsMasterKeyId:
+        Fn::Sub: TxMAKMSEncryptionKey
+    Metadata:
+      SamResourceId: MockTxMASQSQueueDeadLetterQueue
   MockTxMAKMSEncryptionKey:
     Type: AWS::KMS::Key
     Condition: IsMockedEnvironment
@@ -1315,1007 +1623,968 @@ Resources:
       Description: A KMS Key for encrypting the SQS Queue for Mock TxMA
       Enabled: true
       KeyPolicy:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
-            Action:
-              - "kms:*"
-            Resource:
-              - "*"
-          - Effect: Allow
-            Principal:
-              AWS: arn:aws:iam::330163506186:root
-            Action:
-              - "kms:Encrypt"
-              - "kms:Decrypt"
-              - "kms:GenerateDataKey"
-            Resource:
-              - "*"
+        - Effect: Allow
+          Principal:
+            AWS:
+              Fn::Sub: arn:aws:iam::${AWS::AccountId}:root
+          Action:
+          - kms:*
+          Resource:
+          - '*'
+        - Effect: Allow
+          Principal:
+            AWS: arn:aws:iam::330163506186:root
+          Action:
+          - kms:Encrypt
+          - kms:Decrypt
+          - kms:GenerateDataKey
+          Resource:
+          - '*'
       KeySpec: SYMMETRIC_DEFAULT
       KeyUsage: ENCRYPT_DECRYPT
       MultiRegion: false
       PendingWindowInDays: 7
       Tags:
-        - Key: KeyType
-          Value: Encryption Key
-        - Key: Environment
-          Value: !Sub ${Environment}
-
+      - Key: KeyType
+        Value: Encryption Key
+      - Key: Environment
+        Value:
+          Fn::Sub: ${Environment}
+    Metadata:
+      SamResourceId: MockTxMAKMSEncryptionKey
   MockTxMAKeyAlias:
     Type: AWS::KMS::Alias
     Condition: IsMockedEnvironment
     Properties:
-      AliasName: !If
+      AliasName:
+        Fn::If:
         - CreateDevResources
-        - !Sub "alias/MockTxMAKMSEncryptionKey-${AWS::StackName}"
+        - Fn::Sub: alias/MockTxMAKMSEncryptionKey-${AWS::StackName}
         - alias/MockTxMAKMSEncryptionKey
-      TargetKeyId: !Ref MockTxMAKMSEncryptionKey
-
+      TargetKeyId:
+        Ref: MockTxMAKMSEncryptionKey
+    Metadata:
+      SamResourceId: MockTxMAKeyAlias
   TxMASQSQueue:
     Type: AWS::SQS::Queue
     Properties:
       MessageRetentionPeriod:
-        !FindInMap [
-          EnvironmentVariables,
-          !Ref Environment,
-          TXMAMESSAGERETENTIONPERIODDAYS,
-        ]
+        Fn::FindInMap:
+        - EnvironmentVariables
+        - Ref: Environment
+        - TXMAMESSAGERETENTIONPERIODDAYS
       VisibilityTimeout: 60
-      KmsMasterKeyId: !Ref TxMAKeyAlias
+      KmsMasterKeyId:
+        Ref: TxMAKeyAlias
       RedrivePolicy:
         deadLetterTargetArn:
           Fn::GetAtt:
-            - "TxMASQSQueueDeadLetterQueue"
-            - "Arn"
+          - TxMASQSQueueDeadLetterQueue
+          - Arn
         maxReceiveCount: 5
-
+    Metadata:
+      SamResourceId: TxMASQSQueue
   TxMASQSQueuePolicy:
     Type: AWS::SQS::QueuePolicy
     Properties:
       Queues:
-        - !Ref TxMASQSQueue
+      - Ref: TxMASQSQueue
       PolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
-          - Effect: "Allow"
-            Action:
-              - "sqs:DeleteMessage"
-              - "sqs:GetQueueAttributes"
-              - "sqs:ChangeMessageVisibility"
-              - "sqs:ReceiveMessage"
-            Resource:
-              - !GetAtt TxMASQSQueue.Arn
-            Principal:
-              AWS:
-                - !FindInMap [TxMAAccounts, !Ref Environment, EVENTS]
-                - !If [ PerformanceTestEnv, arn:aws:iam::330163506186:root, !Ref AWS::NoValue ]
-
+        - Effect: Allow
+          Action:
+          - sqs:DeleteMessage
+          - sqs:GetQueueAttributes
+          - sqs:ChangeMessageVisibility
+          - sqs:ReceiveMessage
+          Resource:
+          - Fn::GetAtt:
+            - TxMASQSQueue
+            - Arn
+          Principal:
+            AWS:
+            - Fn::FindInMap:
+              - TxMAAccounts
+              - Ref: Environment
+              - EVENTS
+            - Fn::If:
+              - PerformanceTestEnv
+              - arn:aws:iam::330163506186:root
+              - Ref: AWS::NoValue
+    Metadata:
+      SamResourceId: TxMASQSQueuePolicy
   TxMASQSQueueDeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      MessageRetentionPeriod: 259200 # three days
-      KmsMasterKeyId: !Sub TxMAKMSEncryptionKey
-
+      MessageRetentionPeriod: 259200
+      KmsMasterKeyId:
+        Fn::Sub: TxMAKMSEncryptionKey
+    Metadata:
+      SamResourceId: TxMASQSQueueDeadLetterQueue
   TxMAKMSEncryptionKey:
     Type: AWS::KMS::Key
-    # KMS Key manually rotated.
-    # checkov:skip=CKV_AWS_7: KMS Key manually rotated.
     Properties:
       Description: A KMS Key for encrypting the SQS Queue for TxMA
       Enabled: true
       KeyPolicy:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
-            Action:
-              - "kms:*"
-            Resource:
-              - "*"
-          - Effect: Allow
-            Principal:
-              AWS:
-                - !FindInMap [TxMAAccounts, !Ref Environment, EVENTS]
-                - !If [ PerformanceTestEnv, arn:aws:iam::330163506186:root, !Ref AWS::NoValue ]
-            Action:
-              - "kms:Encrypt"
-              - "kms:Decrypt"
-              - "kms:GenerateDataKey"
-            Resource:
-              - "*"
+        - Effect: Allow
+          Principal:
+            AWS:
+              Fn::Sub: arn:aws:iam::${AWS::AccountId}:root
+          Action:
+          - kms:*
+          Resource:
+          - '*'
+        - Effect: Allow
+          Principal:
+            AWS:
+            - Fn::FindInMap:
+              - TxMAAccounts
+              - Ref: Environment
+              - EVENTS
+            - Fn::If:
+              - PerformanceTestEnv
+              - arn:aws:iam::330163506186:root
+              - Ref: AWS::NoValue
+          Action:
+          - kms:Encrypt
+          - kms:Decrypt
+          - kms:GenerateDataKey
+          Resource:
+          - '*'
       KeySpec: SYMMETRIC_DEFAULT
       KeyUsage: ENCRYPT_DECRYPT
       MultiRegion: false
       PendingWindowInDays: 7
       Tags:
-        - Key: KeyType
-          Value: Encryption Key
-        - Key: Environment
-          Value: !Sub ${Environment}
-
+      - Key: KeyType
+        Value: Encryption Key
+      - Key: Environment
+        Value:
+          Fn::Sub: ${Environment}
+    Metadata:
+      SamResourceId: TxMAKMSEncryptionKey
   TxMAKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !If
+      AliasName:
+        Fn::If:
         - CreateDevResources
-        - !Sub "alias/TxMAKMSEncryptionKey-${AWS::StackName}"
+        - Fn::Sub: alias/TxMAKMSEncryptionKey-${AWS::StackName}
         - alias/TxMAKMSEncryptionKey
-      TargetKeyId: !Ref TxMAKMSEncryptionKey
-
+      TargetKeyId:
+        Ref: TxMAKMSEncryptionKey
+    Metadata:
+      SamResourceId: TxMAKeyAlias
   5XXErrorAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-5XXErrorAlarm"
-      AlarmDescription: !Sub "There has been a small proportion of 5XX errors on the backend api-gateway. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-5XXErrorAlarm
+      AlarmDescription:
+        Fn::Sub: There has been a small proportion of 5XX errors on the backend api-gateway.
+          ${SupportManualURL}
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
-      Dimensions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
+      Dimensions: []
       EvaluationPeriods: 5
       DatapointsToAlarm: 2
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
       Metrics:
-        - Id: errorThreshold
-          Label: errorThreshold
-          ReturnData: true
-          Expression: IF(invocations<10,0,errorPercentage)
-        - Id: invocations
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/ApiGateway
-              MetricName: Count
-              Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
-            Period: 60
-            Stat: Sum
-        - Id: errorPercentage
-          Label: errorPercentage
-          ReturnData: false
-          Expression: (error/invocations)*100
-        - Id: error
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/ApiGateway
-              MetricName: 5XXError
-              Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
-            Period: 60
-            Stat: Sum
-
+      - Id: errorThreshold
+        Label: errorThreshold
+        ReturnData: true
+        Expression: IF(invocations<10,0,errorPercentage)
+      - Id: invocations
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: AWS/ApiGateway
+            MetricName: Count
+            Dimensions:
+            - Name: ApiName
+              Value:
+                Fn::Sub: ipv-return-${AWS::StackName}
+          Period: 60
+          Stat: Sum
+      - Id: errorPercentage
+        Label: errorPercentage
+        ReturnData: false
+        Expression: (error/invocations)*100
+      - Id: error
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: AWS/ApiGateway
+            MetricName: 5XXError
+            Dimensions:
+            - Name: ApiName
+              Value:
+                Fn::Sub: ipv-return-${AWS::StackName}
+          Period: 60
+          Stat: Sum
+    Metadata:
+      SamResourceId: 5XXErrorAlarm
   5XXErrorCriticalAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-5XXErrorCriticalAlarm"
-      AlarmDescription: !Sub "There has been a significant proportion of 5XX errors on the backend api-gateway. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-5XXErrorCriticalAlarm
+      AlarmDescription:
+        Fn::Sub: There has been a significant proportion of 5XX errors on the backend
+          api-gateway. ${SupportManualURL}
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
-      InsufficientDataActions: [ ]
-      Dimensions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
+      InsufficientDataActions: []
+      Dimensions: []
       EvaluationPeriods: 5
       DatapointsToAlarm: 2
       Threshold: 80
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
       Metrics:
-        - Id: errorThreshold
-          Label: errorThreshold
-          ReturnData: true
-          Expression: IF(invocations<10,0,errorPercentage)
-        - Id: invocations
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/ApiGateway
-              MetricName: Count
-              Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
-            Period: 60
-            Stat: Sum
-        - Id: errorPercentage
-          Label: errorPercentage
-          ReturnData: false
-          Expression: (error/invocations)*100
-        - Id: error
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/ApiGateway
-              MetricName: 5XXError
-              Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
-            Period: 60
-            Stat: Sum
-
+      - Id: errorThreshold
+        Label: errorThreshold
+        ReturnData: true
+        Expression: IF(invocations<10,0,errorPercentage)
+      - Id: invocations
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: AWS/ApiGateway
+            MetricName: Count
+            Dimensions:
+            - Name: ApiName
+              Value:
+                Fn::Sub: ipv-return-${AWS::StackName}
+          Period: 60
+          Stat: Sum
+      - Id: errorPercentage
+        Label: errorPercentage
+        ReturnData: false
+        Expression: (error/invocations)*100
+      - Id: error
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: AWS/ApiGateway
+            MetricName: 5XXError
+            Dimensions:
+            - Name: ApiName
+              Value:
+                Fn::Sub: ipv-return-${AWS::StackName}
+          Period: 60
+          Stat: Sum
+    Metadata:
+      SamResourceId: 5XXErrorCriticalAlarm
   Session5XXApiGwErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-Session5XXApiGwErrorAlarm"
-      AlarmDescription: !Sub "There has been a small proportion of 5XX errors on the Session endpoint. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-Session5XXApiGwErrorAlarm
+      AlarmDescription:
+        Fn::Sub: There has been a small proportion of 5XX errors on the Session endpoint.
+          ${SupportManualURL}
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
-      Dimensions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
+      Dimensions: []
       EvaluationPeriods: 5
       DatapointsToAlarm: 2
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
       Metrics:
-        - Id: errorThreshold
-          Label: errorThreshold
-          ReturnData: true
-          Expression: IF(invocations<4 || error<2,0,errorPercentage)
-        - Id: invocations
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/ApiGateway
-              MetricName: Count
-              Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
-                - Name: Resource
-                  Value: /session
-                - Name: Stage
-                  Value: !Ref Environment
-                - Name: Method
-                  Value: GET
-            Period: 60
-            Stat: Sum
-        - Id: errorPercentage
-          Label: errorPercentage
-          ReturnData: false
-          Expression: (error/invocations)*100
-        - Id: error
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/ApiGateway
-              MetricName: 5XXError
-              Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
-                - Name: Resource
-                  Value: /session
-                - Name: Stage
-                  Value: !Ref Environment
-                - Name: Method
-                  Value: GET
-            Period: 60
-            Stat: Sum
-
+      - Id: errorThreshold
+        Label: errorThreshold
+        ReturnData: true
+        Expression: IF(invocations<4 || error<2,0,errorPercentage)
+      - Id: invocations
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: AWS/ApiGateway
+            MetricName: Count
+            Dimensions:
+            - Name: ApiName
+              Value:
+                Fn::Sub: ipv-return-${AWS::StackName}
+            - Name: Resource
+              Value: /session
+            - Name: Stage
+              Value:
+                Ref: Environment
+            - Name: Method
+              Value: GET
+          Period: 60
+          Stat: Sum
+      - Id: errorPercentage
+        Label: errorPercentage
+        ReturnData: false
+        Expression: (error/invocations)*100
+      - Id: error
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: AWS/ApiGateway
+            MetricName: 5XXError
+            Dimensions:
+            - Name: ApiName
+              Value:
+                Fn::Sub: ipv-return-${AWS::StackName}
+            - Name: Resource
+              Value: /session
+            - Name: Stage
+              Value:
+                Ref: Environment
+            - Name: Method
+              Value: GET
+          Period: 60
+          Stat: Sum
+    Metadata:
+      SamResourceId: Session5XXApiGwErrorAlarm
   Session5XXApiGwErrorCriticalAlarm:
     Type: AWS::CloudWatch::Alarm
     Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-Session5XXApiGwErrorCriticalAlarm"
-      AlarmDescription: !Sub "There has been a significant proportion of 5XX errors on the Session endpoint. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-Session5XXApiGwErrorCriticalAlarm
+      AlarmDescription:
+        Fn::Sub: There has been a significant proportion of 5XX errors on the Session
+          endpoint. ${SupportManualURL}
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
-      InsufficientDataActions: [ ]
-      Dimensions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-critical-alert
+      InsufficientDataActions: []
+      Dimensions: []
       EvaluationPeriods: 5
       DatapointsToAlarm: 2
       Threshold: 80
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
       Metrics:
-        - Id: errorThreshold
-          Label: errorThreshold
-          ReturnData: true
-          Expression: IF(invocations<10,0,errorPercentage)
-        - Id: invocations
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/ApiGateway
-              MetricName: Count
-              Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
-                - Name: Resource
-                  Value: /session
-                - Name: Stage
-                  Value: !Ref Environment
-                - Name: Method
-                  Value: GET
-            Period: 60
-            Stat: Sum
-        - Id: errorPercentage
-          Label: errorPercentage
-          ReturnData: false
-          Expression: (error/invocations)*100
-        - Id: error
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/ApiGateway
-              MetricName: 5XXError
-              Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
-                - Name: Resource
-                  Value: /session
-                - Name: Stage
-                  Value: !Ref Environment
-                - Name: Method
-                  Value: GET
-            Period: 60
-            Stat: Sum
-
+      - Id: errorThreshold
+        Label: errorThreshold
+        ReturnData: true
+        Expression: IF(invocations<10,0,errorPercentage)
+      - Id: invocations
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: AWS/ApiGateway
+            MetricName: Count
+            Dimensions:
+            - Name: ApiName
+              Value:
+                Fn::Sub: ipv-return-${AWS::StackName}
+            - Name: Resource
+              Value: /session
+            - Name: Stage
+              Value:
+                Ref: Environment
+            - Name: Method
+              Value: GET
+          Period: 60
+          Stat: Sum
+      - Id: errorPercentage
+        Label: errorPercentage
+        ReturnData: false
+        Expression: (error/invocations)*100
+      - Id: error
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: AWS/ApiGateway
+            MetricName: 5XXError
+            Dimensions:
+            - Name: ApiName
+              Value:
+                Fn::Sub: ipv-return-${AWS::StackName}
+            - Name: Resource
+              Value: /session
+            - Name: Stage
+              Value:
+                Ref: Environment
+            - Name: Method
+              Value: GET
+          Period: 60
+          Stat: Sum
+    Metadata:
+      SamResourceId: Session5XXApiGwErrorCriticalAlarm
   Session4XXApiGwErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-Session4XXApiGwErrorAlarm"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-Session4XXApiGwErrorAlarm
       AlarmDescription:
-        Fn::Sub: >-
-          >=50% of invocations to the Session endpoint have generated a 4XX error in
-          4 or more out of the last 10 minutes. ${SupportManualURL}
+        Fn::Sub: '>=50% of invocations to the Session endpoint have generated a 4XX
+          error in 4 or more out of the last 10 minutes. ${SupportManualURL}'
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
-      Dimensions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
+      Dimensions: []
       EvaluationPeriods: 10
       DatapointsToAlarm: 4
       Threshold: 50
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
       Metrics:
-        - Id: safePercentage
-          Label: safePercentage
-          ReturnData: true
-          Expression: IF(invocations<5 || error<5,0,errorPercentage)
-        - Id: invocations
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/ApiGateway
-              MetricName: Count
-              Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
-                - Name: Resource
-                  Value: /session
-                - Name: Stage
-                  Value: !Ref Environment
-                - Name: Method
-                  Value: GET
-            Period: 60
-            Stat: Sum
-        - Id: errorPercentage
-          Label: errorPercentage
-          ReturnData: false
-          Expression: (error/invocations)*100
-        - Id: error
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/ApiGateway
-              MetricName: 4XXError
-              Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
-                - Name: Resource
-                  Value: /session
-                - Name: Stage
-                  Value: !Ref Environment
-                - Name: Method
-                  Value: GET
-            Period: 60
-            Stat: Sum
-
+      - Id: safePercentage
+        Label: safePercentage
+        ReturnData: true
+        Expression: IF(invocations<5 || error<5,0,errorPercentage)
+      - Id: invocations
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: AWS/ApiGateway
+            MetricName: Count
+            Dimensions:
+            - Name: ApiName
+              Value:
+                Fn::Sub: ipv-return-${AWS::StackName}
+            - Name: Resource
+              Value: /session
+            - Name: Stage
+              Value:
+                Ref: Environment
+            - Name: Method
+              Value: GET
+          Period: 60
+          Stat: Sum
+      - Id: errorPercentage
+        Label: errorPercentage
+        ReturnData: false
+        Expression: (error/invocations)*100
+      - Id: error
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: AWS/ApiGateway
+            MetricName: 4XXError
+            Dimensions:
+            - Name: ApiName
+              Value:
+                Fn::Sub: ipv-return-${AWS::StackName}
+            - Name: Resource
+              Value: /session
+            - Name: Stage
+              Value:
+                Ref: Environment
+            - Name: Method
+              Value: GET
+          Period: 60
+          Stat: Sum
+    Metadata:
+      SamResourceId: Session4XXApiGwErrorAlarm
   LatencyAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-apiGWLatencyAlarm"
-      AlarmDescription: !Sub "There has been increased latency on backend api-gateway. ${SupportManualURL}"
-      ActionsEnabled: false  # disabled until we're ready for alarm actions to fire
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-apiGWLatencyAlarm
+      AlarmDescription:
+        Fn::Sub: There has been increased latency on backend api-gateway. ${SupportManualURL}
+      ActionsEnabled: false
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
-      Dimensions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
+      Dimensions: []
       EvaluationPeriods: 5
       DatapointsToAlarm: 2
       Threshold: 2500
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
       Metrics:
-        - Id: safeLatency
-          Label: safeLatency
-          ReturnData: true
-          Expression: IF(invocations<10,0,maxLatency)
-        - Id: invocations
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/ApiGateway
-              MetricName: Count
-              Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
-            Period: 60
-            Stat: Sum
-        - Id: maxLatency
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/ApiGateway
-              MetricName: Latency
-              Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
-            Period: 60
-            Stat: Maximum
-
+      - Id: safeLatency
+        Label: safeLatency
+        ReturnData: true
+        Expression: IF(invocations<10,0,maxLatency)
+      - Id: invocations
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: AWS/ApiGateway
+            MetricName: Count
+            Dimensions:
+            - Name: ApiName
+              Value:
+                Fn::Sub: ipv-return-${AWS::StackName}
+          Period: 60
+          Stat: Sum
+      - Id: maxLatency
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: AWS/ApiGateway
+            MetricName: Latency
+            Dimensions:
+            - Name: ApiName
+              Value:
+                Fn::Sub: ipv-return-${AWS::StackName}
+          Period: 60
+          Stat: Maximum
+    Metadata:
+      SamResourceId: LatencyAlarm
   TXMASQSOldMessagesAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-TXMASQSOldMessagesAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when the age of the oldest TXMA message is 5 or more minutes. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-TXMASQSOldMessagesAlarm
+      AlarmDescription:
+        Fn::Sub: Trigger an alarm when the age of the oldest TXMA message is 5 or
+          more minutes. ${SupportManualURL}
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
       MetricName: ApproximateAgeOfOldestMessage
       Namespace: AWS/SQS
       Statistic: Maximum
       Dimensions:
-        - Name: QueueName
-          Value: !GetAtt TxMASQSQueue.QueueName
+      - Name: QueueName
+        Value:
+          Fn::GetAtt:
+          - TxMASQSQueue
+          - QueueName
       Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 300
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-
+    Metadata:
+      SamResourceId: TXMASQSOldMessagesAlarm
   TXMADLQMessagesVisibleAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-TXMADLQMessagesVisibleAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when message gets added to TXMA DLQ. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-TXMADLQMessagesVisibleAlarm
+      AlarmDescription:
+        Fn::Sub: Trigger an alarm when message gets added to TXMA DLQ. ${SupportManualURL}
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
       MetricName: ApproximateNumberOfMessagesVisible
       Namespace: AWS/SQS
       Statistic: Maximum
       Dimensions:
-        - Name: QueueName
-          Value: !GetAtt TxMASQSQueueDeadLetterQueue.QueueName
+      - Name: QueueName
+        Value:
+          Fn::GetAtt:
+          - TxMASQSQueueDeadLetterQueue
+          - QueueName
       Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-
+    Metadata:
+      SamResourceId: TXMADLQMessagesVisibleAlarm
   GovNotifySQSOldMessagesAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-GovNotifySQSOldMessagesAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when the age of the oldest TXMA message is 5 or more minutes. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-GovNotifySQSOldMessagesAlarm
+      AlarmDescription:
+        Fn::Sub: Trigger an alarm when the age of the oldest TXMA message is 5 or
+          more minutes. ${SupportManualURL}
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
       MetricName: ApproximateAgeOfOldestMessage
       Namespace: AWS/SQS
       Statistic: Maximum
       Dimensions:
-        - Name: QueueName
-          Value: !GetAtt GovNotifySQSQueue.QueueName
+      - Name: QueueName
+        Value:
+          Fn::GetAtt:
+          - GovNotifySQSQueue
+          - QueueName
       Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 300
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-
+    Metadata:
+      SamResourceId: GovNotifySQSOldMessagesAlarm
   GovNotifyDLQMessagesVisibleAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-GovNotifyDLQMessagesVisibleAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when message gets added to GovNotify DLQ. ${SupportManualURL}"
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-GovNotifyDLQMessagesVisibleAlarm
+      AlarmDescription:
+        Fn::Sub: Trigger an alarm when message gets added to GovNotify DLQ. ${SupportManualURL}
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
       MetricName: ApproximateNumberOfMessagesVisible
       Namespace: AWS/SQS
       Statistic: Maximum
       Dimensions:
-        - Name: QueueName
-          Value: !GetAtt GovNotifySQSQueueDeadLetterQueue.QueueName
+      - Name: QueueName
+        Value:
+          Fn::GetAtt:
+          - GovNotifySQSQueueDeadLetterQueue
+          - QueueName
       Period: 60
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-
+    Metadata:
+      SamResourceId: GovNotifyDLQMessagesVisibleAlarm
   LambdaTimeoutAlarm:
     Type: AWS::CloudWatch::Alarm
     Condition: DeployAlarms
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      - Fn::ImportValue: platform-alarm-topic-slack-warning-alert
       InsufficientDataActions: []
-      AlarmDescription: Trigger the alarm if any lambda in the account timesout 5 times within 5 minutes.
-      AlarmName: !Sub "${AWS::StackName}-LambdaTimeoutAlarm"
+      AlarmDescription: Trigger the alarm if any lambda in the account timesout 5
+        times within 5 minutes.
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-LambdaTimeoutAlarm
       EvaluationPeriods: 5
       DatapointsToAlarm: 5
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
       Metrics:
-        - Id: a1
-          Label: AcumulatedLambdaTimeOuts
-          ReturnData: true
-          Expression: (b1 + c1 + d1 + e1) >= 0
-        - Id: b1
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: !Sub "${AWS::StackName}/TimeOutLogMessages"
-              MetricName: VerifyAuthorizeLambdaTimeOut
-            Period: 60
-            Stat: Sum
-        - Id: c1
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: !Sub "${AWS::StackName}/TimeOutLogMessages"
-              MetricName: UserInfoLambdaTimeOut
-            Period: 60
-            Stat: Sum
-        - Id: d1
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: !Sub "${AWS::StackName}/TimeOutLogMessages"
-              MetricName: FetchBioTokenLambdaTimeOut
-            Period: 60
-            Stat: Sum
-        - Id: e1
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: !Sub "${AWS::StackName}/TimeOutLogMessages"
-              MetricName: IssueAccessTokenLambdaTimeOut
-            Period: 60
-            Stat: Sum
-
+      - Id: a1
+        Label: AcumulatedLambdaTimeOuts
+        ReturnData: true
+        Expression: (b1 + c1 + d1 + e1) >= 0
+      - Id: b1
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace:
+              Fn::Sub: ${AWS::StackName}/TimeOutLogMessages
+            MetricName: VerifyAuthorizeLambdaTimeOut
+          Period: 60
+          Stat: Sum
+      - Id: c1
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace:
+              Fn::Sub: ${AWS::StackName}/TimeOutLogMessages
+            MetricName: UserInfoLambdaTimeOut
+          Period: 60
+          Stat: Sum
+      - Id: d1
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace:
+              Fn::Sub: ${AWS::StackName}/TimeOutLogMessages
+            MetricName: FetchBioTokenLambdaTimeOut
+          Period: 60
+          Stat: Sum
+      - Id: e1
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace:
+              Fn::Sub: ${AWS::StackName}/TimeOutLogMessages
+            MetricName: IssueAccessTokenLambdaTimeOut
+          Period: 60
+          Stat: Sum
+    Metadata:
+      SamResourceId: LambdaTimeoutAlarm
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
     Condition: DeployConcurrencyAlarms
     Properties:
-      DashboardName: !Sub '${AWS::StackName}-Concurrency-Alarm-Overview'
+      DashboardName:
+        Fn::Sub: ${AWS::StackName}-Concurrency-Alarm-Overview
       DashboardBody:
-        Fn::Sub: >
-          {
-            "widgets": [
-              {
-                "height": 6,
-                  "width": 12,
-                  "y": 0,
-                  "x": 0,
-                  "type": "metric",
-                  "properties": {
-                    "title": "Postevent 80% Concurrency - ${AWS::StackName}",
-                    "annotations": {
-                      "alarms": ["${PostEventConcurrency80Alarm.Arn}"]
-                    },
-                    "view": "timeSeries",
-                    "stacked": false
-                  }
-                },
-                {
-                  "height": 6,
-                  "width": 12,
-                  "y": 0,
-                  "x": 12,
-                  "type": "metric",
-                  "properties": {
-                    "title": "GovNotify 80% Concurrency - ${AWS::StackName}",
-                    "annotations": {
-                      "alarms": ["${GovNotifyConcurrency80Alarm.Arn}"]
-                    },
-                    "view": "timeSeries",
-                    "stacked": false
-                  }
-                },
-                {
-                  "height": 6,
-                  "width": 12,
-                  "y": 6,
-                  "x": 0,
-                  "type": "metric",
-                  "properties": {
-                    "title": "Stream processor 80% Concurrency - ${AWS::StackName}",
-                    "annotations": {
-                      "alarms": ["${StreamProcessorConcurrency80Alarm.Arn}"]
-                    },
-                    "view": "timeSeries",
-                    "stacked": false
-                  }
-                },
-                {
-                  "height": 6,
-                  "width": 12,
-                  "y": 6,
-                  "x": 12,
-                  "type": "metric",
-                  "properties": {
-                    "title": "session 80% Concurrency - ${AWS::StackName}",
-                    "annotations": {
-                      "alarms": ["${SessionConcurrency80Alarm.Arn}"]
-                    },
-                    "view": "timeSeries",
-                    "stacked": false
-                  }
-                }
-              ]
-            }
-
+        Fn::Sub: "{\n  \"widgets\": [\n    {\n      \"height\": 6,\n        \"width\"\
+          : 12,\n        \"y\": 0,\n        \"x\": 0,\n        \"type\": \"metric\"\
+          ,\n        \"properties\": {\n          \"title\": \"Postevent 80% Concurrency\
+          \ - ${AWS::StackName}\",\n          \"annotations\": {\n            \"alarms\"\
+          : [\"${PostEventConcurrency80Alarm.Arn}\"]\n          },\n          \"view\"\
+          : \"timeSeries\",\n          \"stacked\": false\n        }\n      },\n \
+          \     {\n        \"height\": 6,\n        \"width\": 12,\n        \"y\":\
+          \ 0,\n        \"x\": 12,\n        \"type\": \"metric\",\n        \"properties\"\
+          : {\n          \"title\": \"GovNotify 80% Concurrency - ${AWS::StackName}\"\
+          ,\n          \"annotations\": {\n            \"alarms\": [\"${GovNotifyConcurrency80Alarm.Arn}\"\
+          ]\n          },\n          \"view\": \"timeSeries\",\n          \"stacked\"\
+          : false\n        }\n      },\n      {\n        \"height\": 6,\n        \"\
+          width\": 12,\n        \"y\": 6,\n        \"x\": 0,\n        \"type\": \"\
+          metric\",\n        \"properties\": {\n          \"title\": \"Stream processor\
+          \ 80% Concurrency - ${AWS::StackName}\",\n          \"annotations\": {\n\
+          \            \"alarms\": [\"${StreamProcessorConcurrency80Alarm.Arn}\"]\n\
+          \          },\n          \"view\": \"timeSeries\",\n          \"stacked\"\
+          : false\n        }\n      },\n      {\n        \"height\": 6,\n        \"\
+          width\": 12,\n        \"y\": 6,\n        \"x\": 12,\n        \"type\": \"\
+          metric\",\n        \"properties\": {\n          \"title\": \"session 80%\
+          \ Concurrency - ${AWS::StackName}\",\n          \"annotations\": {\n   \
+          \         \"alarms\": [\"${SessionConcurrency80Alarm.Arn}\"]\n         \
+          \ },\n          \"view\": \"timeSeries\",\n          \"stacked\": false\n\
+          \        }\n      }\n    ]\n  }\n"
+    Metadata:
+      SamResourceId: ConcurrencyAlarmDashboard
   ThrottlesAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
     Condition: DeployAlarms
     Properties:
-      DashboardName: !Sub '${AWS::StackName}-Throttles-Alarm-Overview'
+      DashboardName:
+        Fn::Sub: ${AWS::StackName}-Throttles-Alarm-Overview
       DashboardBody:
-        Fn::Sub: >
-          {
-            "widgets": [
-              {
-                "height": 6,
-                  "width": 12,
-                  "y": 0,
-                  "x": 0,
-                  "type": "metric",
-                  "properties": {
-                    "title": "Post Event throttles - ${AWS::StackName}",
-                    "annotations": {
-                      "alarms": ["${PostEventThrottleAlarm.Arn}"]
-                    },
-                    "view": "timeSeries",
-                    "stacked": false
-                  }
-                },
-                {
-                  "height": 6,
-                  "width": 12,
-                  "y": 0,
-                  "x": 12,
-                  "type": "metric",
-                  "properties": {
-                    "title": "GovNotify Throttles - ${AWS::StackName}",
-                    "annotations": {
-                      "alarms": ["${GovNotifyThrottleAlarm.Arn}"]
-                    },
-                    "view": "timeSeries",
-                    "stacked": false
-                  }
-                },
-                {
-                  "height": 6,
-                  "width": 12,
-                  "y": 6,
-                  "x": 0,
-                  "type": "metric",
-                  "properties": {
-                    "title": "Stream processor Throttles - ${AWS::StackName}",
-                    "annotations": {
-                      "alarms": ["${StreamProcessorThrottleAlarm.Arn}"]
-                    },
-                    "view": "timeSeries",
-                    "stacked": false
-                  }
-                },
-                {
-                  "height": 6,
-                  "width": 12,
-                  "y": 6,
-                  "x": 12,
-                  "type": "metric",
-                  "properties": {
-                    "title": "Session Throttles - ${AWS::StackName}",
-                    "annotations": {
-                      "alarms": ["${SessionThrottleAlarm.Arn}"]
-                    },
-                    "view": "timeSeries",
-                    "stacked": false
-                  }
-                }
-              ]
-            }
-
+        Fn::Sub: "{\n  \"widgets\": [\n    {\n      \"height\": 6,\n        \"width\"\
+          : 12,\n        \"y\": 0,\n        \"x\": 0,\n        \"type\": \"metric\"\
+          ,\n        \"properties\": {\n          \"title\": \"Post Event throttles\
+          \ - ${AWS::StackName}\",\n          \"annotations\": {\n            \"alarms\"\
+          : [\"${PostEventThrottleAlarm.Arn}\"]\n          },\n          \"view\"\
+          : \"timeSeries\",\n          \"stacked\": false\n        }\n      },\n \
+          \     {\n        \"height\": 6,\n        \"width\": 12,\n        \"y\":\
+          \ 0,\n        \"x\": 12,\n        \"type\": \"metric\",\n        \"properties\"\
+          : {\n          \"title\": \"GovNotify Throttles - ${AWS::StackName}\",\n\
+          \          \"annotations\": {\n            \"alarms\": [\"${GovNotifyThrottleAlarm.Arn}\"\
+          ]\n          },\n          \"view\": \"timeSeries\",\n          \"stacked\"\
+          : false\n        }\n      },\n      {\n        \"height\": 6,\n        \"\
+          width\": 12,\n        \"y\": 6,\n        \"x\": 0,\n        \"type\": \"\
+          metric\",\n        \"properties\": {\n          \"title\": \"Stream processor\
+          \ Throttles - ${AWS::StackName}\",\n          \"annotations\": {\n     \
+          \       \"alarms\": [\"${StreamProcessorThrottleAlarm.Arn}\"]\n        \
+          \  },\n          \"view\": \"timeSeries\",\n          \"stacked\": false\n\
+          \        }\n      },\n      {\n        \"height\": 6,\n        \"width\"\
+          : 12,\n        \"y\": 6,\n        \"x\": 12,\n        \"type\": \"metric\"\
+          ,\n        \"properties\": {\n          \"title\": \"Session Throttles -\
+          \ ${AWS::StackName}\",\n          \"annotations\": {\n            \"alarms\"\
+          : [\"${SessionThrottleAlarm.Arn}\"]\n          },\n          \"view\": \"\
+          timeSeries\",\n          \"stacked\": false\n        }\n      }\n    ]\n\
+          \  }\n"
+    Metadata:
+      SamResourceId: ThrottlesAlarmDashboard
   CriticalAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
     Condition: DeployAlarms
     Properties:
-      DashboardName: !Sub '${AWS::StackName}-Critical-Alarm-Overview'
+      DashboardName:
+        Fn::Sub: ${AWS::StackName}-Critical-Alarm-Overview
       DashboardBody:
-        Fn::Sub: >
-          {
-          "widgets": [
-              {
-                "height": 6,
-                "width": 12,
-                "y": 6,
-                "x": 0,
-                "type": "metric",
-                "properties": {
-                  "title": "API Gateway 5XX critical - ${AWS::StackName}",
-                  "annotations": {
-                    "alarms": ["${5XXErrorCriticalAlarm.Arn}"]
-                  },
-                  "view": "timeSeries",
-                  "stacked": false
-                }
-              },
-              {
-                "height": 6,
-                "width": 12,
-                "y": 12,
-                "x": 0,
-                "type": "metric",
-                "properties": {
-                  "title": "Session 5XX critical - ${AWS::StackName}",
-                  "annotations": {
-                    "alarms": ["${Session5XXApiGwErrorCriticalAlarm.Arn}"]
-                  },
-                  "view": "timeSeries",
-                  "stacked": false
-                }
-              }
-            ]
-          }
-
+        Fn::Sub: "{ \"widgets\": [\n    {\n      \"height\": 6,\n      \"width\":\
+          \ 12,\n      \"y\": 6,\n      \"x\": 0,\n      \"type\": \"metric\",\n \
+          \     \"properties\": {\n        \"title\": \"API Gateway 5XX critical -\
+          \ ${AWS::StackName}\",\n        \"annotations\": {\n          \"alarms\"\
+          : [\"${5XXErrorCriticalAlarm.Arn}\"]\n        },\n        \"view\": \"timeSeries\"\
+          ,\n        \"stacked\": false\n      }\n    },\n    {\n      \"height\"\
+          : 6,\n      \"width\": 12,\n      \"y\": 12,\n      \"x\": 0,\n      \"\
+          type\": \"metric\",\n      \"properties\": {\n        \"title\": \"Session\
+          \ 5XX critical - ${AWS::StackName}\",\n        \"annotations\": {\n    \
+          \      \"alarms\": [\"${Session5XXApiGwErrorCriticalAlarm.Arn}\"]\n    \
+          \    },\n        \"view\": \"timeSeries\",\n        \"stacked\": false\n\
+          \      }\n    }\n  ]\n}\n"
+    Metadata:
+      SamResourceId: CriticalAlarmDashboard
   WarningAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
     Condition: DeployAlarms
     Properties:
-      DashboardName: !Sub '${AWS::StackName}-Warning-Alarm-Overview'
+      DashboardName:
+        Fn::Sub: ${AWS::StackName}-Warning-Alarm-Overview
       DashboardBody:
-        Fn::Sub: >
-          {
-            "widgets": [
-              {
-                "height": 6,
-                "width": 12,
-                "y": 0,
-                "x": 0,
-                "type": "metric",
-                "properties": {
-                  "title": "Latency Alarm - ${AWS::StackName}",
-                  "annotations": {
-                    "alarms": ["${LatencyAlarm.Arn}"]
-                  },
-                  "view": "timeSeries",
-                  "stacked": false
-                }
-              },
-              {
-                "height": 6,
-                "width": 12,
-                "y": 6,
-                "x": 12,
-                "type": "metric",
-                "properties": {
-                  "title": "5XX Error Alarm - ${AWS::StackName}",
-                  "annotations": {
-                    "alarms": ["${5XXErrorAlarm.Arn}"]
-                  },
-                  "view": "timeSeries",
-                  "stacked": false
-                }
-              },
-              {
-                "height": 6,
-                "width": 12,
-                "y": 30,
-                "x": 0,
-                "type": "metric",
-                "properties": {
-                  "title": "Session 5XX - ${AWS::StackName}",
-                  "annotations": {
-                    "alarms": ["${Session5XXApiGwErrorAlarm.Arn}"]
-                  },
-                  "view": "timeSeries",
-                  "stacked": false
-                }
-              },
-              {
-                "height": 6,
-                "width": 12,
-                "y": 48,
-                "x": 12,
-                "type": "metric",
-                "properties": {
-                  "title": "Session 4XX - ${AWS::StackName}",
-                  "annotations": {
-                    "alarms": ["${Session4XXApiGwErrorAlarm.Arn}"]
-                  },
-                  "view": "timeSeries",
-                  "stacked": false
-                }
-              },
-              {
-                "height": 6,
-                "width": 12,
-                "y": 66,
-                "x": 0,
-                "type": "metric",
-                "properties": {
-                  "title": "TXMA SQS Old Messages - ${AWS::StackName}",
-                  "annotations": {
-                    "alarms": ["${TXMASQSOldMessagesAlarm.Arn}"]
-                     },
-                  "view": "timeSeries",
-                  "stacked": false
-                }
-              },
-              {
-                "height": 6,
-                "width": 12,
-                "y": 66,
-                "x": 12,
-                "type": "metric",
-                "properties": {
-                  "title": "TXMA DLQ Messages Visible - ${AWS::StackName}",
-                  "annotations": {
-                    "alarms": ["${TXMADLQMessagesVisibleAlarm.Arn}"]
-                     },
-                  "view": "timeSeries",
-                  "stacked": false
-                }
-              },
-              {
-                "height": 6,
-                "width": 12,
-                "y": 72,
-                "x": 12,
-                "type": "metric",
-                "properties": {
-                  "title": "GovNotify SQS Old Messages - ${AWS::StackName}",
-                  "annotations": {
-                    "alarms": ["${GovNotifySQSOldMessagesAlarm.Arn}"]
-                     },
-                  "view": "timeSeries",
-                  "stacked": false
-                }
-              },
-              {
-                "height": 6,
-                "width": 12,
-                "y": 78,
-                "x": 0,
-                "type": "metric",
-                "properties": {
-                  "title": "GovNotify DLQ Messages Visible - ${AWS::StackName}",
-                  "annotations": {
-                    "alarms": ["${GovNotifyDLQMessagesVisibleAlarm.Arn}"]
-                     },
-                  "view": "timeSeries",
-                  "stacked": false
-                }
-              }
-            ]
-          }
-
+        Fn::Sub: "{\n  \"widgets\": [\n    {\n      \"height\": 6,\n      \"width\"\
+          : 12,\n      \"y\": 0,\n      \"x\": 0,\n      \"type\": \"metric\",\n \
+          \     \"properties\": {\n        \"title\": \"Latency Alarm - ${AWS::StackName}\"\
+          ,\n        \"annotations\": {\n          \"alarms\": [\"${LatencyAlarm.Arn}\"\
+          ]\n        },\n        \"view\": \"timeSeries\",\n        \"stacked\": false\n\
+          \      }\n    },\n    {\n      \"height\": 6,\n      \"width\": 12,\n  \
+          \    \"y\": 6,\n      \"x\": 12,\n      \"type\": \"metric\",\n      \"\
+          properties\": {\n        \"title\": \"5XX Error Alarm - ${AWS::StackName}\"\
+          ,\n        \"annotations\": {\n          \"alarms\": [\"${5XXErrorAlarm.Arn}\"\
+          ]\n        },\n        \"view\": \"timeSeries\",\n        \"stacked\": false\n\
+          \      }\n    },\n    {\n      \"height\": 6,\n      \"width\": 12,\n  \
+          \    \"y\": 30,\n      \"x\": 0,\n      \"type\": \"metric\",\n      \"\
+          properties\": {\n        \"title\": \"Session 5XX - ${AWS::StackName}\"\
+          ,\n        \"annotations\": {\n          \"alarms\": [\"${Session5XXApiGwErrorAlarm.Arn}\"\
+          ]\n        },\n        \"view\": \"timeSeries\",\n        \"stacked\": false\n\
+          \      }\n    },\n    {\n      \"height\": 6,\n      \"width\": 12,\n  \
+          \    \"y\": 48,\n      \"x\": 12,\n      \"type\": \"metric\",\n      \"\
+          properties\": {\n        \"title\": \"Session 4XX - ${AWS::StackName}\"\
+          ,\n        \"annotations\": {\n          \"alarms\": [\"${Session4XXApiGwErrorAlarm.Arn}\"\
+          ]\n        },\n        \"view\": \"timeSeries\",\n        \"stacked\": false\n\
+          \      }\n    },\n    {\n      \"height\": 6,\n      \"width\": 12,\n  \
+          \    \"y\": 66,\n      \"x\": 0,\n      \"type\": \"metric\",\n      \"\
+          properties\": {\n        \"title\": \"TXMA SQS Old Messages - ${AWS::StackName}\"\
+          ,\n        \"annotations\": {\n          \"alarms\": [\"${TXMASQSOldMessagesAlarm.Arn}\"\
+          ]\n           },\n        \"view\": \"timeSeries\",\n        \"stacked\"\
+          : false\n      }\n    },\n    {\n      \"height\": 6,\n      \"width\":\
+          \ 12,\n      \"y\": 66,\n      \"x\": 12,\n      \"type\": \"metric\",\n\
+          \      \"properties\": {\n        \"title\": \"TXMA DLQ Messages Visible\
+          \ - ${AWS::StackName}\",\n        \"annotations\": {\n          \"alarms\"\
+          : [\"${TXMADLQMessagesVisibleAlarm.Arn}\"]\n           },\n        \"view\"\
+          : \"timeSeries\",\n        \"stacked\": false\n      }\n    },\n    {\n\
+          \      \"height\": 6,\n      \"width\": 12,\n      \"y\": 72,\n      \"\
+          x\": 12,\n      \"type\": \"metric\",\n      \"properties\": {\n       \
+          \ \"title\": \"GovNotify SQS Old Messages - ${AWS::StackName}\",\n     \
+          \   \"annotations\": {\n          \"alarms\": [\"${GovNotifySQSOldMessagesAlarm.Arn}\"\
+          ]\n           },\n        \"view\": \"timeSeries\",\n        \"stacked\"\
+          : false\n      }\n    },\n    {\n      \"height\": 6,\n      \"width\":\
+          \ 12,\n      \"y\": 78,\n      \"x\": 0,\n      \"type\": \"metric\",\n\
+          \      \"properties\": {\n        \"title\": \"GovNotify DLQ Messages Visible\
+          \ - ${AWS::StackName}\",\n        \"annotations\": {\n          \"alarms\"\
+          : [\"${GovNotifyDLQMessagesVisibleAlarm.Arn}\"]\n           },\n       \
+          \ \"view\": \"timeSeries\",\n        \"stacked\": false\n      }\n    }\n\
+          \  ]\n}\n"
+    Metadata:
+      SamResourceId: WarningAlarmDashboard
 Outputs:
   MockTxMASQSQueue:
-    Description: "SQS TXMA Consumer Queue"
-    Value: !Ref MockTxMASQSQueue
+    Description: SQS TXMA Consumer Queue
+    Value:
+      Ref: MockTxMASQSQueue
     Condition: IsMockedEnvironment
   MockTxMASQSQueueArn:
     Condition: IsMockedEnvironment
-    Description: "Arn of SQS TXMA Consumer Queue"
-    Value: !GetAtt MockTxMASQSQueue.Arn
+    Description: Arn of SQS TXMA Consumer Queue
+    Value:
+      Fn::GetAtt:
+      - MockTxMASQSQueue
+      - Arn
     Export:
-      Name: !Sub ${AWS::StackName}-MockTxMASQSQueue-arn
+      Name:
+        Fn::Sub: ${AWS::StackName}-MockTxMASQSQueue-arn
   MockTxMASQSQueueName:
     Condition: IsMockedEnvironment
-    Description: "Name SQS TXMA Consumer Queue"
-    Value: !GetAtt MockTxMASQSQueue.QueueName
+    Description: Name SQS TXMA Consumer Queue
+    Value:
+      Fn::GetAtt:
+      - MockTxMASQSQueue
+      - QueueName
     Export:
-      Name: !Sub ${AWS::StackName}-MockTxMASQSQueue-name
+      Name:
+        Fn::Sub: ${AWS::StackName}-MockTxMASQSQueue-name
   MockTxMAKMSEncryptionKey:
     Condition: IsMockedEnvironment
-    Description: "Arn of the MockTxMAKMSEncryptionKey"
-    Value: !GetAtt MockTxMAKMSEncryptionKey.Arn
+    Description: Arn of the MockTxMAKMSEncryptionKey
+    Value:
+      Fn::GetAtt:
+      - MockTxMAKMSEncryptionKey
+      - Arn
     Export:
-      Name: !Sub ${AWS::StackName}-MockTxMAKMSEncryptionKey-arn
+      Name:
+        Fn::Sub: ${AWS::StackName}-MockTxMAKMSEncryptionKey-arn
   SessionEventsTable:
-    Description: "SessionEvents Table Name"
+    Description: SessionEvents Table Name
     Value:
-      Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
-  TxMASQSQueue: 
-    Description: "Arn of the TxMASQSQueue"
-    Value: !GetAtt TxMASQSQueue.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-TxMASQSQueue-arn
-  TxMAKMSEncryptionKey: 
-    Description: "Arn of the TxMAKMSEncryptionKey"
-    Value: !GetAtt TxMAKMSEncryptionKey.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-TxMAKMSEncryptionKey-arn
-  GovNotifySQSQueue: 
-    Description: "Arn of the GovNotifySQSQueue"
-    Value: !GetAtt GovNotifySQSQueue.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-GovNotifySQSQueue-arn
-  GovNotifyEncryptionKey: 
-    Description: "Arn of the GovNotifyEncryptionKey"
-    Value: !GetAtt GovNotifyEncryptionKey.Arn
-    Export:
-      Name: !Sub ${AWS::StackName}-GovNotifyEncryptionKey-arn
-  SessionTableARN: 
-    Description: "Arn of the Session DynamoDB table"
+      Fn::ImportValue:
+        Fn::Sub: ${L2DynamoStackName}-session-events-table-name
+  TxMASQSQueue:
+    Description: Arn of the TxMASQSQueue
     Value:
-      Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
+      Fn::GetAtt:
+      - TxMASQSQueue
+      - Arn
     Export:
-      Name: !Sub ${AWS::StackName}-SessionTable-arn
-  SessionTableEcryptionARN: 
-    Description: "Arn of the SessionTableEncryptionKey"
+      Name:
+        Fn::Sub: ${AWS::StackName}-TxMASQSQueue-arn
+  TxMAKMSEncryptionKey:
+    Description: Arn of the TxMAKMSEncryptionKey
     Value:
-      Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
+      Fn::GetAtt:
+      - TxMAKMSEncryptionKey
+      - Arn
     Export:
-      Name: !Sub ${AWS::StackName}-SessionTableEncryptionKey-arn
+      Name:
+        Fn::Sub: ${AWS::StackName}-TxMAKMSEncryptionKey-arn
+  GovNotifySQSQueue:
+    Description: Arn of the GovNotifySQSQueue
+    Value:
+      Fn::GetAtt:
+      - GovNotifySQSQueue
+      - Arn
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-GovNotifySQSQueue-arn
+  GovNotifyEncryptionKey:
+    Description: Arn of the GovNotifyEncryptionKey
+    Value:
+      Fn::GetAtt:
+      - GovNotifyEncryptionKey
+      - Arn
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-GovNotifyEncryptionKey-arn
+  SessionTableARN:
+    Description: Arn of the Session DynamoDB table
+    Value:
+      Fn::ImportValue:
+        Fn::Sub: ${L2DynamoStackName}-session-events-table-arn
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-SessionTable-arn
+  SessionTableEcryptionARN:
+    Description: Arn of the SessionTableEncryptionKey
+    Value:
+      Fn::ImportValue:
+        Fn::Sub: ${L2DynamoStackName}-session-events-table-key-arn
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-SessionTableEncryptionKey-arn
   IpvReturnTestHarnessURL:
     Condition: IsNotProdLikeEnvironment
-    Description: "IPR Test Harness"
-    Value: !FindInMap [EnvironmentVariables, !Ref Environment, TESTHARNESSURL]
+    Description: IPR Test Harness
+    Value:
+      Fn::FindInMap:
+      - EnvironmentVariables
+      - Ref: Environment
+      - TESTHARNESSURL
   GovNotifyAPIURL:
     Condition: IsNotProdLikeEnvironment
-    Description: "Gov Notify Stub"
-    Value: !FindInMap [EnvironmentVariables, !Ref Environment, GOVUKNOTIFYAPI]
-
+    Description: Gov Notify Stub
+    Value:
+      Fn::FindInMap:
+      - EnvironmentVariables
+      - Ref: Environment
+      - GOVUKNOTIFYAPI
