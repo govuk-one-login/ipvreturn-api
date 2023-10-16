@@ -24,7 +24,6 @@ export class ValidationHelper {
 		return errors.map((error: any) => {
 			return {
 				property: error.property,
-				value: error.value,
 				constraints: error.constraints,
 				children: error?.children, // Gets error messages from nested Objects
 			};
