@@ -15,9 +15,7 @@ export class ValidationHelper {
 			await validateOrReject(model, { forbidUnknownValues: true });
 		} catch (errors) {
 			const errorDetails = this.getErrors(errors);
-			console.log(`${model.constructor.name}`);
-			console.log("**** Error validating " + `${model.constructor.name}` + "   " + JSON.stringify(errorDetails));
-			console.log(`Failed to validate data - ${model.constructor.name}`, "ValidationHelper", HttpCodesEnum.UNPROCESSABLE_ENTITY, errorDetails);
+			logger.error({ message: `ValidationHelper: Failed to validate data ${model.constructor.name}` + JSON.stringify(errorDetails) });
 			throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, `Failed to Validate - ${model.constructor.name} ${errorDetails}` );
 		}
 	}
@@ -26,7 +24,6 @@ export class ValidationHelper {
 		return errors.map((error: any) => {
 			return {
 				property: error.property,
-				value: error.value,
 				constraints: error.constraints,
 				children: error?.children, // Gets error messages from nested Objects
 			};
