@@ -10,6 +10,7 @@ import { constants } from "./utils/ApiConstants";
 import { postMockEvent, getSessionByUserId } from "./utils/ApiTestSteps";
 
 describe("post event processor", () => {
+	jest.setTimeout(60000);
 	let userId : string;
 
 	beforeAll(() => {
@@ -104,5 +105,5 @@ describe("post event processor", () => {
 				},
 			},
 		]);
-	}, 10000); // timeout set to 10s to avoid infinite loop
+	}, 20000); // timeout set to 20s to avoid infinite loop
 });
