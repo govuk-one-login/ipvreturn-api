@@ -26,7 +26,7 @@ export class FallbackEmailProcessor {
 	constructor(logger: Logger, metrics: Metrics) {
 		this.logger = logger;
 		this.metrics = metrics;
-		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.POST_EVENT_SERVICE);
+		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.FALLBACK_EMAIL_SERVICE);
 		this.iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 	}
 

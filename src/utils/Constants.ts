@@ -43,6 +43,4 @@ export class Constants {
     static readonly VISIT_PO_EMAIL_DYNAMIC = "VISIT_PO_EMAIL_DYNAMIC";
 
 		static readonly VISIT_PO_EMAIL_FALLBACK = "VISIT_PO_EMAIL_FALLBACK";
-
-    static readonly FALLBACK_EMAIL_LOGGER_SVC_NAME = "FallbackEmailHandler";
 }

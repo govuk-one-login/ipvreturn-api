@@ -6,11 +6,10 @@ import { LambdaInterface } from "@aws-lambda-powertools/commons";
 import { FallbackEmailProcessor } from "./services/FallbackEmailProcessor";
 import { MessageCodes } from "./models/enums/MessageCodes";
 import { AppError } from "./utils/AppError";
-import { Constants } from "./utils/Constants";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : "IPR-CRI";
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : "DEBUG";
-const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME ? process.env.POWERTOOLS_SERVICE_NAME : Constants.FALLBACK_EMAIL_LOGGER_SVC_NAME;
+const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME;
 
 const logger = new Logger({
 	logLevel: POWERTOOLS_LOG_LEVEL,
