@@ -70,6 +70,7 @@ export class FallbackEmailProcessor {
 					await this.iprService.saveEventData(item.userId, updateExpression, expressionAttributeValues);
 					this.logger.info({ message: "Updated the session event record with notified flag" });
 				} catch (error: any) {
+					this.logger.error("")
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 				}
 			} catch (error) {
