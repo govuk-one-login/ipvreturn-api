@@ -1,93 +1,82 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyEvent } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
-import { Response } from "./utils/Response";
-import { ResourcesEnum } from "./models/enums/ResourcesEnum";
-import { HttpCodesEnum } from "./utils/HttpCodesEnum";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
-import { SessionProcessor } from "./services/SessionProcessor";
-import { HttpVerbsEnum } from "./utils/HttpVerbsEnum";
-import { getParameter } from "./utils/Config";
-import { EnvironmentVariables } from "./services/EnvironmentVariables";
-import { ServicesEnum } from "./models/enums/ServicesEnum";
-import { MessageCodes } from "./models/enums/MessageCodes";
-import { AppError } from "./utils/AppError";
-import * as AWS from "aws-sdk"; // Import AWS SDK
+import { PutObjectCommand, S3Client, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3"; // Import DeleteObjectCommand
+import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
 
-const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE
-  ? process.env.POWERTOOLS_METRICS_NAMESPACE
-  : "CIC-CRI";
-const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL
-  ? process.env.POWERTOOLS_LOG_LEVEL
-  : "DEBUG";
-
-const S3_BUCKET_NAME = "your-s3-bucket-name"; // Replace with your S3 bucket name
-const S3_OBJECT_KEYS = [
-  "00418fc0d04998d266f9601d136565f97aeffec592f0e0d8224470159c34ad98",
-  "013500aa7c55b01f828d72dacaa4ee6b80a7f619f88001e1804f51ab459eaecd",
-]; // Replace with your S3 object keys
+const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : "IPR-CRI";
+const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : "DEBUG";
 
 const logger = new Logger({
-  logLevel: POWERTOOLS_LOG_LEVEL,
-  serviceName: "RetryFailedEmails",
+    logLevel: POWERTOOLS_LOG_LEVEL,
+    serviceName: "RetryFailedEmails",
 });
 let CLIENT_ID: string;
 
-const metrics = new Metrics({
-  namespace: POWERTOOLS_METRICS_NAMESPACE,
-  serviceName: "RetryFailedEmails",
+const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceName: "RetryFailedEmails" });
+
+const s3Client = new S3Client({
+    region: process.env.REGION,
+    maxAttempts: 2,
+    requestHandler: new NodeHttpHandler({
+        connectionTimeout: 29000,
+        socketTimeout: 29000,
+    }),
 });
 
 class Session implements LambdaInterface {
-  private readonly environmentVariables = new EnvironmentVariables(
-    logger,
-    ServicesEnum.GET_SESSION_EVENT_DATA_SERVICE
-  );
+    @metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
+    @logger.injectLambdaContext()
+    async handler(event: any, context: any): Promise<any> {
+        logger.setPersistentLogAttributes({});
+        logger.addContext(context);
 
-  @metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
-  @logger.injectLambdaContext()
-  async handler(event: APIGatewayProxyEvent, context: any): Promise<APIGatewayProxyResult> {
-    // clear PersistentLogAttributes set by any previous invocation, and add lambda context for this invocation
-    logger.setPersistentLogAttributes({});
-    logger.addContext(context);
+        logger.info("EVENT", { event });
+        logger.info("EVENT", JSON.stringify(event));
 
-    logger.debug("metrics is", { metrics });
+        // Extract the fileName from the S3 event
+        const fileName = event.Records[0].s3.object.key;
+        logger.info('FILE_NAME', fileName);
 
-    try {
-      const s3 = new AWS.S3(); // Create an S3 client
+        // Use the fileName to get the file from S3
+        try {
+            const getObjectCommand = new GetObjectCommand({
+                Bucket: process.env.RETRY_USER_BUCKET_NAME,
+                Key: fileName,
+            });
 
-      for (const objectKey of S3_OBJECT_KEYS) {
-        const params = {
-          Bucket: S3_BUCKET_NAME,
-          Key: objectKey,
-        };
+            const response = await s3Client.send(getObjectCommand);
 
-        // Use the getObject method to get the content of the S3 object
-        const s3Response = await s3.getObject(params).promise();
+            // The file contents are in response.Body as a readable stream
+            // You can read the contents or process it as needed.
+            const fileContents = response.Body.toString('utf-8');
+            logger.info('FILE_CONTENTS', {fileContents});
+						logger.info('FILE_CONTENTS', JSON.stringify(fileContents));
 
-        // The content of the .csv file will be in s3Response.Body
-        const csvContent = s3Response.Body.toString("utf-8");
+            // Delete the file from S3
+            const deleteObjectCommand = new DeleteObjectCommand({
+                Bucket: process.env.RETRY_USER_BUCKET_NAME,
+                Key: fileName,
+            });
 
-        // Now you can process the CSV content as needed
-        console.log("CSV Content:", csvContent);
-      }
+            await s3Client.send(deleteObjectCommand);
 
-      // Add your processing logic for the CSV content here
+            logger.info('FILE_DELETED', { fileName });
 
-      return {
-        statusCode: HttpCodesEnum.OK,
-        body: "CSV files processed successfully",
-      };
-    } catch (error) {
-      // Handle errors here
-      console.error("Error:", error);
+            return {
+                statusCode: 200,
+                body: JSON.stringify({ message: 'File retrieved and deleted successfully' }),
+            };
+        } catch (error: any) {
+            logger.error('Error retrieving or deleting file from S3', error);
 
-      return {
-        statusCode: HttpCodesEnum.INTERNAL_SERVER_ERROR,
-        body: "Internal Server Error",
-      };
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ error: 'Internal Server Error' }),
+            };
+        }
     }
-  }
 }
 
 const handlerClass = new Session();

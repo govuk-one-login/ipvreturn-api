@@ -276,46 +276,47 @@ Resources:
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
 
-  ### OIDC Provider as IAM entity
-  OIDCProvider:
-    Type: AWS::IAM::OIDCProvider
-    Properties:
-      ClientIdList:
-        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-      ThumbprintList:
-        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+  ### Comment FROM HERE
+  # ### OIDC Provider as IAM entity
+  # OIDCProvider:
+  #   Type: AWS::IAM::OIDCProvider
+  #   Properties:
+  #     ClientIdList:
+  #       - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
+  #     ThumbprintList:
+  #       - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
+  #     Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
-  ### AssumeRoleWithWebIdentityRole
-  AssumeRoleWithWebIdentityRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action: "sts:AssumeRoleWithWebIdentity"
-            Effect: Allow
-            Principal:
-              Federated: !GetAtt OIDCProvider.Arn
-        Version: 2012-10-17
-      Policies:
-        - PolicyName: GetSessionEventPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "dynamodb:GetItem"
-                Resource:
-                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
-              - Effect: Allow
-                Action:
-                  - "kms:Decrypt"
-                Resource:
-                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
-      PermissionsBoundary: !If
-        - UsePermissionsBoundary
-        - !Ref PermissionsBoundary
-        - !Ref AWS::NoValue
+  # ### AssumeRoleWithWebIdentityRole
+  # AssumeRoleWithWebIdentityRole:
+  #   Type: "AWS::IAM::Role"
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Statement:
+  #         - Action: "sts:AssumeRoleWithWebIdentity"
+  #           Effect: Allow
+  #           Principal:
+  #             Federated: !GetAtt OIDCProvider.Arn
+  #       Version: 2012-10-17
+  #     Policies:
+  #       - PolicyName: GetSessionEventPolicy
+  #         PolicyDocument:
+  #           Version: '2012-10-17'
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - "dynamodb:GetItem"
+  #               Resource:
+  #                 Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
+  #             - Effect: Allow
+  #               Action:
+  #                 - "kms:Decrypt"
+  #               Resource:
+  #                 Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
+  #     PermissionsBoundary: !If
+  #       - UsePermissionsBoundary
+  #       - !Ref PermissionsBoundary
+  #       - !Ref AWS::NoValue
 
   ### Start of API Gateway definition.
   IPVRRestApi:
@@ -414,52 +415,54 @@ Resources:
 
   ### End of API Gateway definition.
 
-  WAFv2ACLAssociation:
-    Type: AWS::WAFv2::WebACLAssociation
-    Properties:
-      ResourceArn: !Sub "arn:aws:apigateway:${AWS::Region}::/restapis/${IPVRRestApi}/stages/${IPVRRestApi.Stage}"
-      WebACLArn: !Sub "{{resolve:ssm:/${Environment}/Platform/Security/Block/WafArn}}"
+  # WAFv2ACLAssociation:
+  #   Type: AWS::WAFv2::WebACLAssociation
+  #   Properties:
+  #     ResourceArn: !Sub "arn:aws:apigateway:${AWS::Region}::/restapis/${IPVRRestApi}/stages/${IPVRRestApi.Stage}"
+  #     WebACLArn: !Sub "{{resolve:ssm:/${Environment}/Platform/Security/Block/WafArn}}"
 
-  ### API Gateway Custom Domain definition
+  # ### API Gateway Custom Domain definition
 
-  IPVRApiCustomDomain:
-    Type: AWS::ApiGateway::DomainName
-    Properties:
-      DomainName: !Sub
-        - "api.${DNSSUFFIX}"
-        - DNSSUFFIX:
-            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
-      RegionalCertificateArn: !Sub "{{resolve:ssm:/${Environment}/Platform/ACM/PrimaryZoneWildcardCertificateARN}}"
-      SecurityPolicy: TLS_1_2
+  # IPVRApiCustomDomain:
+  #   Type: AWS::ApiGateway::DomainName
+  #   Properties:
+  #     DomainName: !Sub
+  #       - "api.${DNSSUFFIX}"
+  #       - DNSSUFFIX:
+  #           !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+  #     EndpointConfiguration:
+  #       Types:
+  #         - REGIONAL
+  #     RegionalCertificateArn: !Sub "{{resolve:ssm:/${Environment}/Platform/ACM/PrimaryZoneWildcardCertificateARN}}"
+  #     SecurityPolicy: TLS_1_2
 
-  IPVRApiCertificateRecord:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      Name: !Sub
-        - "api.${DNSSUFFIX}"
-        - DNSSUFFIX:
-            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
-      Type: A
-      HostedZoneId: !Sub "{{resolve:ssm:/${Environment}/Platform/Route53/PrimaryZoneID}}"
-      AliasTarget:
-        DNSName: !GetAtt IPVRApiCustomDomain.RegionalDomainName
-        HostedZoneId: !GetAtt IPVRApiCustomDomain.RegionalHostedZoneId
+  # IPVRApiCertificateRecord:
+  #   Type: AWS::Route53::RecordSet
+  #   Properties:
+  #     Name: !Sub
+  #       - "api.${DNSSUFFIX}"
+  #       - DNSSUFFIX:
+  #           !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+  #     Type: A
+  #     HostedZoneId: !Sub "{{resolve:ssm:/${Environment}/Platform/Route53/PrimaryZoneID}}"
+  #     AliasTarget:
+  #       DNSName: !GetAtt IPVRApiCustomDomain.RegionalDomainName
+  #       HostedZoneId: !GetAtt IPVRApiCustomDomain.RegionalHostedZoneId
 
-  IPVRApiMapping:
-    Type: AWS::ApiGateway::BasePathMapping
-    DependsOn: IPVRApiCustomDomain
-    Properties:
-      DomainName: !Sub
-        - "api.${DNSSUFFIX}"
-        - DNSSUFFIX:
-            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
-      RestApiId: !Ref IPVRRestApi
-      Stage: !Sub "${IPVRRestApi.Stage}"
+  # IPVRApiMapping:
+  #   Type: AWS::ApiGateway::BasePathMapping
+  #   DependsOn: IPVRApiCustomDomain
+  #   Properties:
+  #     DomainName: !Sub
+  #       - "api.${DNSSUFFIX}"
+  #       - DNSSUFFIX:
+  #           !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+  #     RestApiId: !Ref IPVRRestApi
+  #     Stage: !Sub "${IPVRRestApi.Stage}"
 
-  ### End of API Gateway Custom Domain definition
+  # ### End of API Gateway Custom Domain definition
+
+  ### Comment TO HERE
 
   ### Function Definition
   PostEventFunction:
@@ -1040,7 +1043,7 @@ Resources:
           CLIENT_ID_SSM_PATH: !Sub "/${Environment}/ipvreturn/CLIENT_ID"
           OIDC_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
           RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
-          ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
+          # ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
       Policies:
         - AWSLambdaBasicExecutionRole
@@ -1193,6 +1196,28 @@ Resources:
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
 
+  RetryUsersBucket:
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-failed-user-ids-${Environment}
+      VersioningConfiguration:
+        Status: "Enabled"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteAfter24Hours
+            Status: Enabled
+            ExpirationInDays: 1
+          
   RetryFailedEmailsFunction:
     Type: AWS::Serverless::Function
     DependsOn: RetryFailedEmailsFunctionLogGroup
@@ -1211,30 +1236,33 @@ Resources:
             Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+          RETRY_USER_BUCKET_NAME: !Sub ${AWS::StackName}-failed-user-ids-${Environment}
       Policies:
-        - AWSLambdaBasicExecutionRole
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub "${Environment}/ipvreturn/CLIENT_ID"
-        - Statement:
-            - Sid: KMSPolicy
-              Effect: Allow
-              Action:
-                - kms:Sign
-              Resource:
-                Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
+        - S3WritePolicy:
+            BucketName: !Sub ${AWS::StackName}-failed-user-ids-${Environment}
+        - S3ReadPolicy:
+            BucketName: !Sub ${AWS::StackName}-failed-user-ids-${Environment}
+        - S3Del:
+            BucketName: !Sub ${AWS::StackName}-failed-user-ids-${Environment}
+            "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "s3:DeleteObject",
+            "Resource": "arn:aws:s3:::your-bucket-name/your-object-key"
+        }
+    ]
       Events:
-        userInfo:
-          Type: Api
+        S3Event:
+          Type: S3
           Properties:
-            Path: /session
-            Method: get
-            RestApiId: !Ref IPVRRestApi
+            Bucket: !Ref RetryUsersBucket
+            Events: s3:ObjectCreated:*
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
       BuildProperties:
         Minify: true
         Target: "es2020"
-        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
+        Sourcemap: false
         EntryPoints:
           - RetryFailedEmailsHandler.ts
 
@@ -1251,55 +1279,12 @@ Resources:
 
   RetryFailedEmailsFunctionLogsSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
-    # Condition: IsProdLikeEnvironment
     Properties:
       DestinationArn:
         !FindInMap [PlatformConfiguration, !Ref Environment, CSLSEGRESS]
       FilterPattern: ""
       LogGroupName: !Ref RetryFailedEmailsFunctionLogGroup
   
-  RetryUserIdsBucket:
-    Type: "AWS::S3::Bucket"
-    DeletionPolicy: Delete
-    Properties:
-      BucketName: !Sub ${AWS::StackName}-retryuserids-ipr-${Environment}
-      VersioningConfiguration:
-        Status: "Enabled"
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: AES256
-
-  JWKSBucketRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action: "sts:AssumeRole"
-            Effect: Allow
-            Principal:
-              Service: apigateway.amazonaws.com
-        Version: 2012-10-17
-      Policies:
-        - PolicyName: AccessJWKSjson
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "s3:Get*"
-                Resource:
-                  - !Sub "arn:aws:s3:::${RetryUserIdsBucket}/.well-known/jwks.json"
-      PermissionsBoundary: !If
-        - UsePermissionsBoundary
-        - !Ref PermissionsBoundary
-        - !Ref AWS::NoValue
-        
   #Gov Notify SQS Queue
   GovNotifySQSQueue:
     Type: "AWS::SQS::Queue"
