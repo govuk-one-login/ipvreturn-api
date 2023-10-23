@@ -12,8 +12,8 @@ export class Email {
 	constructor(data: Partial<Email>) {
 		this.userId = data.userId!;
 		this.emailAddress = data.emailAddress!;
-		this.firstName = data.firstName!;
-		this.lastName = data.lastName!;
+		// this.firstName = data.firstName!;
+		// this.lastName = data.lastName!;
 		this.messageType = data.messageType!;
 		this.referenceId = randomUUID();
 	}
@@ -37,13 +37,13 @@ export class Email {
     @IsEmail()
     emailAddress!: string;
 
-    @IsString()
-    @IsNotEmpty()
-    firstName!: string;
+  //   @IsString()
+  //   @IsNotEmpty()
+  //   firstName!: string;
 
-	@IsString()
-	@IsNotEmpty()
-	lastName!: string;
+	// @IsString()
+	// @IsNotEmpty()
+	// lastName!: string;
 
     @IsString()
     @IsNotEmpty()
