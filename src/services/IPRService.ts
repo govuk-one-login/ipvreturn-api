@@ -51,15 +51,21 @@ export class IPRService {
 		const params: QueryCommandInput = {
 			TableName: this.tableName,
 			IndexName: "documentUploadedOn-index",
-			KeyConditionExpression: "documentUploadedOn <> :nullValue AND notified = :notifiedValue",
-			FilterExpression: "attribute_not_exists(accountDeletedOn)",
+			KeyConditionExpression: "documentUploadedOn <> :nullValue",
+			FilterExpression: "attribute_not_exists(notified)",
 			ExpressionAttributeValues: {
-				":nullValue": { NULL: true },
-				":notifiedValue": false,
+				":nullValue": { NULL: true }
 			},
 		};
 
-		const sessionItems = (await this.dynamo.query(params))?.Items as SessionEvent[] || [];
+		let sessionItems;
+
+		try {
+			sessionItems = (await this.dynamo.query(params))?.Items as SessionEvent[] || [];
+		} catch (error: any) {
+			this.logger.error({ message: "getSessionsToRetry - failed executing get from dynamodb:", error });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session records");
+		}		
 
 		return sessionItems;
 	}
