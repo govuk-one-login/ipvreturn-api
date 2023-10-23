@@ -68,8 +68,8 @@ Resources:
       AttributeDefinitions:
         - AttributeName: "userId"
           AttributeType: "S"
-        # - AttributeName: "documentUploadedOn"
-        #   AttributeType: "N"
+        - AttributeName: "documentUploadedOn"
+          AttributeType: "N"
       KeySchema:
         - AttributeName: "userId"
           KeyType: "HASH"
