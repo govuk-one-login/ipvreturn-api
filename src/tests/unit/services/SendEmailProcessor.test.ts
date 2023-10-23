@@ -159,13 +159,14 @@ describe("SendEmailProcessor", () => {
 		"firstName",
 		"lastName",
 		"emailAddress",
-	])("Throws error when event body message is missing required attributes to send oldEmail", async (attribute) => {
+	])("Logs error when event body message is missing required attributes to send oldEmail", async (attribute) => {
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const eventBodyMessage = eventBody.Message;
 		delete eventBodyMessage[attribute];
 		eventBody.Message = eventBodyMessage;
 		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
-		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
+		sendEmailProcessorTest.processRequest(message);
+		expect(logger.info).toHaveBeenCalledWith("Failed to Validate Email model data - Continuing to send fallback email to user", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
 	});
 
 	it.each([

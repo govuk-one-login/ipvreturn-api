@@ -45,14 +45,14 @@ export class SendEmailProcessor {
 		return SendEmailProcessor.instance;
 	}
 
-	async processRequest(message: Email | DynamicEmail): Promise<EmailResponse> {
+	async processRequest(message: Email | DynamicEmail | FallbackEmail): Promise<EmailResponse> {
 		let fallbackEventJourney: boolean = false;
 		//const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		// Validate Email model
 		try {
 			await this.validationHelper.validateModel(message, this.logger);
 		} catch (error) {
-			this.logger.error("Failed to Validate Email model data - Continuing to send fallback email to user", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+			this.logger.info("Failed to Validate Email model data - Continuing to send fallback email to user", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 			fallbackEventJourney = true;
 			// throw new AppError(HttpCodesEnum.SERVER_ERROR, "Failed to Validate Email model data.");
 		}
@@ -101,7 +101,7 @@ export class SendEmailProcessor {
 			emailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
 		} else {
 			this.logger.info("Sending Fallback Email to user")
-			emailResponse = await this.govNotifyService.sendEmail(null, Constants.VISIT_PO_EMAIL_FALLBACK);
+			emailResponse = await this.govNotifyService.sendEmail(message, Constants.VISIT_PO_EMAIL_FALLBACK);
 		}
 		
 		try {

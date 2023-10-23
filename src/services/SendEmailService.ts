@@ -90,7 +90,7 @@ export class SendEmailService {
     			break;
     		}
 				case Constants.VISIT_PO_EMAIL_FALLBACK: {				
-    			// Send New template email
+    			// Send Fallback Email Template
     			personalisation = {
     				"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
     			};
