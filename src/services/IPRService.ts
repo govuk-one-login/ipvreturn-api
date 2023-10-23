@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { Logger } from "@aws-lambda-powertools/logger";
 import { AppError } from "../utils/AppError";
-import { DynamoDBDocument, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocument, GetCommand, UpdateCommand, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { Constants } from "../utils/Constants";
 import { sqsClient } from "../utils/SqsClient";
@@ -44,6 +44,24 @@ export class IPRService {
 			IPRService.instance = new IPRService(tableName, logger, dynamoDbClient);
 		}
 		return IPRService.instance;
+	}
+
+	async getSessionsToRetry(): Promise<Array<SessionEvent>> {
+		this.logger.debug("Table name " + this.tableName);
+		const params: QueryCommandInput = {
+			TableName: this.tableName,
+			IndexName: 'documentUploadedOn-index',
+			KeyConditionExpression: 'documentUploadedOn <> :nullValue AND notified = :notifiedValue',
+			FilterExpression: 'attribute_not_exists(accountDeletedOn)',
+			ExpressionAttributeValues: {
+				':nullValue': { NULL: true },
+				':notifiedValue': false,
+			},
+		};
+
+		const sessionItems = (await this.dynamo.query(params))?.Items as SessionEvent[] || [];
+
+		return sessionItems;
 	}
 
 	async getSessionBySub(userId: string): Promise<ExtSessionEvent | undefined> {

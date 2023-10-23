@@ -16,6 +16,8 @@ export class EnvironmentVariables {
 
 	private readonly GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID = process.env.GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID;
 
+	private readonly GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID = process.env.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID;
+
 	private GOVUKNOTIFY_MAX_RETRIES = process.env.GOVUKNOTIFY_MAX_RETRIES;
 
 	private GOVUKNOTIFY_BACKOFF_PERIOD_MS = process.env.GOVUKNOTIFY_BACKOFF_PERIOD_MS;
@@ -60,6 +62,7 @@ export class EnvironmentVariables {
 					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0 ||
 					!this.GOVUKNOTIFY_API || this.GOVUKNOTIFY_API.trim().length === 0 ||
 					!this.GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID || this.GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID.trim().length === 0 ||
+					!this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID || this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID.trim().length === 0 ||
 					!this.GOVUKNOTIFY_TEMPLATE_ID || this.GOVUKNOTIFY_TEMPLATE_ID.trim().length === 0) {
 					logger.error({ message: "GovNotifyService - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
@@ -136,6 +139,10 @@ export class EnvironmentVariables {
 
 	getDynamicEmailTemplateId(): any {
 		return this.GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID;
+	}
+
+	getFallbackEmailTemplate(): any {
+		return this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID;
 	}
 
 	maxRetries(): number {

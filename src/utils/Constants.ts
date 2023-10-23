@@ -41,4 +41,6 @@ export class Constants {
     static readonly VIST_PO_EMAIL_STATIC = "VIST_PO_EMAIL_STATIC";
 
     static readonly VIST_PO_EMAIL_DYNAMIC = "VIST_PO_EMAIL_DYNAMIC";
+
+		static readonly VISIT_PO_EMAIL_FALLBACK = "VISIT_PO_EMAIL_FALLBACK";
 }
