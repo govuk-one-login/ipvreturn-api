@@ -51,11 +51,11 @@ export class IPRService {
 		const params: QueryCommandInput = {
 			TableName: this.tableName,
 			IndexName: "documentUploadedOn-index",
-			KeyConditionExpression: "documentUploadedOn <> :nullValue",
-			FilterExpression: "attribute_not_exists(notified)",
-			ExpressionAttributeValues: {
-				":nullValue": { NULL: true }
-			},
+			//KeyConditionExpression: "documentUploadedOn <> :nullValue",
+			FilterExpression: "attribute_exists(documentUploadedOn) AND attribute_not_exists(notified) AND attribute_not_exists(accountDeletedOn)",
+			// ExpressionAttributeValues: {
+			// 	":nullValue": { NULL: true }
+			// },
 		};
 
 		let sessionItems;
