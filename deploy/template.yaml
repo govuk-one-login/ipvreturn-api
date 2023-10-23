@@ -104,7 +104,7 @@ Mappings:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
-      GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
+      GOVUKNOTIFYAPI: "https://ipvr-gov-notify-stub-govnotifystub.return.dev.account.gov.uk/govnotify"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk/resume"
@@ -1216,6 +1216,7 @@ Resources:
           POWERTOOLS_SERVICE_NAME: FallbackEmailHandler
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+          GOV_NOTIFY_QUEUE_URL: !Ref GovNotifySQSQueue
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
@@ -1231,6 +1232,22 @@ Resources:
             KeyId:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-key-id"
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "sqs:SendMessage"
+              Resource: !GetAtt GovNotifySQSQueue.Arn
+            - Effect: Allow
+              Action:
+                - "kms:Encrypt"
+                - "kms:Decrypt"
+                - "kms:GenerateDataKey"
+              Resource: !GetAtt GovNotifyEncryptionKey.Arn
+      Events:
+        ScheduledEvent:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 16 ? * MON-FRI *)  # This will run at 4pm UTC on weekdays (Monday to Friday) - To be changed back to 10am soon
 
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild

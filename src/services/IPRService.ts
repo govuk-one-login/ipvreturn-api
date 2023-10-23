@@ -50,22 +50,17 @@ export class IPRService {
 		this.logger.debug("Table name " + this.tableName);
 		const params: QueryCommandInput = {
 			TableName: this.tableName,
-			IndexName: "documentUploadedOn-index",
-			//KeyConditionExpression: "documentUploadedOn <> :nullValue",
 			FilterExpression: "attribute_exists(documentUploadedOn) AND attribute_not_exists(notified) AND attribute_not_exists(accountDeletedOn)",
-			// ExpressionAttributeValues: {
-			// 	":nullValue": { NULL: true }
-			// },
 		};
 
 		let sessionItems;
 
 		try {
-			sessionItems = (await this.dynamo.query(params))?.Items as SessionEvent[] || [];
+			sessionItems = (await this.dynamo.scan(params))?.Items as SessionEvent[] || [];
 		} catch (error: any) {
-			this.logger.error({ message: "getSessionsToRetry - failed executing get from dynamodb:", error });
+			this.logger.error({ message: "getSessionsToRetry - failed executing scan from dynamodb:", error });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session records");
-		}		
+		}        
 
 		return sessionItems;
 	}

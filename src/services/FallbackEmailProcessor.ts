@@ -46,6 +46,8 @@ export class FallbackEmailProcessor {
 			return { statusCode: HttpCodesEnum.OK, body: "No Sessions Records found matching retry conditions" };
 		}
 
+		this.logger.info("Number of Fallback Emails to Send: ", { numOfEmails: SessionRecordsToRetry.length });
+
 		let emailType: string;
 		
 		for (const item of SessionRecordsToRetry) {
@@ -70,15 +72,13 @@ export class FallbackEmailProcessor {
 					await this.iprService.saveEventData(item.userId, updateExpression, expressionAttributeValues);
 					this.logger.info({ message: "Updated the session event record with notified flag" });
 				} catch (error: any) {
-					this.logger.error("");
-					throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
+					this.logger.error("Failed to set notified flag for this record");
 				}
 			} catch (error) {
 				this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
 					reason: "Processing Event session data, failed to post fallback email message to GovNotify SQS Queue",
 					error,
 				}, { messageCode: MessageCodes.FAILED_TO_WRITE_GOV_NOTIFY });
-				throw new AppError(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending fallback email message to GovNotify handler");
 			}	
 		}
 	}

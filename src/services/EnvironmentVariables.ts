@@ -93,7 +93,8 @@ export class EnvironmentVariables {
 				break;
 			}
 			case ServicesEnum.FALLBACK_EMAIL_SERVICE: {
-				if (!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
+				if (!this.GOV_NOTIFY_QUEUE_URL || this.GOV_NOTIFY_QUEUE_URL.trim().length === 0 ||
+					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
 					logger.error({ message: "FallbackEmail Handler - Missing SessionEvents Tablename" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}

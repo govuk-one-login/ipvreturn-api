@@ -1,4 +1,4 @@
-import { Email, DynamicEmail } from "../models/Email";
+import { Email, DynamicEmail, FallbackEmail } from "../models/Email";
 import { EmailResponse } from "../models/EmailResponse";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
@@ -45,7 +45,7 @@ export class SendEmailProcessor {
 		return SendEmailProcessor.instance;
 	}
 
-	async processRequest(message: Email | DynamicEmail): Promise<EmailResponse> {
+	async processRequest(message: Email | DynamicEmail | FallbackEmail): Promise<EmailResponse> {
 		//const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		// Validate Email model
 		try {
