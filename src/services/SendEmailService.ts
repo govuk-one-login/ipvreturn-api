@@ -89,6 +89,14 @@ export class SendEmailService {
     			templateId = this.environmentVariables.getDynamicEmailTemplateId();
     			break;
     		}
+				case Constants.VISIT_PO_EMAIL_FALLBACK: {				
+    			// Send New template email
+    			personalisation = {
+    				"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
+    			};
+    			templateId = this.environmentVariables.getFallbackEmailTemplateId();
+    			break;
+    		}
     		default: {
     			this.logger.error(`Unrecognised emailType: ${emailType}, unable to send the email.`);
     			throw new AppError(HttpCodesEnum.SERVER_ERROR, `Unrecognised emailType: ${emailType}, unable to send the email.`);

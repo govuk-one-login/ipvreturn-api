@@ -11,6 +11,7 @@ import { MessageCodes } from "../models/enums/MessageCodes";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
+import { Constants } from "../utils/Constants";
 
 export class SendEmailProcessor {
 
@@ -45,13 +46,15 @@ export class SendEmailProcessor {
 	}
 
 	async processRequest(message: Email | DynamicEmail): Promise<EmailResponse> {
+		let fallbackEventJourney: boolean = false;
 		//const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		// Validate Email model
 		try {
 			await this.validationHelper.validateModel(message, this.logger);
 		} catch (error) {
-			this.logger.error("Failed to Validate Email model data", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Failed to Validate Email model data.");
+			this.logger.error("Failed to Validate Email model data - Continuing to send fallback email to user", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+			fallbackEventJourney = true;
+			// throw new AppError(HttpCodesEnum.SERVER_ERROR, "Failed to Validate Email model data.");
 		}
 
 		//Retrieve session event record for the userId
@@ -86,12 +89,21 @@ export class SendEmailProcessor {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 		
-		const sessionEventData = message instanceof DynamicEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
-		
-		// Validate all necessary fields are populated in the session store before processing the data.
-		const data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
+		let emailResponse: EmailResponse;
 
-		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
+		if (!fallbackEventJourney) {
+			const sessionEventData = message instanceof DynamicEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
+		
+			// Validate all necessary fields are populated in the session store before processing the data.
+			const data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
+
+			this.logger.info(`Sending ${data.emailType} Email to user`)
+			emailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
+		} else {
+			this.logger.info("Sending Fallback Email to user")
+			emailResponse = await this.govNotifyService.sendEmail(null, Constants.VISIT_PO_EMAIL_FALLBACK);
+		}
+		
 		try {
 			await this.iprService.sendToTXMA({
 				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
