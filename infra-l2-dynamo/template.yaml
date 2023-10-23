@@ -68,21 +68,23 @@ Resources:
       AttributeDefinitions:
         - AttributeName: "userId"
           AttributeType: "S"
+        - AttributeName: "documentUploadedOn"
+          AttributeType: "N"
       KeySchema:
         - AttributeName: "userId"
           KeyType: "HASH"
-      # GlobalSecondaryIndexes:
-      #   - IndexName: "documentUploadedOn-index"
-      #     KeySchema:
-      #       - AttributeName: "documentUploadedOn"
-      #         KeyType: "HASH"
-      #     Projection:
-      #       NonKeyAttributes:
-      #         - "userId"
-      #         - "expiresOn"
-      #         - "notified"
-      #         - "accountDeletedOn"
-      #       ProjectionType: "INCLUDE"
+      GlobalSecondaryIndexes:
+        - IndexName: "documentUploadedOn-index"
+          KeySchema:
+            - AttributeName: "documentUploadedOn"
+              KeyType: "HASH"
+          Projection:
+            NonKeyAttributes:
+              - "userId"
+              - "expiresOn"
+              - "notified"
+              - "accountDeletedOn"
+            ProjectionType: "INCLUDE"
       TimeToLiveSpecification:
         AttributeName: expiryDate
         Enabled: true
