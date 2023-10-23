@@ -234,7 +234,7 @@ describe("IPR Service", () => {
 		});
 	});
 
-	describe('sessionsToRetry', () => {
+	describe("sessionsToRetry", () => {
 		it("should return empty array when session items are not found by the retry query", async () => {
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Items: [] });
 	
@@ -245,26 +245,26 @@ describe("IPR Service", () => {
 		it("should return session items when sessions are found matching the retry query", async () => {
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({
 				Items: [
-				{
-					userId: "urn:fdc:gov.uk:2022:6f2daa66-d619-479b-a5d1-4cf4c3fd96df",
-					documentUploadedOn: "1697468794801",
-					notified: false
-				},
-				{
-					userId: "urn:fdc:gov.uk:2022:6f2daa66-d619-479b-a5d1-4cf4c3fd96df",
-					documentUploadedOn: "1697468794801",
-				},
-			],
+					{
+						userId: "urn:fdc:gov.uk:2022:6f2daa66-d619-479b-a5d1-4cf4c3fd96df",
+						documentUploadedOn: "1697468794801",
+						notified: false,
+					},
+					{
+						userId: "urn:fdc:gov.uk:2022:6f2daa66-d619-479b-a5d1-4cf4c3fd96df",
+						documentUploadedOn: "1697468794801",
+					},
+				],
 			});
 	
 			const result = await iprService.getSessionsToRetry();
 			expect(result).toEqual([
 				{
-					"documentUploadedOn": "1697468794801", "notified": false, "userId": "urn:fdc:gov.uk:2022:6f2daa66-d619-479b-a5d1-4cf4c3fd96df"
+					"documentUploadedOn": "1697468794801", "notified": false, "userId": "urn:fdc:gov.uk:2022:6f2daa66-d619-479b-a5d1-4cf4c3fd96df",
 				},
 				{
-					"documentUploadedOn": "1697468794801", "userId": "urn:fdc:gov.uk:2022:6f2daa66-d619-479b-a5d1-4cf4c3fd96df"
-				}
+					"documentUploadedOn": "1697468794801", "userId": "urn:fdc:gov.uk:2022:6f2daa66-d619-479b-a5d1-4cf4c3fd96df",
+				},
 			]);
 		});
 

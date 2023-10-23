@@ -60,11 +60,11 @@ class GovNotifyHandler implements LambdaInterface {
 				const messageType = body.Message.messageType;
 				let message;
 				switch (messageType) {
-					case Constants.VIST_PO_EMAIL_STATIC: {
+					case Constants.VISIT_PO_EMAIL_STATIC: {
 						message = Email.parseRequest(JSON.stringify(body.Message));
 						break;
 					}
-					case Constants.VIST_PO_EMAIL_DYNAMIC: {
+					case Constants.VISIT_PO_EMAIL_DYNAMIC: {
 						message = DynamicEmail.parseRequest(JSON.stringify(body.Message));
 						break;
 					}

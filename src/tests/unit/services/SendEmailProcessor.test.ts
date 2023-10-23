@@ -271,7 +271,7 @@ describe("SendEmailProcessor", () => {
 		const newEmailmessage = DynamicEmail.parseRequest(JSON.stringify(eventBody.Message));
 		const emailResponse = await sendEmailProcessorTest.processRequest(newEmailmessage);
 
-		expect(mockGovNotifyService.sendEmail).toHaveBeenCalledWith(newEmailmessage, Constants.VIST_PO_EMAIL_DYNAMIC);
+		expect(mockGovNotifyService.sendEmail).toHaveBeenCalledWith(newEmailmessage, Constants.VISIT_PO_EMAIL_DYNAMIC);
 
 		expect(emailResponse.emailSentDateTime).toEqual(expectedDateTime);
 		expect(emailResponse.emailFailureMessage).toBe("");
@@ -310,7 +310,7 @@ describe("SendEmailProcessor", () => {
 
 		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
 		expect(logger.info).toHaveBeenNthCalledWith(2, "Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { "messageCode": "MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT" });
-		expect(mockGovNotifyService.sendEmail).toHaveBeenCalledWith(newEmailmessage, Constants.VIST_PO_EMAIL_STATIC);
+		expect(mockGovNotifyService.sendEmail).toHaveBeenCalledWith(newEmailmessage, Constants.VISIT_PO_EMAIL_STATIC);
 
 		expect(emailResponse.emailSentDateTime).toEqual(expectedDateTime);
 		expect(emailResponse.emailFailureMessage).toBe("");

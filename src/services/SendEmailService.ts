@@ -63,7 +63,7 @@ export class SendEmailService {
     	let templateId;
     	let personalisation;
     	switch (emailType) {
-    		case Constants.VIST_PO_EMAIL_STATIC: {
+    		case Constants.VISIT_PO_EMAIL_STATIC: {
     			// Send Old template email
     			personalisation = {
     				"first name": message.firstName,
@@ -74,7 +74,7 @@ export class SendEmailService {
     			break;
 
     		}
-    		case Constants.VIST_PO_EMAIL_DYNAMIC: {				
+    		case Constants.VISIT_PO_EMAIL_DYNAMIC: {				
     			// Send New template email
     			personalisation = {
     				"first name": message.firstName,
@@ -89,7 +89,7 @@ export class SendEmailService {
     			templateId = this.environmentVariables.getDynamicEmailTemplateId();
     			break;
     		}
-				case Constants.VISIT_PO_EMAIL_FALLBACK: {				
+    		case Constants.VISIT_PO_EMAIL_FALLBACK: {				
     			// Send New template email
     			personalisation = {
     				"return_journey_URL": this.environmentVariables.returnJourneyUrl(),

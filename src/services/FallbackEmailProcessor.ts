@@ -42,7 +42,7 @@ export class FallbackEmailProcessor {
 		const SessionRecordsToRetry = await this.iprService.getSessionsToRetry();
 
 		if (SessionRecordsToRetry.length === 0) {
-			this.logger.info(`No Sessions Records found matching retry conditions`);
+			this.logger.info("No Sessions Records found matching retry conditions");
 			return { statusCode: HttpCodesEnum.OK, body: "No Sessions Records found matching retry conditions" };
 		}
 
@@ -51,7 +51,7 @@ export class FallbackEmailProcessor {
 		for (const item of SessionRecordsToRetry) {
 			try { 
 				if (item.nameParts) {
-					emailType = Constants.VIST_PO_EMAIL_STATIC;
+					emailType = Constants.VISIT_PO_EMAIL_STATIC;
 					this.logger.info({ message: `Trying to send ${emailType} message to GovNotify handler` });
 					const nameParts = personalIdentityUtils.getNames(item.nameParts);
 					await this.iprService.sendToGovNotify(buildGovNotifyEventFields(nameParts, item, emailType, this.logger));
@@ -70,15 +70,15 @@ export class FallbackEmailProcessor {
 					await this.iprService.saveEventData(item.userId, updateExpression, expressionAttributeValues);
 					this.logger.info({ message: "Updated the session event record with notified flag" });
 				} catch (error: any) {
-					this.logger.error("")
+					this.logger.error("");
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 				}
 			} catch (error) {
 				this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
-					reason: `Processing Event session data, failed to post fallback email message to GovNotify SQS Queue`,
+					reason: "Processing Event session data, failed to post fallback email message to GovNotify SQS Queue",
 					error,
 				}, { messageCode: MessageCodes.FAILED_TO_WRITE_GOV_NOTIFY });
-				throw new AppError(HttpCodesEnum.SERVER_ERROR, `An error occurred when sending fallback email message to GovNotify handler`);
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending fallback email message to GovNotify handler");
 			}	
 		}
 	}

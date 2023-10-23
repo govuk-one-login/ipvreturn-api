@@ -11,6 +11,7 @@ import { MessageCodes } from "../models/enums/MessageCodes";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
+import { Constants } from "../utils/Constants";
 
 export class SendEmailProcessor {
 
@@ -78,20 +79,27 @@ export class SendEmailProcessor {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Notified flag is not set to true for this user session event");
 		}
 
-		// Validate if the record is missing some fields related to the Events and log the details and do not notify the User.
-		try {
-			this.validationHelper.validateSessionEventFields(session);
-		} catch (error: any) {
-			this.logger.warn(error.message, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
-		}
-		
-		const sessionEventData = message instanceof DynamicEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
-		
-		// Validate all necessary fields are populated in the session store before processing the data.
-		const data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
+		let emailResponse: EmailResponse;
+		// Skip the session record Modal/field validations if messageType is VISIT_PO_EMAIL_FALLBACK
+		if (message.messageType !== Constants.VISIT_PO_EMAIL_FALLBACK) {			
 
-		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
+			// Validate if the record is missing some fields related to the Events and log the details and do not notify the User.
+			try {
+				this.validationHelper.validateSessionEventFields(session);
+			} catch (error: any) {
+				this.logger.warn(error.message, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
+			}
+			
+			const sessionEventData = message instanceof DynamicEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
+			
+			// Validate all necessary fields are populated in the session store before processing the data.
+			const data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
+
+			emailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
+		} else {
+			emailResponse = await this.govNotifyService.sendEmail(message, Constants.VISIT_PO_EMAIL_FALLBACK);
+		}
 		try {
 			await this.iprService.sendToTXMA({
 				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",

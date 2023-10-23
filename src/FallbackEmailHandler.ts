@@ -6,17 +6,18 @@ import { LambdaInterface } from "@aws-lambda-powertools/commons";
 import { FallbackEmailProcessor } from "./services/FallbackEmailProcessor";
 import { MessageCodes } from "./models/enums/MessageCodes";
 import { AppError } from "./utils/AppError";
+import { Constants } from "./utils/Constants";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : "IPR-CRI";
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : "DEBUG";
+const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME ? process.env.POWERTOOLS_SERVICE_NAME : Constants.FALLBACK_EMAIL_LOGGER_SVC_NAME;
 
 const logger = new Logger({
 	logLevel: POWERTOOLS_LOG_LEVEL,
-	serviceName: "FallbackEmailHandler",
+	serviceName: POWERTOOLS_SERVICE_NAME,
 });
-let CLIENT_ID: string;
 
-const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceName: "FallbackEmailHandler" });
+const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceName: POWERTOOLS_SERVICE_NAME });
 
 class FallbackEmailHandler implements LambdaInterface {
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })

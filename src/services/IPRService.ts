@@ -46,16 +46,16 @@ export class IPRService {
 		return IPRService.instance;
 	}
 
-	async getSessionsToRetry(): Promise<Array<SessionEvent>> {
+	async getSessionsToRetry(): Promise<SessionEvent[]> {
 		this.logger.debug("Table name " + this.tableName);
 		const params: QueryCommandInput = {
 			TableName: this.tableName,
-			IndexName: 'documentUploadedOn-index',
-			KeyConditionExpression: 'documentUploadedOn <> :nullValue AND notified = :notifiedValue',
-			FilterExpression: 'attribute_not_exists(accountDeletedOn)',
+			IndexName: "documentUploadedOn-index",
+			KeyConditionExpression: "documentUploadedOn <> :nullValue AND notified = :notifiedValue",
+			FilterExpression: "attribute_not_exists(accountDeletedOn)",
 			ExpressionAttributeValues: {
-				':nullValue': { NULL: true },
-				':notifiedValue': false,
+				":nullValue": { NULL: true },
+				":notifiedValue": false,
 			},
 		};
 
