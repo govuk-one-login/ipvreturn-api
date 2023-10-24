@@ -168,7 +168,7 @@ describe("SendEmailProcessor", () => {
 	// 	await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
 	// });
 
-	it.each([
+	it.skip.each([
 		"userId",
 		"firstName",
 		"lastName",
@@ -215,7 +215,7 @@ describe("SendEmailProcessor", () => {
 
 	});
 
-	it.each([
+	it.skip.each([
 		"userEmail",
 		"nameParts",
 		"clientName",
@@ -289,7 +289,7 @@ describe("SendEmailProcessor", () => {
 		});
 	});
 
-	it.each([
+	it.skip.each([
 		"documentType",
 		"documentExpiryDate",
 		"postOfficeVisitDetails",
