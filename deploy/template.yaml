@@ -151,8 +151,7 @@ Mappings:
       OIDCURL: "https://oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
     production:
-      GOVUKNOTIFYTEMPLATEID: "206971e2-d576-4d12-b34f-b0de442d39ab"
-      GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "f62672d4-ff45-470e-8506-956482061f54"
+      GOVUKNOTIFYTEMPLATEID: "b1f0f510-7501-4e49-b5d4-aced6e36ad90"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "b1f0f510-7501-4e49-b5d4-aced6e36ad90"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
