@@ -66,8 +66,8 @@ export class SendEmailService {
     		case Constants.VIST_PO_EMAIL_STATIC: {
     			// Send Old template email
     			personalisation = {
-    				"first name": message.firstName,
-    				"last name": message.lastName,
+    				// "first name": message.firstName,
+    				// "last name": message.lastName,
     				"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
     			};
     			templateId = this.environmentVariables.getEmailTemplateId();
