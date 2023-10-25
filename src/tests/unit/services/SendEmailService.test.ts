@@ -142,4 +142,21 @@ describe("SendEmailProcessor", () => {
 		expect(emailResponse.emailFailureMessage).toBe("");
 	});
 
+	it("Returns EmailResponse when Fallback is sent successfully", async () => {
+		const mockEmailResponse = new EmailResponse(new Date().toISOString(), "", 201);
+		mockGovNotify.sendEmail.mockResolvedValue(mockEmailResponse);
+		const eventBody = JSON.parse(sqsEventNewEmail.Records[0].body);
+		const emailResponse = await sendEmailServiceTest.sendEmail(null, Constants.VISIT_PO_EMAIL_FALLBACK);
+
+		expect(mockGovNotify.sendEmail).toHaveBeenCalledWith("fallback-template-id", "test.user@digital.cabinet-office.gov.uk", {
+    		"personalisation": {
+				"return_journey_URL": "www.test.com/return_journey_url",
+			},
+    		reference: expect.anything(),
+    	});
+
+		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(1);
+		expect(emailResponse.emailFailureMessage).toBe("");
+	});
+
 });
