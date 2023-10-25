@@ -71,9 +71,9 @@ Resources:
       KeySchema:
         - AttributeName: "userId"
           KeyType: "HASH"
-      TimeToLiveSpecification:
-        AttributeName: expiryDate
-        Enabled: true
+      # TimeToLiveSpecification:
+      #   AttributeName: expiresOn
+      #   Enabled: true
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       SSESpecification:
