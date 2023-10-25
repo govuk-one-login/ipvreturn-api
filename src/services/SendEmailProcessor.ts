@@ -47,13 +47,12 @@ export class SendEmailProcessor {
 	async processRequest(message: Email | DynamicEmail): Promise<EmailResponse> {
 		//const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		// Validate Email model
-		// TODO temporarily switching off the SQS event modal validation.
-		// try {
-		// 	await this.validationHelper.validateModel(message, this.logger);
-		// } catch (error) {
-		// 	this.logger.error("Failed to Validate Email model data", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
-		// 	throw new AppError(HttpCodesEnum.SERVER_ERROR, "Failed to Validate Email model data.");
-		// }
+		try {
+			await this.validationHelper.validateModel(message, this.logger);
+		} catch (error) {
+			this.logger.error("Failed to Validate Email model data", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Failed to Validate Email model data.");
+		}
 
 		//Retrieve session event record for the userId
 		let session;
@@ -90,11 +89,9 @@ export class SendEmailProcessor {
 		const sessionEventData = message instanceof DynamicEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
 		
 		// Validate all necessary fields are populated in the session store before processing the data.
-		// TODO Temporary switch of modal validations
-		//const data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
-		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, message.messageType);
+		const data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
 
-		//const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
+		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
 		try {
 			await this.iprService.sendToTXMA({
 				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
