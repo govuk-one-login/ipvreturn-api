@@ -855,7 +855,7 @@ Resources:
     DependsOn: StreamProcessorFunctionLogGroup
     Properties:
       FunctionName: !Sub "Ipvreturn-StreamProcessor-${AWS::StackName}"
-      Handler: StreamProcessorHandler.lambdaHandler
+      Handler: RecordStreamHandler.lambdaHandler
       CodeUri: ../src/
       ReservedConcurrentExecutions: !If
         - ApplyReservedConcurrency
@@ -863,7 +863,7 @@ Resources:
         - !Ref AWS::NoValue
       Environment:
         Variables:
-          POWERTOOLS_SERVICE_NAME: StreamProcessorHandler
+          POWERTOOLS_SERVICE_NAME: RecordStreamHandler
           GOV_NOTIFY_QUEUE_URL: !Ref GovNotifySQSQueue
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
@@ -907,7 +907,7 @@ Resources:
         Target: "es2020"
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
-          - StreamProcessorHandler.ts
+          - RecordStreamHandler.ts
 
   SessionEventsTableStream:
     Type: AWS::Lambda::EventSourceMapping

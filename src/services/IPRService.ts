@@ -123,6 +123,25 @@ export class IPRService {
     }
 	}
 
+	async setNotifiedFlag(userId: string, notified: boolean): Promise<string | void> {
+    try {
+        this.logger.info({ message: "Setting notified flag", tableName: this.tableName });
+        const updateSessionInfoCommand = new UpdateCommand({
+            TableName: this.tableName,
+            Key: { userId },
+            UpdateExpression: "SET notified = :notified",
+            ExpressionAttributeValues: { ":notified": notified },
+        });
+
+        await this.dynamo.send(updateSessionInfoCommand);
+				this.logger.info({ message: "Updated the session event record with notified flag" });
+        return "Success";
+    } catch (error) {
+        this.logger.error({ message: "Failed to updated the session event record with notified flag", error });
+        throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
+    }
+	}
+
 
 	async sendToGovNotify(event: GovNotifyEvent): Promise<void> {
 		try {
