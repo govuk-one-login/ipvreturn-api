@@ -32,7 +32,7 @@ describe("SendEmailProcessor", () => {
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
 	});
 
-	it.skip("Returns EmailResponse when oldEmail is sent successfully", async () => {
+	it("Returns EmailResponse when oldEmail is sent successfully", async () => {
 		const mockEmailResponse = new EmailResponse(new Date().toISOString(), "", 201);
 		mockGovNotify.sendEmail.mockResolvedValue(mockEmailResponse);
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
@@ -117,7 +117,7 @@ describe("SendEmailProcessor", () => {
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(4);
 	});
 
-	it.skip("Returns EmailResponse when newEmail is sent successfully", async () => {
+	it("Returns EmailResponse when newEmail is sent successfully", async () => {
 		const mockEmailResponse = new EmailResponse(new Date().toISOString(), "", 201);
 		mockGovNotify.sendEmail.mockResolvedValue(mockEmailResponse);
 		const eventBody = JSON.parse(sqsEventNewEmail.Records[0].body);
