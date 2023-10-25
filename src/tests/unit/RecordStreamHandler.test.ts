@@ -1,18 +1,18 @@
 import { mock } from "jest-mock-extended";
-import { lambdaHandler } from "../../StreamProcessorHandler";
+import { lambdaHandler } from "../../RecordStreamHandler";
 import { HttpCodesEnum } from "../../models/enums/HttpCodesEnum";
-import { SessionEventProcessor } from "../../services/SessionEventProcessor";
+import { RecordStreamProcessor } from "../../services/RecordStreamProcessor";
 import { EventNameEnum, VALID_DYNAMODB_STREAM_EVENT } from "./data/dynamodb-stream-record";
 import { AppError } from "../../utils/AppError";
 
-const mockedSessionEventProcessor = mock<SessionEventProcessor>();
+const mockedRecordStreamProcessor = mock<RecordStreamProcessor>();
 
-describe("StreamProcessorHandler", () => {
+describe("RecordStreamHandler", () => {
 	it("return success response for streamProcessor", async () => {
-		SessionEventProcessor.getInstance = jest.fn().mockReturnValue(mockedSessionEventProcessor);
+		RecordStreamProcessor.getInstance = jest.fn().mockReturnValue(mockedRecordStreamProcessor);
 		await lambdaHandler(VALID_DYNAMODB_STREAM_EVENT, "IPR");
 		// eslint-disable-next-line @typescript-eslint/unbound-method
-		expect(mockedSessionEventProcessor.processRequest).toHaveBeenCalledTimes(1);
+		expect(mockedRecordStreamProcessor.processRequest).toHaveBeenCalledTimes(1);
 	});
 
 	it("returns Bad request when number of records in the DynamoDBStreamEvent is not equal to 1", async () => {
@@ -22,7 +22,7 @@ describe("StreamProcessorHandler", () => {
 	});
 
 	it("errors when stream processor throws AppError", async () => {
-		SessionEventProcessor.getInstance = jest.fn().mockImplementation(() => {
+		RecordStreamProcessor.getInstance = jest.fn().mockImplementation(() => {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "");
 		});
 		const response = await lambdaHandler(VALID_DYNAMODB_STREAM_EVENT, "IPR");

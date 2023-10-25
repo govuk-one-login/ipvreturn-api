@@ -24,7 +24,7 @@ export class Constants {
 
     static readonly POSTEVENT_LOGGER_SVC_NAME = "PostEventHandler";
 
-    static readonly STREAM_PROCESSOR_LOGGER_SVC_NAME = "StreamProcessorHandler";
+    static readonly STREAM_PROCESSOR_LOGGER_SVC_NAME = "RecordStreamHandler";
 
     static readonly IPVRETURN_METRICS_NAMESPACE = "IPVRETURN-CRI";
 

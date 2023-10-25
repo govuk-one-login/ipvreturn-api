@@ -180,6 +180,34 @@ describe("IPR Service", () => {
 		});
 	});
 
+	describe("setNotifiedFlag", () => {
+		it("should update session with setNotifiedFlag flag", async () => {
+			mockDynamoDbClient.send = jest.fn().mockResolvedValue({});
+			await iprService.setNotifiedFlag(userId, true);
+			expect(mockDynamoDbClient.send).toHaveBeenCalledWith(expect.objectContaining({
+				input: {
+					ExpressionAttributeValues: {
+						":notified": true,
+					},
+					Key: {
+						userId: userId,
+					},
+					TableName: "MYTABLE",
+					UpdateExpression: "SET notified = :notified",
+				},
+			}));
+		});
+
+		it("Should throw error if setNotifiedFlag fails", async () => {
+			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
+			return expect(iprService.setNotifiedFlag(userId, true)).rejects.toThrow(
+				expect.objectContaining({
+					statusCode: HttpCodesEnum.SERVER_ERROR,
+				}),
+			);
+		});
+	});
+
 	describe("sendToTXMA", () => {
 		it("Should send event to TXMA with the correct details", async () => {
 			const messageBody = JSON.stringify(txmaEventPayload);

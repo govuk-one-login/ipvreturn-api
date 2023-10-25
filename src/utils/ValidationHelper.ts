@@ -31,32 +31,49 @@ export class ValidationHelper {
 	}
 
 	validateSessionEventFields(sessionEventData: SessionEvent): void {
-		if (!sessionEventData.ipvStartedOn || !(sessionEventData.ipvStartedOn > 0)) {
-			throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, "ipvStartedOn is not yet populated, unable to process the DB record.");
-		} else if (!sessionEventData.journeyWentAsyncOn || !(sessionEventData.journeyWentAsyncOn > 0)) {
-			throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, "journeyWentAsyncOn is not yet populated, unable to process the DB record.");
-		} else if (!sessionEventData.readyToResumeOn || !(sessionEventData.readyToResumeOn > 0)) {
-			throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, "readyToResumeOn is not yet populated, unable to process the DB record.");
+		const validationRules = [
+			{ field: sessionEventData.ipvStartedOn, fieldName: "ipvStartedOn" },
+			{ field: sessionEventData.journeyWentAsyncOn, fieldName: "journeyWentAsyncOn" },
+			{ field: sessionEventData.readyToResumeOn, fieldName: "readyToResumeOn" },
+		];
+	
+		for (const rule of validationRules) {
+			if (!rule.field || !(rule.field > 0)) {
+				throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, `${rule.fieldName} is not yet populated, unable to process the DB record.`);
+			}
 		}
 	}
 
-	async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent; emailType: string }> {
-		//Validate all necessary fields are populated required to send the email before processing the data.
+	async validateSessionEvent(
+		sessionEvent: ExtSessionEvent | SessionEvent,
+		emailType: string,
+		logger: Logger
+	): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent; emailType: string }> {
 		try {
-			await this.validateModel(sessionEvent, logger);				
+			await this.validateModel(sessionEvent, logger);
 		} catch (error) {
 			if (emailType === Constants.VIST_PO_EMAIL_DYNAMIC) {
-				logger.info("Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT });
+				logger.info(
+					"Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.",
+					{ messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT }
+				);
+	
 				// Send the old template email
-				sessionEvent = new SessionEvent(sessionEvent);		
+				sessionEvent = new SessionEvent(sessionEvent);
 				emailType = Constants.VIST_PO_EMAIL_STATIC;
-				// Validate feilds required for sending the old email
+	
+				// Validate fields required for sending the old email
 				await this.validateSessionEvent(sessionEvent, emailType, logger);
 			} else {
-				logger.error("Unable to process the DB record as the necessary fields are not populated to send the old template email.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
-				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated to send the old template email.");			
-
-			}			
+				logger.error(
+					"Unable to process the DB record as the necessary fields are not populated to send the old template email.",
+					{ messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT }
+				);
+				throw new AppError(
+					HttpCodesEnum.SERVER_ERROR,
+					"Unable to process the DB record as the necessary fields are not populated to send the old template email."
+				);
+			}
 		}
 		return { sessionEvent, emailType };
 	}
