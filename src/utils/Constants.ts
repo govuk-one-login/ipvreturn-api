@@ -12,6 +12,8 @@ export class Constants {
 
     static readonly EMAIL_LOGGER_SVC_NAME = "SendEmailHandler";
 
+		static readonly GOV_NOTIFY_SVC_NAME = "GovNotifyHandler";
+
     static readonly F2F_YOTI_START = "F2F_YOTI_START";
 
     static readonly AUTH_IPV_AUTHORISATION_REQUESTED = "AUTH_IPV_AUTHORISATION_REQUESTED";
@@ -23,6 +25,8 @@ export class Constants {
     static readonly AUTH_DELETE_ACCOUNT = "AUTH_DELETE_ACCOUNT";
 
     static readonly POSTEVENT_LOGGER_SVC_NAME = "PostEventHandler";
+
+		static readonly SESSION_LOGGER_SVC_NAME = "SessionHandler";
 
     static readonly STREAM_PROCESSOR_LOGGER_SVC_NAME = "StreamProcessorHandler";
 

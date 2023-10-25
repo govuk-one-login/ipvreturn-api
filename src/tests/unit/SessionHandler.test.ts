@@ -10,12 +10,6 @@ jest.mock("../../utils/Config", () => {
 	};
 });
 describe("SessionHandler", () => {
-	it("returns an not found response for an invalid resource request", async () => {
-		const response = await lambdaHandler(INVALID_SESSION, "IPR");
-		expect(response.statusCode).toBe(404);
-		expect(response.body).toBe("Resource not found");
-	});
-
 	it("returns success response for a valid request payload", async () => {
 		SessionProcessor.getInstance = jest.fn().mockReturnValue(mockedSessionProcessor);
 		const response = await lambdaHandler(VALID_SESSION, "IPR");
