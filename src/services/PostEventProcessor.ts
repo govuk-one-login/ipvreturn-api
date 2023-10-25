@@ -64,7 +64,6 @@ export class PostEventProcessor {
 			}
 	
 			this.logger.appendKeys({ event_id, govuk_signin_journey_id });
-
 			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprService.isFlaggedForDeletionOrEventAlreadyProcessed(user_id, event_name);
 	
 			if (isFlaggedForDeletionOrEventAlreadyProcessed) {
