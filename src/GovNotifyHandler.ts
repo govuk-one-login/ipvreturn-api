@@ -9,98 +9,93 @@ import { EnvironmentVariables } from "./services/EnvironmentVariables";
 import { ServicesEnum } from "./models/enums/ServicesEnum";
 import { Email, DynamicEmail } from "./models/Email";
 
-const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : Constants.IPVRETURN_METRICS_NAMESPACE;
-const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : Constants.DEBUG;
-const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME ? process.env.POWERTOOLS_SERVICE_NAME : Constants.EMAIL_LOGGER_SVC_NAME;
+const {
+	POWERTOOLS_METRICS_NAMESPACE = Constants.IPVRETURN_METRICS_NAMESPACE,
+	POWERTOOLS_LOG_LEVEL = Constants.DEBUG,
+	POWERTOOLS_SERVICE_NAME = Constants.EMAIL_LOGGER_SVC_NAME
+} = process.env;
 
-const logger = new Logger({
-	logLevel: POWERTOOLS_LOG_LEVEL,
-	serviceName: POWERTOOLS_SERVICE_NAME,
-});
+const logger = new Logger({logLevel: POWERTOOLS_LOG_LEVEL, serviceName: POWERTOOLS_SERVICE_NAME});
 
 const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceName: POWERTOOLS_SERVICE_NAME });
 
 let GOVUKNOTIFY_API_KEY: string;
 class GovNotifyHandler implements LambdaInterface {
-	private readonly environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GOV_NOTIFY_SERVICE);
+  private readonly environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GOV_NOTIFY_SERVICE);
 
-	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
-	async handler(event: SQSEvent, context: any): Promise<SQSBatchResponse> {
+  @metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
+  async handler(event: SQSEvent, context: any): Promise<SQSBatchResponse> {
+    logger.setPersistentLogAttributes({});
+    logger.addContext(context);
 
-		// clear PersistentLogAttributes set by any previous invocation, and add lambda context for this invocation
-		logger.setPersistentLogAttributes({});
-		logger.addContext(context);
-	
-		const batchFailures: SQSBatchItemFailure[] = [];
-		if (event.Records.length === 1) {
-			const record: SQSRecord = event.Records[0];
-			logger.info("Starting to process record from SQS");
+    const batchFailures: SQSBatchItemFailure[] = [];
 
+    if (event.Records.length !== 1) {
+      logger.warn("Unexpected number of records received");
+      batchFailures.push({ itemIdentifier: "" });
+      return { batchItemFailures: batchFailures };
+    }
+
+    const record: SQSRecord = event.Records[0];
+    logger.info("Starting to process record from SQS");
+
+    try {
+      const body = JSON.parse(record.body);
+      
+			GOVUKNOTIFY_API_KEY = await this.checkGovNotifyApiKey(GOVUKNOTIFY_API_KEY);
+      let govnotifyServiceId = this.extractGovNotifyServiceId(GOVUKNOTIFY_API_KEY);
+
+      const messageType = body.Message.messageType;
+      let message;
+
+      switch (messageType) {
+        case Constants.VIST_PO_EMAIL_STATIC:
+          message = Email.parseRequest(JSON.stringify(body.Message));
+          break;
+        case Constants.VIST_PO_EMAIL_DYNAMIC:
+          message = DynamicEmail.parseRequest(JSON.stringify(body.Message));
+          break;
+        default:
+          logger.error(`Unrecognized emailType: ${messageType}, unable to process Gov Notify message.`);
+          batchFailures.push({ itemIdentifier: "" });
+          return { batchItemFailures: batchFailures };
+      }
+
+      await SendEmailProcessor.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId, this.environmentVariables.sessionEventsTable()).processRequest(message);
+      logger.info("Finished processing record from SQS");
+
+      return { batchItemFailures: [] };
+    } catch (error: any) {
+      logger.error("Email could not be sent. Returning failed message", "Handler");
+      batchFailures.push({ itemIdentifier: "" });
+      return { batchItemFailures: batchFailures };
+    }
+  }
+
+  private async checkGovNotifyApiKey(GOVUKNOTIFY_API_KEY: string) {
+    if (!GOVUKNOTIFY_API_KEY) {
+			logger.info({ message: "Fetching GOVUKNOTIFY_API_KEY from SSM" });
 			try {
-				const body = JSON.parse(record.body);
-				if (!GOVUKNOTIFY_API_KEY) {
-					logger.info({ message: "Fetching GOVUKNOTIFY_API_KEY from SSM" });
-					try {
-						GOVUKNOTIFY_API_KEY = await getParameter(this.environmentVariables.govNotifyApiKeySsmPath());
-					} catch (error) {
-						logger.error(`failed to get param from ssm at ${this.environmentVariables.govNotifyApiKeySsmPath()}`, { error });
-						batchFailures.push({ itemIdentifier: "" });
-						return { batchItemFailures: batchFailures };
-					}
-				}
-				let govnotifyServiceId;
-				try {
-					govnotifyServiceId = GOVUKNOTIFY_API_KEY.substring(GOVUKNOTIFY_API_KEY.length - 73, GOVUKNOTIFY_API_KEY.length - 37);
-				} catch (error) {
-					logger.error("failed to extract govnotifyServiceId from the GOVUKNOTIFY_API_KEY", { error });
-					batchFailures.push({ itemIdentifier: "" });
-					return { batchItemFailures: batchFailures };
-				}
-				// Check for messageType and reject it if it doesnt match the required types.
-				const messageType = body.Message.messageType;
-				let message;
-				switch (messageType) {
-					case Constants.VIST_PO_EMAIL_STATIC: {
-						message = Email.parseRequest(JSON.stringify(body.Message));
-						break;
-					}
-					case Constants.VIST_PO_EMAIL_DYNAMIC: {
-						message = DynamicEmail.parseRequest(JSON.stringify(body.Message));
-						break;
-					}
-					default :{
-						logger.error(`Unrecognised emailType: ${messageType}, unable to process Gov Notify message.`);
-						batchFailures.push({ itemIdentifier: "" });
-						return { batchItemFailures: batchFailures };
-					}
-				}	
-
-				await SendEmailProcessor.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId, this.environmentVariables.sessionEventsTable()).processRequest(message);
-				logger.info("Finished processing record from SQS");
-
-				// return an empty batchItemFailures array to mark the batch as a success
-				// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-				return { batchItemFailures: [] };			
-
-			} catch (error: any) {
-				logger.error("Email could not be sent. Returning failed message", "Handler");
-
-				// explicitly set itemIdentifier to an empty string to fail the whole batch
-				// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-				batchFailures.push({ itemIdentifier: "" });
-				return { batchItemFailures: batchFailures };
+				return await getParameter(this.environmentVariables.govNotifyApiKeySsmPath());
+			} catch (error) {
+				logger.error(`failed to get param from ssm at ${this.environmentVariables.govNotifyApiKeySsmPath()}`, { error });
+				throw error;
 			}
+		} else return GOVUKNOTIFY_API_KEY
+  }
 
-		} else {
-			logger.warn("Unexpected no of records received");
+  private extractGovNotifyServiceId(GOVUKNOTIFY_API_KEY: string): string {
+    let govnotifyServiceId;
 
-			// explicitly set itemIdentifier to an empty string to fail the whole batch
-			// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
-			batchFailures.push({ itemIdentifier: "" });
-			return { batchItemFailures: batchFailures };
-		}
-	}
+    try {
+      govnotifyServiceId = GOVUKNOTIFY_API_KEY.substring(GOVUKNOTIFY_API_KEY.length - 73, GOVUKNOTIFY_API_KEY.length - 37);
+    } catch (error) {
+      logger.error("Failed to extract govnotifyServiceId from the GOVUKNOTIFY_API_KEY", { error });
+      throw error;
+    }
 
+    return govnotifyServiceId;
+  }
 }
 
 const handlerClass = new GovNotifyHandler();

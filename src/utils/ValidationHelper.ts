@@ -77,6 +77,7 @@ export class ValidationHelper {
 		}
 		return { sessionEvent, emailType };
 	}
+	
 
 	isJwtComplete = (payload: JwtPayload): boolean => {
 		const { iss, sub, aud, exp, iat, nonce } = payload;
