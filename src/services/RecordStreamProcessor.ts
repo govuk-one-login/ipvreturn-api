@@ -23,7 +23,7 @@ export class RecordStreamProcessor {
 
   constructor(logger: Logger, metrics: Metrics) {
     this.logger = logger;
-    this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.STREAM_PROCESSOR_SERVICE);
+    this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.RECORD_STREAM_PROCESSOR);
     this.validationHelper = new ValidationHelper();
     this.metrics = metrics;
     this.iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
