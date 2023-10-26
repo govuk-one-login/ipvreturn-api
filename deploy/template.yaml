@@ -461,6 +461,90 @@ Resources:
 
   ### End of API Gateway Custom Domain definition
 
+  PostEventStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Name: !Sub "Ipvreturn-PostEvent-stepfunction-${AWS::StackName}"
+      DefinitionUri: ../src/stepFunctions/yotiCallback.asl.json
+      DefinitionSubstitutions:
+        YotiSessionCompletionFunctionArn: !GetAtt YotiCallbackFunction.Arn
+        ThankYouEmailFunctionArn: !GetAtt ThankYouEmailFunction.Arn
+      Policies:
+        - AWSXrayWriteOnlyAccess
+        - LambdaInvokePolicy:
+            FunctionName: !Ref YotiCallbackFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ThankYouEmailFunction
+      Tracing:
+        Enabled: true
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
+
+  AuthRequestedFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: PostEventFunctionLogGroup
+    Properties:
+      FunctionName: !Sub "Ipvreturn-PostEvent-${AWS::StackName}"
+      Handler: PostEventHandler.lambdaHandler
+      CodeUri: ../src/
+      ReservedConcurrentExecutions: !If
+        - ApplyReservedConcurrency
+        - !Ref LambdaConcurrency
+        - !Ref AWS::NoValue
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: PostEventHandler
+          SESSION_EVENTS_TABLE:
+            Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+          SESSION_RETURN_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, SESSIONRETURNRECORDTTLINSECS ]
+          INITIAL_SESSION_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, INITIALSESSIONRECORDTTLINSECS ]
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSXrayWriteOnlyAccess
+        - DynamoDBWritePolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-session-events-table-name"
+        - DynamoDBReadPolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-session-events-table-name"
+        - KMSDecryptPolicy:
+            KeyId:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-session-events-table-key-id"
+        - Statement:
+            - Sid: TxMAKMSDecryptkeysPolicy
+              Effect: Allow
+              Action:
+                - "kms:Decrypt"
+              Resource: !If
+                - IsMockedEnvironment
+                - !GetAtt MockTxMAKMSEncryptionKey.Arn
+                - !FindInMap [PlatformConfiguration, !Ref Environment, TxMAKey]
+            - Sid: TxMASQSConsumeEventPolicy
+              Effect: Allow
+              Action:
+                - "sqs:DeleteMessage"
+                - "sqs:GetQueueAttributes"
+                - "sqs:ChangeMessageVisibility"
+                - "sqs:ReceiveMessage"
+              Resource: !If
+                - IsMockedEnvironment
+                - !GetAtt MockTxMASQSQueue.Arn
+                - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
+
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
+        EntryPoints:
+          - PostEventHandler.ts
+
   ### Function Definition
   PostEventFunction:
     Type: AWS::Serverless::Function
