@@ -89,7 +89,7 @@ export class IPRService {
             (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!]))
         ) {
             this.logger.info({
-                message: `Record for userId ${userId} is flagged for deletion or ${eventAttribute} is already set`,
+                message: `Record is flagged for deletion or ${eventAttribute} is already set`,
             });
             return true;
         }
