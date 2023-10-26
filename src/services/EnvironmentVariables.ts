@@ -89,7 +89,7 @@ export class EnvironmentVariables {
 				}
 				break;
 			}
-			case ServicesEnum.STREAM_PROCESSOR_SERVICE: {
+			case ServicesEnum.RECORD_STREAM_PROCESSOR: {
 				if (!this.GOV_NOTIFY_QUEUE_URL || this.GOV_NOTIFY_QUEUE_URL.trim().length === 0 ||
 					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0) {
 					logger.error({ message: "Stream Processor Service - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION } );
