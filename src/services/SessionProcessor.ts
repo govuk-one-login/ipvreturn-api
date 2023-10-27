@@ -138,7 +138,7 @@ export class SessionProcessor {
 				this.logger.debug("Session retrieved from session store");
 
 			} catch (error) {
-				this.logger.error({ message: "getSessionByUserId - Error retrieving Session" }, { messageCode: MessageCodes.ERROR_RETRIEVING_SESSION, error });
+				this.logger.error({ message: "getSessionByUserId - Error retrieving Session" }, { messageCode: MessageCodes.ERROR_RETRIEVING_SESSION });
 				throw new AppError(HttpCodesEnum.UNAUTHORIZED, "Error retrieving Session");
 			}
 
