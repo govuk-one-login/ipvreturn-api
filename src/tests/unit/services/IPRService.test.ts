@@ -219,7 +219,7 @@ describe("IPR Service", () => {
 			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
 
 			await expect(iprService.getSessionBySub(userId)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session"));
-			expect(logger.error).toHaveBeenCalledWith({ message: "getSessionByUserId - failed executing get from dynamodb:", error: {} });
+			expect(logger.error).toHaveBeenCalledWith({ message: "getSessionByUserId - failed executing get from dynamodb:" });
 		});
 
 		it("Should return the valid session fetched from dynamo", async () => {

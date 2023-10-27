@@ -57,7 +57,7 @@ export class IPRService {
 		try {
 			session = await this.dynamo.send(getSessionCommand);
 		} catch (error: any) {
-			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:", error });
+			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:" });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 		}
 
