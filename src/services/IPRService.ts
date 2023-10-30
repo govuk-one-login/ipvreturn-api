@@ -103,7 +103,7 @@ export class IPRService {
 }
 
 
-	async saveEventData(userId: string, UpdateExpression: string, ExpressionAttributeValues: any): Promise<string | void> {
+	async saveEventData(userId: string, UpdateExpression: string, ExpressionAttributeValues: any): Promise<void> {
     try {
         this.logger.info({ message: "Saving event data to DynamoDB", tableName: this.tableName });
         const updateSessionInfoCommand = new UpdateCommand({
@@ -117,7 +117,6 @@ export class IPRService {
 
         this.logger.info("Updating session record");
         await this.dynamo.send(updateSessionInfoCommand);
-        return "Success";
     } catch (error) {
         this.logger.error({ message: "Failed to update session record in DynamoDB", error });
         throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");

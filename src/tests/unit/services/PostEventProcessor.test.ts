@@ -75,17 +75,6 @@ describe("PostEventProcessor", () => {
 				email: "jest@test.com",
 			},
 		}, "event_name"],
-		["Throws error if timestamp is missing", {
-			event_id: "588f4a66-f75a-4728-9f7b-8afd865c233c",
-			client_id: "ekwU",
-			clientLandingPageUrl: "REDIRECT_URL",
-			event_name: "AUTH_IPV_AUTHORISATION_REQUESTED",
-			timestamp_formatted: "2023-04-19T11:00:01.000Z",
-			user: {
-				user_id: "01333e01-dde3-412f-a484-5555",
-				email: "jest@test.com",
-			},
-		}, "timestamp"],
 	])("%s", async (testName, eventData, missingField) => {
 		await expect(postEventProcessor.processRequest(JSON.stringify(eventData))).rejects.toThrow(
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),

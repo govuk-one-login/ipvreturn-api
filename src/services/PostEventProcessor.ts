@@ -42,9 +42,9 @@ export class PostEventProcessor {
 	async processRequest(eventBody: string): Promise<any> {
 		try {
 			const eventDetails: ReturnSQSEvent = JSON.parse(eventBody);
-			const { event_id, event_name, timestamp, user } = eventDetails;
+			const { event_id, event_name, user } = eventDetails;
 
-			const requiredFields = ['event_id', 'event_name', 'timestamp', 'user'];
+			const requiredFields = ['event_id', 'event_name', 'user'];
 
 			const missingFields = requiredFields.filter(field => !(field in eventDetails));
 
@@ -54,6 +54,8 @@ export class PostEventProcessor {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, errorMessage);
 			}
 	
+			this.logger.info({ message: `Received SQS event with eventName ${event_name}` });
+
 			const { user_id, govuk_signin_journey_id } = user;
 			if (!user_id) {
 					const errorMessage = "Missing or invalid value for userDetails.user_id in event payload";
@@ -62,8 +64,7 @@ export class PostEventProcessor {
 			}
 	
 			this.logger.appendKeys({ event_id, govuk_signin_journey_id });
-			this.logger.info({ message: `Received SQS event with eventName ${event_name}` });
-	
+
 			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprService.isFlaggedForDeletionOrEventAlreadyProcessed(user_id, event_name);
 	
 			if (isFlaggedForDeletionOrEventAlreadyProcessed) {
@@ -179,11 +180,11 @@ export class PostEventProcessor {
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 			}
 	
-			const saveEventData = await this.iprService.saveEventData(user_id, updateExpression, expressionAttributeValues);
+			await this.iprService.saveEventData(user_id, updateExpression, expressionAttributeValues);
 	
 			return {
 					statusCode: HttpCodesEnum.CREATED,
-					eventBody: saveEventData ? saveEventData : "OK",
+					eventBody: "OK",
 			};
 	
 		} catch (error) {

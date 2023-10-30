@@ -4,6 +4,7 @@ import { Metrics } from "@aws-lambda-powertools/metrics";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
 import { PostEventProcessor } from "./services/PostEventProcessor";
 import { Constants } from "./utils/Constants";
+import { BatchItemFailure } from "./utils/BatchItemFailure";
 
 const {
     POWERTOOLS_METRICS_NAMESPACE = Constants.IPVRETURN_METRICS_NAMESPACE,
@@ -20,11 +21,15 @@ class PostEventHandler implements LambdaInterface {
     async handler(event: SQSEvent, context: any): Promise<SQSBatchResponse> {
         logger.setPersistentLogAttributes({});
         logger.addContext(context);
+				const batchFailures: BatchItemFailure[] = [];
 
-        if (event.Records.length !== 1) {
-            logger.warn({ message: "Unexpected no. of records received", numOfRecords: event.Records.length });
-            return { batchItemFailures: [] };
-        }
+				if (event.Records.length !== 1) {
+					logger.warn({ message: "Unexpected no. of records received", numOfRecords: event.Records.length });
+					for (const record of event.Records) {
+							batchFailures.push(new BatchItemFailure(record.messageId));
+					}
+					return { batchItemFailures: batchFailures };
+				}
 
         const record: SQSRecord = event.Records[0];
         let body;
@@ -33,7 +38,8 @@ class PostEventHandler implements LambdaInterface {
             body = JSON.parse(record.body);
         } catch {
             logger.error({ message: "Received invalid JSON in the SQS event record.body" });
-            return { batchItemFailures: [] };
+						batchFailures.push(new BatchItemFailure(record.messageId));
+						return { batchItemFailures: batchFailures };
         }
 
         logger.debug("Starting PostEventProcessor", { event_name: body.event_name });
@@ -43,6 +49,8 @@ class PostEventHandler implements LambdaInterface {
             logger.debug("Finished processing record from SQS");
         } catch (error: any) {
             logger.error({ message: "SQS Event could not be processed", error });
+						batchFailures.push(new BatchItemFailure(record.messageId));
+						return { batchItemFailures: batchFailures };
         }
 
         return { batchItemFailures: [] };
