@@ -142,7 +142,6 @@ export class IPRService {
     }
 	}
 
-
 	async sendToGovNotify(event: GovNotifyEvent): Promise<void> {
 		try {
 			const messageBody = JSON.stringify(event);
