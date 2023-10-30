@@ -228,6 +228,16 @@ Conditions:
     - Condition: DeployAlarms
     - Condition: ApplyReservedConcurrency
   PerformanceTestEnv: !Equals [ !Ref Environment, build]
+  NotLocalTestStack:
+    Fn::Not:
+      - Fn::And:
+          - Fn::Equals:
+              - !Ref Environment
+              - dev
+          - Fn::Not:
+              - Fn::Equals:
+                  - !Sub "${AWS::StackName}"
+                  - "ipvreturn-api"
 
 Globals:
   Function:
@@ -279,6 +289,7 @@ Resources:
   ### OIDC Provider as IAM entity
   OIDCProvider:
     Type: AWS::IAM::OIDCProvider
+    Condition: NotLocalTestStack
     Properties:
       ClientIdList:
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
@@ -289,6 +300,7 @@ Resources:
   ### AssumeRoleWithWebIdentityRole
   AssumeRoleWithWebIdentityRole:
     Type: "AWS::IAM::Role"
+    Condition: NotLocalTestStack
     Properties:
       AssumeRolePolicyDocument:
         Statement:
@@ -424,6 +436,7 @@ Resources:
 
   IPVRApiCustomDomain:
     Type: AWS::ApiGateway::DomainName
+    Condition: NotLocalTestStack
     Properties:
       DomainName: !Sub
         - "api.${DNSSUFFIX}"
@@ -437,6 +450,7 @@ Resources:
 
   IPVRApiCertificateRecord:
     Type: AWS::Route53::RecordSet
+    Condition: NotLocalTestStack
     Properties:
       Name: !Sub
         - "api.${DNSSUFFIX}"
@@ -450,6 +464,7 @@ Resources:
 
   IPVRApiMapping:
     Type: AWS::ApiGateway::BasePathMapping
+    Condition: NotLocalTestStack
     DependsOn: IPVRApiCustomDomain
     Properties:
       DomainName: !Sub
@@ -1040,7 +1055,11 @@ Resources:
           CLIENT_ID_SSM_PATH: !Sub "/${Environment}/ipvreturn/CLIENT_ID"
           OIDC_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
           RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
-          ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
+          ASSUMEROLE_WITH_WEB_IDENTITY_ARN:
+            Fn::If:
+              - NotLocalTestStack
+              - !GetAtt AssumeRoleWithWebIdentityRole.Arn
+              - !Ref AWS::NoValue
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
       Policies:
         - AWSLambdaBasicExecutionRole

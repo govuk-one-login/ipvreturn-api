@@ -5,3 +5,15 @@ The gov-notify-templates directory contains the templates required for sending e
 
 If you need the reserved concurrencies set in DEV then add `ApplyReservedConcurrencyInDev=\"true\"` in to the `--parameter-overrides`.
 Please only do this whilst you need them, if lots of stacks are deployed with these in DEV then deployments will start failing.
+
+## Local development
+
+For local development deploy a custom stack:
+1. `cd /deploy`
+2. In samconfig.toml change `stack_name` to a custom stack name of your choice
+3. Log in using AWS SSO
+4. Deploy by running `sam build && sam deploy --config-env dev --resolve-s3`
+
+Note: When deploying custom stacks in dev NotLocalTestStack will prevent the deploy of Custom Domains and OIDCProvider unless the stackname is ipvreturn-api
+If you require a BE stack with those capabilities please use the "Deploy Main to Dev Env" Github Workflow with your branch to deploy your changes to the main Dev Stack
+
