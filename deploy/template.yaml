@@ -103,7 +103,7 @@ Mappings:
     dev:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
-      GOVUKNOTIFYAPI: "https://ipvr-gov-notify-stub-govnotifystub.return.dev.account.gov.uk/govnotify"
+      GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk/resume"
@@ -855,7 +855,7 @@ Resources:
     DependsOn: StreamProcessorFunctionLogGroup
     Properties:
       FunctionName: !Sub "Ipvreturn-StreamProcessor-${AWS::StackName}"
-      Handler: StreamProcessorHandler.lambdaHandler
+      Handler: RecordStreamHandler.lambdaHandler
       CodeUri: ../src/
       ReservedConcurrentExecutions: !If
         - ApplyReservedConcurrency
@@ -863,7 +863,7 @@ Resources:
         - !Ref AWS::NoValue
       Environment:
         Variables:
-          POWERTOOLS_SERVICE_NAME: StreamProcessorHandler
+          POWERTOOLS_SERVICE_NAME: RecordStreamHandler
           GOV_NOTIFY_QUEUE_URL: !Ref GovNotifySQSQueue
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
@@ -907,7 +907,7 @@ Resources:
         Target: "es2020"
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
-          - StreamProcessorHandler.ts
+          - RecordStreamHandler.ts
 
   SessionEventsTableStream:
     Type: AWS::Lambda::EventSourceMapping

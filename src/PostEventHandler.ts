@@ -4,7 +4,10 @@ import { Metrics } from "@aws-lambda-powertools/metrics";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
 import { PostEventProcessor } from "./services/PostEventProcessor";
 import { Constants } from "./utils/Constants";
+<<<<<<< HEAD
 import { BatchItemFailure } from "./utils/BatchItemFailure";
+=======
+>>>>>>> 00d03e3 ([KIWI-1367] - Refactor PostEventHandler)
 
 const {
     POWERTOOLS_METRICS_NAMESPACE = Constants.IPVRETURN_METRICS_NAMESPACE,

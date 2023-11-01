@@ -12,6 +12,7 @@ import { absoluteTimeNow } from "../../../utils/DateTimeUtils";
 import { ExtSessionEvent, SessionEvent } from "../../../models/SessionEvent";
 import { Email, DynamicEmail } from "../../../models/Email";
 import { Constants } from "../../../utils/Constants";
+import { AppError } from "../../../utils/AppError";
 
 let sendEmailProcessorTest: SendEmailProcessor;
 const mockGovNotifyService = mock<SendEmailService>();
