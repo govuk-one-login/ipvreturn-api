@@ -42,3 +42,26 @@ export class Constants {
 
     static readonly VIST_PO_EMAIL_DYNAMIC = "VIST_PO_EMAIL_DYNAMIC";
 }
+
+export const TXMA_EVENT_DETAILS = {
+  AUTH_REQUESTED: {
+    Name: "AUTH_IPV_AUTHORISATION_REQUESTED",
+    UpdateExpression: "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn"
+  },
+	YOTI_START: {
+		Name: "F2F_YOTI_START",
+    UpdateExpression: "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn"
+	},
+	VC_CONSUMED: {
+		Name: "IPV_F2F_CRI_VC_CONSUMED",
+    UpdateExpression: "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts"
+	},
+	DOCUMENT_UPLOADED: {
+		Name: "F2F_DOCUMENT_UPLOADED",
+    UpdateExpression: "SET documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails"
+	},
+	DELETE_ACCOUNT: {
+		Name: "AUTH_DELETE_ACCOUNT",
+    UpdateExpression: "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri"
+	}
+};
