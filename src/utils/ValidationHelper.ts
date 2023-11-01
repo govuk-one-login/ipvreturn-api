@@ -47,7 +47,7 @@ export class ValidationHelper {
 	async validateSessionEvent(
 		sessionEvent: ExtSessionEvent | SessionEvent,
 		emailType: string,
-		logger: Logger
+		logger: Logger,
 	): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent; emailType: string }> {
 		try {
 			await this.validateModel(sessionEvent, logger);
@@ -55,7 +55,7 @@ export class ValidationHelper {
 			if (emailType === Constants.VIST_PO_EMAIL_DYNAMIC) {
 				logger.info(
 					"Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.",
-					{ messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT }
+					{ messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT },
 				);
 	
 				// Send the old template email
@@ -67,11 +67,11 @@ export class ValidationHelper {
 			} else {
 				logger.error(
 					"Unable to process the DB record as the necessary fields are not populated to send the old template email.",
-					{ messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT }
+					{ messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT },
 				);
 				throw new AppError(
 					HttpCodesEnum.SERVER_ERROR,
-					"Unable to process the DB record as the necessary fields are not populated to send the old template email."
+					"Unable to process the DB record as the necessary fields are not populated to send the old template email.",
 				);
 			}
 		}

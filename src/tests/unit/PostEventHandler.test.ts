@@ -39,9 +39,8 @@ describe("PostEventHandler", () => {
 		});
 		const response = await lambdaHandler(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT, "IPR");
 		expect(response.batchItemFailures).toEqual([{
-			itemIdentifier: expect.any(String)
+			itemIdentifier: expect.any(String),
 		}]);
 	});
 });
-
 

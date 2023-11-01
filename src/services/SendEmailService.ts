@@ -46,65 +46,65 @@ export class SendEmailService {
 		return this.instance;
 	}
 
-  async sendEmail(message: any, emailType: string): Promise<EmailResponse> {
-    const { govNotify, environmentVariables, logger } = this;
-    const templateId = emailType === Constants.VIST_PO_EMAIL_STATIC ? environmentVariables.getEmailTemplateId() : environmentVariables.getDynamicEmailTemplateId();
-    const personalisation = {
-      "first name": message.firstName,
-      "last name": message.lastName,
-      "return_journey_URL": environmentVariables.returnJourneyUrl(),
-      ...(emailType === Constants.VIST_PO_EMAIL_DYNAMIC && {
-        "chosen_photo_ID": DocumentTypes[message.documentType as keyof typeof DocumentTypes],
-        "id_expiry_date": this.getFullFormattedDate(message.documentExpiryDate),
-        "branch_name_and_address": message.poAddress,
-        "date": message.poVisitDate,
-        "time": message.poVisitTime.replace(/\s/g, ""),
-      }),
-    };
+	async sendEmail(message: any, emailType: string): Promise<EmailResponse> {
+		const { govNotify, environmentVariables, logger } = this;
+		const templateId = emailType === Constants.VIST_PO_EMAIL_STATIC ? environmentVariables.getEmailTemplateId() : environmentVariables.getDynamicEmailTemplateId();
+		const personalisation = {
+			"first name": message.firstName,
+			"last name": message.lastName,
+			"return_journey_URL": environmentVariables.returnJourneyUrl(),
+			...(emailType === Constants.VIST_PO_EMAIL_DYNAMIC && {
+				"chosen_photo_ID": DocumentTypes[message.documentType as keyof typeof DocumentTypes],
+				"id_expiry_date": this.getFullFormattedDate(message.documentExpiryDate),
+				"branch_name_and_address": message.poAddress,
+				"date": message.poVisitDate,
+				"time": message.poVisitTime.replace(/\s/g, ""),
+			}),
+		};
 
-    const options = { personalisation, reference: message.referenceId };
-    const maxRetries = environmentVariables.maxRetries();
+		const options = { personalisation, reference: message.referenceId };
+		const maxRetries = environmentVariables.maxRetries();
 
-    for (let retryCount = 0; retryCount <= maxRetries; retryCount++) {
-      logger.debug(`trying to send ${emailType} message ${SendEmailService.name} ${new Date().toISOString()}`, {
-        templateId,
-        retryCount,
-      });
+		for (let retryCount = 0; retryCount <= maxRetries; retryCount++) {
+			logger.debug(`trying to send ${emailType} message ${SendEmailService.name} ${new Date().toISOString()}`, {
+				templateId,
+				retryCount,
+			});
 
-      try {
-        const emailResponse = await govNotify.sendEmail(templateId, message.emailAddress, options);
+			try {
+				const emailResponse = await govNotify.sendEmail(templateId, message.emailAddress, options);
 				logger.info("Sending Email Type:", { emailType });
-        logger.debug("Response status after sending Email", SendEmailService.name, emailResponse.status);
-        return new EmailResponse(new Date().toISOString(), "", emailResponse.status);
-      } catch (err: any) {
-        logger.error("GOV UK Notify threw an error");
+				logger.debug("Response status after sending Email", SendEmailService.name, emailResponse.status);
+				return new EmailResponse(new Date().toISOString(), "", emailResponse.status);
+			} catch (err: any) {
+				logger.error("GOV UK Notify threw an error");
 
-        if (err.response) {
-          logger.error(`GOV UK Notify error ${SendEmailService.name}`, {
-            statusCode: err.response.data.status_code,
-            errors: err.response.data.errors,
-          });
-        }
+				if (err.response) {
+					logger.error(`GOV UK Notify error ${SendEmailService.name}`, {
+						statusCode: err.response.data.status_code,
+						errors: err.response.data.errors,
+					});
+				}
 
-        const appError: any = this.govNotifyErrorMapper.map(err.response.data.status_code, err.response.data.errors[0].message);
+				const appError: any = this.govNotifyErrorMapper.map(err.response.data.status_code, err.response.data.errors[0].message);
 
-        if (appError.obj!.shouldRetry && retryCount < maxRetries) {
-          logger.error(`Mapped error ${SendEmailService.name}`, { appError });
-          logger.error(`Retrying to send the email. Sleeping for ${environmentVariables.backoffPeriod()} ms ${SendEmailService.name} ${new Date().toISOString()}`, { retryCount });
-          await sleep(environmentVariables.backoffPeriod());
-        } else {
-          logger.error("Mapped error", SendEmailService.name, appError.message);
-          throw appError;
-        }
-      }
-    }
+				if (appError.obj!.shouldRetry && retryCount < maxRetries) {
+					logger.error(`Mapped error ${SendEmailService.name}`, { appError });
+					logger.error(`Retrying to send the email. Sleeping for ${environmentVariables.backoffPeriod()} ms ${SendEmailService.name} ${new Date().toISOString()}`, { retryCount });
+					await sleep(environmentVariables.backoffPeriod());
+				} else {
+					logger.error("Mapped error", SendEmailService.name, appError.message);
+					throw appError;
+				}
+			}
+		}
 
-    logger.error(`Failed to send Email even after ${maxRetries} retries.`);
-    throw new AppError(HttpCodesEnum.SERVER_ERROR, `Failed to send Email even after ${maxRetries} retries.`);
-  }
+		logger.error(`Failed to send Email even after ${maxRetries} retries.`);
+		throw new AppError(HttpCodesEnum.SERVER_ERROR, `Failed to send Email even after ${maxRetries} retries.`);
+	}
 
-  getFullFormattedDate(date: any): string {
-    return new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-  }
+	getFullFormattedDate(date: any): string {
+		return new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+	}
 }
 

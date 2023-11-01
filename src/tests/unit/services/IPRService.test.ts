@@ -190,7 +190,7 @@ describe("IPR Service", () => {
 						":notified": true,
 					},
 					Key: {
-						userId: userId,
+						userId,
 					},
 					TableName: "MYTABLE",
 					UpdateExpression: "SET notified = :notified",

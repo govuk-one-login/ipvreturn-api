@@ -72,74 +72,74 @@ export class IPRService {
 
 
 	async isFlaggedForDeletionOrEventAlreadyProcessed(userId: string, eventType: string): Promise<boolean | undefined> {
-    try {
-        this.logger.info({ message: "Checking if record is flagged for deletion or already processed", tableName: this.tableName });
-        const getSessionCommand = new GetCommand({
-            TableName: this.tableName,
-            Key: {
-                userId,
-            },
-        });
+		try {
+			this.logger.info({ message: "Checking if record is flagged for deletion or already processed", tableName: this.tableName });
+			const getSessionCommand = new GetCommand({
+				TableName: this.tableName,
+				Key: {
+					userId,
+				},
+			});
 
-        const session = await this.dynamo.send(getSessionCommand);
-        const eventAttribute = this.eventAttributeMap.get(eventType);
+			const session = await this.dynamo.send(getSessionCommand);
+			const eventAttribute = this.eventAttributeMap.get(eventType);
 
-        if (
-            (eventType === TXMA_EVENT_DETAILS.DELETE_ACCOUNT.Name && (!session.Item || session.Item.accountDeletedOn)) ||
+			if (
+				(eventType === TXMA_EVENT_DETAILS.DELETE_ACCOUNT.Name && (!session.Item || session.Item.accountDeletedOn)) ||
             (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!]))
-        ) {
-            this.logger.info({
-                message: `Record is flagged for deletion or ${eventAttribute} is already set`,
-            });
-            return true;
-        }
+			) {
+				this.logger.info({
+					message: `Record is flagged for deletion or ${eventAttribute} is already set`,
+				});
+				return true;
+			}
 
-        this.logger.info({ message: "Record is not flagged for deletion or processed" });
-        return false;
-    } catch (error) {
-        this.logger.error({ message: "isFlaggedForDeletionOrEventAlreadyProcessed - Error retrieving session from DynamoDB", error });
-        throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
-    }
-}
+			this.logger.info({ message: "Record is not flagged for deletion or processed" });
+			return false;
+		} catch (error) {
+			this.logger.error({ message: "isFlaggedForDeletionOrEventAlreadyProcessed - Error retrieving session from DynamoDB", error });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
+		}
+	}
 
 
 	async saveEventData(userId: string, UpdateExpression: string, ExpressionAttributeValues: any): Promise<void> {
-    try {
-        this.logger.info({ message: "Saving event data to DynamoDB", tableName: this.tableName });
-        const updateSessionInfoCommand = new UpdateCommand({
-            TableName: this.tableName,
-            Key: {
-                userId,
-            },
-            UpdateExpression,
-            ExpressionAttributeValues,
-        });
+		try {
+			this.logger.info({ message: "Saving event data to DynamoDB", tableName: this.tableName });
+			const updateSessionInfoCommand = new UpdateCommand({
+				TableName: this.tableName,
+				Key: {
+					userId,
+				},
+				UpdateExpression,
+				ExpressionAttributeValues,
+			});
 
-        this.logger.info("Updating session record");
-        await this.dynamo.send(updateSessionInfoCommand);
-    } catch (error) {
-        this.logger.error({ message: "Failed to update session record in DynamoDB", error });
-        throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
-    }
+			this.logger.info("Updating session record");
+			await this.dynamo.send(updateSessionInfoCommand);
+		} catch (error) {
+			this.logger.error({ message: "Failed to update session record in DynamoDB", error });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
+		}
 	}
 
 	async setNotifiedFlag(userId: string, notified: boolean): Promise<string | void> {
-    try {
-        this.logger.info({ message: "Setting notified flag", tableName: this.tableName });
-        const updateSessionInfoCommand = new UpdateCommand({
-            TableName: this.tableName,
-            Key: { userId },
-            UpdateExpression: "SET notified = :notified",
-            ExpressionAttributeValues: { ":notified": notified },
-        });
+		try {
+			this.logger.info({ message: "Setting notified flag", tableName: this.tableName });
+			const updateSessionInfoCommand = new UpdateCommand({
+				TableName: this.tableName,
+				Key: { userId },
+				UpdateExpression: "SET notified = :notified",
+				ExpressionAttributeValues: { ":notified": notified },
+			});
 
-        await this.dynamo.send(updateSessionInfoCommand);
-				this.logger.info({ message: "Updated the session event record with notified flag" });
-        return "Success";
-    } catch (error) {
-        this.logger.error({ message: "Failed to updated the session event record with notified flag", error });
-        throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
-    }
+			await this.dynamo.send(updateSessionInfoCommand);
+			this.logger.info({ message: "Updated the session event record with notified flag" });
+			return "Success";
+		} catch (error) {
+			this.logger.error({ message: "Failed to updated the session event record with notified flag", error });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
+		}
 	}
 
 	async sendToGovNotify(event: GovNotifyEvent): Promise<void> {

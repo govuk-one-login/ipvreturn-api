@@ -64,7 +64,7 @@ export class SendEmailProcessor {
 		const session = await this.iprService.getSessionBySub(userId);
 		if (!session) {
 			this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
-				throw new AppError(HttpCodesEnum.SERVER_ERROR, "No session event found for this userId");
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "No session event found for this userId");
 		}
 		this.logger.appendKeys({
 			govuk_signin_journey_id: session.clientSessionId,
@@ -96,7 +96,7 @@ export class SendEmailProcessor {
 	private async sendEmailAndLogEvent(
 		message: Email | DynamicEmail,
 		emailType: string,
-		clientSessionId: string
+		clientSessionId: string,
 	): Promise<EmailResponse> {
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, emailType);
 		try {
