@@ -3,7 +3,7 @@ import { Logger } from "@aws-lambda-powertools/logger";
 import { AppError } from "../utils/AppError";
 import { DynamoDBDocument, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
-import { Constants, TXMA_EVENT_DETAILS } from "../utils/Constants";
+import { Constants } from "../utils/Constants";
 import { sqsClient } from "../utils/SqsClient";
 import { SendMessageCommand } from "@aws-sdk/client-sqs";
 import { GovNotifyEvent } from "../utils/GovNotifyEvent";
@@ -72,57 +72,56 @@ export class IPRService {
 
 
 	async isFlaggedForDeletionOrEventAlreadyProcessed(userId: string, eventType: string): Promise<boolean | undefined> {
-    try {
-        this.logger.info({ message: "Checking if record is flagged for deletion or already processed", tableName: this.tableName });
-        const getSessionCommand = new GetCommand({
-            TableName: this.tableName,
-            Key: {
-                userId,
-            },
-        });
+		this.logger.info({ message: "Checking if record is flagged for deletion or already processed", tableName: this.tableName });
+		const getSessionCommand = new GetCommand({
+			TableName: this.tableName,
+			Key: {
+				userId,
+			},
+		});
 
-        const session = await this.dynamo.send(getSessionCommand);
-        const eventAttribute = this.eventAttributeMap.get(eventType);
-
-        if (
-            (eventType === TXMA_EVENT_DETAILS.DELETE_ACCOUNT.Name && (!session.Item || session.Item.accountDeletedOn)) ||
-            (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!]))
-        ) {
-            this.logger.info({
-                message: `Record is flagged for deletion or ${eventAttribute} is already set`,
-            });
-            return true;
-        }
-
-        this.logger.info({ message: "Record is not flagged for deletion or processed" });
-        return false;
-    } catch (error) {
-        this.logger.error({ message: "isFlaggedForDeletionOrEventAlreadyProcessed - Error retrieving session from DynamoDB", error });
-        throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
-    }
-}
-
-
-	async saveEventData(userId: string, UpdateExpression: string, ExpressionAttributeValues: any): Promise<void> {
-    try {
-        this.logger.info({ message: "Saving event data to DynamoDB", tableName: this.tableName });
-        const updateSessionInfoCommand = new UpdateCommand({
-            TableName: this.tableName,
-            Key: {
-                userId,
-            },
-            UpdateExpression,
-            ExpressionAttributeValues,
-        });
-
-        this.logger.info("Updating session record");
-        await this.dynamo.send(updateSessionInfoCommand);
-    } catch (error) {
-        this.logger.error({ message: "Failed to update session record in DynamoDB", error });
-        throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
-    }
+		try {
+			const session = await this.dynamo.send(getSessionCommand);
+			const eventAttribute = this.eventAttributeMap.get(eventType);
+			// If Event type is AUTH_DELETE_ACCOUNT and no record was found, or flagged for deletion then do not process the event.
+			if (eventType === Constants.AUTH_DELETE_ACCOUNT && (!session.Item || (session.Item && session.Item.accountDeletedOn))) {
+				this.logger.info({ message: "Received AUTH_DELETE_ACCOUNT event and no session with that userId was found OR session was found but accountDeletedOn was already set" });
+				return true;
+			} else if (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!])) {
+				// Do not process the event if the record is flagged for deletion or the event mapped attribute exists.
+				this.logger.info({ message: `Session record with that userId was found with either accountDeletedOn set or with ${eventAttribute} already set` });
+				return true;
+			} else {
+				// Process all events except AUTH_DELETE_ACCOUNT when no record exists.
+				return false;
+			}
+		} catch (e: any) {
+			this.logger.error({ message: "getSessionById - failed executing get from dynamodb:", e });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
+		}
 	}
 
+	async saveEventData(userId: string, updateExpression: string, expressionAttributeValues: any): Promise<string | void> {
+
+		this.logger.info({ message: "Saving event data to dynamodb", tableName: this.tableName });
+		const updateSessionInfoCommand = new UpdateCommand({
+			TableName: this.tableName,
+			Key: {
+				userId,
+			},
+			UpdateExpression: updateExpression,
+			ExpressionAttributeValues: expressionAttributeValues,
+		});
+
+		this.logger.info("Updating session record" );
+
+		try {
+			await this.dynamo.send(updateSessionInfoCommand);
+		} catch (e: any) {
+			this.logger.error({ message: "Failed to update session record in dynamo", e });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
+		}
+	}
 
 	async sendToGovNotify(event: GovNotifyEvent): Promise<void> {
 		try {

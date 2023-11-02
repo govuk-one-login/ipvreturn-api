@@ -43,16 +43,25 @@ describe("PostEventProcessor", () => {
 		expect(response.eventBody).toBe("OK");
 	});
 
-	it.each([
-		["Throws error if user object is missing", {
+	it("Throws error if user object is missing", async () => {
+		const AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_USER_MISSING = {
 			event_id: "588f4a66-f75a-4728-9f7b-8afd865c233c",
 			client_id: "ekwU",
 			clientLandingPageUrl: "REDIRECT_URL",
 			event_name: "AUTH_IPV_AUTHORISATION_REQUESTED",
 			timestamp: 1681902001,
 			timestamp_formatted: "2023-04-19T11:00:01.000Z",
-		}, "user"],
-		["Throws error if eventName is missing", {
+		};
+		await expect(postEventProcessor.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_USER_MISSING))).rejects.toThrow(
+			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
+		);
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "Missing user details in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+
+	});
+
+	it("Throws error if eventName is missing", async () => {
+		const AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_NAME_MISSING = {
 			event_id: "588f4a66-f75a-4728-9f7b-8afd865c233c",
 			client_id: "ekwU",
 			clientLandingPageUrl: "REDIRECT_URL",
@@ -62,8 +71,16 @@ describe("PostEventProcessor", () => {
 				user_id: "01333e01-dde3-412f-a484-5555",
 				email: "jest@test.com",
 			},
-		}, "event_name"],
-		["Throws error if eventName is only spaces", {
+		};
+		await expect(postEventProcessor.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_NAME_MISSING))).rejects.toThrow(
+			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
+		);
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+	});
+
+	it("Throws error if eventName is only spaces", async () => {
+		const AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_NAME_SPACES = {
 			event_id: "588f4a66-f75a-4728-9f7b-8afd865c233c",
 			client_id: "ekwU",
 			eventName: "  ",
@@ -74,15 +91,32 @@ describe("PostEventProcessor", () => {
 				user_id: "01333e01-dde3-412f-a484-5555",
 				email: "jest@test.com",
 			},
-		}, "event_name"],
-	])("%s", async (testName, eventData, missingField) => {
-		await expect(postEventProcessor.processRequest(JSON.stringify(eventData))).rejects.toThrow(
+		};
+		await expect(postEventProcessor.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_NAME_SPACES))).rejects.toThrow(
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "Missing fields in the incoming SQS event" }, { missingFields: missingField }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 	});
-	
+
+	it("Throws error if timestamp is missing", async () => {
+		const AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_TIMESTAMP_MISSING = {
+			event_id: "588f4a66-f75a-4728-9f7b-8afd865c233c",
+			client_id: "ekwU",
+			clientLandingPageUrl: "REDIRECT_URL",
+			event_name: "AUTH_IPV_AUTHORISATION_REQUESTED",
+			timestamp_formatted: "2023-04-19T11:00:01.000Z",
+			user: {
+				user_id: "01333e01-dde3-412f-a484-5555",
+				email: "jest@test.com",
+			},
+		};
+		await expect(postEventProcessor.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_TIMESTAMP_MISSING))).rejects.toThrow(
+			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
+		);
+		// eslint-disable-next-line @typescript-eslint/unbound-method
+		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+	});
 
 	describe("AUTH_IPV_AUTHORISATION_REQUESTED event", () => {
 		it("Calls saveEventData with appropriate payload for AUTH_IPV_AUTHORISATION_REQUESTED event", async () => {
@@ -107,7 +141,7 @@ describe("PostEventProcessor", () => {
 			const result = await postEventProcessor.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_MISSING_EMAIL));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockLogger.warn).toHaveBeenCalledWith({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
-			expect(result).toBe(`Missing info in ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, unlikely this event was meant for F2F`);
+			expect(result).toBe(`Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`);
 		});
 
 		it("Throws error if clientLandingPageUrl is missing", async () => {
@@ -125,7 +159,7 @@ describe("PostEventProcessor", () => {
 			const result = await postEventProcessor.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_MISSING_LANDINGURL));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockLogger.warn).toHaveBeenCalledWith({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
-			expect(result).toBe(`Missing info in ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, unlikely this event was meant for F2F`);
+			expect(result).toBe(`Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`);
 		});
 
 		it("Throws error if clientLandingPageUrl is only spaces", async () => {
@@ -144,7 +178,7 @@ describe("PostEventProcessor", () => {
 			const result = await postEventProcessor.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_URL_SPACES));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockLogger.warn).toHaveBeenCalledWith({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
-			expect(result).toBe(`Missing info in ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, unlikely this event was meant for F2F`);
+			expect(result).toBe(`Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`);
 		});
 	});
 

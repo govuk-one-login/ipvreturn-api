@@ -38,10 +38,6 @@ describe("PostEventHandler", () => {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 		});
 		const response = await lambdaHandler(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT, "IPR");
-		expect(response.batchItemFailures).toEqual([{
-			itemIdentifier: expect.any(String)
-		}]);
+		expect(response.batchItemFailures).toEqual([]);
 	});
 });
-
-
