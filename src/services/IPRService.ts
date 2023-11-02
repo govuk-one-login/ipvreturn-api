@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { Logger } from "@aws-lambda-powertools/logger";
 import { AppError } from "../utils/AppError";
-import { DynamoDBDocument, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocument, GetCommand, UpdateCommand, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { Constants } from "../utils/Constants";
 import { sqsClient } from "../utils/SqsClient";
@@ -44,6 +44,25 @@ export class IPRService {
 			IPRService.instance = new IPRService(tableName, logger, dynamoDbClient);
 		}
 		return IPRService.instance;
+	}
+
+	async getSessionsToRetry(): Promise<SessionEvent[]> {
+		this.logger.debug("Table name " + this.tableName);
+		const params: QueryCommandInput = {
+			TableName: this.tableName,
+			FilterExpression: "attribute_exists(documentUploadedOn) AND attribute_not_exists(notified) AND attribute_not_exists(accountDeletedOn)",
+		};
+
+		let sessionItems;
+
+		try {
+			sessionItems = (await this.dynamo.scan(params))?.Items as SessionEvent[] || [];
+		} catch (error: any) {
+			this.logger.error({ message: "getSessionsToRetry - failed executing scan from dynamodb:", error });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session records");
+		}        
+
+		return sessionItems;
 	}
 
 	async getSessionBySub(userId: string): Promise<ExtSessionEvent | undefined> {

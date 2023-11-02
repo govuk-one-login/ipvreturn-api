@@ -60,13 +60,13 @@ export class SessionEventProcessor {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 
-		let emailType = Constants.VIST_PO_EMAIL_DYNAMIC;
+		let emailType = Constants.VISIT_PO_EMAIL_DYNAMIC;
 
 		// Validate if documentUploadedOn exists
 		if (!sessionEventData.documentUploadedOn || !(sessionEventData.documentUploadedOn > 0)) {
 			this.logger.info({ message: "documentUploadedOn is not yet populated, sending the old template email." });
 			// Send the old template email
-			emailType = Constants.VIST_PO_EMAIL_STATIC;
+			emailType = Constants.VISIT_PO_EMAIL_STATIC;
 			sessionEventData = new SessionEvent(sessionEventData);	
 		} 	
 		

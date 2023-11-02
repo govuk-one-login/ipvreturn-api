@@ -9,8 +9,8 @@ export interface GovNotifyEvent {
 	"Message": {
 		"userId": string;
 		"emailAddress": string;
-		"firstName": string;
-		"lastName": string;
+		"firstName"?: string;
+		"lastName"?: string;
 		"messageType": string;
 		"documentType"?: string;
 		"documentExpiryDate"?: string;
@@ -20,39 +20,45 @@ export interface GovNotifyEvent {
 	};
 }
 
-export const buildGovNotifyEventFields = (nameParts: { givenNames: string[]; familyNames: string[] }, sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger ): GovNotifyEvent => {
+export const buildGovNotifyEventFields = (nameParts: { givenNames: string[]; familyNames: string[] } | null, sessionEvent: ExtSessionEvent | SessionEvent | any, emailType: string, logger: Logger ): GovNotifyEvent => {
 	
 	switch (emailType) {					
-		case Constants.VIST_PO_EMAIL_STATIC:
+		case Constants.VISIT_PO_EMAIL_STATIC:
 			return {
 				Message : {
 					userId: sessionEvent.userId,
 					emailAddress: sessionEvent.userEmail,
-					firstName: nameParts.givenNames[0],
-					lastName: nameParts.familyNames[0],
-					messageType: Constants.VIST_PO_EMAIL_STATIC,
+					firstName: nameParts?.givenNames[0],
+					lastName: nameParts?.familyNames[0],
+					messageType: Constants.VISIT_PO_EMAIL_STATIC,
 				},
 			};
-		case Constants.VIST_PO_EMAIL_DYNAMIC:{
+		case Constants.VISIT_PO_EMAIL_DYNAMIC:
 			const newSessionEvent: ExtSessionEvent = new ExtSessionEvent(sessionEvent);
 			return {
 				Message : {
 					userId: newSessionEvent.userId,
 					emailAddress: newSessionEvent.userEmail,
-					firstName: nameParts.givenNames[0],
-					lastName: nameParts.familyNames[0],
+					firstName: nameParts?.givenNames[0],
+					lastName: nameParts?.familyNames[0],
 					documentType: newSessionEvent.documentType,
 					poAddress: newSessionEvent.postOfficeInfo[0].address + " " + newSessionEvent.postOfficeInfo[0].post_code,
 					poVisitDate: newSessionEvent.postOfficeVisitDetails[0].post_office_date_of_visit,
 					poVisitTime: newSessionEvent.postOfficeVisitDetails[0].post_office_time_of_visit,
 					documentExpiryDate: newSessionEvent.documentExpiryDate,
-					messageType: Constants.VIST_PO_EMAIL_DYNAMIC,
+					messageType: Constants.VISIT_PO_EMAIL_DYNAMIC,
 				},
 			};
-		}
+		case Constants.VISIT_PO_EMAIL_FALLBACK:
+			return {
+				Message : {
+					userId: sessionEvent.userId,
+					emailAddress: sessionEvent.userEmail,
+					messageType: Constants.VISIT_PO_EMAIL_FALLBACK,
+				},
+			};
 		default:
 			logger.error(`Unrecognised emailType ${emailType}, unable to build Gov Notify message.`);
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, `Could not build Gov Notify fields for ${emailType} emailType.`, { messageCode: MessageCodes.UNRECOGNISED_EMAIL_TYPE });
-		
 	}
 };

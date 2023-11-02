@@ -37,7 +37,7 @@ describe("SendEmailProcessor", () => {
 		mockGovNotify.sendEmail.mockResolvedValue(mockEmailResponse);
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
-		const emailResponse = await sendEmailServiceTest.sendEmail(email, Constants.VIST_PO_EMAIL_STATIC);
+		const emailResponse = await sendEmailServiceTest.sendEmail(email, Constants.VISIT_PO_EMAIL_STATIC);
 
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledWith("old-template-id", "test.user@digital.cabinet-office.gov.uk", {
     		"personalisation": {
@@ -69,7 +69,7 @@ describe("SendEmailProcessor", () => {
 		});
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
-		await expect(sendEmailServiceTest.sendEmail(email, Constants.VIST_PO_EMAIL_STATIC)).rejects.toThrow();
+		await expect(sendEmailServiceTest.sendEmail(email, Constants.VISIT_PO_EMAIL_STATIC)).rejects.toThrow();
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(1);
 	});
 
@@ -91,7 +91,7 @@ describe("SendEmailProcessor", () => {
 
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
-		await expect(sendEmailServiceTest.sendEmail(email, Constants.VIST_PO_EMAIL_STATIC)).rejects.toThrow();
+		await expect(sendEmailServiceTest.sendEmail(email, Constants.VISIT_PO_EMAIL_STATIC)).rejects.toThrow();
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(4);
 	});
 
@@ -113,7 +113,7 @@ describe("SendEmailProcessor", () => {
 
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
-		await expect(sendEmailServiceTest.sendEmail(email, Constants.VIST_PO_EMAIL_STATIC)).rejects.toThrow();
+		await expect(sendEmailServiceTest.sendEmail(email, Constants.VISIT_PO_EMAIL_STATIC)).rejects.toThrow();
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(4);
 	});
 
@@ -122,7 +122,7 @@ describe("SendEmailProcessor", () => {
 		mockGovNotify.sendEmail.mockResolvedValue(mockEmailResponse);
 		const eventBody = JSON.parse(sqsEventNewEmail.Records[0].body);
 		const newEmail = DynamicEmail.parseRequest(JSON.stringify(eventBody.Message));
-		const emailResponse = await sendEmailServiceTest.sendEmail(newEmail, Constants.VIST_PO_EMAIL_DYNAMIC);
+		const emailResponse = await sendEmailServiceTest.sendEmail(newEmail, Constants.VISIT_PO_EMAIL_DYNAMIC);
 
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledWith("new-template-id", "test.user@digital.cabinet-office.gov.uk", {
     		"personalisation": {

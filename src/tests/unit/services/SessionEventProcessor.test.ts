@@ -48,7 +48,7 @@ describe("SessionEventProcessor", () => {
 				emailAddress: "test.user@digital.cabinet-office.gov.uk",
 				firstName: "ANGELA",
 				lastName: "UK SPECIMEN",
-				messageType: Constants.VIST_PO_EMAIL_STATIC,
+				messageType: Constants.VISIT_PO_EMAIL_STATIC,
 			},
 		});
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
@@ -102,7 +102,7 @@ describe("SessionEventProcessor", () => {
 		mockIprService.sendToGovNotify.mockRejectedValueOnce("Failed to send to GovNotify Queue");
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1, "FAILED_TO_WRITE_GOV_NOTIFY", { "error": "Failed to send to GovNotify Queue", "reason": "Processing Event session data, failed to post VIST_PO_EMAIL_STATIC type message to GovNotify SQS Queue" }, { "messageCode": "FAILED_TO_WRITE_GOV_NOTIFY_SQS" });
+		expect(mockLogger.error).toHaveBeenNthCalledWith(1, "FAILED_TO_WRITE_GOV_NOTIFY", { "error": "Failed to send to GovNotify Queue", "reason": "Processing Event session data, failed to post VISIT_PO_EMAIL_STATIC type message to GovNotify SQS Queue" }, { "messageCode": "FAILED_TO_WRITE_GOV_NOTIFY_SQS" });
 
 	});
 
@@ -128,7 +128,7 @@ describe("SessionEventProcessor", () => {
 				poAddress: "1 The Street, Funkytown N1 2AA",
     			poVisitDate: "1985-01-25",
     			poVisitTime: "1688477191",
-				messageType: Constants.VIST_PO_EMAIL_DYNAMIC,
+				messageType: Constants.VISIT_PO_EMAIL_DYNAMIC,
 
 			},
 		});
@@ -151,7 +151,7 @@ describe("SessionEventProcessor", () => {
 				emailAddress: "test.user@digital.cabinet-office.gov.uk",
 				firstName: "ANGELA",
 				lastName: "UK SPECIMEN",
-				messageType: Constants.VIST_PO_EMAIL_STATIC,
+				messageType: Constants.VISIT_PO_EMAIL_STATIC,
 			},
 		});
 		const updateExpression = "SET notified = :notified";
@@ -178,7 +178,7 @@ describe("SessionEventProcessor", () => {
 				emailAddress: "test.user@digital.cabinet-office.gov.uk",
 				firstName: "ANGELA",
 				lastName: "UK SPECIMEN",
-				messageType: Constants.VIST_PO_EMAIL_STATIC,
+				messageType: Constants.VISIT_PO_EMAIL_STATIC,
 			},
 		});
 		const updateExpression = "SET notified = :notified";

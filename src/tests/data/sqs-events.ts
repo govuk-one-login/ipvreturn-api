@@ -6,7 +6,7 @@ export const VALID_GOV_NOTIFY_HANDLER_SQS_EVENT = {
 			"messageId": "6e67a34a-94f1-493f-b9eb-3d421aa701a8",
 			// pragma: allowlist nextline secret
 			"receiptHandle": "AQEBDzpW+TMqnd6I8zcqmrq8g8BTsuDjI745ci0bJ46g0Ej",
-			"body": "{\"Message\":{\"userId\":\"user_id\",\"emailAddress\":\"test.user@digital.cabinet-office.gov.uk\",\"firstName\":\"Frederick\",\"lastName\":\"Flintstone\",\"messageType\":\"VIST_PO_EMAIL_STATIC\"}}",
+			"body": "{\"Message\":{\"userId\":\"user_id\",\"emailAddress\":\"test.user@digital.cabinet-office.gov.uk\",\"firstName\":\"Frederick\",\"lastName\":\"Flintstone\",\"messageType\":\"VISIT_PO_EMAIL_STATIC\"}}",
 			"attributes": {
 				"ApproximateReceiveCount": "1",
 				"SentTimestamp": "1588867971441",
@@ -29,7 +29,7 @@ export const VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL = {
 			"messageId": "6e67a34a-94f1-493f-b9eb-3d421aa701a8",
 			// pragma: allowlist nextline secret
 			"receiptHandle": "AQEBDzpW+TMqnd6I8zcqmrq8g8BTsuDjI745ci0bJ46g0Ej",
-			"body": "{\"Message\":{\"userId\":\"user_id\",\"emailAddress\":\"test.user@digital.cabinet-office.gov.uk\",\"firstName\":\"Frederick\",\"lastName\":\"Flintstone\",\"documentType\": \"PASSPORT\",\"poAddress\": \"1 The Street, Funkytown N1 2AA\",\"poVisitDate\": \"7 September 2023\",\"poVisitTime\": \"4:43 pm\",\"documentExpiryDate\": \"2030-11-21\",\"messageType\":\"VIST_PO_EMAIL_DYNAMIC\"}}",
+			"body": "{\"Message\":{\"userId\":\"user_id\",\"emailAddress\":\"test.user@digital.cabinet-office.gov.uk\",\"firstName\":\"Frederick\",\"lastName\":\"Flintstone\",\"documentType\": \"PASSPORT\",\"poAddress\": \"1 The Street, Funkytown N1 2AA\",\"poVisitDate\": \"7 September 2023\",\"poVisitTime\": \"4:43 pm\",\"documentExpiryDate\": \"2030-11-21\",\"messageType\":\"VISIT_PO_EMAIL_DYNAMIC\"}}",
 			"attributes": {
 				"ApproximateReceiveCount": "1",
 				"SentTimestamp": "1588867971441",

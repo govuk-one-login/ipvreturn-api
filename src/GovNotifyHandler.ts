@@ -7,7 +7,7 @@ import { SendEmailProcessor } from "./services/SendEmailProcessor";
 import { getParameter } from "./utils/Config";
 import { EnvironmentVariables } from "./services/EnvironmentVariables";
 import { ServicesEnum } from "./models/enums/ServicesEnum";
-import { Email, DynamicEmail } from "./models/Email";
+import { Email, DynamicEmail, FallbackEmail } from "./models/Email";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : Constants.IPVRETURN_METRICS_NAMESPACE;
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : Constants.DEBUG;
@@ -60,12 +60,16 @@ class GovNotifyHandler implements LambdaInterface {
 				const messageType = body.Message.messageType;
 				let message;
 				switch (messageType) {
-					case Constants.VIST_PO_EMAIL_STATIC: {
+					case Constants.VISIT_PO_EMAIL_STATIC: {
 						message = Email.parseRequest(JSON.stringify(body.Message));
 						break;
 					}
-					case Constants.VIST_PO_EMAIL_DYNAMIC: {
+					case Constants.VISIT_PO_EMAIL_DYNAMIC: {
 						message = DynamicEmail.parseRequest(JSON.stringify(body.Message));
+						break;
+					}
+					case Constants.VISIT_PO_EMAIL_FALLBACK: {
+						message = FallbackEmail.parseRequest(JSON.stringify(body.Message));
 						break;
 					}
 					default :{
