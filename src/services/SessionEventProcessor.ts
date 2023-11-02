@@ -1,5 +1,4 @@
 import { ValidationHelper } from "../utils/ValidationHelper";
-import { personalIdentityUtils } from "../utils/PersonalIdentityUtils";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
@@ -69,11 +68,16 @@ export class SessionEventProcessor {
 			emailType = Constants.VIST_PO_EMAIL_STATIC;
 			sessionEventData = new SessionEvent(sessionEventData);	
 		} 	
+		let data;
+		try{
+			// Validate for fields and confirm the emailType
+			data = await this.validationHelper.validateSessionEvent(sessionEventData, emailType, this.logger);	
+		} catch (error)	{
+			sessionEventData = new SessionEvent(sessionEventData);
+			data = { sessionEvent: sessionEventData, emailType: Constants.VISIT_PO_EMAIL_FALLBACK };
+		}
 		
-		// Validate for fields and confirm the emailType
-		const data = await this.validationHelper.validateSessionEvent(sessionEventData, emailType, this.logger);		
-		
-		// Send the new template email
+		// Send the email notification message
 		await this.sendEmailMessageToGovNotify(data.sessionEvent, data.emailType);	
 
 		// Update the DB table with notified flag set to true
@@ -93,9 +97,8 @@ export class SessionEventProcessor {
 		
 		// Send SQS message to GovNotify queue to send email to the user.
 		try {
-			this.logger.info({ message: `Trying to send  ${emailType} type message to GovNotify handler` });
-			const nameParts = personalIdentityUtils.getNames(sessionEvent.nameParts);
-			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(nameParts, sessionEvent, emailType, this.logger));
+			this.logger.info({ message: `Trying to send  ${emailType} type message to GovNotify handler` });			
+			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEvent, emailType, this.logger));
 		} catch (error) {
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
 				reason: `Processing Event session data, failed to post ${emailType} type message to GovNotify SQS Queue`,
