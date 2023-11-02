@@ -88,15 +88,14 @@ export class SendEmailProcessor {
 		
 		const sessionEventData = message instanceof DynamicEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
 		
-		let data;
+		let data = {emailType : message.messageType};
 		//Skip validating the session record fields if messageType is VISIT_PO_EMAIL_FALLBACK
 		if(message.messageType !== Constants.VISIT_PO_EMAIL_FALLBACK){
 			// Validate all necessary fields are populated in the session store before processing the data.
 			data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
 		}
-		const emailType = message.messageType === Constants.VISIT_PO_EMAIL_FALLBACK ? Constants.VISIT_PO_EMAIL_FALLBACK :  data!.emailType;
 		
-		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, emailType);
+		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
 		try {
 			await this.iprService.sendToTXMA({
 				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
