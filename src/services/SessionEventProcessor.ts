@@ -63,8 +63,8 @@ export class SessionEventProcessor {
 
 		// Validate if documentUploadedOn exists
 		if (!sessionEventData.documentUploadedOn || !(sessionEventData.documentUploadedOn > 0)) {
-			this.logger.info({ message: "documentUploadedOn is not yet populated, sending the old template email." });
-			// Send the old template email
+			this.logger.info({ message: "documentUploadedOn is not yet populated, sending the static template email." });
+			// Send the static template email
 			emailType = Constants.VIST_PO_EMAIL_STATIC;
 			sessionEventData = new SessionEvent(sessionEventData);	
 		} 	

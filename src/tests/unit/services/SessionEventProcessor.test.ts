@@ -32,7 +32,7 @@ describe("SessionEventProcessor", () => {
 		streamEventWithPoDetails = VALID_DYNAMODB_STREAM_EVENT_WITH_PO_DETAILS;
 	});
 
-	it("When all the necessary fields are populated in the session Event record, sends old email and updates notified flag", async () => {
+	it("When all the necessary fields are populated in the session Event record, sends static email and updates notified flag", async () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		const updateExpression = "SET notified = :notified";
 		const expressionAttributeValues = {
@@ -74,27 +74,56 @@ describe("SessionEventProcessor", () => {
 	});
 
 	it.each([
-		"userEmail",
 		"nameParts",
 		"clientName",
 		"redirectUri",
-	])("Throws error when session event record is missing necessary attribute %s", async (attribute) => {
+	])("Sends fallback template email if missing mandatory attribute %s", async (attribute) => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		delete sessionEvent[attribute];
-		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		expect(mockLogger.error).toHaveBeenNthCalledWith(2, "Unable to process the DB record as the necessary fields are not populated to send the old template email.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
+
+		const updateExpression = "SET notified = :notified";
+		const expressionAttributeValues = {
+			":notified": true,
+		};
+
+		await sessionEventProcessorTest.processRequest(sessionEvent);
+
+		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
+		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
+			Message: {
+				userId: "01333e01-dde3-412f-a484-4444",
+				emailAddress: "test.user@digital.cabinet-office.gov.uk",
+				messageType: Constants.VISIT_PO_EMAIL_FALLBACK,
+			},
+		});
+		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
+		expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
 	});
 
 	it.each([
-		"userEmail",
 		"nameParts",
 		"clientName",
 		"redirectUri",
-	])("Throws error when session event record attribute %s is not correct type", async (attribute) => {
+	])("Sends fallback template email when session event record attribute %s is not correct type", async (attribute) => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		sessionEvent[attribute] = 0;
-		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		expect(mockLogger.error).toHaveBeenNthCalledWith(2, "Unable to process the DB record as the necessary fields are not populated to send the old template email.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
+		const updateExpression = "SET notified = :notified";
+		const expressionAttributeValues = {
+			":notified": true,
+		};
+
+		await sessionEventProcessorTest.processRequest(sessionEvent);
+
+		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
+		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
+			Message: {
+				userId: "01333e01-dde3-412f-a484-4444",
+				emailAddress: "test.user@digital.cabinet-office.gov.uk",
+				messageType: Constants.VISIT_PO_EMAIL_FALLBACK,
+			},
+		});
+		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
+		expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
 	});
 
 	it("Throws error if failure to send to GovNotify queue", async () => {
@@ -139,11 +168,11 @@ describe("SessionEventProcessor", () => {
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
 	});
 
-	it("Logs Info message when session event record is missing documentUploadedOn field and hence sending old template email", async () => {
+	it("Logs Info message when session event record is missing documentUploadedOn field and hence sending static template email", async () => {
 		const sessionEvent = unmarshall(streamEventWithPoDetails.Records[0].dynamodb?.NewImage);
 		delete sessionEvent.documentUploadedOn;
 		await sessionEventProcessorTest.processRequest(sessionEvent);
-		expect(mockLogger.info).toHaveBeenNthCalledWith(1, { "message":"documentUploadedOn is not yet populated, sending the old template email." });
+		expect(mockLogger.info).toHaveBeenNthCalledWith(1, { "message":"documentUploadedOn is not yet populated, sending the static template email." });
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
 			Message: {
@@ -166,11 +195,11 @@ describe("SessionEventProcessor", () => {
 		"documentExpiryDate",
 		"postOfficeVisitDetails",
 		"postOfficeInfo",
-	])("Logs Info message when session event record is missing necessary attribute -  %s, to send new template email and hence falls back to sending old template email", async (attribute) => {
+	])("Logs Info message when session event record is missing necessary attribute -  %s, to send new template email and hence falls back to sending static template email", async (attribute) => {
 		const sessionEvent = unmarshall(streamEventWithPoDetails.Records[0].dynamodb?.NewImage);
 		delete sessionEvent[attribute];
 		await sessionEventProcessorTest.processRequest(sessionEvent);	
-		expect(mockLogger.info).toHaveBeenNthCalledWith(1, "Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { "messageCode": "MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT" });
+		expect(mockLogger.info).toHaveBeenNthCalledWith(1, "Unable to process the DB record as the necessary fields to send the dynamic template email are not populated, trying to send the static template email.", { "messageCode": "MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT" });
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
 			Message: {

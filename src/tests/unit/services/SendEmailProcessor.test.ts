@@ -128,7 +128,7 @@ describe("SendEmailProcessor", () => {
 		mockExtSessionEvent = getMockExtSessionEventItem();
 	});
 
-	it("Returns success response when all required Email attributes exists to send oldEmail messageType", async () => {
+	it("Returns success response when all required Email attributes exists to send static template Email messageType", async () => {
 		const expectedDateTime = new Date().toISOString();
 		const mockEmailResponse = new EmailResponse(expectedDateTime, "", 201);
 		mockGovNotifyService.sendEmail.mockResolvedValue(mockEmailResponse);
@@ -159,7 +159,7 @@ describe("SendEmailProcessor", () => {
 		"firstName",
 		"lastName",
 		"emailAddress",
-	])("Throws error when event body message is missing required attributes to send oldEmail", async (attribute) => {
+	])("Throws error when event body message is missing required attributes to send static template Email", async (attribute) => {
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const eventBodyMessage = eventBody.Message;
 		delete eventBodyMessage[attribute];
@@ -220,7 +220,7 @@ describe("SendEmailProcessor", () => {
 		"nameParts",
 		"clientName",
 		"redirectUri",
-	])("Throws error when session event record is missing necessary field %s required to send oldEmail", async (attribute) => {
+	])("Throws error when session event record is missing necessary field %s required to send static template Email", async (attribute) => {
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const eventBodyMessage = eventBody.Message;
 		eventBody.Message = eventBodyMessage;
@@ -231,7 +231,7 @@ describe("SendEmailProcessor", () => {
 		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
 		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
-		expect(logger.error).toHaveBeenCalledWith("Unable to process the DB record as the necessary fields are not populated to send the static template email.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
+		expect(logger.error).toHaveBeenCalledWith("The mandatory fields required for static template email are missing in session record, trying to send the fallback template email.", { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
 
 	});
 
@@ -294,7 +294,7 @@ describe("SendEmailProcessor", () => {
 		"documentExpiryDate",
 		"postOfficeVisitDetails",
 		"postOfficeInfo",
-	])("when session event record is missing necessary field %s required to send newEmail, then it falls back to sending oldEMail", async (attribute) => {
+	])("when session event record is missing necessary field %s required to send newEmail, then it falls back to sending static template Email", async (attribute) => {
 		const expectedDateTime = new Date().toISOString();
 		const mockEmailResponse = new EmailResponse(expectedDateTime, "", 201);
 		mockGovNotifyService.sendEmail.mockResolvedValue(mockEmailResponse);
