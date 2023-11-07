@@ -39,7 +39,7 @@ export class SessionReturnRecord {
 				this.expiresDate = expiresOn;
 				break;
 			}
-			case Constants.F2F_YOTI_START:{
+			case Constants.F2F_YOTI_START: {
 				this.journeyWentAsyncOn = data.timestamp;
 				this.expiresDate = expiresOn;
 				if (data.user.govuk_signin_journey_id && (data.user.govuk_signin_journey_id).toLowerCase() !== "unknown") {
@@ -51,18 +51,18 @@ export class SessionReturnRecord {
 				});
 				break;
 			}
-			case Constants.IPV_F2F_CRI_VC_CONSUMED:{
+			case Constants.IPV_F2F_CRI_VC_CONSUMED: {
 				this.readyToResumeOn = data.timestamp;
 				this.nameParts = data.restricted?.nameParts;
 				this.documentExpiryDate = data.restricted?.docExpiryDate;
 				break;
 			}
-			case Constants.F2F_DOCUMENT_UPLOADED:{
+			case Constants.F2F_DOCUMENT_UPLOADED: {
 				this.documentUploadedOn = data.timestamp;
 				this.postOfficeVisitDetails = data.extensions?.post_office_visit_details;
 				break;
 			}
-			case Constants.AUTH_DELETE_ACCOUNT:{
+			case Constants.AUTH_DELETE_ACCOUNT: {
 				this.accountDeletedOn = data.timestamp;
 				this.clientSessionId = "";
 				this.clientName = "";
@@ -71,7 +71,7 @@ export class SessionReturnRecord {
 				this.nameParts = [];
 				break;
 			}
-			default:{
+			default: {
 				break;
 			}
 		}

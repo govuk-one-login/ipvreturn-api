@@ -39,10 +39,10 @@ const wrongPayload : JWTPayload = {
 	iat: absoluteTimeNow(),
 	nonce: "nonce",
 };
-const passingKmsJwtAdapterFactory = (_signingKeys: string) => new MockKmsJwtAdapter(true, validPayload);
-const failingKmsJwtAdapterFactory = (_signingKeys: string) => new MockKmsJwtAdapter(false, validPayload);
-const failingKmsJwtSigningAdapterFactory = (_signingKeys: string) => new MockFailingKmsSigningJwtAdapter();
-const failingKmsJwtDecodeAdapterFactory = (_signingKeys: string) => new MockFailingKmsJwtAdapter();
+const passingKmsJwtAdapterFactory = () => new MockKmsJwtAdapter(true, validPayload);
+const failingKmsJwtAdapterFactory = () => new MockKmsJwtAdapter(false, validPayload);
+const failingKmsJwtSigningAdapterFactory = () => new MockFailingKmsSigningJwtAdapter();
+const failingKmsJwtDecodeAdapterFactory = () => new MockFailingKmsJwtAdapter();
 
 const logger = mock<Logger>();
 const metrics = new Metrics({ namespace: "CIC" });

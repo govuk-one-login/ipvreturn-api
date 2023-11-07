@@ -20,9 +20,13 @@ export interface GovNotifyEvent {
 	};
 }
 
-export const buildGovNotifyEventFields = (nameParts: { givenNames: string[]; familyNames: string[] }, sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger ): GovNotifyEvent => {
-	
-	switch (emailType) {					
+export const buildGovNotifyEventFields = (
+	nameParts: { givenNames: string[]; familyNames: string[] },
+	sessionEvent: ExtSessionEvent | SessionEvent,
+	emailType: string, logger: Logger,
+): GovNotifyEvent => {
+
+	switch (emailType) {
 		case Constants.VIST_PO_EMAIL_STATIC:
 			return {
 				Message : {

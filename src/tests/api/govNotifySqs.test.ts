@@ -12,6 +12,7 @@ describe("TxMA Events from Gov Notify SQS queue", () => {
 	});
 
 	// TODO these are commented out until F2F-583 is merged 
+	// eslint-disable-next-line @typescript-eslint/tslint/config
 	it.skip("should post an VALID_GOV_NOTIFY_SQS_TXMA_EVENT TxMA event", async () => {
 		await purgeTxmaSqsQueue();
 		const response = await postGovNotifyEvent(VALID_GOV_NOTIFY_SQS_TXMA_EVENT);
@@ -19,7 +20,8 @@ describe("TxMA Events from Gov Notify SQS queue", () => {
 		expect(response.MessageId).toBeTruthy();
 	});
 
-	// TODO these are commented out until F2F-583 is merged 
+	// TODO these are commented out until F2F-583 is merged
+	// eslint-disable-next-line @typescript-eslint/tslint/config
 	it.skip("should result in a TxMA event with event name IPR_RESULT_NOTIFICATION_EMAILED", async () => {
 		const response = await getTxmaSqsEvent();
 		const messageBody = JSON.parse(response.Messages[0].Body);
