@@ -46,7 +46,7 @@ export class PostEventProcessor {
 			const eventDetails: ReturnSQSEvent = JSON.parse(eventBody);
 			const eventName = eventDetails.event_name;
 
-			const obfuscatedObject = await this.iprService.obfuscateJSONValues(event, Constants.TXMA_FIELDS_TO_SHOW);
+			const obfuscatedObject = await this.iprService.obfuscateJSONValues(eventDetails, Constants.TXMA_FIELDS_TO_SHOW);
 			this.logger.info({ message: "Obfuscated TxMA Event", txmaEvent: obfuscatedObject });
 
 			if (!eventDetails.event_id) {
