@@ -177,7 +177,7 @@ export class IPRService {
 				return obfuscatedObject;
 			}
 		} else {
-			return input === null || input === undefined ? input : '***';
+			return input === null || input === undefined ? input : "***";
 		}
 	}
 }

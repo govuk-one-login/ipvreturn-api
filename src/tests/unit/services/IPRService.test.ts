@@ -258,8 +258,8 @@ describe("IPR Service", () => {
 			expect(obfuscatedObject.field3).toBe("non-sensitive");
 			expect(obfuscatedObject.nested.field4).toBe("***");
 			expect(obfuscatedObject.nested.field5).toBe("non-sensitive");
-			expect(obfuscatedObject.nested.field6).toBe(null);
-			expect(obfuscatedObject.nested.field7).toBe(undefined);
+			expect(obfuscatedObject.nested.field6).toBeNull();
+			expect(obfuscatedObject.nested.field7).toBeUndefined();
 		});
 	
 		it("should handle arrays correctly", async () => {

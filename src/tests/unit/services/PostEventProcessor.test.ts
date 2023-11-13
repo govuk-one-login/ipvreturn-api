@@ -35,7 +35,7 @@ describe("PostEventProcessor", () => {
 		// @ts-ignore
 		postEventProcessor.iprService = mockIprService;
 		mockIprService.saveEventData.mockResolvedValueOnce();
-		mockIprService.obfuscateJSONValues.mockResolvedValue({"event_name":"IPR_RESULT_NOTIFICATION_EMAILED","user":{"user_id":"***"},"timestamp":"***"});
+		mockIprService.obfuscateJSONValues.mockResolvedValue({ "event_name":"IPR_RESULT_NOTIFICATION_EMAILED", "user":{ "user_id":"***" }, "timestamp":"***" });
 	});
 
 	it("Returns success response when call to save event data is successful", async () => {
