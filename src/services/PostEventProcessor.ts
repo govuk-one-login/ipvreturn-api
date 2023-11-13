@@ -46,9 +46,8 @@ export class PostEventProcessor {
 			const eventDetails: ReturnSQSEvent = JSON.parse(eventBody);
 			const eventName = eventDetails.event_name;
 
-			this.iprService.obfuscateJSONValues(eventDetails, Constants.TXMA_FIELDS_TO_SHOW).then((obfuscatedObject) => {
-				this.logger.info({ message: "Obfuscated TxMA Event", txmaEvent: JSON.stringify(obfuscatedObject, null, 2) });
-			});
+			const obfuscatedObject = await this.iprService.obfuscateJSONValues(event, Constants.TXMA_FIELDS_TO_SHOW);
+			this.logger.info({ message: "Obfuscated TxMA Event", txmaEvent: obfuscatedObject });
 
 			if (!eventDetails.event_id) {
 				this.logger.error({ message: "Missing event_id in the incoming SQS event" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
