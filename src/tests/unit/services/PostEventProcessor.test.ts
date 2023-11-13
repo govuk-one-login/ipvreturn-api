@@ -35,6 +35,7 @@ describe("PostEventProcessor", () => {
 		// @ts-ignore
 		postEventProcessor.iprService = mockIprService;
 		mockIprService.saveEventData.mockResolvedValueOnce();
+		mockIprService.obfuscateJSONValues.mockResolvedValue({"event_name":"IPR_RESULT_NOTIFICATION_EMAILED","user":{"user_id":"***"},"timestamp":"***"});
 	});
 
 	it("Returns success response when call to save event data is successful", async () => {
@@ -189,7 +190,7 @@ describe("PostEventProcessor", () => {
 			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
 			// Check if it logs about docExpiryDate missing
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockLogger.info).toHaveBeenNthCalledWith(2, "No docExpiryDate in IPV_F2F_CRI_VC_CONSUMED event");
+			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No docExpiryDate in IPV_F2F_CRI_VC_CONSUMED event");
 		});
 
 		it("Throws error if restricted is missing", async () => {
@@ -340,7 +341,7 @@ describe("PostEventProcessor", () => {
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, documentType = :documentType, clientSessionId = :clientSessionId", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":documentType": "PASSPORT", ":clientSessionId": "asdfadsfasdf" });
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockLogger.info).toHaveBeenNthCalledWith(2, "No post_office_details in F2F_YOTI_START event");
+			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No post_office_details in F2F_YOTI_START event");
 		});
 
 		it("Logs if post_office_details and document_details is missing", async () => {
@@ -349,9 +350,9 @@ describe("PostEventProcessor", () => {
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn });
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockLogger.info).toHaveBeenNthCalledWith(2, "No post_office_details in F2F_YOTI_START event");
+			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No post_office_details in F2F_YOTI_START event");
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No document_details in F2F_YOTI_START event");
+			expect(mockLogger.info).toHaveBeenNthCalledWith(4, "No document_details in F2F_YOTI_START event");
 		});
 	});
 	
