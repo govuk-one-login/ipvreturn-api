@@ -89,7 +89,7 @@ export class SendEmailService {
     			templateId = this.environmentVariables.getDynamicEmailTemplateId();
     			break;
     		}
-			case Constants.VISIT_PO_EMAIL_FALLBACK: {				
+    		case Constants.VISIT_PO_EMAIL_FALLBACK: {				
     			// Send Fallback template email
     			personalisation = {
     				"return_journey_URL": this.environmentVariables.returnJourneyUrl(),

@@ -54,7 +54,7 @@ export const buildGovNotifyEventFields = (sessionEvent: ExtSessionEvent | Sessio
 					messageType: Constants.VIST_PO_EMAIL_DYNAMIC,
 				},
 			};
-		};
+		}
 		case Constants.VISIT_PO_EMAIL_FALLBACK:
 			return {
 				Message : {

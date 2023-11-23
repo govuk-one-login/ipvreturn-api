@@ -88,9 +88,9 @@ export class SendEmailProcessor {
 		
 		const sessionEventData = message instanceof DynamicEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
 		
-		let data = {emailType : message.messageType};
+		let data = { emailType : message.messageType };
 		//Skip validating the session record fields if messageType is VISIT_PO_EMAIL_FALLBACK
-		if(message.messageType !== Constants.VISIT_PO_EMAIL_FALLBACK){
+		if (message.messageType !== Constants.VISIT_PO_EMAIL_FALLBACK) {
 			// Validate all necessary fields are populated in the session store before processing the data.
 			data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
 		}

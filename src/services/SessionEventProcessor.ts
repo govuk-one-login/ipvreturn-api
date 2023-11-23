@@ -69,7 +69,7 @@ export class SessionEventProcessor {
 			sessionEventData = new SessionEvent(sessionEventData);	
 		} 	
 		let data;
-		try{
+		try {
 			// Validate for fields and confirm the emailType
 			data = await this.validationHelper.validateSessionEvent(sessionEventData, emailType, this.logger);	
 		} catch (error)	{
