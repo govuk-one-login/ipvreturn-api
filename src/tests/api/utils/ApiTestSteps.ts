@@ -87,7 +87,7 @@ export async function getTxmaSqsEvent(): Promise<any> {
 	return sqsClient.send(command);
 }
 
-	export async function getSessionByUserId(userId: string, tableName: string): Promise< ExtSessionEvent | undefined > {
+export async function getSessionByUserId(userId: string, tableName: string): Promise< ExtSessionEvent | undefined > {
 	interface OriginalValue {
 		N?: string;
 		S?: string;
