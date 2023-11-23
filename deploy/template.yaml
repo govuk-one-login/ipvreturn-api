@@ -2105,6 +2105,42 @@ Resources:
               MetricName: IssueAccessTokenLambdaTimeOut
             Period: 60
             Stat: Sum
+  
+  StreamProcessorFunctionErorMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref StreamProcessorFunctionLogGroup
+      FilterPattern: '{ $.level = "ERROR" || $.message = "*trying to send the fallback template email." }'
+      MetricTransformations:
+        -
+          MetricValue: "1"
+          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
+          MetricName: "StreamProcessorFunction-error"
+
+  StreamProcessorFunctionErrorAlarm:
+    DependsOn:
+      - "StreamProcessorFunctionErorMetricFilter"
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-ErrorAlarm"
+      AlarmDescription: !Sub "Trigger an alarm when Error occurs. ${SupportManualURL}"
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      MetricName: StreamProcessorFunction-error
+      Namespace: !Sub "${AWS::StackName}/LogMessages"
+      Statistic: Sum
+      Dimensions: [ ]
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
 
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
