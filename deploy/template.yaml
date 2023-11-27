@@ -2106,7 +2106,7 @@ Resources:
             Period: 60
             Stat: Sum
   
-  StreamProcessorFunctionErorMetricFilter:
+  FallbackEmailErrorMetricFilter:
     Type: AWS::Logs::MetricFilter
     Properties:
       LogGroupName: !Ref StreamProcessorFunctionLogGroup
@@ -2115,23 +2115,23 @@ Resources:
         -
           MetricValue: "1"
           MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
-          MetricName: "StreamProcessorFunction-error"
+          MetricName: "StreamProcessorFunction-FallbackEmail-error"
 
-  StreamProcessorFunctionErrorAlarm:
+  FallbackEmailErrorAlarm:
     DependsOn:
-      - "StreamProcessorFunctionErorMetricFilter"
+      - "FallbackEmailErrorMetricFilter"
     Type: AWS::CloudWatch::Alarm
     Condition: "DeployAlarms"
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-ErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Error occurs. ${SupportManualURL}"
+      AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-FallbackEmailErrorAlarm"
+      AlarmDescription: !Sub "Trigger an alarm when Fallback email is trigerred due to missing mandatory fields. ${SupportManualURL}"
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
       AlarmActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
       InsufficientDataActions: [ ]
-      MetricName: StreamProcessorFunction-error
+      MetricName: StreamProcessorFunction-FallbackEmail-error
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
       Dimensions: [ ]
