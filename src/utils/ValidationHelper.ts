@@ -7,6 +7,7 @@ import { JwtPayload } from "./IVeriCredential";
 import { absoluteTimeNow } from "./DateTimeUtils";
 import { Constants } from "./Constants";
 import { MessageCodes } from "../models/enums/MessageCodes";
+import { FallbackEmail } from "../models/Email";
 
 export class ValidationHelper {
 
@@ -40,22 +41,21 @@ export class ValidationHelper {
 		}
 	}
 
-	async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent; emailType: string }> {
+	async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent | FallbackEmail; emailType: string }> {
 		//Validate all necessary fields are populated required to send the email before processing the data.
 		try {
 			await this.validateModel(sessionEvent, logger);				
 		} catch (error) {
 			if (emailType === Constants.VIST_PO_EMAIL_DYNAMIC) {
-				logger.info("Unable to process the DB record as the necessary fields to send the new template email are not populated, trying to send the old template email.", { messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT });
-				// Send the old template email
+				logger.info("Unable to process the DB record as the necessary fields to send the dynamic template email are not populated, trying to send the static template email.", { messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT });
+				// Send the static template email
 				sessionEvent = new SessionEvent(sessionEvent);		
 				emailType = Constants.VIST_PO_EMAIL_STATIC;
-				// Validate feilds required for sending the old email
+				// Validate fields required for sending the static email
 				await this.validateSessionEvent(sessionEvent, emailType, logger);
 			} else {
-				logger.error("Unable to process the DB record as the necessary fields are not populated to send the old template email.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
-				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unable to process the DB record as the necessary fields are not populated to send the old template email.");			
-
+				logger.error("The mandatory fields required for static template email are missing in session record, trying to send the fallback template email.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "The mandatory fields required for static template email are missing in session record, trying to send the fallback template email.");			
 			}			
 		}
 		return { sessionEvent, emailType };

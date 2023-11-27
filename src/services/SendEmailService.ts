@@ -64,7 +64,7 @@ export class SendEmailService {
     	let personalisation;
     	switch (emailType) {
     		case Constants.VIST_PO_EMAIL_STATIC: {
-    			// Send Old template email
+    			// Send Static template email
     			personalisation = {
     				"first name": message.firstName,
     				"last name": message.lastName,
@@ -75,7 +75,7 @@ export class SendEmailService {
 
     		}
     		case Constants.VIST_PO_EMAIL_DYNAMIC: {				
-    			// Send New template email
+    			// Send Dynamic template email
     			personalisation = {
     				"first name": message.firstName,
     				"last name": message.lastName,
@@ -87,6 +87,14 @@ export class SendEmailService {
     				"time": message.poVisitTime.replace(/\s/g, ""),
     			};
     			templateId = this.environmentVariables.getDynamicEmailTemplateId();
+    			break;
+    		}
+    		case Constants.VISIT_PO_EMAIL_FALLBACK: {				
+    			// Send Fallback template email
+    			personalisation = {
+    				"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
+    			};
+    			templateId = this.environmentVariables.getFallbackEmailTemplateId();
     			break;
     		}
     		default: {

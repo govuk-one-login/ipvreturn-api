@@ -46,6 +46,8 @@ export class EnvironmentVariables {
 
 	private readonly TXMA_QUEUE_URL = process.env.TXMA_QUEUE_URL;
 
+	private readonly GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID = process.env.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID;
+
 
 	/*
 	 * This function performs validation on env variable values.
@@ -60,7 +62,8 @@ export class EnvironmentVariables {
 					!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0 ||
 					!this.GOVUKNOTIFY_API || this.GOVUKNOTIFY_API.trim().length === 0 ||
 					!this.GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID || this.GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID.trim().length === 0 ||
-					!this.GOVUKNOTIFY_TEMPLATE_ID || this.GOVUKNOTIFY_TEMPLATE_ID.trim().length === 0) {
+					!this.GOVUKNOTIFY_TEMPLATE_ID || this.GOVUKNOTIFY_TEMPLATE_ID.trim().length === 0 ||
+					!this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID || this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID.trim().length === 0) {
 					logger.error({ message: "GovNotifyService - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
@@ -200,5 +203,9 @@ export class EnvironmentVariables {
 
 	govukNotifyApiUrl(): any {
 		return this.GOVUKNOTIFY_API;
+	}
+
+	getFallbackEmailTemplateId(): any {
+		return this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID;
 	}
 }

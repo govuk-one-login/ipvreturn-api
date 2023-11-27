@@ -42,5 +42,8 @@ export class Constants {
 
     static readonly VIST_PO_EMAIL_DYNAMIC = "VIST_PO_EMAIL_DYNAMIC";
 
-		static readonly TXMA_FIELDS_TO_SHOW = ["event_name", "documentType", "docExpiryDate"];
+    static readonly VISIT_PO_EMAIL_FALLBACK = "VISIT_PO_EMAIL_FALLBACK";
+    
+
+	static readonly TXMA_FIELDS_TO_SHOW = ["event_name", "documentType", "docExpiryDate"];
 }

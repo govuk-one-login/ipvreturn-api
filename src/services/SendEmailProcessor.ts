@@ -1,4 +1,4 @@
-import { Email, DynamicEmail } from "../models/Email";
+import { Email, DynamicEmail, FallbackEmail } from "../models/Email";
 import { EmailResponse } from "../models/EmailResponse";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
@@ -11,6 +11,7 @@ import { MessageCodes } from "../models/enums/MessageCodes";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
+import { Constants } from "../utils/Constants";
 
 export class SendEmailProcessor {
 
@@ -44,8 +45,7 @@ export class SendEmailProcessor {
 		return SendEmailProcessor.instance;
 	}
 
-	async processRequest(message: Email | DynamicEmail): Promise<EmailResponse> {
-		//const message = Email.parseRequest(JSON.stringify(eventBody.Message));
+	async processRequest(message: Email | DynamicEmail | FallbackEmail): Promise<EmailResponse> {
 		// Validate Email model
 		try {
 			await this.validationHelper.validateModel(message, this.logger);
@@ -88,9 +88,13 @@ export class SendEmailProcessor {
 		
 		const sessionEventData = message instanceof DynamicEmail ? ExtSessionEvent.parseRequest(JSON.stringify(session)) : SessionEvent.parseRequest(JSON.stringify(session));
 		
-		// Validate all necessary fields are populated in the session store before processing the data.
-		const data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
-
+		let data = { emailType : message.messageType };
+		//Skip validating the session record fields if messageType is VISIT_PO_EMAIL_FALLBACK
+		if (message.messageType !== Constants.VISIT_PO_EMAIL_FALLBACK) {
+			// Validate all necessary fields are populated in the session store before processing the data.
+			data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
+		}
+		
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
 		try {
 			await this.iprService.sendToTXMA({

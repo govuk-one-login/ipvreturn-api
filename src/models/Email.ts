@@ -100,3 +100,41 @@ export class DynamicEmail extends Email {
     documentExpiryDate!: string;
 
 }
+
+export class FallbackEmail {
+
+	constructor(data: Partial<FallbackEmail>) {
+		this.userId = data.userId!;
+		this.emailAddress = data.emailAddress!;
+		this.messageType = data.messageType!;
+		this.referenceId = randomUUID();
+	}
+
+	static parseRequest(data: any): FallbackEmail {
+		try {
+			const obj = JSON.parse(data);
+			return new FallbackEmail(obj);
+		} catch (error: any) {
+			console.log("Cannot parse Email data", FallbackEmail.name, "parseBody", { data });
+			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse Email data");
+		}
+	}
+
+	@IsString()
+	@IsNotEmpty()
+	userId!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @IsEmail()
+    emailAddress!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    referenceId!: string;
+
+	@IsString()
+    @IsNotEmpty()
+    messageType!: string;	
+
+}
