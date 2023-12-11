@@ -73,7 +73,7 @@ Resources:
           KeyType: "HASH"
       TimeToLiveSpecification:
         AttributeName: expiresOn
-        Enabled: false
+        Enabled: true
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       SSESpecification:
