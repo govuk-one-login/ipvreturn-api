@@ -45,5 +45,5 @@ export class Constants {
     static readonly VISIT_PO_EMAIL_FALLBACK = "VISIT_PO_EMAIL_FALLBACK";
     
 
-	static readonly TXMA_FIELDS_TO_SHOW = ["event_name", "documentType", "docExpiryDate"];
+	static readonly TXMA_FIELDS_TO_SHOW = ["event_name", "documentType", "docExpiryDate", "govuk_signin_journey_id"];
 }
