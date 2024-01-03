@@ -24,7 +24,14 @@ export interface PostOfficeInfo {
 }
 
 export interface DocumentDetails {
-	documentType?: string;
+	passport?: DocumentTypeDetails[] | null;
+	residencePermit?: DocumentTypeDetails[] | null;
+	drivingPermit?: DocumentTypeDetails[] | null;
+	idCard?: DocumentTypeDetails[] | null;
+}
+
+export interface DocumentTypeDetails {
+	documentType: string;
 }
 
 export class SessionReturnRecord {
@@ -46,10 +53,15 @@ export class SessionReturnRecord {
 					this.clientSessionId = data.user.govuk_signin_journey_id;
 				}
 				this.postOfficeInfo = data.extensions?.post_office_details;
-				data.restricted?.document_details?.map(doc => {
-					this.documentType = doc.documentType;
-				});
-				break;
+				if (data.restricted?.document_details) {
+					Object.values(data.restricted.document_details).forEach(docArray => {
+						if (Array.isArray(docArray)) {
+							docArray.forEach(doc => {
+								this.documentType = doc.documentType;
+							});
+						}
+					});
+				}
 			}
 			case Constants.IPV_F2F_CRI_VC_CONSUMED: {
 				this.readyToResumeOn = data.timestamp;
