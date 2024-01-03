@@ -62,6 +62,7 @@ export class SessionReturnRecord {
 						}
 					});
 				}
+				break;
 			}
 			case Constants.IPV_F2F_CRI_VC_CONSUMED: {
 				this.readyToResumeOn = data.timestamp;
