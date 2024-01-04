@@ -17,7 +17,7 @@ export interface ReturnSQSEvent {
 	};
 	restricted?: {
 		nameParts?: NamePart[];
-		document_details?: DocumentDetails[];
+		document_details?: DocumentDetails;
 		docExpiryDate?: string;
 	};
 	extensions?: {

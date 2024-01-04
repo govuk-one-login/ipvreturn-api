@@ -240,11 +240,16 @@ export const VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT: ReturnSQSEvent
 			},
 		],
 	},
-	"restricted": {
-		"document_details": [
-			{
-				"documentType": "PASSPORT",
-			},
-		],
+	"restricted":{
+		"document_details":{
+			"passport":[
+				{
+					"documentType":"PASSPORT",
+				},
+			],
+			"residencePermit":null,
+			"drivingPermit":null,
+			"idCard":null,
+		},
 	},
 };
