@@ -1673,8 +1673,8 @@ Resources:
               Namespace: AWS/ApiGateway
               MetricName: Count
               Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: ApiId
+                  Value: !Sub "${IPVRestApi}"
             Period: 60
             Stat: Sum
         - Id: errorPercentage
@@ -1688,8 +1688,8 @@ Resources:
               Namespace: AWS/ApiGateway
               MetricName: 5XXError
               Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: ApiId
+                  Value: !Sub "${IPVRestApi}"
             Period: 60
             Stat: Sum
 
@@ -1723,8 +1723,8 @@ Resources:
               Namespace: AWS/ApiGateway
               MetricName: Count
               Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: ApiId
+                  Value: !Sub "${IPVRestApi}"
             Period: 60
             Stat: Sum
         - Id: errorPercentage
@@ -1738,8 +1738,8 @@ Resources:
               Namespace: AWS/ApiGateway
               MetricName: 5XXError
               Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: ApiId
+                  Value: !Sub "${IPVRestApi}"
             Period: 60
             Stat: Sum
 
@@ -1773,8 +1773,8 @@ Resources:
               Namespace: AWS/ApiGateway
               MetricName: Count
               Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: ApiId
+                  Value: !Sub "${IPVRestApi}"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1794,8 +1794,8 @@ Resources:
               Namespace: AWS/ApiGateway
               MetricName: 5XXError
               Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: ApiId
+                  Value: !Sub "${IPVRestApi}"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1835,8 +1835,8 @@ Resources:
               Namespace: AWS/ApiGateway
               MetricName: Count
               Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: ApiId
+                  Value: !Sub "${IPVRestApi}"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1856,8 +1856,8 @@ Resources:
               Namespace: AWS/ApiGateway
               MetricName: 5XXError
               Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: ApiId
+                  Value: !Sub "${IPVRestApi}"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1900,8 +1900,8 @@ Resources:
               Namespace: AWS/ApiGateway
               MetricName: Count
               Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: ApiId
+                  Value: !Sub "${IPVRestApi}"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1921,8 +1921,8 @@ Resources:
               Namespace: AWS/ApiGateway
               MetricName: 4XXError
               Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: ApiId
+                  Value: !Sub "${IPVRestApi}"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1962,8 +1962,8 @@ Resources:
               Namespace: AWS/ApiGateway
               MetricName: Count
               Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: ApiId
+                  Value: !Sub "${IPVRestApi}"
             Period: 60
             Stat: Sum
         - Id: maxLatency
@@ -1973,8 +1973,8 @@ Resources:
               Namespace: AWS/ApiGateway
               MetricName: Latency
               Dimensions:
-                - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                - Name: ApiId
+                  Value: !Sub "${IPVRestApi}"
             Period: 60
             Stat: Maximum
 
