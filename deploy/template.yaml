@@ -514,7 +514,20 @@ Resources:
       StageName: !Ref Environment
       OpenApiVersion: 3.0.1
       AccessLogSetting:
-        Format: "$context.requestId $context.httpMethod $context.path"
+        Format: >-
+          {
+          "requestId":"$context.requestId",
+          "ip": "$context.identity.sourceIp",
+          "requestTime":"$context.requestTime",
+          "httpMethod":"$context.httpMethod",
+          "path": "$context.path",
+          "routeKey":"$context.routeKey",
+          "status":"$context.status",
+          "protocol":"$context.protocol",
+          "responseLength":"$context.responseLength",
+          "responseLatency":"$context.responseLatency",
+          "integrationLatency":"$context.integrationLatency"
+          }
         DestinationArn: !GetAtt IPVRAPIGatewayAccessLogGroup.Arn
       EndpointConfiguration:
         Type: REGIONAL
@@ -1674,7 +1687,7 @@ Resources:
               MetricName: Count
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
             Period: 60
             Stat: Sum
         - Id: errorPercentage
@@ -1689,7 +1702,7 @@ Resources:
               MetricName: 5XXError
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
             Period: 60
             Stat: Sum
 
@@ -1724,7 +1737,7 @@ Resources:
               MetricName: Count
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
             Period: 60
             Stat: Sum
         - Id: errorPercentage
@@ -1739,7 +1752,7 @@ Resources:
               MetricName: 5XXError
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
             Period: 60
             Stat: Sum
 
@@ -1774,7 +1787,7 @@ Resources:
               MetricName: Count
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1795,7 +1808,7 @@ Resources:
               MetricName: 5XXError
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1836,7 +1849,7 @@ Resources:
               MetricName: Count
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1857,7 +1870,7 @@ Resources:
               MetricName: 5XXError
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1901,7 +1914,7 @@ Resources:
               MetricName: Count
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1922,7 +1935,7 @@ Resources:
               MetricName: 4XXError
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1963,7 +1976,7 @@ Resources:
               MetricName: Count
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
             Period: 60
             Stat: Sum
         - Id: maxLatency
@@ -1974,7 +1987,7 @@ Resources:
               MetricName: Latency
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
             Period: 60
             Stat: Maximum
 
