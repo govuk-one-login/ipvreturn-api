@@ -10,7 +10,7 @@ import { GovNotifyEvent } from "../utils/GovNotifyEvent";
 import { TxmaEvent } from "../utils/TxmaEvent";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
-import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
+import { ExtSessionEvent } from "../models/SessionEvent";
 import { MessageCodes } from "../models/enums/MessageCodes";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
 
@@ -57,7 +57,7 @@ export class IPRService {
 		try {
 			session = await this.dynamo.send(getSessionCommand);
 		} catch (error: any) {
-			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:" });
+			this.logger.error({ message: "getSessionBySub - failed executing get from dynamodb", name: error?.name, info: error?.message });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 		}
 

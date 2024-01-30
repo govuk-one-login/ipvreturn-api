@@ -1,18 +1,14 @@
-import { SendMessageCommand, SendMessageCommandOutput, SQSClient, PurgeQueueCommand, ReceiveMessageCommand } from "@aws-sdk/client-sqs";
 import { fromNodeProviderChain } from "@aws-sdk/credential-providers"; 
 import axios, { AxiosInstance } from "axios";
 import { aws4Interceptor } from "aws4-axios";
 import { randomUUID } from "crypto";
-import { XMLParser } from "fast-xml-parser";
 import { ReturnSQSEvent } from "../../../models/ReturnSQSEvent";
-import { ExtSessionEvent, SessionEvent } from "../../../models/SessionEvent";
+import { ExtSessionEvent } from "../../../models/SessionEvent";
 import { constants } from "./ApiConstants";
 
 const AWS_REGION = process.env.AWS_REGION ?? "eu-west-2";
-const MOCK_TXMA_SQS_URL = constants.API_TEST_SQS_TXMA_CONSUMER_QUEUE;
-const GOV_NOTIFY_SQS_URL = constants.API_TEST_GOV_NOTIFY_SQS_QUEUE;
 const EMAIL_ADDRESS = constants.API_TEST_EMAIL_ADDRESS;
-const GOV_NOTIFY_INSTANCE = axios.create({ baseURL: process.env.GOVUKNOTIFYAPI });
+const GOV_NOTIFY_INSTANCE = axios.create({ baseURL: constants.GOV_NOTIFY_API });
 
 const HARNESS_API_INSTANCE : AxiosInstance = axios.create({ baseURL: constants.DEV_IPR_TEST_HARNESS_URL });
 
@@ -31,11 +27,6 @@ const awsSigv4Interceptor = aws4Interceptor({
 	credentials: customCredentialsProvider,
 });
 HARNESS_API_INSTANCE.interceptors.request.use(awsSigv4Interceptor);
-const xmlParser = new XMLParser();
-
-const sqsClient = new SQSClient({
-	region: AWS_REGION,
-});
 
 export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, emailAddress: any): Promise<any> {
 	const event = structuredClone(inputEvent);
@@ -55,36 +46,6 @@ export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, em
 	} catch (error: any) {
 		console.error({ message: "postMockEvent - failed sending message to mock TxMA queue", error });
 	}
-}
-
-export async function postGovNotifyEvent(inputEvent: any): Promise<SendMessageCommandOutput> {
-	const event = structuredClone(inputEvent);
-	event.Message.emailAddress = EMAIL_ADDRESS;
-	console.log(JSON.stringify(event));
-	const command = new SendMessageCommand({
-		QueueUrl: GOV_NOTIFY_SQS_URL,
-		MessageBody: JSON.stringify(event),
-	});
-	return sqsClient.send(command);
-}
-
-export async function purgeTxmaSqsQueue(): Promise<SendMessageCommandOutput> {
-	const command = new PurgeQueueCommand({
-		QueueUrl: MOCK_TXMA_SQS_URL,
-	});
-	return sqsClient.send(command);
-}
-
-export async function getTxmaSqsEvent(): Promise<any> {
-	const command = new ReceiveMessageCommand({
-		AttributeNames: ["SentTimestamp"],
-		MaxNumberOfMessages: 10,
-		MessageAttributeNames: ["All"],
-		QueueUrl: MOCK_TXMA_SQS_URL,
-		VisibilityTimeout: 40,
-		WaitTimeSeconds: 20,
-	});
-	return sqsClient.send(command);
 }
 
 export async function getSessionByUserId(userId: string, tableName: string): Promise< ExtSessionEvent | undefined > {

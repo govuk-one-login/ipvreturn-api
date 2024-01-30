@@ -12,8 +12,6 @@ describe("GovNotify Endpoint /v2/notifications/email", () => {
 	it.each(responseCodes)("GovNotify - expect '%i' response on POST/v2/notifications/email", async (govNotifyDelimitator) => {
 		const response = await postGovNotifyRequest(govNotifyDelimitator, govNotifyRequestData);
 
-		console.log("post response: " + JSON.stringify(response.data));
-
 		expect(response.status).toBe(govNotifyDelimitator);
 	});
 });

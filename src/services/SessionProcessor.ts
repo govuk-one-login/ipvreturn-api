@@ -51,6 +51,7 @@ export class SessionProcessor {
 		return SessionProcessor.instance;
 	}
 
+	// eslint-disable-next-line max-lines-per-function, complexity
 	async processRequest(event: APIGatewayProxyEvent): Promise<Response> {
 		let issuer, jwksEndpoint;
 		try {
