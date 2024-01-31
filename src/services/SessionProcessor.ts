@@ -51,6 +51,7 @@ export class SessionProcessor {
 		return SessionProcessor.instance;
 	}
 
+	// eslint-disable-next-line max-lines-per-function, complexity
 	async processRequest(event: APIGatewayProxyEvent): Promise<Response> {
 		let issuer, jwksEndpoint;
 		try {
@@ -124,23 +125,16 @@ export class SessionProcessor {
 			// to rows where the leading key (partition key)
 			// is equal to the sub of the ID.
 			//
-			let session;
 			const sub = jwtIdTokenPayload.sub!;
-			try {
-				session = await iprService.getSessionBySub(sub);
-				if (!session) {
-					this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
-					return new Response(HttpCodesEnum.UNAUTHORIZED, "No session event found for this userId");
-				}
-				this.logger.appendKeys({
-					govuk_signin_journey_id: session.clientSessionId,
-				});
-				this.logger.debug("Session retrieved from session store");
-
-			} catch (error) {
-				this.logger.error({ message: "getSessionByUserId - Error retrieving Session" }, { messageCode: MessageCodes.ERROR_RETRIEVING_SESSION });
-				throw new AppError(HttpCodesEnum.UNAUTHORIZED, "Error retrieving Session");
+			const session = await iprService.getSessionBySub(sub);
+			if (!session) {
+				this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
+				return new Response(HttpCodesEnum.UNAUTHORIZED, "No session event found for this userId");
 			}
+			this.logger.appendKeys({
+				govuk_signin_journey_id: session.clientSessionId,
+			});
+			this.logger.info("Session retrieved from session store");
 
 			// Validate sessionEvent Item if its missing some events.
 			try {

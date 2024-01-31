@@ -23,7 +23,6 @@ To run the API tests, run `npm run test:api`. Note that these tests need to inje
 The API tests also require the following env vars to be set:
 
 - `API_TEST_SESSION_EVENTS_TABLE` - table name for the Session Events table to check
-- `API_TEST_SQS_TXMA_CONSUMER_QUEUE` - URL of the TXMA mock consumer queue
 
 These are set automatically by `./run-tests-locally.sh <AWS_Stack_Name>`.
 

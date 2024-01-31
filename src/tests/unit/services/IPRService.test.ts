@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 /* eslint-disable @typescript-eslint/unbound-method */
 import { mock } from "jest-mock-extended";
 import { SendMessageCommand } from "@aws-sdk/client-sqs";
@@ -219,7 +220,7 @@ describe("IPR Service", () => {
 			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
 
 			await expect(iprService.getSessionBySub(userId)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session"));
-			expect(logger.error).toHaveBeenCalledWith({ message: "getSessionByUserId - failed executing get from dynamodb:" });
+			expect(logger.error).toHaveBeenCalledWith({ message: "getSessionBySub - failed executing get from dynamodb" });
 		});
 
 		it("Should return the valid session fetched from dynamo", async () => {
