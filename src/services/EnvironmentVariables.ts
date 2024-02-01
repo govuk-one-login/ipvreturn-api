@@ -112,8 +112,8 @@ export class EnvironmentVariables {
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
 				if (!this.OIDC_JWT_ASSERTION_TOKEN_EXP || this.OIDC_JWT_ASSERTION_TOKEN_EXP.trim().length === 0) {
-					this.OIDC_JWT_ASSERTION_TOKEN_EXP = "300";
-					logger.warn({ message: "OIDC_JWT_ASSERTION_TOKEN_EXP env var is not set. Setting the expiry to default - 5 minutes." });
+					this.OIDC_JWT_ASSERTION_TOKEN_EXP = "900";
+					logger.warn({ message: "OIDC_JWT_ASSERTION_TOKEN_EXP env var is not set. Setting the expiry to default - 15 minutes." });
 				}
 				break;
 			}

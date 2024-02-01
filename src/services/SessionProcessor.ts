@@ -214,6 +214,7 @@ export class SessionProcessor {
 				urlEncodedBody,
 				{ headers:{ "Content-Type" : "text/plain" } },
 			);
+			this.logger.debug({ message: "Expiration time for assumedRole: ", expTime: data.expires_in });
 			return data.id_token;
 		} catch (error) {
 			this.logger.error("An error occurred when fetching OIDC token response", {
