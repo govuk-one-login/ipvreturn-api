@@ -84,6 +84,7 @@ export class SessionProcessor {
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Invalid request: Rejected jwt");
 			}
 			const jwtIdTokenPayload: JwtPayload = parsedIdTokenJwt.payload;
+			this.logger.info("---idToken payload: ", { jwtIdTokenPayload });
 
 			// idToken Validation
 			try {
@@ -203,6 +204,9 @@ export class SessionProcessor {
 			});
 			throw new AppError(HttpCodesEnum.UNAUTHORIZED, "Failed to sign the client_assertion Jwt");
 		}
+
+		this.logger.info("---clientAssertion: ", { client_assertion })
+		this.logger.info("----authCode: " , authCode);
 
 		const ENCODED_REDIRECT_URI = encodeURIComponent(this.environmentVariables.returnRedirectUrl());
 		const ENCODED_CLIENT_ASSERTION_TYPE = encodeURIComponent(Constants.CLIENT_ASSERTION_TYPE);
