@@ -109,7 +109,7 @@ Mappings:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
-      GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
+      GOVUKNOTIFYAPI: "https://ipvr-gov-notify-stub-govnotifystub.return.dev.account.gov.uk/govnotify"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk/resume"
