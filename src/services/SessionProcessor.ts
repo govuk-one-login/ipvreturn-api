@@ -84,7 +84,6 @@ export class SessionProcessor {
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Invalid request: Rejected jwt");
 			}
 			const jwtIdTokenPayload: JwtPayload = parsedIdTokenJwt.payload;
-			this.logger.info("---idToken payload: ", { jwtIdTokenPayload });
 
 			// idToken Validation
 			try {
@@ -205,9 +204,6 @@ export class SessionProcessor {
 			throw new AppError(HttpCodesEnum.UNAUTHORIZED, "Failed to sign the client_assertion Jwt");
 		}
 
-		this.logger.info("---clientAssertion: ", { client_assertion })
-		this.logger.info("----authCode: " , authCode);
-
 		const ENCODED_REDIRECT_URI = encodeURIComponent(this.environmentVariables.returnRedirectUrl());
 		const ENCODED_CLIENT_ASSERTION_TYPE = encodeURIComponent(Constants.CLIENT_ASSERTION_TYPE);
 		const urlEncodedBody = `grant_type=${Constants.GRANT_TYPE}&code=${authCode}&redirect_uri=${ENCODED_REDIRECT_URI}&client_assertion_type=${ENCODED_CLIENT_ASSERTION_TYPE}&client_assertion=${client_assertion}`;
@@ -218,7 +214,6 @@ export class SessionProcessor {
 				urlEncodedBody,
 				{ headers:{ "Content-Type" : "text/plain" } },
 			);
-			this.logger.debug({ message: "Expiration time for assumedRole: ", expTime: data.expires_in });
 			return data.id_token;
 		} catch (error) {
 			this.logger.error("An error occurred when fetching OIDC token response", {

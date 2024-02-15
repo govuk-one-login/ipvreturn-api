@@ -51,6 +51,7 @@ class Session implements LambdaInterface {
 								return new Response(HttpCodesEnum.SERVER_ERROR, "An error has occurred");
 							}
 						}
+						logger.appendKeys({ requestId: event.requestContext.requestId });
 						return await SessionProcessor.getInstance(logger, metrics, CLIENT_ID).processRequest(event);
 					} catch (error) {
 						logger.error({ message: "An error has occurred. ",
