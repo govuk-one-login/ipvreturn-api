@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Logger } from "@aws-lambda-powertools/logger";
@@ -8,7 +9,6 @@ import { SendEmailService } from "../../../services/SendEmailService";
 import { IPRService } from "../../../services/IPRService";
 import { mock } from "jest-mock-extended";
 import { EmailResponse } from "../../../models/EmailResponse";
-import { absoluteTimeNow } from "../../../utils/DateTimeUtils";
 import { ExtSessionEvent, SessionEvent } from "../../../models/SessionEvent";
 import { Email, DynamicEmail } from "../../../models/Email";
 import { Constants } from "../../../utils/Constants";
@@ -122,10 +122,16 @@ describe("SendEmailProcessor", () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		jest.useFakeTimers();
+		jest.setSystemTime(new Date(1585695600000));
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
 		mockSessionEvent = getMockSessionEventItem();
 		mockExtSessionEvent = getMockExtSessionEventItem();
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
 	});
 
 	it("Returns success response when all required Email attributes exists to send static template Email messageType", async () => {
@@ -143,7 +149,8 @@ describe("SendEmailProcessor", () => {
 		expect(mockIprService.sendToTXMA).toHaveBeenCalledTimes(1);
 		expect(mockIprService.sendToTXMA).toHaveBeenCalledWith({
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-			timestamp: absoluteTimeNow(),
+			timestamp: 1585695600,
+			event_timestamp_ms: 1585695600000,
 			user: {
 				email: "test.user@digital.cabinet-office.gov.uk",
 				user_id: "user_id",
@@ -278,7 +285,8 @@ describe("SendEmailProcessor", () => {
 		expect(mockIprService.sendToTXMA).toHaveBeenCalledTimes(1);
 		expect(mockIprService.sendToTXMA).toHaveBeenCalledWith({
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-			timestamp: absoluteTimeNow(),
+			timestamp: 1585695600,
+			event_timestamp_ms: 1585695600000,
 			user: {
 				email: "test.user@digital.cabinet-office.gov.uk",
 				user_id: "user_id",
@@ -317,7 +325,8 @@ describe("SendEmailProcessor", () => {
 		expect(mockIprService.sendToTXMA).toHaveBeenCalledTimes(1);
 		expect(mockIprService.sendToTXMA).toHaveBeenCalledWith({
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-			timestamp: absoluteTimeNow(),
+			timestamp: 1585695600,
+			event_timestamp_ms: 1585695600000,
 			user: {
 				email: "test.user@digital.cabinet-office.gov.uk",
 				user_id: "user_id",
