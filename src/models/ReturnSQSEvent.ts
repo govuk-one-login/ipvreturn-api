@@ -9,6 +9,7 @@ export interface ReturnSQSEvent {
 	clientLandingPageUrl?: string;
 	event_name: EventType;
 	timestamp: number;
+	event_timestamp_ms: number;
 	timestamp_formatted: string;
 	user: {
 		govuk_signin_journey_id?: string;
