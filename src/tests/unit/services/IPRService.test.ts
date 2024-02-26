@@ -36,6 +36,7 @@ function getTXMAEventPayload(): TxmaEvent {
 			user_id: "sessionCliendId",
 		},
 		timestamp: 123,
+		event_timestamp_ms: 123000,
 	};
 	return txmaEventPayload;
 }

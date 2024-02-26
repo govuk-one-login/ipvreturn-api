@@ -134,6 +134,7 @@ describe("PostEventProcessor", () => {
 				clientLandingPageUrl: "REDIRECT_URL",
 				event_name: "AUTH_IPV_AUTHORISATION_REQUESTED",
 				timestamp: 1681902001,
+				event_timestamp_ms: 1681902001713,
 				timestamp_formatted: "2023-04-19T11:00:01.000Z",
 				user: {
 					user_id: "01333e01-dde3-412f-a484-5555",
@@ -151,6 +152,7 @@ describe("PostEventProcessor", () => {
 				client_id: "ekwU",
 				event_name: "AUTH_IPV_AUTHORISATION_REQUESTED",
 				timestamp: 1681902001,
+				event_timestamp_ms: 1681902001713,
 				timestamp_formatted: "2023-04-19T11:00:01.000Z",
 				user: {
 					user_id: "01333e01-dde3-412f-a484-5555",
@@ -170,6 +172,7 @@ describe("PostEventProcessor", () => {
 				clientLandingPageUrl: "  ",
 				event_name: "AUTH_IPV_AUTHORISATION_REQUESTED",
 				timestamp: 1681902001,
+				event_timestamp_ms: 1681902001713,
 				timestamp_formatted: "2023-04-19T11:00:01.000Z",
 				user: {
 					user_id: "01333e01-dde3-412f-a484-5555",

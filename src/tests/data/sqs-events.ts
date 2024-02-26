@@ -53,6 +53,7 @@ export const VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT: ReturnSQSEvent =
 	event_name: "AUTH_IPV_AUTHORISATION_REQUESTED",
 	// rp_name: "replay",
 	timestamp: 1681902001,
+	event_timestamp_ms: 1681902001713,
 	timestamp_formatted: "2023-04-19T11:00:01.000Z",
 	user: {
 		user_id: "01333e01-dde3-412f-a484-5555",
@@ -90,6 +91,7 @@ export const VALID_F2F_YOTI_START_TXMA_EVENT: ReturnSQSEvent = {
 	"client_id": "ekwU",
 	"event_name": "F2F_YOTI_START",
 	"timestamp": 1681902001,
+	"event_timestamp_ms": 1681902001713,
 	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
 	"user": {
 		"user_id": "01333e01-dde3-412f-a484-4444",
@@ -105,6 +107,7 @@ export const VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT: ReturnSQSEvent = {
 	"event_name": "IPV_F2F_CRI_VC_CONSUMED",
 	"clientLandingPageUrl": "REDIRECT_URL",
 	"timestamp": 1681902001,
+	"event_timestamp_ms": 1681902001713,
 	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
 	"user": {
 		"user_id": "01333e01-dde3-412f-a484-4444",
@@ -137,6 +140,7 @@ export const VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT: Retur
 	"event_name": "IPV_F2F_CRI_VC_CONSUMED",
 	"clientLandingPageUrl": "REDIRECT_URL",
 	"timestamp": 1681902001,
+	"event_timestamp_ms": 1681902001713,
 	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
 	"user": {
 		"user_id": "01333e01-dde3-412f-a484-4444",
@@ -200,6 +204,7 @@ export const VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT: ReturnSQSEvent = {
 	"client_id": "ekwU",
 	"event_name": "F2F_DOCUMENT_UPLOADED",
 	"timestamp": 1681902001,
+	"event_timestamp_ms": 1681902001713,
 	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
 	"user": {
 		"user_id": "01333e01-dde3-412f-a484-4444",
@@ -219,6 +224,7 @@ export const VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT: ReturnSQSEvent
 	"client_id": "ekwU",
 	"event_name": "F2F_YOTI_START",
 	"timestamp": 1681902001,
+	"event_timestamp_ms": 1681902001713,
 	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
 	"user": {
 		"user_id": "01333e01-dde3-412f-a484-4444",
