@@ -162,7 +162,6 @@ const CODE_STYLING_RULES = {
   'import/no-deprecated': 'error',
   'jsdoc/check-alignment': 'error',
   'jsdoc/check-indentation': 'error',
-  'jsdoc/newline-after-description': 'error',
   'new-parens': 'error',
   'no-caller': 'error',
   'no-cond-assign': 'error',
