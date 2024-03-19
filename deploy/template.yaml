@@ -38,10 +38,10 @@ Parameters:
     Type: String
     Default: "ipvreturn-kms"
     Description: The name of the L2 DynamoDB stack deployed.
-  DeployAlarmsInNonProdLikeEnvironment:
+  DeployAlarmsInDev:
     Description: "Set to the string value `true` to deploy alarms in a DEV environment"
     Type: String
-    Default: true
+    Default: false
   SupportManualURL:
     Description: "Link to the IPV Return Journey support manual"
     Type: String
@@ -194,10 +194,6 @@ Conditions:
   CreateDevResources: !Equals
     - !Ref Environment
     - dev
-  ApplyReservedConcurrency: !Or
-    - !Not
-      - !Condition CreateDevResources
-    - !Equals [!Ref ApplyReservedConcurrencyInDev, "true"]
   IsProdLikeEnvironment: !Or
     - !Equals [!Ref Environment, staging]
     - !Equals [!Ref Environment, integration]
@@ -232,11 +228,11 @@ Conditions:
         - !Ref Environment
         - build
   DeployAlarms: !Or
-    - Condition: IsProdLikeEnvironment
-    - !Equals [!Ref DeployAlarmsInNonProdLikeEnvironment, true]
-  DeployConcurrencyAlarms: !And
-    - Condition: DeployAlarms
-    - Condition: ApplyReservedConcurrency
+    - Condition: IsNotDevelopment
+    - !Equals [!Ref DeployAlarmsInDev, true]
+  ApplyReservedConcurrency: !Or
+    - Condition: IsNotDevelopment
+    - !Equals [!Ref ApplyReservedConcurrencyInDev, true]
   PerformanceTestEnv: !Equals [ !Ref Environment, build]
   NotLocalTestStack:
     Fn::Not:
@@ -305,6 +301,7 @@ Resources:
   # Log metric filter and alarm for S3 bucket policy changes
   S3BucketActivityEventMetricFilter:
     Type: 'AWS::Logs::MetricFilter'
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref SessionFunctionLogGroup
       FilterPattern: '{ ($.eventSource = s3.amazonaws.com) && (($.eventName = PutBucketAcl) || ($.eventName = PutBucketPolicy) || ($.eventName = PutBucketCors) || ($.eventName = PutBucketLifecycle) || ($.eventName = PutBucketReplication) || ($.eventName = DeleteBucketPolicy) || ($.eventName = DeleteBucketCors) || ($.eventName = DeleteBucketLifecycle) || ($.eventName = DeleteBucketReplication)) }'
@@ -315,6 +312,7 @@ Resources:
 
   S3BucketActivityEventErrorAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-S3Bucket-changes"
       AlarmDescription: A CloudWatch Alarm that triggers when changes are made to S3 Bucket.
@@ -338,6 +336,7 @@ Resources:
   # Log metric filter and alarm for changes to network gateways
   InternetGatewayEventMetricFilter:
     Type: 'AWS::Logs::MetricFilter'
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref SessionFunctionLogGroup
       FilterPattern: '{ ($.eventName = CreateCustomerGateway) || ($.eventName = DeleteCustomerGateway) || ($.eventName = AttachInternetGateway) || ($.eventName = CreateInternetGateway) || ($.eventName = DeleteInternetGateway) || ($.eventName = DetachInternetGateway) }'
@@ -348,6 +347,7 @@ Resources:
 
   InternetGatewayActivityEventErrorAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-IGW-changes"
       AlarmDescription: Triggers CloudWatch Alarm when changes are made to an Internet Gateway in a VPC.
@@ -367,6 +367,7 @@ Resources:
   # Log metric filter and alarm for route table changes
   RouteTableChangesMetricFilter:
     Type: 'AWS::Logs::MetricFilter'
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref SessionFunctionLogGroup
       FilterPattern: '{ ($.eventName = AssociateRouteTable) || ($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DeleteRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation) || ($.eventName = DisassociateRouteTable) }'
@@ -376,6 +377,7 @@ Resources:
           MetricName: VPCRouteTableEvent
   RouteTableChangesEventErrorAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-vpc-route-changes"
       AlarmDescription: A CloudWatch Alarm that triggers when changes are made to a VPC's Route Table.
@@ -395,6 +397,7 @@ Resources:
   # Log metric filter and alarm when changes are made to VPC.
   VpcChangesEventMetricFilter:
     Type: 'AWS::Logs::MetricFilter'
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref SessionFunctionLogGroup
       FilterPattern: '{ ($.eventName = CreateVpc) || ($.eventName = DeleteVpc) || ($.eventName = ModifyVpcAttribute) || ($.eventName = AcceptVpcPeeringConnection) || ($.eventName = CreateVpcPeeringConnection) || ($.eventName = DeleteVpcPeeringConnection) || ($.eventName = RejectVpcPeeringConnection) || ($.eventName = AttachClassicLinkVpc) || ($.eventName = DetachClassicLinkVpc) || ($.eventName = DisableVpcClassicLink) || ($.eventName = EnableVpcClassicLink) }'
@@ -404,6 +407,7 @@ Resources:
           MetricName: VpcEventChanges
   VpcChangesEventAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-vpc-changes"
       AlarmDescription: A CloudWatch Alarm that triggers when changes are made to a VPC.
@@ -424,6 +428,7 @@ Resources:
   # Log metric and alarm when changes are made to AWS Organisations.
   OrganisationChangesEventMetricFilter:
     Type: 'AWS::Logs::MetricFilter'
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref SessionFunctionLogGroup
       FilterPattern: '{ ($.eventSource = organizations.amazonaws.com) && (($.eventName = AcceptHandshake) || ($.eventName = AttachPolicy) || ($.eventName = CreateAccount) || ($.eventName = CreateOrganizationalUnit) || ($.eventName = CreatePolicy) || ($.eventName = DeclineHandshake) || ($.eventName = DeleteOrganization) || ($.eventName = DeleteOrganizationalUnit) || ($.eventName = DeletePolicy) || ($.eventName = DetachPolicy) || ($.eventName = DisablePolicyType) || ($.eventName = EnablePolicyType) || ($.eventName = InviteAccountToOrganization) || ($.eventName = LeaveOrganization) || ($.eventName = MoveAccount) || ($.eventName = RemoveAccountFromOrganization) || ($.eventName = UpdatePolicy) || ($.eventName = UpdateOrganizationalUnit)) }'
@@ -433,6 +438,7 @@ Resources:
           MetricName: OrganisationsEventChange
   OrganisationChangesEventAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-organisations-changes"
       AlarmDescription: A CloudWatch Alarm that triggers when changes are made to AWS Organisations.
@@ -581,6 +587,7 @@ Resources:
 
   IPVRAPIGatewayFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref IPVRAPIGatewayAccessLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
@@ -770,6 +777,7 @@ Resources:
 
   PostEventFunctionFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref PostEventFunctionLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
@@ -806,7 +814,7 @@ Resources:
 
   PostEventConcurrency80Alarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployConcurrencyAlarms"
+    Condition: "ApplyReservedConcurrency"
     Properties:
       ActionsEnabled: true
       AlarmActions:
@@ -958,6 +966,7 @@ Resources:
 
   GovNotifyFunctionFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref GovNotifyFunctionLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
@@ -994,7 +1003,7 @@ Resources:
 
   GovNotifyConcurrency80Alarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployConcurrencyAlarms"
+    Condition: "ApplyReservedConcurrency"
     Properties:
       ActionsEnabled: true
       AlarmActions:
@@ -1141,6 +1150,7 @@ Resources:
 
   StreamProcessorFunctionFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref StreamProcessorFunctionLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
@@ -1177,7 +1187,7 @@ Resources:
 
   StreamProcessorConcurrency80Alarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployConcurrencyAlarms"
+    Condition: "ApplyReservedConcurrency"
     Properties:
       ActionsEnabled: true
       AlarmActions:
@@ -1320,6 +1330,7 @@ Resources:
 
   SessionFunctionFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref SessionFunctionLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
@@ -1356,7 +1367,7 @@ Resources:
 
   SessionConcurrency80Alarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployConcurrencyAlarms"
+    Condition: "ApplyReservedConcurrency"
     Properties:
       ActionsEnabled: true
       AlarmActions:
@@ -2146,6 +2157,7 @@ Resources:
   
   FallbackEmailErrorMetricFilter:
     Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref StreamProcessorFunctionLogGroup
       FilterPattern: '{ $.level = "ERROR" || $.message = "*trying to send the fallback template email." }'
@@ -2182,7 +2194,7 @@ Resources:
 
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
-    Condition: DeployConcurrencyAlarms
+    Condition: ApplyReservedConcurrency
     Properties:
       DashboardName: !Sub '${AWS::StackName}-Concurrency-Alarm-Overview'
       DashboardBody:
