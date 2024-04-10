@@ -45,7 +45,7 @@ Parameters:
   SupportManualURL:
     Description: "Link to the IPV Return Journey support manual"
     Type: String
-    Default: 'https://govukverify.atlassian.net/wiki/spaces/FTFCRI/pages/3626532870/IPR+Support+Documentation'
+    Default: 'https://govukverify.atlassian.net/wiki/spaces/FTFCRI/pages/3626565651/IPR+BE+Metrics+Alerts'
   LambdaConcurrency:
     Description: "Reserved concurrency for Lambdas running in non-DEV environments"
     Type: Number
@@ -317,7 +317,7 @@ Resources:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmName: !Sub "${AWS::StackName}-S3Bucket-changes"
-      AlarmDescription: A CloudWatch Alarm that triggers when changes are made to S3 Bucket.
+      AlarmDescription: !Sub "A CloudWatch Alarm that triggers when changes are made to S3 Bucket ${SupportManualURL}"
       ActionsEnabled: true
       AlarmActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -350,7 +350,7 @@ Resources:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmName: !Sub "${AWS::StackName}-IGW-changes"
-      AlarmDescription: Triggers CloudWatch Alarm when changes are made to an Internet Gateway in a VPC.
+      AlarmDescription: !Sub "Triggers CloudWatch Alarm when changes are made to an Internet Gateway in a VPC ${SupportManualURL}"
       MetricName: IGatewayActivityEvent
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
@@ -378,7 +378,7 @@ Resources:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmName: !Sub "${AWS::StackName}-vpc-route-changes"
-      AlarmDescription: A CloudWatch Alarm that triggers when changes are made to a VPC's Route Table.
+      AlarmDescription: !Sub "A CloudWatch Alarm that triggers when changes are made to a VPC's Route Table ${SupportManualURL}"
       MetricName: VpcRouteTableEvent
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
@@ -406,7 +406,7 @@ Resources:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmName: !Sub "${AWS::StackName}-vpc-changes"
-      AlarmDescription: A CloudWatch Alarm that triggers when changes are made to a VPC.
+      AlarmDescription: !Sub "A CloudWatch Alarm that triggers when changes are made to a VPC ${SupportManualURL}"
       MetricName: VpcEventChanges
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
@@ -435,7 +435,7 @@ Resources:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmName: !Sub "${AWS::StackName}-organisations-changes"
-      AlarmDescription: A CloudWatch Alarm that triggers when changes are made to AWS Organisations.
+      AlarmDescription: !Sub "A CloudWatch Alarm that triggers when changes are made to AWS Organisations ${SupportManualURL}"
       MetricName: OrganisationsEventChange
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
