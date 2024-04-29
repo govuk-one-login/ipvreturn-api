@@ -38,14 +38,14 @@ Parameters:
     Type: String
     Default: "ipvreturn-kms"
     Description: The name of the L2 DynamoDB stack deployed.
-  DeployAlarmsInNonProdLikeEnvironment:
+  DeployAlarmsInDev:
     Description: "Set to the string value `true` to deploy alarms in a DEV environment"
     Type: String
-    Default: true
+    Default: false
   SupportManualURL:
     Description: "Link to the IPV Return Journey support manual"
     Type: String
-    Default: 'https://govukverify.atlassian.net/wiki/spaces/FTFCRI/pages/3626532870/IPR+Support+Documentation'
+    Default: 'https://govukverify.atlassian.net/wiki/spaces/FTFCRI/pages/3626565651/IPR+BE+Metrics+Alerts'
   LambdaConcurrency:
     Description: "Reserved concurrency for Lambdas running in non-DEV environments"
     Type: Number
@@ -194,10 +194,6 @@ Conditions:
   CreateDevResources: !Equals
     - !Ref Environment
     - dev
-  ApplyReservedConcurrency: !Or
-    - !Not
-      - !Condition CreateDevResources
-    - !Equals [!Ref ApplyReservedConcurrencyInDev, "true"]
   IsProdLikeEnvironment: !Or
     - !Equals [!Ref Environment, staging]
     - !Equals [!Ref Environment, integration]
@@ -207,6 +203,11 @@ Conditions:
   IsPersonalIdentifiableInformationEnvironment: !Or
     - !Equals [!Ref Environment, integration]
     - !Equals [!Ref Environment, production]
+  IsNotDevelopment: !Or
+    - !Equals [ !Ref Environment, build ]
+    - !Equals [ !Ref Environment, staging ]
+    - !Equals [ !Ref Environment, integration ]
+    - !Equals [ !Ref Environment, production ]
   UseCodeSigning:
     Fn::Not:
       - Fn::Equals:
@@ -232,11 +233,11 @@ Conditions:
         - !Ref Environment
         - build
   DeployAlarms: !Or
-    - Condition: IsProdLikeEnvironment
-    - !Equals [!Ref DeployAlarmsInNonProdLikeEnvironment, true]
-  DeployConcurrencyAlarms: !And
-    - Condition: DeployAlarms
-    - Condition: ApplyReservedConcurrency
+    - Condition: IsNotDevelopment
+    - !Equals [!Ref DeployAlarmsInDev, true]
+  ApplyReservedConcurrency: !Or
+    - Condition: IsNotDevelopment
+    - !Equals [!Ref ApplyReservedConcurrencyInDev, true]
   PerformanceTestEnv: !Equals [ !Ref Environment, build]
   NotLocalTestStack:
     Fn::Not:
@@ -297,7 +298,7 @@ Globals:
           - SecretArn: !FindInMap [ EnvironmentConfiguration, !Ref Environment, dynatraceSecretArn ]
         DT_OPEN_TELEMETRY_ENABLE_INTEGRATION: "true"
         AWS_STACK_NAME: !Sub ${AWS::StackName} # The AWS Stack Name, as passed into the template.
-        POWERTOOLS_LOG_LEVEL: DEBUG # The LogLevel for the AWS PowerTools LogHelper
+        POWERTOOLS_LOG_LEVEL: !If [IsNotProdLikeEnvironment, "DEBUG", "INFO"] # The LogLevel for the AWS PowerTools LogHelper
         POWERTOOLS_METRICS_NAMESPACE: IPR-CRI # The Metric Namespace for the AWS PowerTools MetricHelper
     AutoPublishAlias: live
 
@@ -305,6 +306,7 @@ Resources:
   # Log metric filter and alarm for S3 bucket policy changes
   S3BucketActivityEventMetricFilter:
     Type: 'AWS::Logs::MetricFilter'
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref SessionFunctionLogGroup
       FilterPattern: '{ ($.eventSource = s3.amazonaws.com) && (($.eventName = PutBucketAcl) || ($.eventName = PutBucketPolicy) || ($.eventName = PutBucketCors) || ($.eventName = PutBucketLifecycle) || ($.eventName = PutBucketReplication) || ($.eventName = DeleteBucketPolicy) || ($.eventName = DeleteBucketCors) || ($.eventName = DeleteBucketLifecycle) || ($.eventName = DeleteBucketReplication)) }'
@@ -315,9 +317,10 @@ Resources:
 
   S3BucketActivityEventErrorAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-S3Bucket-changes"
-      AlarmDescription: A CloudWatch Alarm that triggers when changes are made to S3 Bucket.
+      AlarmDescription: !Sub "A CloudWatch Alarm that triggers when changes are made to S3 Bucket ${SupportManualURL}"
       ActionsEnabled: true
       AlarmActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -338,6 +341,7 @@ Resources:
   # Log metric filter and alarm for changes to network gateways
   InternetGatewayEventMetricFilter:
     Type: 'AWS::Logs::MetricFilter'
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref SessionFunctionLogGroup
       FilterPattern: '{ ($.eventName = CreateCustomerGateway) || ($.eventName = DeleteCustomerGateway) || ($.eventName = AttachInternetGateway) || ($.eventName = CreateInternetGateway) || ($.eventName = DeleteInternetGateway) || ($.eventName = DetachInternetGateway) }'
@@ -348,9 +352,10 @@ Resources:
 
   InternetGatewayActivityEventErrorAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-IGW-changes"
-      AlarmDescription: Triggers CloudWatch Alarm when changes are made to an Internet Gateway in a VPC.
+      AlarmDescription: !Sub "Triggers CloudWatch Alarm when changes are made to an Internet Gateway in a VPC ${SupportManualURL}"
       MetricName: IGatewayActivityEvent
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
@@ -367,6 +372,7 @@ Resources:
   # Log metric filter and alarm for route table changes
   RouteTableChangesMetricFilter:
     Type: 'AWS::Logs::MetricFilter'
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref SessionFunctionLogGroup
       FilterPattern: '{ ($.eventName = AssociateRouteTable) || ($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DeleteRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation) || ($.eventName = DisassociateRouteTable) }'
@@ -376,9 +382,10 @@ Resources:
           MetricName: VPCRouteTableEvent
   RouteTableChangesEventErrorAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-vpc-route-changes"
-      AlarmDescription: A CloudWatch Alarm that triggers when changes are made to a VPC's Route Table.
+      AlarmDescription: !Sub "A CloudWatch Alarm that triggers when changes are made to a VPC's Route Table ${SupportManualURL}"
       MetricName: VpcRouteTableEvent
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
@@ -395,6 +402,7 @@ Resources:
   # Log metric filter and alarm when changes are made to VPC.
   VpcChangesEventMetricFilter:
     Type: 'AWS::Logs::MetricFilter'
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref SessionFunctionLogGroup
       FilterPattern: '{ ($.eventName = CreateVpc) || ($.eventName = DeleteVpc) || ($.eventName = ModifyVpcAttribute) || ($.eventName = AcceptVpcPeeringConnection) || ($.eventName = CreateVpcPeeringConnection) || ($.eventName = DeleteVpcPeeringConnection) || ($.eventName = RejectVpcPeeringConnection) || ($.eventName = AttachClassicLinkVpc) || ($.eventName = DetachClassicLinkVpc) || ($.eventName = DisableVpcClassicLink) || ($.eventName = EnableVpcClassicLink) }'
@@ -404,9 +412,10 @@ Resources:
           MetricName: VpcEventChanges
   VpcChangesEventAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-vpc-changes"
-      AlarmDescription: A CloudWatch Alarm that triggers when changes are made to a VPC.
+      AlarmDescription: !Sub "A CloudWatch Alarm that triggers when changes are made to a VPC ${SupportManualURL}"
       MetricName: VpcEventChanges
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
@@ -424,6 +433,7 @@ Resources:
   # Log metric and alarm when changes are made to AWS Organisations.
   OrganisationChangesEventMetricFilter:
     Type: 'AWS::Logs::MetricFilter'
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref SessionFunctionLogGroup
       FilterPattern: '{ ($.eventSource = organizations.amazonaws.com) && (($.eventName = AcceptHandshake) || ($.eventName = AttachPolicy) || ($.eventName = CreateAccount) || ($.eventName = CreateOrganizationalUnit) || ($.eventName = CreatePolicy) || ($.eventName = DeclineHandshake) || ($.eventName = DeleteOrganization) || ($.eventName = DeleteOrganizationalUnit) || ($.eventName = DeletePolicy) || ($.eventName = DetachPolicy) || ($.eventName = DisablePolicyType) || ($.eventName = EnablePolicyType) || ($.eventName = InviteAccountToOrganization) || ($.eventName = LeaveOrganization) || ($.eventName = MoveAccount) || ($.eventName = RemoveAccountFromOrganization) || ($.eventName = UpdatePolicy) || ($.eventName = UpdateOrganizationalUnit)) }'
@@ -433,9 +443,10 @@ Resources:
           MetricName: OrganisationsEventChange
   OrganisationChangesEventAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-organisations-changes"
-      AlarmDescription: A CloudWatch Alarm that triggers when changes are made to AWS Organisations.
+      AlarmDescription: !Sub "A CloudWatch Alarm that triggers when changes are made to AWS Organisations ${SupportManualURL}"
       MetricName: OrganisationsEventChange
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
@@ -514,7 +525,20 @@ Resources:
       StageName: !Ref Environment
       OpenApiVersion: 3.0.1
       AccessLogSetting:
-        Format: "$context.requestId $context.httpMethod $context.path"
+        Format: >-
+          {
+          "requestId":"$context.requestId",
+          "ip": "$context.identity.sourceIp",
+          "requestTime":"$context.requestTime",
+          "httpMethod":"$context.httpMethod",
+          "path": "$context.path",
+          "routeKey":"$context.routeKey",
+          "status":"$context.status",
+          "protocol":"$context.protocol",
+          "responseLength":"$context.responseLength",
+          "responseLatency":"$context.responseLatency",
+          "integrationLatency":"$context.integrationLatency"
+          }
         DestinationArn: !GetAtt IPVRAPIGatewayAccessLogGroup.Arn
       EndpointConfiguration:
         Type: REGIONAL
@@ -568,6 +592,7 @@ Resources:
 
   IPVRAPIGatewayFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref IPVRAPIGatewayAccessLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
@@ -757,6 +782,7 @@ Resources:
 
   PostEventFunctionFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref PostEventFunctionLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
@@ -793,7 +819,7 @@ Resources:
 
   PostEventConcurrency80Alarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployConcurrencyAlarms"
+    Condition: "ApplyReservedConcurrency"
     Properties:
       ActionsEnabled: true
       AlarmActions:
@@ -945,6 +971,7 @@ Resources:
 
   GovNotifyFunctionFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref GovNotifyFunctionLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
@@ -981,7 +1008,7 @@ Resources:
 
   GovNotifyConcurrency80Alarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployConcurrencyAlarms"
+    Condition: "ApplyReservedConcurrency"
     Properties:
       ActionsEnabled: true
       AlarmActions:
@@ -1128,6 +1155,7 @@ Resources:
 
   StreamProcessorFunctionFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref StreamProcessorFunctionLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
@@ -1164,7 +1192,7 @@ Resources:
 
   StreamProcessorConcurrency80Alarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployConcurrencyAlarms"
+    Condition: "ApplyReservedConcurrency"
     Properties:
       ActionsEnabled: true
       AlarmActions:
@@ -1307,6 +1335,7 @@ Resources:
 
   SessionFunctionFatalErorMetricFilter:
     Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref SessionFunctionLogGroup
       FilterPattern: '{ $.level = "FATAL" || $.message = "Unhandled Exception:*" }'
@@ -1343,7 +1372,7 @@ Resources:
 
   SessionConcurrency80Alarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployConcurrencyAlarms"
+    Condition: "ApplyReservedConcurrency"
     Properties:
       ActionsEnabled: true
       AlarmActions:
@@ -1674,7 +1703,7 @@ Resources:
               MetricName: Count
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
             Period: 60
             Stat: Sum
         - Id: errorPercentage
@@ -1689,7 +1718,7 @@ Resources:
               MetricName: 5XXError
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
             Period: 60
             Stat: Sum
 
@@ -1724,7 +1753,7 @@ Resources:
               MetricName: Count
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
             Period: 60
             Stat: Sum
         - Id: errorPercentage
@@ -1739,7 +1768,7 @@ Resources:
               MetricName: 5XXError
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
             Period: 60
             Stat: Sum
 
@@ -1774,7 +1803,7 @@ Resources:
               MetricName: Count
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1795,7 +1824,7 @@ Resources:
               MetricName: 5XXError
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1836,7 +1865,7 @@ Resources:
               MetricName: Count
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1857,7 +1886,7 @@ Resources:
               MetricName: 5XXError
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1901,7 +1930,7 @@ Resources:
               MetricName: Count
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1922,7 +1951,7 @@ Resources:
               MetricName: 4XXError
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
                 - Name: Resource
                   Value: /session
                 - Name: Stage
@@ -1963,7 +1992,7 @@ Resources:
               MetricName: Count
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
             Period: 60
             Stat: Sum
         - Id: maxLatency
@@ -1974,7 +2003,7 @@ Resources:
               MetricName: Latency
               Dimensions:
                 - Name: ApiName
-                  Value: !Sub "ipv-return-${AWS::StackName}"
+                  Value: !Sub "${AWS::StackName} - IPVR API"
             Period: 60
             Stat: Maximum
 
@@ -2133,6 +2162,7 @@ Resources:
   
   FallbackEmailErrorMetricFilter:
     Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref StreamProcessorFunctionLogGroup
       FilterPattern: '{ $.level = "ERROR" || $.message = "*trying to send the fallback template email." }'
@@ -2169,7 +2199,7 @@ Resources:
 
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
-    Condition: DeployConcurrencyAlarms
+    Condition: ApplyReservedConcurrency
     Properties:
       DashboardName: !Sub '${AWS::StackName}-Concurrency-Alarm-Overview'
       DashboardBody:

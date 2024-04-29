@@ -41,6 +41,7 @@ export class PostEventProcessor {
 		return PostEventProcessor.instance;
 	}
 
+	// eslint-disable-next-line max-lines-per-function, complexity
 	async processRequest(eventBody: any): Promise<any> {
 		try {
 			const eventDetails: ReturnSQSEvent = JSON.parse(eventBody);

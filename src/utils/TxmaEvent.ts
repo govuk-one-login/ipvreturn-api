@@ -1,5 +1,3 @@
-import { absoluteTimeNow } from "./DateTimeUtils";
-
 export type TxmaEventName =
 	"IPR_RESULT_NOTIFICATION_EMAILED"
 	| "IPR_USER_REDIRECTED";
@@ -14,6 +12,7 @@ export interface TxmaUser {
 export interface BaseTxmaEvent {
 	"user"?: TxmaUser;
 	"timestamp": number;
+	"event_timestamp_ms": number;
 }
 
 export interface ExtensionObject {
@@ -25,11 +24,14 @@ export interface TxmaEvent extends BaseTxmaEvent {
 	"extensions"?: ExtensionObject;
 }
 
-export const buildCoreEventFields = (user: TxmaUser, getNow: () => number = absoluteTimeNow): BaseTxmaEvent => {
+export const buildCoreEventFields = (user: TxmaUser): BaseTxmaEvent => {
+	const now = Date.now();
+
 	return {
 		user: {
 			...user,
 		},
-		timestamp: getNow(),
+		timestamp: Math.floor(now / 1000),
+		event_timestamp_ms: now,
 	};
 };
