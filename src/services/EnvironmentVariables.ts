@@ -27,6 +27,8 @@ export class EnvironmentVariables {
 	private readonly GOV_NOTIFY_QUEUE_URL = process.env.GOV_NOTIFY_QUEUE_URL;
 
 	private readonly SESSION_EVENTS_TABLE = process.env.SESSION_EVENTS_TABLE;
+	
+	private readonly AUTH_EVENTS_TABLE = process.env.AUTH_EVENTS_TABLE;
 
 	private readonly SESSION_RETURN_RECORD_TTL_SECS = process.env.SESSION_RETURN_RECORD_TTL_SECS;
 
@@ -159,6 +161,10 @@ export class EnvironmentVariables {
 
 	sessionEventsTable(): any {
 		return this.SESSION_EVENTS_TABLE;
+	}
+
+	authEventsTable(): any {
+		return this.AUTH_EVENTS_TABLE;
 	}
 
 	sessionReturnRecordTtlSecs(): number {

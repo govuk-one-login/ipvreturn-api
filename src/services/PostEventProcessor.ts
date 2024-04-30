@@ -5,6 +5,7 @@ import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { Constants } from "../utils/Constants";
 import { IPRService } from "./IPRService";
+import { IPRServiceAuth } from "./IPRServiceAuth";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
@@ -25,13 +26,16 @@ export class PostEventProcessor {
 
 	private readonly environmentVariables: EnvironmentVariables;
 
-	private readonly iprService: IPRService;
+	private readonly iprServiceSession: IPRService;
+
+	private readonly iprServiceAuth: IPRServiceAuth;
 
 	constructor(logger: Logger, metrics: Metrics) {
 		this.logger = logger;
 		this.metrics = metrics;
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.POST_EVENT_SERVICE);
-		this.iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
+		this.iprServiceSession = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
+		this.iprServiceAuth = IPRServiceAuth.getInstance(this.environmentVariables.authEventsTable(), this.logger, createDynamoDbClient());
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics): PostEventProcessor {
@@ -47,7 +51,7 @@ export class PostEventProcessor {
 			const eventDetails: ReturnSQSEvent = JSON.parse(eventBody);
 			const eventName = eventDetails.event_name;
 
-			const obfuscatedObject = await this.iprService.obfuscateJSONValues(eventDetails, Constants.TXMA_FIELDS_TO_SHOW);
+			const obfuscatedObject = await this.iprServiceSession.obfuscateJSONValues(eventDetails, Constants.TXMA_FIELDS_TO_SHOW);
 			this.logger.info({ message: "Obfuscated TxMA Event", txmaEvent: obfuscatedObject });
 
 			if (!eventDetails.event_id) {
@@ -77,7 +81,7 @@ export class PostEventProcessor {
 
 			const userId = userDetails.user_id;
 			// Do not process the event if the event is already processed or flagged for deletion
-			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, eventName);
+			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, eventName);
 			if (isFlaggedForDeletionOrEventAlreadyProcessed) {
 				this.logger.info( { message: "Record flagged for deletion or event already processed, skipping update" });
 				return "Record flagged for deletion or event already processed, skipping update";
@@ -191,12 +195,19 @@ export class PostEventProcessor {
 				this.logger.error({ message: "Missing config to update DynamboDB for event:", eventName });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 			}
-
-			const saveEventData = await this.iprService.saveEventData(userId, updateExpression, expressionAttributeValues);
-
+			
+			if(eventName === Constants.AUTH_IPV_AUTHORISATION_REQUESTED) {
+				const saveEventData = await this.iprServiceAuth.saveEventData(userId, updateExpression, expressionAttributeValues);
+				return {
+					statusCode: HttpCodesEnum.CREATED,
+					eventBody: saveEventData ? saveEventData : "OK",
+				};
+			} else {
+			const saveEventData = await this.iprServiceSession.saveEventData(userId, updateExpression, expressionAttributeValues)
 			return {
 				statusCode: HttpCodesEnum.CREATED,
 				eventBody: saveEventData ? saveEventData : "OK",
+			};
 			};
 
 		} catch (error: any) {
