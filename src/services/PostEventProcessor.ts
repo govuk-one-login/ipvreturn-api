@@ -104,7 +104,6 @@ export class PostEventProcessor {
 						this.logger.warn({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						return `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`;
 					}
-
 					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn";
 					expressionAttributeValues = {
 						":userEmail": returnRecord.userEmail,
@@ -116,11 +115,19 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.F2F_YOTI_START: {
-					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn";
-					expressionAttributeValues = {
-						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
-						":expiresOn": returnRecord.expiresDate,
-					};
+					const fetchedRecord = await this.iprServiceAuth.getSessionBySub(userId)
+					console.log("GEORGE FETCHED RECORD", fetchedRecord)
+					
+						updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri";
+						console.log("GEORGE 127 UPDATE EXPRESSION", updateExpression)
+						expressionAttributeValues = {
+							":userEmail": fetchedRecord!.userEmail,
+							":ipvStartedOn": fetchedRecord!.ipvStartedOn,
+							":clientName": fetchedRecord!.clientName,
+							":redirectUri": fetchedRecord!.redirectUri,
+							":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
+							":expiresOn": returnRecord.expiresDate,
+							}
 
 					if (returnRecord.postOfficeInfo) {
 						updateExpression += ", postOfficeInfo = :postOfficeInfo";
@@ -195,7 +202,7 @@ export class PostEventProcessor {
 				this.logger.error({ message: "Missing config to update DynamboDB for event:", eventName });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 			}
-			
+
 			if(eventName === Constants.AUTH_IPV_AUTHORISATION_REQUESTED) {
 				const saveEventData = await this.iprServiceAuth.saveEventData(userId, updateExpression, expressionAttributeValues);
 				return {

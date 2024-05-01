@@ -30,6 +30,8 @@ export class EnvironmentVariables {
 	
 	private readonly AUTH_EVENTS_TABLE = process.env.AUTH_EVENTS_TABLE;
 
+	private readonly AUTH_EVENT_TTL_SECS = process.env.AUTH_EVENT_TTL_SECS
+
 	private readonly SESSION_RETURN_RECORD_TTL_SECS = process.env.SESSION_RETURN_RECORD_TTL_SECS;
 
 	private readonly INITIAL_SESSION_RECORD_TTL_SECS = process.env.INITIAL_SESSION_RECORD_TTL_SECS;
@@ -165,6 +167,10 @@ export class EnvironmentVariables {
 
 	authEventsTable(): any {
 		return this.AUTH_EVENTS_TABLE;
+	}
+
+	authEventTtlSecs(): number {
+		return +this.AUTH_EVENT_TTL_SECS!;
 	}
 
 	sessionReturnRecordTtlSecs(): number {
