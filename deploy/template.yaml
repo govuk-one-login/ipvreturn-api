@@ -113,6 +113,7 @@ Mappings:
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk/resume"
+      AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
       INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
       DNSSUFFIX: "return.dev.account.gov.uk"
@@ -127,6 +128,7 @@ Mappings:
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.build.account.gov.uk/resume"
+      AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
       INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
       DNSSUFFIX: "return.build.account.gov.uk"
@@ -141,6 +143,7 @@ Mappings:
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk/resume"
+      AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
       INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
       DNSSUFFIX: "return.staging.account.gov.uk"
@@ -154,6 +157,7 @@ Mappings:
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk/resume"
+      AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
       INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
       DNSSUFFIX: "return.integration.account.gov.uk"
@@ -167,6 +171,7 @@ Mappings:
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.account.gov.uk/resume"
+      AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
       INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
       DNSSUFFIX: "return.account.gov.uk"
@@ -513,6 +518,20 @@ Resources:
                   - "kms:Decrypt"
                 Resource:
                   Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
+        - PolicyName: GetAuthEventPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:GetItem"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-arn"
+              - Effect: Allow
+                Action:
+                  - "kms:Decrypt"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-key-arn"
       PermissionsBoundary: !If
         - UsePermissionsBoundary
         - !Ref PermissionsBoundary
@@ -696,8 +715,11 @@ Resources:
           POWERTOOLS_SERVICE_NAME: PostEventHandler
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+          AUTH_EVENT_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, AUTHEVENTTTLINSECS ]
           SESSION_RETURN_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, SESSIONRETURNRECORDTTLINSECS ]
           INITIAL_SESSION_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, INITIALSESSIONRECORDTTLINSECS ]
+          AUTH_EVENTS_TABLE:
+            Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
@@ -709,10 +731,22 @@ Resources:
             TableName:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-name"
+        - DynamoDBWritePolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-auth-events-table-name"
+        - DynamoDBReadPolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-auth-events-table-name"
         - KMSDecryptPolicy:
             KeyId:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-key-id"
+        - KMSDecryptPolicy:
+            KeyId:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-auth-events-table-key-id"
         - Statement:
             - Sid: TxMAKMSDecryptkeysPolicy
               Effect: Allow
@@ -1073,6 +1107,8 @@ Resources:
           GOV_NOTIFY_QUEUE_URL: !Ref GovNotifySQSQueue
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+          AUTH_EVENTS_TABLE:
+            Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
@@ -1084,6 +1120,14 @@ Resources:
             TableName:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-name"
+        - DynamoDBWritePolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-auth-events-table-name"
+        - DynamoDBReadPolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-auth-events-table-name"
         - KMSDecryptPolicy:
             KeyId:
               Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-id"
@@ -1106,6 +1150,25 @@ Resources:
                 - "dynamodb:ListStreams"
               Resource:
                 Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-stream-arn"
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "sqs:SendMessage"
+              Resource: !GetAtt GovNotifySQSQueue.Arn
+            - Effect: Allow
+              Action:
+                - "kms:Encrypt"
+                - "kms:Decrypt"
+                - "kms:GenerateDataKey"
+              Resource: !GetAtt GovNotifyEncryptionKey.Arn
+            - Effect: Allow #allow lambda to read from the event stream
+              Action:
+                - "dynamodb:DescribeStream"
+                - "dynamodb:GetRecords"
+                - "dynamodb:GetShardIterator"
+                - "dynamodb:ListStreams"
+              Resource:
+                Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-stream-arn"
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
       BuildProperties:
@@ -1123,6 +1186,18 @@ Resources:
       Enabled: True
       EventSourceArn:
         Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-stream-arn"
+      FunctionName: !Ref StreamProcessorFunction
+      # Always start at the tail of the Stream
+      StartingPosition: LATEST
+
+  AuthEventsTableStream:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      # The maximum number of DB items to send to Lambda
+      BatchSize: 1
+      Enabled: True
+      EventSourceArn:
+        Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-stream-arn"
       FunctionName: !Ref StreamProcessorFunction
       # Always start at the tail of the Stream
       StartingPosition: LATEST
@@ -2542,6 +2617,10 @@ Outputs:
     Description: "SessionEvents Table Name"
     Value:
       Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+  AuthEventsTable:
+    Description: "AuthEvents Table Name"
+    Value:
+      Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
   TxMASQSQueue: 
     Description: "Arn of the TxMASQSQueue"
     Value: !GetAtt TxMASQSQueue.Arn
@@ -2574,6 +2653,18 @@ Outputs:
       Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
     Export:
       Name: !Sub ${AWS::StackName}-SessionTableEncryptionKey-arn
+  AuthTableARN: 
+    Description: "Arn of the Auth DynamoDB table"
+    Value:
+      Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-arn"
+    Export:
+      Name: !Sub ${AWS::StackName}-AuthTable-arn
+  AuthTableEcryptionARN: 
+    Description: "Arn of the AuthTableEncryptionKey"
+    Value:
+      Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-key-arn"
+    Export:
+      Name: !Sub ${AWS::StackName}-AuthEventsTableEncryptionKey-arn
   IpvReturnTestHarnessURL:
     Condition: IsNotProdLikeEnvironment
     Description: "IPR Test Harness"

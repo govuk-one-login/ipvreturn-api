@@ -83,6 +83,31 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_IMAGE
 
+  AuthEventsTable:
+    Type: "AWS::DynamoDB::Table"
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName: !Sub "auth-events-${AWS::StackName}"
+      BillingMode: "PAY_PER_REQUEST"
+      AttributeDefinitions:
+        - AttributeName: "userId"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "userId"
+          KeyType: "HASH"
+      TimeToLiveSpecification:
+        AttributeName: expiresOn
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        KMSMasterKeyId: !Ref AuthEventsTableKey
+        SSEEnabled: true
+        SSEType: KMS
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+
   SessionEventsTableKey:
     Type: AWS::KMS::Key
     Properties:
@@ -118,6 +143,41 @@ Resources:
       AliasName: !Sub "alias/${AWS::StackName}-session-events-table-key"
       TargetKeyId: !Ref SessionEventsTableKey
 
+  AuthEventsTableKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "${AWS::StackName} authEvents table key"
+      Enabled: true
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyUsage: ENCRYPT_DECRYPT
+      MultiRegion: false
+      PendingWindowInDays: !Ref KmsPendingWindowInDays
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "Allow the account to manage the key"
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: "kms:*"
+            Resource: "*"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName} auth events table key"
+        - Key: Product
+          Value: Gov.UK Sign On
+        - Key: System
+          Value: IPV Return Service
+        - Key: Environment
+          Value: !Ref Environment
+
+  AuthEventsTableKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-auth-events-table-key"
+      TargetKeyId: !Ref SessionEventsTableKey
+
   
 Outputs:
   SessionEventsTableName:
@@ -148,3 +208,31 @@ Outputs:
     Value: !GetAtt SessionEventsTable.StreamArn
     Export:
       Name: !Sub "${AWS::StackName}-session-events-table-stream-arn"
+  AuthEventsTableName:
+    Description: "The name of the DynamoDB Auth Events table"
+    Value: !Ref AuthEventsTable
+    Export:
+      Name: !Sub "${AWS::StackName}-auth-events-table-name"
+  AuthEventsTableArn:
+    Description: "The Arn of the DynamoDB Auth Events table"
+    Value: !GetAtt AuthEventsTable.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-auth-events-table-arn"
+  AuthEventsTableKeyArn:
+    Description: "The Arn of the Auth Events table encryption key"
+    Value: !GetAtt AuthEventsTableKey.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-auth-events-table-key-arn"
+  AuthEventsTableKeyId:
+    Description: "The Id of the Auth Events table encryption key"
+    Value: !Ref AuthEventsTableKey
+    Export:
+      Name: !Sub "${AWS::StackName}-auth-events-table-key-id"
+  AuthEventsTableKeyAlias:
+    Description: "The Alias of the Auth Events encryption key"
+    Value: !Ref AuthEventsTableKeyAlias
+  AuthEventsTableStreamArn:
+    Description: "The Arn for the Auth Events table Stream"
+    Value: !GetAtt AuthEventsTable.StreamArn
+    Export:
+      Name: !Sub "${AWS::StackName}-auth-events-table-stream-arn"

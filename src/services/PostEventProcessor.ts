@@ -89,8 +89,8 @@ export class PostEventProcessor {
 
 			let updateExpression, expressionAttributeValues: { [key: string]: any }, expiresOn;
 
-			//Set default TTL to 12hrs to expire any records not meant for F2F
-			expiresOn = absoluteTimeNow() + this.environmentVariables.initialSessionReturnRecordTtlSecs();
+			//Set auth event TTL to 6hrs
+			expiresOn = absoluteTimeNow() + this.environmentVariables.authEventTtlSecs();
 
 			if (eventName === Constants.F2F_YOTI_START) {
 				//Reset TTL to 11days for F2F journey
@@ -115,7 +115,7 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.F2F_YOTI_START: {
-					const fetchedRecord = await this.iprServiceAuth.getSessionBySub(userId)
+					const fetchedRecord = await this.iprServiceAuth.getAuthEventBySub(userId)
 					console.log("GEORGE FETCHED RECORD", fetchedRecord)
 					
 						updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri";

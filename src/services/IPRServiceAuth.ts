@@ -10,7 +10,7 @@ import { GovNotifyEvent } from "../utils/GovNotifyEvent";
 import { TxmaEvent } from "../utils/TxmaEvent";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
-import { ExtSessionEvent } from "../models/SessionEvent";
+import { AuthEvent } from "../models/AuthEvent";
 import { MessageCodes } from "../models/enums/MessageCodes";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
 
@@ -26,10 +26,7 @@ export class IPRServiceAuth {
 	private static instance: IPRServiceAuth;
 
 	private readonly eventAttributeMap = new Map<string, string>([
-		[Constants.AUTH_IPV_AUTHORISATION_REQUESTED, "ipvStartedOn"],
-		[Constants.F2F_YOTI_START, "journeyWentAsyncOn"],
-		[Constants.IPV_F2F_CRI_VC_CONSUMED, "readyToResumeOn"],
-		[Constants.AUTH_DELETE_ACCOUNT, "accountDeletedOn"],
+		[Constants.AUTH_IPV_AUTHORISATION_REQUESTED, "ipvStartedOn"]
 	]);
 
 	constructor(tableName: any, logger: Logger, dynamoDbClient: DynamoDBDocument) {
@@ -46,27 +43,27 @@ export class IPRServiceAuth {
 		return IPRServiceAuth.instance;
 	}
 
-	async getSessionBySub(userId: string): Promise<ExtSessionEvent | undefined> {
-		const getSessionCommand = new GetCommand({
+	async getAuthEventBySub(userId: string): Promise<AuthEvent | undefined> {
+		const getAuthEventCommand = new GetCommand({
 			TableName: this.tableName,
 			Key: {
 				userId,
 			},
 		});
-		let session;
+		let event;
 		try {
-			session = await this.dynamo.send(getSessionCommand);
+			event = await this.dynamo.send(getAuthEventCommand);
 		} catch (error: any) {
-			this.logger.error({ message: "getSessionBySub - failed executing get from dynamodb", name: error?.name, info: error?.message });
+			this.logger.error({ message: "getAuthEventBySub - failed executing get from dynamodb", name: error?.name, info: error?.message });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 		}
 
-		if (session.Item) {
-			if (session.Item.expiresOn < absoluteTimeNow()) {
-				this.logger.error({ message: "Session has expired", messageCode: MessageCodes.SESSION_EXPIRED });
-				throw new AppError( HttpCodesEnum.UNAUTHORIZED, "Session has expired");
+		if (event.Item) {
+			if (event.Item.expiresOn < absoluteTimeNow()) {
+				this.logger.error({ message: "Auth event has expired", messageCode: MessageCodes.AUTH_EVENT_EXPIRED });
+				throw new AppError( HttpCodesEnum.UNAUTHORIZED, "Auth event has expired");
 			}
-			return session.Item as ExtSessionEvent;
+			return event.Item as AuthEvent;
 		}
 	}
 
@@ -96,8 +93,8 @@ export class IPRServiceAuth {
 				return false;
 			}
 		} catch (e: any) {
-			this.logger.error({ message: "getSessionById - failed executing get from dynamodb:", e });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
+			this.logger.error({ message: "getauthEventById - failed executing get from dynamodb:", e });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving auth event");
 		}
 	}
 
@@ -113,31 +110,16 @@ export class IPRServiceAuth {
 			ExpressionAttributeValues: expressionAttributeValues,
 		});
 
-		this.logger.info("Updating session record" );
+		this.logger.info("Updating auth event record" );
 
 		try {
 			await this.dynamo.send(updateSessionInfoCommand);
 		} catch (e: any) {
-			this.logger.error({ message: "Failed to update session record in dynamo", e });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
+			this.logger.error({ message: "Failed to update auth event record in dynamo", e });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating auth event record");
 		}
 	}
 
-	async sendToGovNotify(event: GovNotifyEvent): Promise<void> {
-		try {
-			const messageBody = JSON.stringify(event);
-			const params = {
-				MessageBody: messageBody,
-				QueueUrl: this.environmentVariables.getGovNotifyQueueURL(this.logger),
-			};
-
-			await sqsClient.send(new SendMessageCommand(params));
-			this.logger.info("Sent message to Gov Notify");
-		} catch (error) {
-			this.logger.error({ message: "Error when sending message to GovNotify Queue", error });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "sending event to govNotify queue - failed ");
-		}
-	}
 
 	async sendToTXMA(event: TxmaEvent): Promise<void> {
 		try {
