@@ -43,6 +43,8 @@ export class Constants {
     static readonly VIST_PO_EMAIL_DYNAMIC = "VIST_PO_EMAIL_DYNAMIC";
 
     static readonly VISIT_PO_EMAIL_FALLBACK = "VISIT_PO_EMAIL_FALLBACK";
+
+    static readonly SQS_OUT_OF_SYNC = "SQS_OUT_OF_SYNC";
     
 
 	static readonly TXMA_FIELDS_TO_SHOW = ["event_name", "documentType", "docExpiryDate", "govuk_signin_journey_id", "event_id", "timestamp", "configVersion"];

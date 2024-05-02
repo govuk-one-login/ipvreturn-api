@@ -814,7 +814,7 @@ Resources:
         - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
       FunctionName: !Ref PostEventFunction
 
-  PostEventFunctionFatalErorMetricFilter:
+  PostEventFunctionFatalErrorMetricFilter:
     Type: AWS::Logs::MetricFilter
     Condition: "DeployAlarms"
     Properties:
@@ -826,13 +826,13 @@ Resources:
           MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
           MetricName: "PostEventFunction-Fatalerror"
 
-  PostEventFunctionnFatalErrorAlarm:
+  PostEventFunctionFatalErrorAlarm:
     DependsOn:
-      - "PostEventFunctionFatalErorMetricFilter"
+      - "PostEventFunctionFatalErrorMetricFilter"
     Type: AWS::CloudWatch::Alarm
     Condition: "DeployAlarms"
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-PostEventFunctionn-FatalErrorAlarm"
+      AlarmName: !Sub "${AWS::StackName}-PostEventFunction-FatalErrorAlarm"
       AlarmDescription: !Sub "Trigger an alarm when Fatal Error occurs. ${SupportManualURL}"
       ActionsEnabled: true
       OKActions:
@@ -2240,7 +2240,7 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref StreamProcessorFunctionLogGroup
-      FilterPattern: '{ $.level = "ERROR" || $.message = "*trying to send the fallback template email." }'
+      FilterPattern: '{ $.level = "ERROR" && $.message = "*trying to send the fallback template email." }'
       MetricTransformations:
         -
           MetricValue: "1"
@@ -2254,7 +2254,7 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-FallbackEmailErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fallback email is trigerred due to missing mandatory fields. ${SupportManualURL}"
+      AlarmDescription: !Sub "Trigger an alarm when Fallback email is triggered due to missing mandatory fields. ${SupportManualURL}"
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -2262,6 +2262,43 @@ Resources:
         - !ImportValue platform-alarm-topic-slack-warning-alert
       InsufficientDataActions: [ ]
       MetricName: StreamProcessorFunction-FallbackEmail-error
+      Namespace: !Sub "${AWS::StackName}/LogMessages"
+      Statistic: Sum
+      Dimensions: [ ]
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  OutOfSyncSQSEventsErrorMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
+    Properties:
+      LogGroupName: !Ref PostEventFunctionLogGroup
+      FilterPattern: '{ $.level = "ERROR" && $.message = "F2F_YOTI_START event sent before AUTH_IPV_AUTHORISATION_REQUESTED event." }'
+      MetricTransformations:
+        -
+          MetricValue: "1"
+          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
+          MetricName: "PostEventFunction-OutOfSyncSQSEvents-error"
+
+  OutOfSyncSQSEventsErrorAlarm:
+    DependsOn:
+      - "OutOfSyncSQSEventsErrorMetricFilter"
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-OutOfSyncSQSEventsErrorAlarm"
+      AlarmDescription: !Sub "Trigger an alarm when F2F_YOTI_START event sent before AUTH_IPV_AUTHORISATION_REQUESTED event"
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      MetricName: PostEventFunction-OutOfSyncSQSEvents-error
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
       Dimensions: [ ]
