@@ -12,6 +12,7 @@ import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
 import { Constants } from "../utils/Constants";
+import { TxmaEventNames } from "../models/enums/TxmaEvents";
 
 export class SendEmailProcessor {
 
@@ -98,7 +99,7 @@ export class SendEmailProcessor {
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
 		try {
 			await this.iprService.sendToTXMA({
-				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
+				event_name: TxmaEventNames.IPR_RESULT_NOTIFICATION_EMAILED,
 				...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }),
 				extensions: {
 					previous_govuk_signin_journey_id: session.clientSessionId,

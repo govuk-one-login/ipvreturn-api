@@ -19,6 +19,7 @@ import { Constants } from "../utils/Constants";
 import { SessionEventStatusEnum } from "../models/enums/SessionEventStatusEnum";
 import { stsClient } from "../utils/StsClient";
 import { MessageCodes } from "../models/enums/MessageCodes";
+import { TxmaEventNames } from "../models/enums/TxmaEvents";
 
 export class SessionProcessor {
 	private static instance: SessionProcessor;
@@ -76,6 +77,9 @@ export class SessionProcessor {
 			}
 			const idToken = await this.generateIdToken(authCode);
 
+			console.log("----issuer: " + issuer);
+			console.log("----jwks_uri: " + jwksEndpoint);
+			console.log("----IDTOKEN: " + idToken);
 			let parsedIdTokenJwt: Jwt;
 			try {
 				parsedIdTokenJwt = this.kmsJwtAdapter.decode(idToken);
@@ -126,6 +130,7 @@ export class SessionProcessor {
 			// is equal to the sub of the ID.
 			//
 			const sub = jwtIdTokenPayload.sub!;
+			//const sub = "01333e01-dde3-412f-a484-4444"
 			const session = await iprService.getSessionBySub(sub);
 			if (!session) {
 				this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
@@ -158,7 +163,7 @@ export class SessionProcessor {
 
 			try {
 				await iprService.sendToTXMA({
-					event_name: "IPR_USER_REDIRECTED",
+					event_name: TxmaEventNames.IPR_USER_REDIRECTED,
 					...buildCoreEventFields({ user_id: sub }),
 					extensions: {
 						previous_govuk_signin_journey_id: session.clientSessionId,
