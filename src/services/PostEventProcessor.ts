@@ -115,20 +115,20 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.F2F_YOTI_START: {
-					const fetchedRecord = await this.iprServiceAuth.getAuthEventBySub(userId)
-					if(!fetchedRecord) {
+					const fetchedRecord = await this.iprServiceAuth.getAuthEventBySub(userId);
+					if (!fetchedRecord) {
 						this.logger.error({ message: "F2F_YOTI_START event sent before AUTH_IPV_AUTHORISATION_REQUESTED event." }, { messageCode: MessageCodes.SQS_OUT_OF_SYNC });
 						throw new AppError(HttpCodesEnum.BAD_REQUEST, Constants.SQS_OUT_OF_SYNC);
 					}
-						updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri";
-						expressionAttributeValues = {
-							":userEmail": fetchedRecord!.userEmail,
-							":ipvStartedOn": fetchedRecord!.ipvStartedOn,
-							":clientName": fetchedRecord!.clientName,
-							":redirectUri": fetchedRecord!.redirectUri,
-							":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
-							":expiresOn": returnRecord.expiresDate,
-							}
+					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri";
+					expressionAttributeValues = {
+						":userEmail": fetchedRecord.userEmail,
+						":ipvStartedOn": fetchedRecord.ipvStartedOn,
+						":clientName": fetchedRecord.clientName,
+						":redirectUri": fetchedRecord.redirectUri,
+						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
+						":expiresOn": returnRecord.expiresDate,
+					};
 
 					if (returnRecord.postOfficeInfo) {
 						updateExpression += ", postOfficeInfo = :postOfficeInfo";
@@ -204,19 +204,19 @@ export class PostEventProcessor {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 			}
 
-			if(eventName === Constants.AUTH_IPV_AUTHORISATION_REQUESTED) {
+			if (eventName === Constants.AUTH_IPV_AUTHORISATION_REQUESTED) {
 				const saveEventData = await this.iprServiceAuth.saveEventData(userId, updateExpression, expressionAttributeValues);
 				return {
 					statusCode: HttpCodesEnum.CREATED,
 					eventBody: saveEventData ? saveEventData : "OK",
 				};
 			} else {
-			const saveEventData = await this.iprServiceSession.saveEventData(userId, updateExpression, expressionAttributeValues)
-			return {
-				statusCode: HttpCodesEnum.CREATED,
-				eventBody: saveEventData ? saveEventData : "OK",
-			};
-			};
+				const saveEventData = await this.iprServiceSession.saveEventData(userId, updateExpression, expressionAttributeValues);
+				return {
+					statusCode: HttpCodesEnum.CREATED,
+					eventBody: saveEventData ? saveEventData : "OK",
+				};
+			}
 
 		} catch (error: any) {
 			this.logger.error({ message: "Cannot parse event data", error });

@@ -26,7 +26,7 @@ export class IPRServiceAuth {
 	private static instance: IPRServiceAuth;
 
 	private readonly eventAttributeMap = new Map<string, string>([
-		[Constants.AUTH_IPV_AUTHORISATION_REQUESTED, "ipvStartedOn"]
+		[Constants.AUTH_IPV_AUTHORISATION_REQUESTED, "ipvStartedOn"],
 	]);
 
 	constructor(tableName: any, logger: Logger, dynamoDbClient: DynamoDBDocument) {
