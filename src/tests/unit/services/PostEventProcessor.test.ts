@@ -22,13 +22,12 @@ import {
 } from "../../data/sqs-events";
 import { table } from "console";
 
-let postEventProcessor: PostEventProcessor;
+let postEventProcessorMockSessionService: PostEventProcessor;
 let postEventProcessorMockServices: PostEventProcessor;
-let iprService: IPRServiceSession;
 let iprServiceAuth: IPRServiceAuth;
 const tableName = "MYTABLE";
 const mockDynamoDbClient = jest.mocked(createDynamoDbClient());
-const mockIprService = mock<IPRServiceSession>();
+const mockIprServiceSession = mock<IPRServiceSession>();
 const mockIprServiceAuth = mock<IPRServiceAuth>();
 const mockLogger = mock<Logger>();
 
@@ -39,21 +38,20 @@ describe("PostEventProcessor", () => {
 		jest.useFakeTimers();
 		const fakeTime = 1684933200.123;
 		jest.setSystemTime(new Date(fakeTime * 1000)); // 2023-05-24T13:00:00.123Z
-		iprService = new IPRServiceSession(tableName, mockLogger, mockDynamoDbClient);
 		iprServiceAuth = new IPRServiceAuth(tableName, mockLogger, mockDynamoDbClient);
-		postEventProcessor = new PostEventProcessor(mockLogger, metrics);
+		postEventProcessorMockSessionService = new PostEventProcessor(mockLogger, metrics);
 		postEventProcessorMockServices = new PostEventProcessor(mockLogger, metrics);
 		// @ts-ignore
-		postEventProcessorMockServices.iprServiceSession = mockIprService;
+		postEventProcessorMockServices.iprServiceSession = mockIprServiceSession;
 		// @ts-ignore
 		postEventProcessorMockServices.iprServiceAuth = mockIprServiceAuth;
 		// @ts-ignore
-		postEventProcessor.iprServiceSession = mockIprService;
+		postEventProcessorMockSessionService.iprServiceSession = mockIprServiceSession;
 		// @ts-ignore
-		postEventProcessor.iprServiceAuth = iprServiceAuth;
-		mockIprService.saveEventData.mockResolvedValueOnce();
-		mockIprServiceAuth.saveEventData.mockResolvedValueOnce();
-		mockIprService.obfuscateJSONValues.mockResolvedValue({ "event_name":"IPR_RESULT_NOTIFICATION_EMAILED", "user":{ "user_id":"***" }, "timestamp":"***" });
+		postEventProcessorMockSessionService.iprServiceAuth = iprServiceAuth;
+		mockIprServiceSession.saveEventData.mockResolvedValueOnce();
+		//mockIprServiceAuth.saveEventData.mockResolvedValueOnce();
+		mockIprServiceSession.obfuscateJSONValues.mockResolvedValue({ "event_name":"IPR_RESULT_NOTIFICATION_EMAILED", "user":{ "user_id":"***" }, "timestamp":"***" });
 	});
 
 	it("Returns success response when call to save event data is successful", async () => {
@@ -71,7 +69,7 @@ describe("PostEventProcessor", () => {
 			timestamp: 1681902001,
 			timestamp_formatted: "2023-04-19T11:00:01.000Z",
 		};
-		await expect(postEventProcessor.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_USER_MISSING))).rejects.toThrow(
+		await expect(postEventProcessorMockSessionService.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_USER_MISSING))).rejects.toThrow(
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -91,7 +89,7 @@ describe("PostEventProcessor", () => {
 				email: "jest@test.com",
 			},
 		};
-		await expect(postEventProcessor.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_NAME_MISSING))).rejects.toThrow(
+		await expect(postEventProcessorMockSessionService.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_NAME_MISSING))).rejects.toThrow(
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -111,7 +109,7 @@ describe("PostEventProcessor", () => {
 				email: "jest@test.com",
 			},
 		};
-		await expect(postEventProcessor.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_NAME_SPACES))).rejects.toThrow(
+		await expect(postEventProcessorMockSessionService.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_NAME_SPACES))).rejects.toThrow(
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -130,7 +128,7 @@ describe("PostEventProcessor", () => {
 				email: "jest@test.com",
 			},
 		};
-		await expect(postEventProcessor.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_TIMESTAMP_MISSING))).rejects.toThrow(
+		await expect(postEventProcessorMockSessionService.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_TIMESTAMP_MISSING))).rejects.toThrow(
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -208,7 +206,7 @@ describe("PostEventProcessor", () => {
 		it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event", async () => {
 			await postEventProcessorMockServices.processRequest(VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
 			// Check if it logs about docExpiryDate missing
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No docExpiryDate in IPV_F2F_CRI_VC_CONSUMED event");
@@ -238,7 +236,7 @@ describe("PostEventProcessor", () => {
 		it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event with docExpiryDate field", async () => {
 			await postEventProcessorMockServices.processRequest(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT_STRING);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts, documentExpiryDate = :documentExpiryDate", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }], ":documentExpiryDate": "2030-01-01" });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts, documentExpiryDate = :documentExpiryDate", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }], ":documentExpiryDate": "2030-01-01" });
 		});
 	});
 
@@ -253,22 +251,22 @@ describe("PostEventProcessor", () => {
 				expiresOn: absoluteTimeNow() + 1000,
 			};
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
-			await postEventProcessor.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
+			await postEventProcessorMockSessionService.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":ipvStartedOn": "test", ":userEmail": "test@digital.cabinet-office.gov.uk", ":clientName": "test", ":redirectUri": "test" });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":ipvStartedOn": "test", ":userEmail": "test@digital.cabinet-office.gov.uk", ":clientName": "test", ":redirectUri": "test" });
 		});
 	
 		it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event", async () => {
-			await postEventProcessor.processRequest(VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING);
+			await postEventProcessorMockSessionService.processRequest(VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
 		});
 	
 		it("Calls saveEventData with appropriate payload for AUTH_DELETE_ACCOUNT_EVENT event", async () => {
-			await postEventProcessor.processRequest(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING);
+			await postEventProcessorMockSessionService.processRequest(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-3333", "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri", { ":accountDeletedOn": 1681902001, ":clientName": "", ":nameParts": [], ":redirectUri": "", ":userEmail": "" });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-3333", "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri", { ":accountDeletedOn": 1681902001, ":clientName": "", ":nameParts": [], ":redirectUri": "", ":userEmail": "" });
 		});
 	});
 
@@ -285,26 +283,26 @@ describe("PostEventProcessor", () => {
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
 			const YotiStartEvent = JSON.parse(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
 			YotiStartEvent.user.govuk_signin_journey_id = "sdfssg";
-			await postEventProcessor.processRequest(JSON.stringify(YotiStartEvent));
+			await postEventProcessorMockSessionService.processRequest(JSON.stringify(YotiStartEvent));
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, clientSessionId = :clientSessionId", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":clientSessionId": "sdfssg", ":ipvStartedOn": "test", ":userEmail": "test@digital.cabinet-office.gov.uk", ":clientName": "test", ":redirectUri": "test" });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, clientSessionId = :clientSessionId", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":clientSessionId": "sdfssg", ":ipvStartedOn": "test", ":userEmail": "test@digital.cabinet-office.gov.uk", ":clientName": "test", ":redirectUri": "test" });
 		});
 	
 		it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event", async () => {
 			const vcCounsumedEvent = JSON.parse(VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING);
 			vcCounsumedEvent.user.govuk_signin_journey_id = "sdfssg";
-			await postEventProcessor.processRequest(VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING);
+			await postEventProcessorMockSessionService.processRequest(VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
 		});
 	});
 
 	describe("F2F_DOCUMENT_UPLOADED event", () => {
 		it("Calls saveEventData with appropriate payload for F2F_DOCUMENT_UPLOADED event", async () => {
-			await postEventProcessor.processRequest(JSON.stringify(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT));
+			await postEventProcessorMockSessionService.processRequest(JSON.stringify(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails", { ":documentUploadedOn": 1681902001, ":postOfficeVisitDetails": [{ "post_office_date_of_visit": "7 September 2023", "post_office_time_of_visit": "4:43 pm" }] });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails", { ":documentUploadedOn": 1681902001, ":postOfficeVisitDetails": [{ "post_office_date_of_visit": "7 September 2023", "post_office_time_of_visit": "4:43 pm" }] });
 		});
 
 		it("Throws error if post_office_visit_details is missing", async () => {
@@ -320,7 +318,7 @@ describe("PostEventProcessor", () => {
 				},
 				extensions: {},
 			};
-			await expect(postEventProcessor.processRequest(JSON.stringify(F2F_DOCUMENT_UPLOADED_EVENT_INVALID))).rejects.toThrow(
+			await expect(postEventProcessorMockSessionService.processRequest(JSON.stringify(F2F_DOCUMENT_UPLOADED_EVENT_INVALID))).rejects.toThrow(
 				new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 			);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -339,7 +337,7 @@ describe("PostEventProcessor", () => {
 					user_id: "01333e01-dde3-412f-a484-4444",
 				},
 			};
-			await expect(postEventProcessor.processRequest(JSON.stringify(F2F_DOCUMENT_UPLOADED_EVENT_INVALID))).rejects.toThrow(
+			await expect(postEventProcessorMockSessionService.processRequest(JSON.stringify(F2F_DOCUMENT_UPLOADED_EVENT_INVALID))).rejects.toThrow(
 				new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 			);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
@@ -359,9 +357,9 @@ describe("PostEventProcessor", () => {
 			};
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
-			await postEventProcessor.processRequest(JSON.stringify(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT));
+			await postEventProcessorMockSessionService.processRequest(JSON.stringify(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, postOfficeInfo = :postOfficeInfo, documentType = :documentType, clientSessionId = :clientSessionId", { 
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, postOfficeInfo = :postOfficeInfo, documentType = :documentType, clientSessionId = :clientSessionId", { 
 				":journeyWentAsyncOn": 1681902001, 
 				":clientName": "test",
 				":ipvStartedOn": "test",
@@ -399,9 +397,9 @@ describe("PostEventProcessor", () => {
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			const yotiStartEvent = VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT;
 			delete yotiStartEvent.extensions;
-			await postEventProcessor.processRequest(JSON.stringify(yotiStartEvent));
+			await postEventProcessorMockSessionService.processRequest(JSON.stringify(yotiStartEvent));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, documentType = :documentType, clientSessionId = :clientSessionId", { 
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, documentType = :documentType, clientSessionId = :clientSessionId", { 
 				":journeyWentAsyncOn": 1681902001, 
 				":clientName": "test",
 				":ipvStartedOn": "test",
@@ -426,9 +424,9 @@ describe("PostEventProcessor", () => {
 			};
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
-			await postEventProcessor.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
+			await postEventProcessorMockSessionService.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri", { 
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri", { 
 				":journeyWentAsyncOn": 1681902001, 
 				":clientName": "test",
 				":ipvStartedOn": "test",
