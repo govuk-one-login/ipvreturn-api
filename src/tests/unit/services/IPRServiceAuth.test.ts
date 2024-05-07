@@ -63,56 +63,6 @@ describe("IPR Service", () => {
 		iprServiceAuth = new IPRServiceAuth(tableName, logger, mockDynamoDbClient);
 	});
 
-	describe("isFlaggedForDeletionOrEventAlreadyProcessed", () => {
-		it("Should throw error if isFlaggedForDeletionOrEventAlreadyProcessed check fails", async () => {
-			return expect(
-				iprServiceAuth.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED),
-			).rejects.toThrow(
-				expect.objectContaining({
-					statusCode: HttpCodesEnum.SERVER_ERROR,
-				}),
-			);
-		});
-
-		it("Should return false for isFlaggedForDeletionOrEventAlreadyProcessed if record does not exist", async () => {
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue({});
-			const result = await iprServiceAuth.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
-			expect(result).toBe(false);
-		});
-
-		it("Should return false for isFlaggedForDeletionOrEventAlreadyProcessed if record exist and ipvStartedOn flag is not set", async () => {
-			const recordNotFlaggedForDeletetionAndNotProcessed = {
-				Item: {
-					clientName: "",
-					userEmail: "",
-					userId: "SESSID",
-					nameParts: [],
-					redirectUri: "",
-				},
-			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordNotFlaggedForDeletetionAndNotProcessed);
-			const result = await iprServiceAuth.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
-			expect(result).toBe(false);
-		});
-
-		it("Should return true for isFlaggedForDeletionOrEventAlreadyProcessed if record exist and value set for accountDeletedOn", async () => {
-			const recordFlaggedForDeletetion = {
-				Item: {
-					clientName: "",
-					userEmail: "",
-					ipvStartedOn: 1681902001,
-					userId: "SESSID",
-					accountDeletedOn: 1681902001,
-					nameParts: [],
-					redirectUri: "",
-				},
-			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForDeletetion);
-			const result = await iprServiceAuth.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
-			expect(result).toBe(true);
-		});
-	});
-
 	describe("saveEventData", () => {
 		it("Should throw error if saveEventData fails", async () => {
 			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
@@ -121,29 +71,6 @@ describe("IPR Service", () => {
 					statusCode: HttpCodesEnum.SERVER_ERROR,
 				}),
 			);
-		});
-	});
-
-	describe("sendToTXMA", () => {
-		it("Should send event to TXMA with the correct details", async () => {
-			const messageBody = JSON.stringify(txmaEventPayload);
-
-			await iprServiceAuth.sendToTXMA(txmaEventPayload);
-
-			expect(SendMessageCommand).toHaveBeenCalledWith({
-				MessageBody: messageBody,
-				QueueUrl: process.env.TXMA_QUEUE_URL,
-			});
-			expect(sqsClient.send).toHaveBeenCalled();
-		});
-
-		it("Should throw error if is fails to send to TXMA queue", async () => {
-			sqsClient.send.mockRejectedValueOnce({});
-	
-			await expect(iprServiceAuth.sendToTXMA(txmaEventPayload)).rejects.toThrow(expect.objectContaining({
-				statusCode: HttpCodesEnum.SERVER_ERROR,
-				message: "sending event to txma queue - failed",
-			}));
 		});
 	});
 
@@ -175,88 +102,6 @@ describe("IPR Service", () => {
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
 			const result = await iprServiceAuth.getAuthEventBySub(userId);
 			expect(result).toEqual(Item);
-		});
-	});
-
-	describe("obfuscateJSONValues", () => {
-		it("should obfuscate all fields except those in txmaFieldsToShow", async () => {
-			const inputObject = {
-				field1: "sensitive1",
-				field2: "sensitive2",
-				field3: "non-sensitive",
-				nested: {
-					field4: "sensitive3",
-					field5: "non-sensitive",
-					field6: null,
-					field7: undefined,
-				},
-			};
-	
-			const txmaFieldsToShow = ["field3", "field5"];
-	
-			const obfuscatedObject = await iprServiceAuth.obfuscateJSONValues(inputObject, txmaFieldsToShow);
-	
-			// Check that sensitive fields are obfuscated and non-sensitive fields are not
-			expect(obfuscatedObject.field1).toBe("***");
-			expect(obfuscatedObject.field2).toBe("***");
-			expect(obfuscatedObject.field3).toBe("non-sensitive");
-			expect(obfuscatedObject.nested.field4).toBe("***");
-			expect(obfuscatedObject.nested.field5).toBe("non-sensitive");
-			expect(obfuscatedObject.nested.field6).toBeNull();
-			expect(obfuscatedObject.nested.field7).toBeUndefined();
-		});
-	
-		it("should handle arrays correctly", async () => {
-			const inputObject = {
-				field1: "sensitive1",
-				arrayField: [
-					{
-						field2: "sensitive2",
-						field3: "non-sensitive",
-					},
-					{
-						field2: "sensitive3",
-						field3: "non-sensitive",
-					},
-				],
-			};
-	
-			const txmaFieldsToShow = ["field3"];
-	
-			const obfuscatedObject = await iprServiceAuth.obfuscateJSONValues(inputObject, txmaFieldsToShow);
-	
-			// Check that sensitive fields are obfuscated and non-sensitive fields are not
-			expect(obfuscatedObject.field1).toBe("***");
-			expect(obfuscatedObject.arrayField[0].field2).toBe("***");
-			expect(obfuscatedObject.arrayField[0].field3).toBe("non-sensitive");
-			expect(obfuscatedObject.arrayField[1].field2).toBe("***");
-			expect(obfuscatedObject.arrayField[1].field3).toBe("non-sensitive");
-		});
-	
-		it("should obfuscate values of different types", async () => {
-			const inputObject = {
-				stringField: "sensitive-string",
-				numberField: 42,
-				booleanField: true,
-			};
-	
-			const txmaFieldsToShow: string[] | undefined = [];
-	
-			const obfuscatedObject = await iprServiceAuth.obfuscateJSONValues(inputObject, txmaFieldsToShow);
-	
-			// Check that all fields are obfuscated
-			expect(obfuscatedObject.stringField).toBe("***");
-			expect(obfuscatedObject.numberField).toBe("***");
-			expect(obfuscatedObject.booleanField).toBe("***");
-		});
-	
-		it('should return "***" for non-object input', async () => {
-			const input = "string-input";
-	
-			const obfuscatedValue = await iprServiceAuth.obfuscateJSONValues(input);
-	
-			// Check that non-object input is obfuscated as '***'
-			expect(obfuscatedValue).toBe("***");
 		});
 	});
 });

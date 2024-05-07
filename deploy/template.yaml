@@ -1149,25 +1149,6 @@ Resources:
                 - "dynamodb:ListStreams"
               Resource:
                 Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-stream-arn"
-        - Statement:
-            - Effect: Allow
-              Action:
-                - "sqs:SendMessage"
-              Resource: !GetAtt GovNotifySQSQueue.Arn
-            - Effect: Allow
-              Action:
-                - "kms:Encrypt"
-                - "kms:Decrypt"
-                - "kms:GenerateDataKey"
-              Resource: !GetAtt GovNotifyEncryptionKey.Arn
-            - Effect: Allow #allow lambda to read from the event stream
-              Action:
-                - "dynamodb:DescribeStream"
-                - "dynamodb:GetRecords"
-                - "dynamodb:GetShardIterator"
-                - "dynamodb:ListStreams"
-              Resource:
-                Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-stream-arn"
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
       BuildProperties:
@@ -1185,18 +1166,6 @@ Resources:
       Enabled: True
       EventSourceArn:
         Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-stream-arn"
-      FunctionName: !Ref StreamProcessorFunction
-      # Always start at the tail of the Stream
-      StartingPosition: LATEST
-
-  AuthEventsTableStream:
-    Type: AWS::Lambda::EventSourceMapping
-    Properties:
-      # The maximum number of DB items to send to Lambda
-      BatchSize: 1
-      Enabled: True
-      EventSourceArn:
-        Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-stream-arn"
       FunctionName: !Ref StreamProcessorFunction
       # Always start at the tail of the Stream
       StartingPosition: LATEST
@@ -2276,7 +2245,7 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref PostEventFunctionLogGroup
-      FilterPattern: '{ $.level = "ERROR" && $.message = "F2F_YOTI_START event sent before AUTH_IPV_AUTHORISATION_REQUESTED event." }'
+      FilterPattern: '{ $.level = "ERROR" && $.message = "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event." }'
       MetricTransformations:
         -
           MetricValue: "1"
