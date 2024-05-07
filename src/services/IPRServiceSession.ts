@@ -14,7 +14,7 @@ import { ExtSessionEvent } from "../models/SessionEvent";
 import { MessageCodes } from "../models/enums/MessageCodes";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
 
-export class IPRService {
+export class IPRServiceSession {
 	readonly tableName: string;
 
 	private readonly dynamo: DynamoDBDocument;
@@ -23,7 +23,7 @@ export class IPRService {
 
 	private readonly environmentVariables: EnvironmentVariables;
 
-	private static instance: IPRService;
+	private static instance: IPRServiceSession;
 
 	private readonly eventAttributeMap = new Map<string, string>([
 		[Constants.AUTH_IPV_AUTHORISATION_REQUESTED, "ipvStartedOn"],
@@ -39,11 +39,11 @@ export class IPRService {
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.NA);
 	}
 
-	static getInstance(tableName: string, logger: Logger, dynamoDbClient: DynamoDBDocument): IPRService {
-		if (!IPRService.instance) {
-			IPRService.instance = new IPRService(tableName, logger, dynamoDbClient);
+	static getInstance(tableName: string, logger: Logger, dynamoDbClient: DynamoDBDocument): IPRServiceSession {
+		if (!IPRServiceSession.instance) {
+			IPRServiceSession.instance = new IPRServiceSession(tableName, logger, dynamoDbClient);
 		}
-		return IPRService.instance;
+		return IPRServiceSession.instance;
 	}
 
 	async getSessionBySub(userId: string): Promise<ExtSessionEvent | undefined> {
@@ -79,12 +79,13 @@ export class IPRService {
 				userId,
 			},
 		});
-
+		console.log("SOLO", this.tableName, userId);
 		try {
 			const session = await this.dynamo.send(getSessionCommand);
 			const eventAttribute = this.eventAttributeMap.get(eventType);
 			// If Event type is AUTH_DELETE_ACCOUNT and no record was found, or flagged for deletion then do not process the event.
 			if (eventType === Constants.AUTH_DELETE_ACCOUNT && (!session.Item || (session.Item && session.Item.accountDeletedOn))) {
+				console.log("DEL 88");
 				this.logger.info({ message: "Received AUTH_DELETE_ACCOUNT event and no session with that userId was found OR session was found but accountDeletedOn was already set" });
 				return true;
 			} else if (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!])) {

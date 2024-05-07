@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { mock } from "jest-mock-extended";
 import { SendMessageCommand } from "@aws-sdk/client-sqs";
-import { IPRService } from "../../../services/IPRService";
+import { IPRServiceSession } from "../../../services/IPRServiceSession";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
 import { sqsClient } from "../../../utils/SqsClient";
@@ -15,7 +15,7 @@ import { MessageCodes } from "../../../models/enums/MessageCodes";
 
 const logger = mock<Logger>();
 
-let iprService: IPRService;
+let iprService: IPRServiceSession;
 const tableName = "MYTABLE";
 const userId = "SESSID";
 const mockDynamoDbClient = jest.mocked(createDynamoDbClient());
@@ -60,7 +60,7 @@ describe("IPR Service", () => {
 
 	beforeEach(() => {
 		jest.resetAllMocks();
-		iprService = new IPRService(tableName, logger, mockDynamoDbClient);
+		iprService = new IPRServiceSession(tableName, logger, mockDynamoDbClient);
 	});
 
 	describe("isFlaggedForDeletionOrEventAlreadyProcessed", () => {

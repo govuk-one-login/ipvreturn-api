@@ -717,7 +717,6 @@ Resources:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
           AUTH_EVENT_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, AUTHEVENTTTLINSECS ]
           SESSION_RETURN_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, SESSIONRETURNRECORDTTLINSECS ]
-          INITIAL_SESSION_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, INITIALSESSIONRECORDTTLINSECS ]
           AUTH_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
       Policies:

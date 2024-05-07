@@ -6,7 +6,7 @@ import { buildCoreEventFields } from "../utils/TxmaEvent";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { SendEmailService } from "./SendEmailService";
-import { IPRService } from "./IPRService";
+import { IPRServiceSession } from "./IPRServiceSession";
 import { MessageCodes } from "../models/enums/MessageCodes";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
@@ -27,7 +27,7 @@ export class SendEmailProcessor {
 
 	private readonly govNotifyService: SendEmailService;
 
-	private readonly iprService: IPRService;
+	private readonly iprService: IPRServiceSession;
 
 	constructor(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string) {
 		this.logger = logger;
@@ -35,7 +35,7 @@ export class SendEmailProcessor {
 		this.metrics = metrics;
 		this.govNotifyService = SendEmailService.getInstance(this.logger, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
 		this.sessionEventsTable = sessionEventsTable;
-		this.iprService = IPRService.getInstance(this.sessionEventsTable, this.logger, createDynamoDbClient());
+		this.iprService = IPRServiceSession.getInstance(this.sessionEventsTable, this.logger, createDynamoDbClient());
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string): SendEmailProcessor {

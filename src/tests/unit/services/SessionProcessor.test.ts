@@ -9,7 +9,7 @@ import {
 	MockKmsJwtAdapter,
 } from "../utils/MockJwtVerifierSigner";
 import { SessionProcessor } from "../../../services/SessionProcessor";
-import { IPRService } from "../../../services/IPRService";
+import { IPRServiceSession } from "../../../services/IPRServiceSession";
 import { SessionEvent } from "../../../models/SessionEvent";
 import { MISSING_AUTH_CODE, VALID_SESSION } from "../data/session-events";
 import { SessionEventStatusEnum } from "../../../models/enums/SessionEventStatusEnum";
@@ -21,7 +21,7 @@ import { MessageCodes } from "../../../models/enums/MessageCodes";
 /* eslint @typescript-eslint/unbound-method: 0 */
 /* eslint jest/unbound-method: error */
 let sessionProcessorTest: SessionProcessor;
-const mockIprService = mock<IPRService>();
+const mockIprService = mock<IPRServiceSession>();
 let mockSessionEvent: SessionEvent;
 const validPayload = {
 	iss: "issuer",
@@ -99,7 +99,7 @@ describe("SessionProcessor", () => {
 			SecAccessKey: "SecAccessKey",
 			SessionToken: "SessionToken",
 		};
-		IPRService.getInstance = jest.fn().mockReturnValue(mockIprService);
+		IPRServiceSession.getInstance = jest.fn().mockReturnValue(mockIprService);
 		const mockGetCredentials = jest.fn().mockReturnValue({ Credentials: credential });
 		mockStsClient.assumeRoleWithWebIdentity = mockGetCredentials;
 	});

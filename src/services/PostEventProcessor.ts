@@ -4,7 +4,7 @@ import { Metrics } from "@aws-lambda-powertools/metrics";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { Constants } from "../utils/Constants";
-import { IPRService } from "./IPRService";
+import { IPRServiceSession } from "./IPRServiceSession";
 import { IPRServiceAuth } from "./IPRServiceAuth";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
@@ -26,7 +26,7 @@ export class PostEventProcessor {
 
 	private readonly environmentVariables: EnvironmentVariables;
 
-	private readonly iprServiceSession: IPRService;
+	private readonly iprServiceSession: IPRServiceSession;
 
 	private readonly iprServiceAuth: IPRServiceAuth;
 
@@ -34,7 +34,7 @@ export class PostEventProcessor {
 		this.logger = logger;
 		this.metrics = metrics;
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.POST_EVENT_SERVICE);
-		this.iprServiceSession = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
+		this.iprServiceSession = IPRServiceSession.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 		this.iprServiceAuth = IPRServiceAuth.getInstance(this.environmentVariables.authEventsTable(), this.logger, createDynamoDbClient());
 	}
 
@@ -78,15 +78,13 @@ export class PostEventProcessor {
 				this.logger.error({ message: "Missing or invalid value for userDetails.user_id in event payload" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
-
 			const userId = userDetails.user_id;
-			// Do not process the event if the event is already processed or flagged for deletion
+			//Do not process the event if the event is already processed or flagged for deletion
 			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, eventName);
 			if (isFlaggedForDeletionOrEventAlreadyProcessed) {
 				this.logger.info( { message: "Record flagged for deletion or event already processed, skipping update" });
 				return "Record flagged for deletion or event already processed, skipping update";
 			}
-
 			let updateExpression, expressionAttributeValues: { [key: string]: any }, expiresOn;
 
 			//Set auth event TTL to 6hrs
@@ -120,7 +118,7 @@ export class PostEventProcessor {
 						this.logger.error({ message: "F2F_YOTI_START event sent before AUTH_IPV_AUTHORISATION_REQUESTED event." }, { messageCode: MessageCodes.SQS_OUT_OF_SYNC });
 						throw new AppError(HttpCodesEnum.BAD_REQUEST, Constants.SQS_OUT_OF_SYNC);
 					}
-					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri";
+					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri";
 					expressionAttributeValues = {
 						":userEmail": fetchedRecord.userEmail,
 						":ipvStartedOn": fetchedRecord.ipvStartedOn,
@@ -129,7 +127,6 @@ export class PostEventProcessor {
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
 						":expiresOn": returnRecord.expiresDate,
 					};
-
 					if (returnRecord.postOfficeInfo) {
 						updateExpression += ", postOfficeInfo = :postOfficeInfo";
 						expressionAttributeValues[":postOfficeInfo"] = returnRecord.postOfficeInfo;

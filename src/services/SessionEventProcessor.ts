@@ -7,7 +7,7 @@ import { buildGovNotifyEventFields } from "../utils/GovNotifyEvent";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
-import { IPRService } from "./IPRService";
+import { IPRServiceSession } from "./IPRServiceSession";
 import { AppError } from "../utils/AppError";
 import { MessageCodes } from "../models/enums/MessageCodes";
 import { Constants } from "../utils/Constants";
@@ -22,7 +22,7 @@ export class SessionEventProcessor {
 
 	private readonly validationHelper: ValidationHelper;
 
-	private readonly iprService: IPRService;
+	private readonly iprService: IPRServiceSession;
 
 	private readonly environmentVariables: EnvironmentVariables;
 
@@ -31,7 +31,7 @@ export class SessionEventProcessor {
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.STREAM_PROCESSOR_SERVICE);
 		this.validationHelper = new ValidationHelper();
 		this.metrics = metrics;
-		this.iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
+		this.iprService = IPRServiceSession.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics): SessionEventProcessor {
