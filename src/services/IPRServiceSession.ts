@@ -79,13 +79,11 @@ export class IPRServiceSession {
 				userId,
 			},
 		});
-		console.log("SOLO", this.tableName, userId);
 		try {
 			const session = await this.dynamo.send(getSessionCommand);
 			const eventAttribute = this.eventAttributeMap.get(eventType);
 			// If Event type is AUTH_DELETE_ACCOUNT and no record was found, or flagged for deletion then do not process the event.
 			if (eventType === Constants.AUTH_DELETE_ACCOUNT && (!session.Item || (session.Item && session.Item.accountDeletedOn))) {
-				console.log("DEL 88");
 				this.logger.info({ message: "Received AUTH_DELETE_ACCOUNT event and no session with that userId was found OR session was found but accountDeletedOn was already set" });
 				return true;
 			} else if (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!])) {

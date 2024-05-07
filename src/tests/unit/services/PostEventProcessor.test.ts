@@ -360,7 +360,6 @@ describe("PostEventProcessor", () => {
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			await postEventProcessor.processRequest(JSON.stringify(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT));
-			console.log("FIROT");
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, postOfficeInfo = :postOfficeInfo, documentType = :documentType, clientSessionId = :clientSessionId", { 
 				":journeyWentAsyncOn": 1681902001, 
