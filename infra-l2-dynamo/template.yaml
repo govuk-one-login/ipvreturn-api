@@ -176,7 +176,7 @@ Resources:
     Type: AWS::KMS::Alias
     Properties:
       AliasName: !Sub "alias/${AWS::StackName}-auth-events-table-key"
-      TargetKeyId: !Ref SessionEventsTableKey
+      TargetKeyId: !Ref AuthEventsTableKey
 
   
 Outputs:
