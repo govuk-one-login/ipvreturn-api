@@ -115,7 +115,7 @@ export class PostEventProcessor {
 				case Constants.F2F_YOTI_START: {
 					const fetchedRecord = await this.iprServiceAuth.getAuthEventBySub(userId);
 					if (!fetchedRecord) {
-						this.logger.error({ message: "Event received before" }, { messageCode: MessageCodes.SQS_OUT_OF_SYNC });
+						this.logger.error({ message: "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event" }, { messageCode: MessageCodes.SQS_OUT_OF_SYNC });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, "Event received before");
 					}
 					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri";
