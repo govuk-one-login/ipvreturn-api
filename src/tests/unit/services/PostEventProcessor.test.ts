@@ -443,8 +443,8 @@ describe("PostEventProcessor", () => {
 		it("Checks for record in auth table with relevant userID and throws error if not found", async () => {
 			await expect(postEventProcessorMockServices.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING)).rejects.toThrow(
 				new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse event data"),
-			)
-			expect(mockLogger.error).toHaveBeenNthCalledWith(1, {"message": "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event"}, {"messageCode": "SQS_OUT_OF_SYNC"})	
-		})
+			);
+			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event" }, { "messageCode": "SQS_OUT_OF_SYNC" });	
+		});
 	});
 });

@@ -85,6 +85,6 @@ export class IPRServiceAuth {
 		} catch (e: any) {
 			this.logger.error({ message: "Failed to update auth event record in dynamo", e });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating auth event record");
-		};
-	};
-};
+		}
+	}
+}
