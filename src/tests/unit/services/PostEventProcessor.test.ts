@@ -444,6 +444,7 @@ describe("PostEventProcessor", () => {
 			await expect(postEventProcessorMockServices.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING)).rejects.toThrow(
 				new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse event data"),
 			);
+			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event" }, { "messageCode": "SQS_OUT_OF_SYNC" });	
 		});
 	});
