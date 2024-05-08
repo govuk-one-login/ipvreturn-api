@@ -50,7 +50,7 @@ describe("PostEventProcessor", () => {
 		// @ts-ignore
 		postEventProcessorMockSessionService.iprServiceAuth = iprServiceAuth;
 		mockIprServiceSession.saveEventData.mockResolvedValueOnce();
-		//mockIprServiceAuth.saveEventData.mockResolvedValueOnce();
+		mockIprServiceAuth.saveEventData.mockResolvedValueOnce();
 		mockIprServiceSession.obfuscateJSONValues.mockResolvedValue({ "event_name":"IPR_RESULT_NOTIFICATION_EMAILED", "user":{ "user_id":"***" }, "timestamp":"***" });
 	});
 
@@ -439,5 +439,12 @@ describe("PostEventProcessor", () => {
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockLogger.info).toHaveBeenNthCalledWith(4, "No document_details in F2F_YOTI_START event");
 		});
+
+		it("Checks for record in auth table with relevant userID and throws error if not found", async () => {
+			await expect(postEventProcessorMockServices.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING)).rejects.toThrow(
+				new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse event data"),
+			)
+			expect(mockLogger.error).toHaveBeenNthCalledWith(1, {"message": "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event"}, {"messageCode": "SQS_OUT_OF_SYNC"})	
+		})
 	});
 });
