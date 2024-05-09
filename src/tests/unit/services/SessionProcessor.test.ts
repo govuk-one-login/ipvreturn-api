@@ -287,7 +287,7 @@ describe("SessionProcessor", () => {
 			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 			// @ts-ignore
 			jest.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
-			const missingXForwardedFor = { ...VALID_SESSION, headers: { "txma-audit-encoded": "ABCDEFG" }, requestContext: { identity: { sourceIp: "2.2.2"} } };
+			const missingXForwardedFor = { ...VALID_SESSION, headers: { "txma-audit-encoded": "ABCDEFG" }, requestContext: { identity: { sourceIp: "2.2.2" } } };
 			const missingXForwardedForSession = JSON.parse(JSON.stringify(missingXForwardedFor));
 
 			await sessionProcessorTest.processRequest(missingXForwardedForSession);
@@ -318,11 +318,11 @@ describe("SessionProcessor", () => {
 				{
 					"event_name": "IPR_USER_REDIRECTED",
 					"event_timestamp_ms": 1585695600000,
-					"extensions": {"previous_govuk_signin_journey_id": "sdfssg"},
+					"extensions": { "previous_govuk_signin_journey_id": "sdfssg" },
 					"timestamp": 1585695600,
-					"user": {"ip_address": "", "user_id": "userId"}
+					"user": { "ip_address": "", "user_id": "userId" },
 				},
-				undefined
+				undefined,
 			);
 		});
 	});
