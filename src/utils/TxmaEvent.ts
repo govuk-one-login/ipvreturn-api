@@ -32,12 +32,12 @@ export interface RestrictedObject {
 	};
 }
 
-export const buildCoreEventFields = (user: TxmaUser, ): BaseTxmaEvent => {
+export const buildCoreEventFields = (user: TxmaUser ): BaseTxmaEvent => {
 	const now = Date.now();
 
 	return {
 		user: {
-			...user,		},
+			...user		},
 		timestamp: Math.floor(now / 1000),
 		event_timestamp_ms: now,
 	};

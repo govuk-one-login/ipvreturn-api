@@ -108,8 +108,8 @@ describe("SessionProcessor", () => {
 	});
 
 	afterEach(() => {
-        jest.useRealTimers();
-    });
+		jest.useRealTimers();
+	});
 
 	it("Return 401 when auth_code is missing in the request", async () => {
 		const out: Response = await sessionProcessorTest.processRequest(MISSING_AUTH_CODE);
@@ -272,39 +272,59 @@ describe("SessionProcessor", () => {
 				{
 					"event_name": "IPR_USER_REDIRECTED",
 					"event_timestamp_ms": 1585695600000,
-					"extensions": {"previous_govuk_signin_journey_id": "sdfssg"},
+					"extensions": { "previous_govuk_signin_journey_id": "sdfssg" },
 					"timestamp": 1585695600,
-					"user": {"ip_address": "1.1.1", "user_id": "userId"}
+					"user": { "ip_address": "1.1.1", "user_id": "userId" },
 				},
 				"ABCDEFG",
 			);
 		});
 
-		it("ip_address is X_FORWARDED_FOR if header is present", async () => {
+		it("ip_address is source IP if no X_FORWARDED_FOR header is present", async () => {
 			// @ts-ignore
 			axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
 			// @ts-ignore
 			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 			// @ts-ignore
 			jest.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
-			const missingHeaders = { ...VALID_SESSION, headers: { "txma-audit-encoded": "ABCDEFG" } }
-			const missingHeadersSession = JSON.parse(JSON.stringify(missingHeaders));
+			const missingXForwardedFor = { ...VALID_SESSION, headers: { "txma-audit-encoded": "ABCDEFG" }, requestContext: { identity: { sourceIp: "2.2.2"} } };
+			const missingXForwardedForSession = JSON.parse(JSON.stringify(missingXForwardedFor));
 
-			await sessionProcessorTest.processRequest(missingHeadersSession);
+			await sessionProcessorTest.processRequest(missingXForwardedForSession);
 
+			expect(mockIprService.sendToTXMA).toHaveBeenCalledWith(
+				{
+					"event_name": "IPR_USER_REDIRECTED",
+					"event_timestamp_ms": 1585695600000,
+					"extensions": { "previous_govuk_signin_journey_id": "sdfssg" },
+					"timestamp": 1585695600,
+					"user": { "ip_address": "2.2.2", "user_id": "userId" },
+				},
+				"ABCDEFG",
+			);
+		});
+
+		it("when no headers are included defaults are used", async () => {
+			// @ts-ignore
+			axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
+			// @ts-ignore
+			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+			// @ts-ignore
+			jest.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
+			const sessionWithOutHeaders = JSON.parse(JSON.stringify(VALID_SESSION));
+			delete sessionWithOutHeaders.headers;
+			console.log("result", await sessionProcessorTest.processRequest(sessionWithOutHeaders));
 			expect(mockIprService.sendToTXMA).toHaveBeenCalledWith(
 				{
 					"event_name": "IPR_USER_REDIRECTED",
 					"event_timestamp_ms": 1585695600000,
 					"extensions": {"previous_govuk_signin_journey_id": "sdfssg"},
 					"timestamp": 1585695600,
-					"user": {"ip_address": "2.2.2", "user_id": "userId"}
+					"user": {"ip_address": "", "user_id": "userId"}
 				},
-				"ABCDEFG",
+				undefined
 			);
 		});
-
-
 	});
 
 	it.each([
