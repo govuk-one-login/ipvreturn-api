@@ -1,0 +1,410 @@
+openapi: 3.0.2
+info:
+  title:
+     Fn::Sub: "${AWS::StackName} - Oidc Stub Service"
+  version: 1.0.0
+
+tags:
+  - name: Public Endpoints
+    description: Endpoints accessible by the public domain
+
+paths:
+  /token:
+    post:
+      tags:
+        - Backend token Endpoint for OIDC
+      summary: Mock OIDC's token endpoint
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/OidcTokenRequest"
+      responses:
+        201:
+          description: Token generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OidcTokenResponseBody"
+        400:
+          $ref: "#/components/responses/400"
+        403:
+          $ref: "#/components/responses/403"
+        429:
+          $ref: "#/components/responses/429"
+        500:
+          $ref: "#/components/responses/500"
+      x-amazon-apigateway-request-validator: "both"
+      x-amazon-apigateway-integration:
+        httpMethod: "POST"
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:Oidc-Stub-${AWS::StackName}:live/invocations
+        responses:
+          default:
+            statusCode: "201"
+        passthroughBehavior: "when_no_match"
+        contentHandling: "CONVERT_TO_TEXT"
+        type: "aws_proxy"
+
+  /.well-known/openid-configuration:
+    get:
+      tags:
+        - Backend Connect configuration Endpoint for OIDC
+      summary: Retrieve OpenID Connect configuration     
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  issuer:
+                    type: string
+                    example: https://api.example.com
+                  authorization_endpoint:
+                    type: string
+                    example: https://api.example.com/authorize
+                  token_endpoint:
+                    type: string
+                    example: https://api.example.com/token
+                  userinfo_endpoint:
+                    type: string
+                    example: https://api.example.com/userinfo
+                  jwks_uri:
+                    type: string
+                    example: https://api.example.com/jwks
+        400:
+          $ref: "#/components/responses/400"
+        403:
+          $ref: "#/components/responses/403"
+        429:
+          $ref: "#/components/responses/429"
+        500:
+          $ref: "#/components/responses/500"
+      x-amazon-apigateway-integration:
+        httpMethod: "POST"
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:Oidc-Stub-${AWS::StackName}:live/invocations
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        contentHandling: "CONVERT_TO_TEXT"
+        type: "aws_proxy"
+
+  /.well-known/jwks.json:
+    get:
+      tags:
+        - Backend configuration Endpoint for OIDC jwks keys
+      summary: Retrieve OIDC jwks keys    
+      responses:
+        200:
+          description: >-
+            OK - key ring returned
+          headers:
+            Cache-Control:
+              schema:
+                type: "string"
+            Content-Type:
+              schema:
+                type: "string"
+            Strict-Transport-Security:
+              schema:
+                type: "string"
+            X-Content-Type-Options:
+              schema:
+                type: "string"
+            X-Frame-Options:
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JWKSFile"
+        400:
+          $ref: "#/components/responses/400"
+        403:
+          $ref: "#/components/responses/403"
+        429:
+          $ref: "#/components/responses/429"
+        500:
+          $ref: "#/components/responses/500"
+      x-amazon-apigateway-integration:
+        httpMethod: "POST"
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:OIDCStubJWKS-${AWS::StackName}:live/invocations
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        contentHandling: "CONVERT_TO_TEXT"
+        type: "aws_proxy"
+
+components:
+  ## ---------------------
+  ## Schema Definitions
+  ## ---------------------
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              property:
+                type: string
+              message:
+                type: string
+            required:
+              - property
+              - message
+      required:
+        - code
+        - message
+
+    OidcTokenRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - grant_type
+        - code
+        - redirect_uri
+      properties:
+        grant_type:
+          type: string
+          example: authorization_code
+          description: >-
+            OAuth grant type. At present the only supported grant type is `authorization_code`.
+          enum:
+            - authorization_code
+        code:
+          type: string
+          format: uuid
+          example: 33333333-3333-3333-3333-333333333333
+          description: >-
+            `authorization_code` as issued by POST /authorizationCode.
+        redirect_uri:
+          type: string
+          example: https://www.example.com/receiveToken
+          description: >-
+            the OAuth client identifier which has been registered with CRI
+        client_assertion:
+          type: string
+          example: abcdefgh
+          description: >-
+            Client assertion (use for client credentials flow, not supported here)
+        client_assertion_type:
+          type: string
+          example: jwt_bearer
+          description: >-
+            Client assertion type (use for client credentials flow, not supported here)
+
+    OidcTokenResponse:
+      type: object
+      additionalProperties: true
+      required:
+        - id_token
+        - token_type
+        - expires_in
+      properties:
+        id_token:
+          type: string
+          description: >-
+            The actual issued access token. Note this is a short-lived token and needs to be
+            protected as a secret.
+          example: ABCDABCDABCDABCDABCDABCDABCD
+        token_type:
+          type: string
+          example: bearer
+          description: >-
+            Token type - usually `bearer`.
+        expires_in:
+          type: number
+          description: >-
+            The lifetime in seconds of the issued access token
+          example: 3600
+
+    JWKSFile:
+      type: object
+      required:
+        - keys
+      additionalProperties: true
+      properties:
+        keys:
+          type: array
+          description: >-
+            The value of the `keys` parameter is an array of JWK values. By default, the order of the JWK
+            values within the array does not imply an order of preference among them, although applications of
+            JWK Sets can choose to assign a meaning to the order for their purposes, if desired.
+          items:
+            type: object
+            additionalProperties: true
+            description: >-
+              A JSON Web Key (JWK) as defined by [RFC7517](https://www.rfc-editor.org/rfc/rfc7517)
+            properties:
+              kty:
+                type: string
+                description: >-
+                  The `kty` (key type) parameter identifies the cryptographic algorithm family used with the
+                  key, such as `RSA or `EC`
+              use:
+                type: string
+                enum:
+                  - sig
+                  - enc
+                description: >-
+                  The "use" (public key use) parameter identifies the intended use of the public key.  The
+                  "use" parameter is employed to indicate whether a public key is used for encrypting data or
+                  verifying the signature on data. Valid values are `sig` (signature) and `enc` (encryption).
+              key_ops:
+                type: string
+                description: >-
+                  The `key_ops` (key operations) parameter identifies the operation(s) for which the key is
+                  intended to be used.  The `key_ops` parameter is intended for use cases in which public,
+                  private, or symmetric keys may be present.
+              alg:
+                type: string
+                description: >-
+                  The `alg` (algorithm) parameter identifies the algorithm intended for use with the key.
+              kid:
+                type: string
+                description: >-
+                  The `kid` (key ID) parameter is used to match a specific key. This is used, for instance,
+                  to choose among a set of keys within a JWK Set during key rollover.  The structure of the
+                  `kid` value is unspecified.
+              x5u:
+                type: string
+                format: uri
+                description: >-
+                  The `x5u` (X.509 URL) parameter is a URI that refers to a resource for an X.509 public key
+                  certificate or certificate chain.
+              x5c:
+                type: array
+                description: >-
+                  The `x5c` (X.509 certificate chain) parameter contains a chain of one or more PKIX
+                  certificates [RFC5280].  The certificate chain is represented as a JSON array of certificate
+                  value strings.
+                items:
+                  type: string
+                  description: PKIX certificate [RFC5280]
+              x5t:
+                type: string
+                description: >-
+                  The `x5t` (X.509 certificate SHA-1 thumbprint) parameter is a base64url-encoded SHA-1
+                  thumbprint (a.k.a. digest) of the DER encoding of an X.509 certificate.
+              x5t#S256:
+                type: string
+                description: >-
+                  The `x5t#S256` (X.509 certificate SHA-256 thumbprint) parameter is a base64url-encoded
+                  SHA-256 thumbprint (a.k.a. digest) of the DER encoding of an X.509 certificate.
+            required:
+              - kty
+
+   ## ---------------------
+  ## Response Definitions
+  ## ---------------------
+  responses:
+    400:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            PAYLOAD_VALIDATION:
+              $ref: "#/components/examples/PayloadValidationError"
+            MALFORMED_DIGEST:
+              $ref: "#/components/examples/MalformedRequestDigestError"
+            MALFORMED_TOKEN:
+              $ref: "#/components/examples/MalformedRequestTokenError"
+    403:
+      description: Auth Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            SCHEME_NOT_FOUND:
+              $ref: "#/components/examples/SchemeNotFoundError"
+            SCHEME_VALIDATION_REQUIREMENT_NOT_FOUND:
+              $ref: "#/components/examples/SchemeValidationRequirementNotFoundError"
+    429:
+      description: Too Many Requests Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            TOO_MANY_REQUESTS:
+              $ref: "#/components/examples/TooManyRequestsError"
+    500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            SERVER_ERROR:
+              $ref: "#/components/examples/UnexpectedServerError"
+    503:
+      description: Service Unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            TEMPORARILY_UNAVAILABLE:
+              $ref: "#/components/examples/TemporarilyUnavailableError"
+
+  ## ---------------------
+  ## Example Definitions
+  ## ---------------------
+  examples:
+    PayloadValidationError:
+      value:
+        code: PAYLOAD_VALIDATION
+        message: There were errors validating the payload
+        errors:
+          - property: The JSON property name
+            message: The error message associated with the property
+    MalformedRequestDigestError:
+      value:
+        code: MALFORMED_REQUEST
+        errors:
+          - property: header.X-Yoti-Auth-Digest
+            message: must not be null or empty
+    MalformedRequestTokenError:
+      value:
+        code: MALFORMED_REQUEST
+        errors:
+          - property: header.X-Yoti-Auth-Token
+            message: must not be null or empty
+    SchemeNotFoundError:
+      value:
+        code: SCHEME_NOT_FOUND
+        message: No scheme found that matches provided scheme name
+    SchemeValidationRequirementNotFoundError:
+      value:
+        code: SCHEME_VALIDATION_REQUIREMENT_NOT_FOUND
+        message: No scheme validation found for requested issuing country and/or document type
+    TooManyRequestsError:
+      value:
+        code: TOO_MANY_REQUESTS
+        message: Exceeded permissible limits
+    UnexpectedServerError:
+      value:
+        code: SERVER_ERROR
+        message: An unexpected error occurred on the server
+    TemporarilyUnavailableError:
+      value:
+        code: TEMPORARILY_UNAVAILABLE
+        message: Unable to complete your request right now.  Please try again later
+
