@@ -7,6 +7,7 @@ export interface TxmaUser {
 	"user_id"?: string;
 	"email"?: string;
 	"govuk_signin_journey_id"?: string;
+	"ip_address"?: string | undefined;
 }
 
 export interface BaseTxmaEvent {
@@ -21,16 +22,22 @@ export interface ExtensionObject {
 
 export interface TxmaEvent extends BaseTxmaEvent {
 	"event_name": TxmaEventName;
+	"restricted"?: RestrictedObject;
 	"extensions"?: ExtensionObject;
 }
 
-export const buildCoreEventFields = (user: TxmaUser): BaseTxmaEvent => {
+export interface RestrictedObject {
+	"device_information"?: {
+		"encoded": string;
+	};
+}
+
+export const buildCoreEventFields = (user: TxmaUser, ): BaseTxmaEvent => {
 	const now = Date.now();
 
 	return {
 		user: {
-			...user,
-		},
+			...user,		},
 		timestamp: Math.floor(now / 1000),
 		event_timestamp_ms: now,
 	};

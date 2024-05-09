@@ -53,6 +53,14 @@ export class SessionProcessor {
 
 	// eslint-disable-next-line max-lines-per-function, complexity
 	async processRequest(event: APIGatewayProxyEvent): Promise<Response> {
+		let encodedHeader, clientIpAddress;
+
+		if (event.headers) {
+			encodedHeader = event.headers[Constants.ENCODED_AUDIT_HEADER] ?? "";
+			clientIpAddress = event.headers[Constants.X_FORWARDED_FOR] ?? event.requestContext.identity?.sourceIp;
+		} else {
+			clientIpAddress = event.requestContext.identity?.sourceIp;
+		}
 		let issuer, jwksEndpoint;
 		try {
 			const authCode = event.queryStringParameters?.code;
@@ -159,11 +167,11 @@ export class SessionProcessor {
 			try {
 				await iprService.sendToTXMA({
 					event_name: "IPR_USER_REDIRECTED",
-					...buildCoreEventFields({ user_id: sub }),
+					...buildCoreEventFields({ user_id: sub, ip_address: clientIpAddress }),
 					extensions: {
 						previous_govuk_signin_journey_id: session.clientSessionId,
 				  },
-				});
+				}, encodedHeader);
 			} catch (error) {
 				this.logger.error("Failed to send IPR_USER_REDIRECTED event to TXMA", {
 					error,

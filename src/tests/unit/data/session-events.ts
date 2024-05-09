@@ -3,7 +3,7 @@ const AUTHORIZATION_CODE = randomUUID();
 export const VALID_SESSION = {
 	httpMethod: "GET",
 	body: "",
-	headers: {}, // safe IP address for documentation purposes
+	headers: { "x-forwarded-for": "1.1.1", "txma-audit-encoded": "ABCDEFG" },
 	isBase64Encoded: false,
 	multiValueHeaders: {},
 	multiValueQueryStringParameters: {},
@@ -33,7 +33,7 @@ export const VALID_SESSION = {
 			cognitoIdentityId: "",
 			cognitoIdentityPoolId: "",
 			principalOrgId: "",
-			sourceIp: "",
+			sourceIp: "2.2.2",
 			user: "",
 			userAgent: "",
 			userArn: "",
@@ -53,7 +53,7 @@ export const VALID_SESSION = {
 export const MISSING_AUTH_CODE = {
 	httpMethod: "GET",
 	body: "",
-	headers: {}, // safe IP address for documentation purposes
+	headers: { "x-forwarded-for": "1.1.1", "txma-audit-encoded": "ABCDEFG" },
 	isBase64Encoded: false,
 	multiValueHeaders: {},
 	multiValueQueryStringParameters: {},
@@ -103,7 +103,7 @@ export const MISSING_AUTH_CODE = {
 export const INVALID_SESSION = {
 	httpMethod: "GET",
 	body: "",
-	headers: { "X-Forwarded-For": "192.0.2.1" }, // safe IP address for documentation purposes
+	headers: { "x-forwarded-for": "1.1.1", "txma-audit-encoded": "ABCDEFG" },
 	isBase64Encoded: false,
 	multiValueHeaders: {},
 	multiValueQueryStringParameters: {},
