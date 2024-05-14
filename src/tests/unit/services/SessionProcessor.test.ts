@@ -368,11 +368,4 @@ describe("SessionProcessor", () => {
 			}),
 		);
 	});
-
-
 });
-
-
-// expect.objectContaining({
-// 	"user": {"ip_address": sessionWithOutHeaders.requestContext.identity?.sourceIp, "user_id": "userId"}
-// 	}),
