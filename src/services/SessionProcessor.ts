@@ -51,28 +51,23 @@ export class SessionProcessor {
 		return SessionProcessor.instance;
 	}
 
-	// eslint-disable-next-line max-lines-per-function, complexity
 	async processRequest(event: APIGatewayProxyEvent): Promise<Response> {
-		let encodedHeader, clientIpAddress;
+		const { encodedHeader, clientIpAddress } = this.extractHeaders(event);
 
-		if (event.headers) {
-			encodedHeader = event.headers[Constants.ENCODED_AUDIT_HEADER] ?? "";
-			clientIpAddress = event.headers[Constants.X_FORWARDED_FOR] ?? event.requestContext.identity?.sourceIp;
-		} else {
-			clientIpAddress = event.requestContext.identity?.sourceIp;
-		}
 		let issuer, jwksEndpoint;
 		try {
 			const authCode = event.queryStringParameters?.code;
 			// Get OpenId configuration to extract the jwks_uri
 			const openIdConfigEndpoint = `${this.environmentVariables.oidcUrl()}${Constants.OIDC_OPENID_CONFIG_ENDPOINT}`;
-			const openIdConfiguration = (await axios.get(openIdConfigEndpoint)).data;
+			const { data: openIdConfiguration } = await axios.get(openIdConfigEndpoint);
+
 			if (openIdConfiguration.issuer == null || openIdConfiguration.jwks_uri == null ) {
 				this.logger.error({ message: "Missing openIdConfiguration values." }, {
 					messageCode: MessageCodes.MISSING_OIDC_CONFIGURATION,
 				});
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Missing openIdConfiguration values.");
 			}
+
 			this.logger.debug("Fetching OpenId Configuration data");
 			issuer = openIdConfiguration.issuer;
 			jwksEndpoint = openIdConfiguration.jwks_uri;
@@ -127,22 +122,22 @@ export class SessionProcessor {
 
 			// Dynamo access using the temporary credentials
 			// from the ID token
-			const iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClientWithCreds(assumedRole.Credentials));
+			const iprService = IPRService.getInstance(
+				this.environmentVariables.sessionEventsTable(),
+				this.logger,
+				createDynamoDbClientWithCreds(assumedRole.Credentials),
+			);
 
 			// The assumed role only allows access
 			// to rows where the leading key (partition key)
 			// is equal to the sub of the ID.
-			//
 			const sub = jwtIdTokenPayload.sub!;
 			const session = await iprService.getSessionBySub(sub);
 			if (!session) {
 				this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "No session event found for this userId");
 			}
-			this.logger.appendKeys({
-				govuk_signin_journey_id: session.clientSessionId,
-			});
-			this.logger.info("Session retrieved from session store");
+			this.logger.appendKeys({ govuk_signin_journey_id: session.clientSessionId });
 
 			// Validate sessionEvent Item if its missing some events.
 			try {
@@ -157,6 +152,7 @@ export class SessionProcessor {
 					}),
 				};
 			}
+
 			// Validate the notified field is set to true
 			if (!session.notified) {
 				this.logger.error("User is not yet notified for this session event.", { messageCode: MessageCodes.USER_NOT_NOTIFIED });
@@ -189,6 +185,18 @@ export class SessionProcessor {
 		} catch (err: any) {
 			return new Response(HttpCodesEnum.UNAUTHORIZED, err.message);
 		}
+	}
+
+	extractHeaders(event: APIGatewayProxyEvent): { encodedHeader?: string; clientIpAddress: string } {
+		let encodedHeader;
+		let clientIpAddress = event.requestContext.identity?.sourceIp;
+
+		if (event.headers) {
+			encodedHeader = event.headers[Constants.ENCODED_AUDIT_HEADER] ?? "";
+			clientIpAddress = event.headers[Constants.X_FORWARDED_FOR] ?? event.requestContext.identity?.sourceIp;
+		}
+
+		return { encodedHeader, clientIpAddress };
 	}
 
 	async generateIdToken(authCode : string): Promise<string> {

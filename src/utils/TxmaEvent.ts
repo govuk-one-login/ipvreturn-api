@@ -7,7 +7,7 @@ export interface TxmaUser {
 	"user_id"?: string;
 	"email"?: string;
 	"govuk_signin_journey_id"?: string;
-	"ip_address"?: string | undefined;
+	"ip_address"?: string;
 }
 
 export interface BaseTxmaEvent {
@@ -37,7 +37,8 @@ export const buildCoreEventFields = (user: TxmaUser ): BaseTxmaEvent => {
 
 	return {
 		user: {
-			...user		},
+			...user,
+		},
 		timestamp: Math.floor(now / 1000),
 		event_timestamp_ms: now,
 	};

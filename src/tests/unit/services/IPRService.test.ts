@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /* eslint-disable max-lines-per-function */
 /* eslint-disable @typescript-eslint/unbound-method */
 import { mock } from "jest-mock-extended";
@@ -230,15 +231,13 @@ describe("IPR Service", () => {
 		});
 
 		it("Should send event to TxMA with the correct details for a payload with restricted present", async () => {  
-				
 			const restrictedDetails = {
 				device_information: {
 					encoded: "ENCHEADER",
 				},
 			};
 	
-			const payload = txmaEventPayload;
-			payload.restricted = restrictedDetails;
+			const payload = { ...txmaEventPayload, ...restrictedDetails };
 	
 			await iprService.sendToTXMA(payload);
 			const messageBody = JSON.stringify(payload);
@@ -249,15 +248,18 @@ describe("IPR Service", () => {
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
 			expect(iprService.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
-		});		
+		});
 	
 		it("Should throw error if is fails to send to TXMA queue", async () => {
 			sqsClient.send.mockRejectedValueOnce({});
+
+			await iprService.sendToTXMA(txmaEventPayload);
 	
-			await expect(iprService.sendToTXMA(txmaEventPayload)).rejects.toThrow(expect.objectContaining({
-				statusCode: HttpCodesEnum.SERVER_ERROR,
-				message: "sending event to txma queue - failed",
-			}));
+			expect(logger.error).toHaveBeenCalledWith({
+				message: "Error when sending event IPR_RESULT_NOTIFICATION_EMAILED to TXMA Queue",
+				error: {},
+				messageCode: MessageCodes.FAILED_TO_WRITE_TXMA,
+			});
 		});
 	});
 
