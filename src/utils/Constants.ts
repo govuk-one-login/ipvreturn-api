@@ -47,6 +47,7 @@ export class Constants {
 	static readonly X_FORWARDED_FOR = "x-forwarded-for";
 
 	static readonly ENCODED_AUDIT_HEADER = "txma-audit-encoded";
+    
 
 	static readonly TXMA_FIELDS_TO_SHOW = ["event_name", "documentType", "docExpiryDate", "govuk_signin_journey_id", "event_id", "timestamp", "configVersion"];
 }

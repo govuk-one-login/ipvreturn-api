@@ -54,8 +54,6 @@ export class SessionProcessor {
 	async processRequest(event: APIGatewayProxyEvent): Promise<Response> {
 		const { encodedHeader, clientIpAddress } = this.extractHeaders(event);
 
-		console.log("encodedHeader", encodedHeader);
-
 		let issuer, jwksEndpoint;
 		try {
 			const authCode = event.queryStringParameters?.code;
@@ -190,15 +188,10 @@ export class SessionProcessor {
 	}
 
 	extractHeaders(event: APIGatewayProxyEvent): { encodedHeader?: string; clientIpAddress: string } {
-		console.log("event.headers", event.headers);
-		console.log("Constants.ENCODED_AUDIT_HEADER", Constants.ENCODED_AUDIT_HEADER);
 		let encodedHeader;
 		let clientIpAddress = event.requestContext.identity?.sourceIp;
 
 		if (event.headers) {
-			console.log("there are headers");
-			console.log("event.headers[Constants.ENCODED_AUDIT_HEADER]", event.headers[Constants.ENCODED_AUDIT_HEADER]);
-
 			encodedHeader = event.headers[Constants.ENCODED_AUDIT_HEADER] ?? "";
 			clientIpAddress = event.headers[Constants.X_FORWARDED_FOR] ?? event.requestContext.identity?.sourceIp;
 		}
