@@ -1,4 +1,4 @@
-import { KMSClient, SignCommand, SignRequest } from "@aws-sdk/client-kms";
+import { KMSClient } from "@aws-sdk/client-kms";
 import { HttpCodesEnum } from "../utils/HttpCodesEnum";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
@@ -152,7 +152,7 @@ export class OidcProcessor {
     async returnAuthCode(event: any): Promise<any> {
 		
 		const authorizationCode = "mock-authorization-code";
-		const redirectUri = event.querystring.redirect_uri;
+		const redirectUri = event.queryStringParameters.redirect_uri;
 		const redirectUrl = `${redirectUri}?code=${authorizationCode}`;
 		return {
 			statusCode: HttpCodesEnum.FOUND,

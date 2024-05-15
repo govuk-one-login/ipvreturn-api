@@ -1,8 +1,8 @@
 {
-  "name": "F2F",
+  "name": "IPR",
   "version": "1.0.0",
-  "description": "OneLogin GovNotify stub",
-  "repository": "https://github.com/alphagov/di-ipv-cri-f2f-api",
+  "description": "OneLogin OIDC stub",
+  "repository": "https://github.com/alphagov/di-ipvreturn-apigi",
   "author": "GDS",
   "license": "MIT",
   "dependencies": {

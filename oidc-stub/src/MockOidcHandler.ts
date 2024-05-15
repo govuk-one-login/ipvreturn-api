@@ -55,7 +55,7 @@ class MockOidcHandler implements LambdaInterface {
 					 }
 				 }
 				 break;
-			case ResourcesEnum.OIDC_OPENID_CONFIG_ENDPOINT:
+			case ResourcesEnum.OIDC_AUTHORIZE_ENDPOINT:
 				 if (event.httpMethod === "GET") {
 					 try {
 						 logger.info("Event received: OIDC Authorize endpoint");

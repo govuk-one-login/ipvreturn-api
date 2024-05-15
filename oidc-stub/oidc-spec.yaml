@@ -157,7 +157,7 @@ paths:
       x-amazon-apigateway-integration:
         httpMethod: "POST"
         uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:OIDCStubJWKS-${AWS::StackName}:live/invocations
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:Oidc-Stub-${AWS::StackName}:live/invocations
         responses:
           default:
             statusCode: "200"
@@ -422,7 +422,7 @@ components:
       schema:
         type: string
     RedirectUri:
-      name: redirectUri
+      name: redirect_uri
       in: query
       description: The clients Redirect uri 
       required: true
