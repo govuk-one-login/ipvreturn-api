@@ -55,6 +55,20 @@ class MockOidcHandler implements LambdaInterface {
 					 }
 				 }
 				 break;
+			case ResourcesEnum.OIDC_OPENID_CONFIG_ENDPOINT:
+				 if (event.httpMethod === "GET") {
+					 try {
+						 logger.info("Event received: OIDC Authorize endpoint");
+						 return await OidcProcessor.getInstance(logger, metrics).returnAuthCode(event);						 
+					 } catch (err: any) {
+						 logger.error({ message: "An error has occurred.", err });
+						 if (err instanceof AppError) {
+							 return new Response(err.statusCode, err.message);
+						 }
+						 return new Response(HttpCodesEnum.SERVER_ERROR, "An error has occurred");
+					 }
+				 }
+				 break;
 					
 			default:
 				throw new AppError(`Requested resource does not exist: ${event.resource}`, HttpCodesEnum.NOT_FOUND);

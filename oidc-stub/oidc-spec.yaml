@@ -142,6 +142,55 @@ paths:
         contentHandling: "CONVERT_TO_TEXT"
         type: "aws_proxy"
 
+  /authorize:
+    get:
+      operationId: authorize
+      summary: returns an authorization code to the user logged in
+      description: >-
+        returns an authorization code to the user logged in
+      tags:
+        - Backend authorize Endpoint for OIDC
+      parameters:
+        - $ref: "#/components/parameters/AuthCode"
+        - $ref: "#/components/parameters/RedirectUri"
+      x-amazon-apigateway-request-validator: "both"
+      x-amazon-apigateway-integration:
+        httpMethod: "POST"
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:OIDCStubJWKS-${AWS::StackName}:live/invocations
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        contentHandling: "CONVERT_TO_TEXT"
+        type: "aws_proxy"
+      responses:
+        302:
+          description: >-
+            Created - Authentication code is valid 
+            is returned.
+          headers:
+            Location:
+              schema:
+                type: "string"
+            Cache-Control:
+              schema:
+                type: "string"
+            Content-Type:
+              schema:
+                type: "string"
+            Strict-Transport-Security:
+              schema:
+                type: "string"
+            X-Content-Type-Options:
+              schema:
+                type: "string"
+            X-Frame-Options:
+              schema:
+                type: "string"
+        400:
+          $ref: "#/components/responses/400"
+
 components:
   ## ---------------------
   ## Schema Definitions
@@ -363,6 +412,22 @@ components:
           examples:
             TEMPORARILY_UNAVAILABLE:
               $ref: "#/components/examples/TemporarilyUnavailableError"
+  
+  parameters:
+    AuthCode:
+      name: state
+      in: query
+      description: The session-id returned from GOV.UK Signin
+      required: true
+      schema:
+        type: string
+    RedirectUri:
+      name: redirectUri
+      in: query
+      description: The clients Redirect uri 
+      required: true
+      schema:
+        type: string
 
   ## ---------------------
   ## Example Definitions
@@ -407,4 +472,5 @@ components:
       value:
         code: TEMPORARILY_UNAVAILABLE
         message: Unable to complete your request right now.  Please try again later
+
 

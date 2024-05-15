@@ -226,6 +226,12 @@ Resources:
             Path: /.well-known/openid-configuration
             Method: get
             RestApiId: !Ref MockOidcRestApi
+        authorize:
+          Type: Api
+          Properties:
+            Path: /authorize
+            Method: get
+            RestApiId: !Ref MockOidcRestApi
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
       BuildProperties:

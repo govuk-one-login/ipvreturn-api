@@ -5,9 +5,7 @@ import { Metrics } from "@aws-lambda-powertools/metrics";
 import { JarPayload, JwtHeader } from "../models/enums/AuthTypes";
 import { util } from "node-jose";
 import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
-import format from "ecdsa-sig-formatter";
 import crypto from "node:crypto";
-import jwt from "jsonwebtoken";
 import { jwtUtils } from "./JwtUtils";
 import * as AWS from "@aws-sdk/client-kms";
 
@@ -73,13 +71,95 @@ export class OidcProcessor {
 		return {
 			statusCode: HttpCodesEnum.OK,
 			body: JSON.stringify({
-				issuer: baseUrl,
-				authorization_endpoint: baseUrl+"authorize",
-				token_endpoint: baseUrl+"token",
-				userinfo_endpoint: baseUrl+"userinfo",
-				jwks_uri: baseUrl+".well-known/jwks.json",
-			}),
+				"authorization_endpoint": baseUrl+"authorize",
+				"token_endpoint": baseUrl+"token",
+				"registration_endpoint": baseUrl +"connect/register",
+				"issuer": baseUrl,
+				"jwks_uri": baseUrl+".well-known/jwks.json",
+				"scopes_supported": [
+				  "openid",
+				  "email",
+				  "phone",
+				  "offline_access"
+				],
+				"response_types_supported": [
+				  "code"
+				],
+				"grant_types_supported": [
+				  "authorization_code"
+				],
+				"token_endpoint_auth_methods_supported": [
+				  "private_key_jwt",
+				  "client_secret_post"
+				],
+				"token_endpoint_auth_signing_alg_values_supported": [
+				  "RS256",
+				  "RS384",
+				  "RS512",
+				  "PS256",
+				  "PS384",
+				  "PS512"
+				],
+				"ui_locales_supported": [
+				  "en",
+				  "cy"
+				],
+				"service_documentation": "https://docs.sign-in.service.gov.uk/",
+				"op_policy_uri": "https://signin.staging.account.gov.uk/privacy-notice",
+				"op_tos_uri": "https://signin.staging.account.gov.uk/terms-and-conditions",
+				"request_parameter_supported": true,
+				"trustmarks": baseUrl+"trustmark",
+				"subject_types_supported": [
+				  "public",
+				  "pairwise"
+				],
+				"userinfo_endpoint": baseUrl+"userinfo",
+				"end_session_endpoint": baseUrl+"logout",
+				"id_token_signing_alg_values_supported": [
+				  "ES256",
+				  "RS256"
+				],
+				"claim_types_supported": [
+				  "normal"
+				],
+				"claims_supported": [
+				  "sub",
+				  "email",
+				  "email_verified",
+				  "phone_number",
+				  "phone_number_verified",
+				  "wallet_subject_id",
+				  "https://vocab.account.gov.uk/v1/passport",
+				  "https://vocab.account.gov.uk/v1/socialSecurityRecord",
+				  "https://vocab.account.gov.uk/v1/drivingPermit",
+				  "https://vocab.account.gov.uk/v1/coreIdentityJWT",
+				  "https://vocab.account.gov.uk/v1/address",
+				  "https://vocab.account.gov.uk/v1/inheritedIdentityJWT",
+				  "https://vocab.account.gov.uk/v1/returnCode"
+				],
+				"request_uri_parameter_supported": false,
+				"backchannel_logout_supported": true,
+				"backchannel_logout_session_supported": false
+			}
+		),
 		};
+    }
+
+	/***
+	 * Authorization endpoint
+     * GET /authorize
+     */
+    async returnAuthCode(event: any): Promise<any> {
+		
+		const authorizationCode = "mock-authorization-code";
+		const redirectUri = event.querystring.redirect_uri;
+		const redirectUrl = `${redirectUri}?code=${authorizationCode}`;
+		return {
+			statusCode: HttpCodesEnum.FOUND,
+			headers: {
+				Location: redirectUrl
+			}
+		}
     }
 
 }
