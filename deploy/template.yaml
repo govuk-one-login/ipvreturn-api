@@ -129,7 +129,6 @@ Mappings:
       RETURNJOURNEYURL: "https://return.build.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
       DNSSUFFIX: "return.build.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
@@ -144,7 +143,6 @@ Mappings:
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
       DNSSUFFIX: "return.staging.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
@@ -158,7 +156,6 @@ Mappings:
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
       DNSSUFFIX: "return.integration.account.gov.uk"
       OIDCURL: "https://oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
@@ -172,7 +169,6 @@ Mappings:
       RETURNJOURNEYURL: "https://return.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
       DNSSUFFIX: "return.account.gov.uk"
       OIDCURL: "https://oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
