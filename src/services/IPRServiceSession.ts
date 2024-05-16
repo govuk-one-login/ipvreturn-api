@@ -138,8 +138,13 @@ export class IPRServiceSession {
 		}
 	}
 
-	async sendToTXMA(event: TxmaEvent): Promise<void> {
+	async sendToTXMA(event: TxmaEvent, encodedHeader?: string): Promise<void> {
 		try {
+			if (encodedHeader) {
+				event.restricted = event.restricted ?? { device_information: { encoded: "" } };
+				event.restricted.device_information = { encoded: encodedHeader };
+			}
+
 			const messageBody = JSON.stringify(event);
 			const params = {
 				MessageBody: messageBody,
@@ -152,8 +157,11 @@ export class IPRServiceSession {
 			const obfuscatedObject = await this.obfuscateJSONValues(event, Constants.TXMA_FIELDS_TO_SHOW);
 			this.logger.info({ message: "Obfuscated TxMA Event", txmaEvent: JSON.stringify(obfuscatedObject, null, 2) });
 		} catch (error) {
-			this.logger.error({ message: "Error when sending message to TXMA Queue", error });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "sending event to txma queue - failed");
+			this.logger.error({
+				message: `Error when sending event ${event.event_name} to TXMA Queue`,
+				error,
+				messageCode: MessageCodes.FAILED_TO_WRITE_TXMA,
+			});
 		}
 	}
 
