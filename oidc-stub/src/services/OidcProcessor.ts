@@ -33,12 +33,16 @@ export class OidcProcessor {
      * POST /token
      * @param event
      */
-    async generateToken(event: any): Promise<any> {
-    	this.logger.info({ message: "Generating token response" });
+    async generateToken(event: any): Promise<any> {    	
+		const body = event.isBase64Encoded ? Buffer.from(event.body, "base64").toString() : event.body;
+		const searchParams = new URLSearchParams(body);
+		const code = searchParams.get("code");
+		this.logger.info({ message: "Generating token response" }, { code });
 		const config = getConfig();
 		const iat = Math.floor(Date.now() / 1000);
 		const payload: JarPayload = {
-			sub: "01333e01-dde3-412f-a484-4444", //TODO -Further investigation to get this userid
+			//sub: "01333e01-dde3-412f-a484-4444", //TODO -Further investigation to get this userid
+			sub: code as string,
 			aud: "ppcQQGGNxghc-QJiqhRyGIJ5Its", //TODO get it from the env var
 			iss: "https://ipr-oidc-stub-bhav-govnotifystub.return.dev.account.gov.uk/", //TODO get this from env var
 			iat,
@@ -49,8 +53,8 @@ export class OidcProcessor {
 
   		const signedJwt = await sign(payload, config.signingKey);
 		const accessToken = 'mock-access-token';
-		//const idToken = "eyJraWQiOiJjMTkwZjBjYzMwY2Q5NjY3Mzc2NjA3Y2U1MmQxZTA4NGE2ODU2MDU0ZGM0ZTU5OWZiYjMwYjQ5ODk0NzMwOTAzIiwiYWxnIjoiUlMyNTYifQ.eyJhdF9oYXNoIjoiRmpRdTNZSnR3Z3Rrc0syN0VUWXJRQSIsInN1YiI6InVybjpmZGM6Z292LnVrOjIwMjI6VzBmOV9TNGJZRmU4Tl9IQ09lQl8xQ0lKLTMzOTliQWoyX290NmFha2JOWSIsImF1ZCI6InBwY1FRR0dOeGdoYy1RSmlxaFJ5R0lKNUl0cyIsImlzcyI6Imh0dHBzOi8vb2lkYy5zdGFnaW5nLmFjY291bnQuZ292LnVrLyIsInZvdCI6IkNsLkNtIiwiZXhwIjoxNzE0NjYzNDY2LCJpYXQiOjE3MTQ2NjMzNDYsIm5vbmNlIjoiOGYyNTVjOTQtMmY2My00OTkxLTljZGUtOGQwY2UzNzMwZDE2IiwidnRtIjoiaHR0cHM6Ly9vaWRjLnN0YWdpbmcuYWNjb3VudC5nb3YudWsvdHJ1c3RtYXJrIiwic2lkIjoibFZvT0lDdnRFN1hqdVdEbE9RNk5XNHBBSUhBIn0.Mp4wngmxevcjgd3OuRbPoaoEtSH9BMDguEEv61zOKLcNoVWz8kjdxSIsLBw-krU7K65kEUzqnSnbdj3khZS2eE8XeCl80EHUK6SFYKnzgS5WQ2s7SpUw3xTAnf0VgWOVdBh2WI_0eRRWcUZmCWI2LaE7h1LGx-BFFBJOVJ1RVdL8-YTCiANv_REHmU-QKNwnlmlkiGqSU7e-R9Q9SuqKJtqCdBwvCY8ZQtOGcig_E2S2uKQRZZvWQZWg759gep7v9MCTW0GtC0THkse_0xKg-4MEp4DLXWO6LXi4VAgppVV1scVVrPJ4z0xHnyT5vcd7LRpIfiimYD_TZYi2lp--QVGBIfxj4jInuZYc_bMI0atB47leoS0obt4i7IwA_75zVRK1E6srJcR2dC-Xyv9UFzwDFoKVPzLwyvyUvlZcok3V3Q6xrpk63nVbehOXoKhNDX7YlsM6pfI-nMEmQ2OHLE_qkHQwVpkQL-zUCUCnlHmKjBclIFhd-TlaohgyZ6fXKmDRJuoHptZw75qycdCDjoXlhnfYs9zt__OtTyy8-sNWpTAOtRuVkEGC8O7Oy1SUvIBMIRA5tNgsIA1lJTUqc0QErSLefFfJ6zFl2kRpqMIiaITBZqBpcLg4gNrazp89R-WDnpBZ2c3PT4sKBVDuG66ngmtRRF-_NF44cIc-ZFs";
 		const idToken = signedJwt;
+		this.logger.info("Generated token: ", idToken);
 		return {
 			statusCode: HttpCodesEnum.CREATED,
 			body: JSON.stringify({
@@ -150,10 +154,11 @@ export class OidcProcessor {
      * GET /authorize
      */
     async returnAuthCode(event: any): Promise<any> {
-		
-		const authorizationCode = "mock-authorization-code";
+		this.logger.info({ message: "Generating AuthCode" });
+		const authorizationCode = event.queryStringParameters.state;
 		const redirectUri = event.queryStringParameters.redirect_uri;
-		const redirectUrl = `${redirectUri}?code=${authorizationCode}`;
+		const redirectUrl = `${redirectUri}?code=${authorizationCode}&state=${authorizationCode}`;
+		this.logger.info({ message: "Successfully generated authorizationCode, redirectUrl: ", redirectUrl });
 		return {
 			statusCode: HttpCodesEnum.FOUND,
 			headers: {
