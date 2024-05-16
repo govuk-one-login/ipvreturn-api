@@ -116,8 +116,7 @@ Mappings:
       SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
       INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
       DNSSUFFIX: "return.dev.account.gov.uk"
-      # OIDCURL: "https://oidc.staging.account.gov.uk/"
-      OIDCURL: "https://ipr-oidc-stub-bhav-govnotifystub.return.dev.account.gov.uk/"
+      OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
     build:
@@ -477,88 +476,47 @@ Resources:
         Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
 
   ### OIDC Provider as IAM entity
-  # OIDCProvider:
-  #   Type: AWS::IAM::OIDCProvider
-  #   Condition: NotLocalTestStack
-  #   Properties:
-  #     ClientIdList:
-  #       - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-  #     ThumbprintList:
-  #       - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-  #     Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
-
-  ### OIDC Provider as IAM entity- Local deployment
-  # OIDCProvider:
-  #   Type: AWS::IAM::OIDCProvider
-  #   Properties:
-  #     ClientIdList:
-  #       - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-  #     ThumbprintList:
-  #       - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-  #     Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+  OIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: NotLocalTestStack
+    Properties:
+      ClientIdList:
+        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
+      ThumbprintList:
+        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
+      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
   ### AssumeRoleWithWebIdentityRole
-  # AssumeRoleWithWebIdentityRole:
-  #   Type: "AWS::IAM::Role"
-  #   Condition: NotLocalTestStack
-  #   Properties:
-  #     AssumeRolePolicyDocument:
-  #       Statement:
-  #         - Action: "sts:AssumeRoleWithWebIdentity"
-  #           Effect: Allow
-  #           Principal:
-  #             Federated: !GetAtt OIDCProvider.Arn
-  #       Version: 2012-10-17
-  #     Policies:
-  #       - PolicyName: GetSessionEventPolicy
-  #         PolicyDocument:
-  #           Version: '2012-10-17'
-  #           Statement:
-  #             - Effect: Allow
-  #               Action:
-  #                 - "dynamodb:GetItem"
-  #               Resource:
-  #                 Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
-  #             - Effect: Allow
-  #               Action:
-  #                 - "kms:Decrypt"
-  #               Resource:
-  #                 Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
-  #     PermissionsBoundary: !If
-  #       - UsePermissionsBoundary
-  #       - !Ref PermissionsBoundary
-  #       - !Ref AWS::NoValue
-
-  ### AssumeRoleWithWebIdentityRole-local testing
-  # AssumeRoleWithWebIdentityRole:
-  #   Type: "AWS::IAM::Role"
-  #   Properties:
-  #     AssumeRolePolicyDocument:
-  #       Statement:
-  #         - Action: "sts:AssumeRoleWithWebIdentity"
-  #           Effect: Allow
-  #           Principal:
-  #             Federated: !GetAtt OIDCProvider.Arn
-  #       Version: 2012-10-17
-  #     Policies:
-  #       - PolicyName: GetSessionEventPolicy
-  #         PolicyDocument:
-  #           Version: '2012-10-17'
-  #           Statement:
-  #             - Effect: Allow
-  #               Action:
-  #                 - "dynamodb:GetItem"
-  #               Resource:
-  #                 Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
-  #             - Effect: Allow
-  #               Action:
-  #                 - "kms:Decrypt"
-  #               Resource:
-  #                 Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
-  #     PermissionsBoundary: !If
-  #       - UsePermissionsBoundary
-  #       - !Ref PermissionsBoundary
-  #       - !Ref AWS::NoValue
+  AssumeRoleWithWebIdentityRole:
+    Type: "AWS::IAM::Role"
+    Condition: NotLocalTestStack
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: "sts:AssumeRoleWithWebIdentity"
+            Effect: Allow
+            Principal:
+              Federated: !GetAtt OIDCProvider.Arn
+        Version: 2012-10-17
+      Policies:
+        - PolicyName: GetSessionEventPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:GetItem"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
+              - Effect: Allow
+                Action:
+                  - "kms:Decrypt"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
 
   ### Start of API Gateway definition.
   IPVRRestApi:
@@ -1304,12 +1262,11 @@ Resources:
           CLIENT_ID_SSM_PATH: !Sub "/${Environment}/ipvreturn/CLIENT_ID"
           OIDC_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
           RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
-          ASSUMEROLE_WITH_WEB_IDENTITY_ARN: arn:aws:iam::489145412748:role/ipvreturn-api-oidc-AssumeRoleWithWebIdentityRole-yAvcEUrJbzPD
-          # ASSUMEROLE_WITH_WEB_IDENTITY_ARN:
-          #   Fn::If:
-          #     - NotLocalTestStack
-          #     - !GetAtt AssumeRoleWithWebIdentityRole.Arn
-          #     - !Ref AWS::NoValue
+          ASSUMEROLE_WITH_WEB_IDENTITY_ARN:
+            Fn::If:
+              - NotLocalTestStack
+              - !GetAtt AssumeRoleWithWebIdentityRole.Arn
+              - !Ref AWS::NoValue
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
       Policies:
         - AWSLambdaBasicExecutionRole
