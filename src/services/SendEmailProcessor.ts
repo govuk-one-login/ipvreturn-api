@@ -96,19 +96,13 @@ export class SendEmailProcessor {
 		}
 		
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
-		try {
-			await this.iprService.sendToTXMA({
-				event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-				...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }),
-				extensions: {
-					previous_govuk_signin_journey_id: session.clientSessionId,
-				},
-			});
-		} catch (error) {
-			this.logger.error("Failed to write TXMA event IPR_RESULT_NOTIFICATION_EMAILED to SQS queue.", {
-				messageCode: MessageCodes.FAILED_TO_WRITE_TXMA,
-			});
-		}
+		await this.iprService.sendToTXMA({
+			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
+			...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }),
+			extensions: {
+				previous_govuk_signin_journey_id: session.clientSessionId,
+			},
+		});
 
 		this.logger.info("Response after sending Email message", { emailResponse });
 		return emailResponse;
