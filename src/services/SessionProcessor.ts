@@ -122,7 +122,7 @@ export class SessionProcessor {
 
 			// Dynamo access using the temporary credentials
 			// from the ID token
-			const iprService = IPRService.getInstance(
+			const iprService = IPRServiceSession.getInstance(
 				this.environmentVariables.sessionEventsTable(),
 				this.logger,
 				createDynamoDbClientWithCreds(assumedRole.Credentials),

@@ -187,31 +187,31 @@ describe("IPR Service", () => {
 		it("Should send event to TxMA without encodedHeader if encodedHeader param is missing", async () => {
 			const messageBody = JSON.stringify(txmaEventPayload);
 
-			await iprService.sendToTXMA(txmaEventPayload);
+			await iprServiceSession.sendToTXMA(txmaEventPayload);
 
 			expect(SendMessageCommand).toHaveBeenCalledWith({
 				MessageBody: messageBody,
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprService.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 
 		it("Should send event to TxMA without encodedHeader if encodedHeader param is empty", async () => {  	
 			const messageBody = JSON.stringify(txmaEventPayload);	
 			
-			await iprService.sendToTXMA(txmaEventPayload, "");
+			await iprServiceSession.sendToTXMA(txmaEventPayload, "");
 	
 			expect(SendMessageCommand).toHaveBeenCalledWith({
 				MessageBody: messageBody,
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprService.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 	
 		it("Should send event to TxMA with the correct details for a payload without restricted present", async () => {  
-			await iprService.sendToTXMA(txmaEventPayload, "ENCHEADER");
+			await iprServiceSession.sendToTXMA(txmaEventPayload, "ENCHEADER");
 	
 			const messageBody = JSON.stringify({
 				...txmaEventPayload,
@@ -227,7 +227,7 @@ describe("IPR Service", () => {
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprService.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 
 		it("Should send event to TxMA with the correct details for a payload with restricted present", async () => {  
@@ -239,7 +239,7 @@ describe("IPR Service", () => {
 	
 			const payload = { ...txmaEventPayload, ...restrictedDetails };
 	
-			await iprService.sendToTXMA(payload);
+			await iprServiceSession.sendToTXMA(payload);
 			const messageBody = JSON.stringify(payload);
 	
 			expect(SendMessageCommand).toHaveBeenCalledWith({
@@ -247,13 +247,13 @@ describe("IPR Service", () => {
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprService.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 	
 		it("Should throw error if is fails to send to TXMA queue", async () => {
 			sqsClient.send.mockRejectedValueOnce({});
 
-			await iprService.sendToTXMA(txmaEventPayload);
+			await iprServiceSession.sendToTXMA(txmaEventPayload);
 	
 			expect(logger.error).toHaveBeenCalledWith({
 				message: "Error when sending event IPR_RESULT_NOTIFICATION_EMAILED to TXMA Queue",
