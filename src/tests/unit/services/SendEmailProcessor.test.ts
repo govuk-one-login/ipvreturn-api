@@ -6,7 +6,7 @@ import { SQSEvent } from "aws-lambda";
 import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL } from "../../data/sqs-events";
 import { SendEmailProcessor } from "../../../services/SendEmailProcessor";
 import { SendEmailService } from "../../../services/SendEmailService";
-import { IPRService } from "../../../services/IPRService";
+import { IPRServiceSession } from "../../../services/IPRServiceSession";
 import { mock } from "jest-mock-extended";
 import { EmailResponse } from "../../../models/EmailResponse";
 import { ExtSessionEvent, SessionEvent } from "../../../models/SessionEvent";
@@ -15,7 +15,7 @@ import { Constants } from "../../../utils/Constants";
 
 let sendEmailProcessorTest: SendEmailProcessor;
 const mockGovNotifyService = mock<SendEmailService>();
-const mockIprService = mock<IPRService>();
+const mockIprService = mock<IPRServiceSession>();
 // pragma: allowlist nextline secret
 const GOVUKNOTIFY_API_KEY = "sdhohofsdf";
 const SESSION_EVENTS_TABLE = "session-table";

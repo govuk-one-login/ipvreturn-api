@@ -4,7 +4,8 @@ import { Metrics } from "@aws-lambda-powertools/metrics";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { Constants } from "../utils/Constants";
-import { IPRService } from "./IPRService";
+import { IPRServiceSession } from "./IPRServiceSession";
+import { IPRServiceAuth } from "./IPRServiceAuth";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
@@ -25,13 +26,16 @@ export class PostEventProcessor {
 
 	private readonly environmentVariables: EnvironmentVariables;
 
-	private readonly iprService: IPRService;
+	private readonly iprServiceSession: IPRServiceSession;
+
+	private readonly iprServiceAuth: IPRServiceAuth;
 
 	constructor(logger: Logger, metrics: Metrics) {
 		this.logger = logger;
 		this.metrics = metrics;
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.POST_EVENT_SERVICE);
-		this.iprService = IPRService.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
+		this.iprServiceSession = IPRServiceSession.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
+		this.iprServiceAuth = IPRServiceAuth.getInstance(this.environmentVariables.authEventsTable(), this.logger, createDynamoDbClient());
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics): PostEventProcessor {
@@ -47,7 +51,7 @@ export class PostEventProcessor {
 			const eventDetails: ReturnSQSEvent = JSON.parse(eventBody);
 			const eventName = eventDetails.event_name;
 
-			const obfuscatedObject = await this.iprService.obfuscateJSONValues(eventDetails, Constants.TXMA_FIELDS_TO_SHOW);
+			const obfuscatedObject = await this.iprServiceSession.obfuscateJSONValues(eventDetails, Constants.TXMA_FIELDS_TO_SHOW);
 			this.logger.info({ message: "Obfuscated TxMA Event", txmaEvent: obfuscatedObject });
 
 			if (!eventDetails.event_id) {
@@ -74,19 +78,17 @@ export class PostEventProcessor {
 				this.logger.error({ message: "Missing or invalid value for userDetails.user_id in event payload" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
-
 			const userId = userDetails.user_id;
-			// Do not process the event if the event is already processed or flagged for deletion
-			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, eventName);
+			//Do not process the event if the event is already processed or flagged for deletion
+			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, eventName);
 			if (isFlaggedForDeletionOrEventAlreadyProcessed) {
 				this.logger.info( { message: "Record flagged for deletion or event already processed, skipping update" });
 				return "Record flagged for deletion or event already processed, skipping update";
 			}
-
 			let updateExpression, expressionAttributeValues: { [key: string]: any }, expiresOn;
 
-			//Set default TTL to 12hrs to expire any records not meant for F2F
-			expiresOn = absoluteTimeNow() + this.environmentVariables.initialSessionReturnRecordTtlSecs();
+			//Set auth event TTL to 6hrs
+			expiresOn = absoluteTimeNow() + this.environmentVariables.authEventTtlSecs();
 
 			if (eventName === Constants.F2F_YOTI_START) {
 				//Reset TTL to 11days for F2F journey
@@ -100,7 +102,6 @@ export class PostEventProcessor {
 						this.logger.warn({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						return `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`;
 					}
-
 					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn";
 					expressionAttributeValues = {
 						":userEmail": returnRecord.userEmail,
@@ -112,12 +113,20 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.F2F_YOTI_START: {
-					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn";
+					const fetchedRecord = await this.iprServiceAuth.getAuthEventBySub(userId);
+					if (!fetchedRecord) {
+						this.logger.error({ message: "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event" }, { messageCode: MessageCodes.SQS_OUT_OF_SYNC });
+						throw new AppError(HttpCodesEnum.SERVER_ERROR, "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event");
+					}
+					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri";
 					expressionAttributeValues = {
+						":userEmail": fetchedRecord.userEmail,
+						":ipvStartedOn": fetchedRecord.ipvStartedOn,
+						":clientName": fetchedRecord.clientName,
+						":redirectUri": fetchedRecord.redirectUri,
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
 						":expiresOn": returnRecord.expiresDate,
 					};
-
 					if (returnRecord.postOfficeInfo) {
 						updateExpression += ", postOfficeInfo = :postOfficeInfo";
 						expressionAttributeValues[":postOfficeInfo"] = returnRecord.postOfficeInfo;
@@ -192,12 +201,19 @@ export class PostEventProcessor {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 			}
 
-			const saveEventData = await this.iprService.saveEventData(userId, updateExpression, expressionAttributeValues);
-
-			return {
-				statusCode: HttpCodesEnum.CREATED,
-				eventBody: saveEventData ? saveEventData : "OK",
-			};
+			if (eventName === Constants.AUTH_IPV_AUTHORISATION_REQUESTED) {
+				const saveEventData = await this.iprServiceAuth.saveEventData(userId, updateExpression, expressionAttributeValues);
+				return {
+					statusCode: HttpCodesEnum.CREATED,
+					eventBody: saveEventData ? saveEventData : "OK",
+				};
+			} else {
+				const saveEventData = await this.iprServiceSession.saveEventData(userId, updateExpression, expressionAttributeValues);
+				return {
+					statusCode: HttpCodesEnum.CREATED,
+					eventBody: saveEventData ? saveEventData : "OK",
+				};
+			}
 
 		} catch (error: any) {
 			this.logger.error({ message: "Cannot parse event data", error });

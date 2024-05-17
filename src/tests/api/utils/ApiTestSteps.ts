@@ -1,16 +1,17 @@
-import { fromNodeProviderChain } from "@aws-sdk/credential-providers"; 
+import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
 import axios, { AxiosInstance } from "axios";
 import { aws4Interceptor } from "aws4-axios";
 import { randomUUID } from "crypto";
 import { ReturnSQSEvent } from "../../../models/ReturnSQSEvent";
 import { ExtSessionEvent } from "../../../models/SessionEvent";
 import { constants } from "./ApiConstants";
+import { sleep } from "../../../utils/Sleep";
 
 const AWS_REGION = process.env.AWS_REGION ?? "eu-west-2";
 const EMAIL_ADDRESS = constants.API_TEST_EMAIL_ADDRESS;
 const GOV_NOTIFY_INSTANCE = axios.create({ baseURL: constants.GOV_NOTIFY_API });
 
-const HARNESS_API_INSTANCE : AxiosInstance = axios.create({ baseURL: constants.DEV_IPR_TEST_HARNESS_URL });
+const HARNESS_API_INSTANCE: AxiosInstance = axios.create({ baseURL: constants.DEV_IPR_TEST_HARNESS_URL });
 
 const customCredentialsProvider = {
 	getCredentials: fromNodeProviderChain({
@@ -48,14 +49,15 @@ export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, em
 	}
 }
 
-export async function getSessionByUserId(userId: string, tableName: string): Promise< ExtSessionEvent | undefined > {
+export async function getSessionByUserId(userId: string, tableName: string): Promise<ExtSessionEvent | undefined> {
+	await sleep(2000);
 	interface OriginalValue {
 		N?: string;
 		S?: string;
 		L?: string;
 		BOOL?: boolean;
 	}
-	
+
 	interface OriginalSessionItem {
 		[key: string]: OriginalValue;
 	}
@@ -64,9 +66,7 @@ export async function getSessionByUserId(userId: string, tableName: string): Pro
 	let response;
 
 	try {
-		do {
-			response = await HARNESS_API_INSTANCE.get<{ Item: OriginalSessionItem }>(`getRecordByUserId/${tableName}/${userId}`, {});
-		} while (!(response.data.Item?.notified && response.data.Item.notified.BOOL));
+		response = await HARNESS_API_INSTANCE.get<{ Item: OriginalSessionItem }>(`getRecordByUserId/${tableName}/${userId}`, {});
 		const originalSession = response.data.Item;
 
 		session = Object.fromEntries(

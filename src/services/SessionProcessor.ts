@@ -10,7 +10,7 @@ import { randomUUID } from "crypto";
 import axios from "axios";
 import { AppError } from "../utils/AppError";
 import { createDynamoDbClientWithCreds } from "../utils/DynamoDBFactory";
-import { IPRService } from "./IPRService";
+import { IPRServiceSession } from "./IPRServiceSession";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { ValidationHelper } from "../utils/ValidationHelper";
@@ -122,7 +122,7 @@ export class SessionProcessor {
 
 			// Dynamo access using the temporary credentials
 			// from the ID token
-			const iprService = IPRService.getInstance(
+			const iprService = IPRServiceSession.getInstance(
 				this.environmentVariables.sessionEventsTable(),
 				this.logger,
 				createDynamoDbClientWithCreds(assumedRole.Credentials),

@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { mock } from "jest-mock-extended";
 import { SendMessageCommand } from "@aws-sdk/client-sqs";
-import { IPRService } from "../../../services/IPRService";
+import { IPRServiceSession } from "../../../services/IPRServiceSession";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
 import { sqsClient } from "../../../utils/SqsClient";
@@ -16,7 +16,7 @@ import { MessageCodes } from "../../../models/enums/MessageCodes";
 
 const logger = mock<Logger>();
 
-let iprService: IPRService;
+let iprServiceSession: IPRServiceSession;
 const tableName = "MYTABLE";
 const userId = "SESSID";
 const mockDynamoDbClient = jest.mocked(createDynamoDbClient());
@@ -61,13 +61,13 @@ describe("IPR Service", () => {
 
 	beforeEach(() => {
 		jest.resetAllMocks();
-		iprService = new IPRService(tableName, logger, mockDynamoDbClient);
+		iprServiceSession = new IPRServiceSession(tableName, logger, mockDynamoDbClient);
 	});
 
 	describe("isFlaggedForDeletionOrEventAlreadyProcessed", () => {
 		it("Should throw error if isFlaggedForDeletionOrEventAlreadyProcessed check fails", async () => {
 			return expect(
-				iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED),
+				iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED),
 			).rejects.toThrow(
 				expect.objectContaining({
 					statusCode: HttpCodesEnum.SERVER_ERROR,
@@ -77,7 +77,7 @@ describe("IPR Service", () => {
 
 		it("Should return false for isFlaggedForDeletionOrEventAlreadyProcessed if record does not exist", async () => {
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({});
-			const result = await iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
+			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
 			expect(result).toBe(false);
 		});
 
@@ -92,7 +92,7 @@ describe("IPR Service", () => {
 				},
 			};
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordNotFlaggedForDeletetionAndNotProcessed);
-			const result = await iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
+			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
 			expect(result).toBe(false);
 		});
 
@@ -109,7 +109,7 @@ describe("IPR Service", () => {
 				},
 			};
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForDeletetion);
-			const result = await iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
+			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
 			expect(result).toBe(true);
 		});
 
@@ -125,7 +125,7 @@ describe("IPR Service", () => {
 				},
 			};
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
-			const result = await iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
+			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
 			expect(result).toBe(true);
 		});
 	
@@ -137,7 +137,7 @@ describe("IPR Service", () => {
 				},
 			};
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
-			const result = await iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.F2F_YOTI_START);
+			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.F2F_YOTI_START);
 			expect(result).toBe(true);
 		});
 	
@@ -149,7 +149,7 @@ describe("IPR Service", () => {
 				},
 			};
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
-			const result = await iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.IPV_F2F_CRI_VC_CONSUMED);
+			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.IPV_F2F_CRI_VC_CONSUMED);
 			expect(result).toBe(true);
 		});
 	
@@ -161,13 +161,13 @@ describe("IPR Service", () => {
 				},
 			};
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
-			const result = await iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_DELETE_ACCOUNT);
+			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_DELETE_ACCOUNT);
 			expect(result).toBe(true);
 		});
 	
 		it("Should not process the AUTH_DELETE_ACCOUNT session record is not found", async () => {
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({});
-			const result = await iprService.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_DELETE_ACCOUNT);
+			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_DELETE_ACCOUNT);
 			expect(result).toBe(true);
 		});
 	});
@@ -175,7 +175,7 @@ describe("IPR Service", () => {
 	describe("saveEventData", () => {
 		it("Should throw error if saveEventData fails", async () => {
 			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
-			return expect(iprService.saveEventData(userId, authRequestedUpdateExpression, authRequestedExpressionAttributeValues)).rejects.toThrow(
+			return expect(iprServiceSession.saveEventData(userId, authRequestedUpdateExpression, authRequestedExpressionAttributeValues)).rejects.toThrow(
 				expect.objectContaining({
 					statusCode: HttpCodesEnum.SERVER_ERROR,
 				}),
@@ -187,31 +187,31 @@ describe("IPR Service", () => {
 		it("Should send event to TxMA without encodedHeader if encodedHeader param is missing", async () => {
 			const messageBody = JSON.stringify(txmaEventPayload);
 
-			await iprService.sendToTXMA(txmaEventPayload);
+			await iprServiceSession.sendToTXMA(txmaEventPayload);
 
 			expect(SendMessageCommand).toHaveBeenCalledWith({
 				MessageBody: messageBody,
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprService.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 
 		it("Should send event to TxMA without encodedHeader if encodedHeader param is empty", async () => {  	
 			const messageBody = JSON.stringify(txmaEventPayload);	
 			
-			await iprService.sendToTXMA(txmaEventPayload, "");
+			await iprServiceSession.sendToTXMA(txmaEventPayload, "");
 	
 			expect(SendMessageCommand).toHaveBeenCalledWith({
 				MessageBody: messageBody,
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprService.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 	
 		it("Should send event to TxMA with the correct details for a payload without restricted present", async () => {  
-			await iprService.sendToTXMA(txmaEventPayload, "ENCHEADER");
+			await iprServiceSession.sendToTXMA(txmaEventPayload, "ENCHEADER");
 	
 			const messageBody = JSON.stringify({
 				...txmaEventPayload,
@@ -227,7 +227,7 @@ describe("IPR Service", () => {
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprService.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 
 		it("Should send event to TxMA with the correct details for a payload with restricted present", async () => {  
@@ -239,7 +239,7 @@ describe("IPR Service", () => {
 	
 			const payload = { ...txmaEventPayload, ...restrictedDetails };
 	
-			await iprService.sendToTXMA(payload);
+			await iprServiceSession.sendToTXMA(payload);
 			const messageBody = JSON.stringify(payload);
 	
 			expect(SendMessageCommand).toHaveBeenCalledWith({
@@ -247,13 +247,13 @@ describe("IPR Service", () => {
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprService.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 	
 		it("Should throw error if is fails to send to TXMA queue", async () => {
 			sqsClient.send.mockRejectedValueOnce({});
 
-			await iprService.sendToTXMA(txmaEventPayload);
+			await iprServiceSession.sendToTXMA(txmaEventPayload);
 	
 			expect(logger.error).toHaveBeenCalledWith({
 				message: "Error when sending event IPR_RESULT_NOTIFICATION_EMAILED to TXMA Queue",
@@ -271,14 +271,14 @@ describe("IPR Service", () => {
 				},
 			});
 
-			await expect(iprService.getSessionBySub(userId)).rejects.toThrow(new AppError( HttpCodesEnum.UNAUTHORIZED, "Session has expired"));
+			await expect(iprServiceSession.getSessionBySub(userId)).rejects.toThrow(new AppError( HttpCodesEnum.UNAUTHORIZED, "Session has expired"));
 			expect(logger.error).toHaveBeenCalledWith({ message: "Session has expired", messageCode: MessageCodes.SESSION_EXPIRED });
 		});
 
 		it("Should throw error if dynamo get command fails", async () => {
 			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
 
-			await expect(iprService.getSessionBySub(userId)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session"));
+			await expect(iprServiceSession.getSessionBySub(userId)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session"));
 			expect(logger.error).toHaveBeenCalledWith({ message: "getSessionBySub - failed executing get from dynamodb" });
 		});
 
@@ -289,7 +289,7 @@ describe("IPR Service", () => {
 				userEmail: "test@digital.cabinet-office.gov.uk",
 			};
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
-			const result = await iprService.getSessionBySub(userId);
+			const result = await iprServiceSession.getSessionBySub(userId);
 			expect(result).toEqual(Item);
 		});
 	});
@@ -310,7 +310,7 @@ describe("IPR Service", () => {
 	
 			const txmaFieldsToShow = ["field3", "field5"];
 	
-			const obfuscatedObject = await iprService.obfuscateJSONValues(inputObject, txmaFieldsToShow);
+			const obfuscatedObject = await iprServiceSession.obfuscateJSONValues(inputObject, txmaFieldsToShow);
 	
 			// Check that sensitive fields are obfuscated and non-sensitive fields are not
 			expect(obfuscatedObject.field1).toBe("***");
@@ -339,7 +339,7 @@ describe("IPR Service", () => {
 	
 			const txmaFieldsToShow = ["field3"];
 	
-			const obfuscatedObject = await iprService.obfuscateJSONValues(inputObject, txmaFieldsToShow);
+			const obfuscatedObject = await iprServiceSession.obfuscateJSONValues(inputObject, txmaFieldsToShow);
 	
 			// Check that sensitive fields are obfuscated and non-sensitive fields are not
 			expect(obfuscatedObject.field1).toBe("***");
@@ -358,7 +358,7 @@ describe("IPR Service", () => {
 	
 			const txmaFieldsToShow: string[] | undefined = [];
 	
-			const obfuscatedObject = await iprService.obfuscateJSONValues(inputObject, txmaFieldsToShow);
+			const obfuscatedObject = await iprServiceSession.obfuscateJSONValues(inputObject, txmaFieldsToShow);
 	
 			// Check that all fields are obfuscated
 			expect(obfuscatedObject.stringField).toBe("***");
@@ -369,7 +369,7 @@ describe("IPR Service", () => {
 		it('should return "***" for non-object input', async () => {
 			const input = "string-input";
 	
-			const obfuscatedValue = await iprService.obfuscateJSONValues(input);
+			const obfuscatedValue = await iprServiceSession.obfuscateJSONValues(input);
 	
 			// Check that non-object input is obfuscated as '***'
 			expect(obfuscatedValue).toBe("***");
