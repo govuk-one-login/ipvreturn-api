@@ -160,7 +160,7 @@ describe("PostEventProcessor", () => {
 			expect(mockLogger.warn).toHaveBeenCalledWith({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 			expect(result).toBe(`Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`);
 		});
-
+	});
 
 	describe("IPV_F2F_CRI_VC_CONSUMED_EVENT event", () => {
 		it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event", async () => {
