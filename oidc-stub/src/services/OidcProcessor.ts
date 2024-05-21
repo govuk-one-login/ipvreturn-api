@@ -41,10 +41,9 @@ export class OidcProcessor {
 		const config = getConfig();
 		const iat = Math.floor(Date.now() / 1000);
 		const payload: JarPayload = {
-			//sub: "01333e01-dde3-412f-a484-4444", //TODO -Further investigation to get this userid
 			sub: code as string,
 			aud: "ppcQQGGNxghc-QJiqhRyGIJ5Its", //TODO get it from the env var
-			iss: "https://ipr-oidc-stub-bhav-govnotifystub.return.dev.account.gov.uk/", //TODO get this from env var
+			iss: "https://ipr-oidc-stub-bhav-oidcstub.return.dev.account.gov.uk/", //TODO get this from env var
 			iat,
 			nbf: iat - 1,
 			exp: iat + 3 * 60,
@@ -71,7 +70,7 @@ export class OidcProcessor {
      */
     async returnOpenIdConfig(): Promise<any> {
     	this.logger.info({ message: "Fetching OpenId configuration response" });
-		const baseUrl = "https://ipr-oidc-stub-bhav-govnotifystub.return.dev.account.gov.uk/"; //TODO get it from env variable.
+		const baseUrl = "https://ipr-oidc-stub-bhav-oidcstub.return.dev.account.gov.uk/"; //TODO get it from env variable.
 		return {
 			statusCode: HttpCodesEnum.OK,
 			body: JSON.stringify({
@@ -155,7 +154,8 @@ export class OidcProcessor {
      */
     async returnAuthCode(event: any): Promise<any> {
 		this.logger.info({ message: "Generating AuthCode" });
-		const authorizationCode = event.queryStringParameters.state;
+		// Return static value for FE to retrieve the user details from DDB
+		const authorizationCode = "01333e01-dde3-412f-a484-4444";
 		const redirectUri = event.queryStringParameters.redirect_uri;
 		const redirectUrl = `${redirectUri}?code=${authorizationCode}&state=${authorizationCode}`;
 		this.logger.info({ message: "Successfully generated authorizationCode, redirectUrl: ", redirectUrl });
@@ -176,54 +176,6 @@ export const v3KmsClient = new KMSClient({
 	}),
 	maxAttempts: 2,
 });
-
-// async function sign(payload: JarPayload, keyId: string): Promise<string> {
-// 	const kid = keyId.split("/").pop() ?? "";
-// 	const alg = "RSASSA_PKCS1_V1_5_SHA_256";
-// 	const jwtHeader: JwtHeader = { alg: "RS256", typ: "JWT", kid };
-// 	const tokenComponents = {
-// 	  header: util.base64url.encode(
-// 		Buffer.from(JSON.stringify(jwtHeader)),
-// 		"utf8"
-// 	  ),
-// 	  payload: util.base64url.encode(
-// 		Buffer.from(JSON.stringify(payload)),
-// 		"utf8"
-// 	  ),
-// 	  signature: "",
-// 	};
-// 	console.log("Sending to KMSClient...");
-// 	const res = await v3KmsClient.send(
-// 	  new SignCommand({
-// 		KeyId: kid,
-// 		SigningAlgorithm: alg,
-// 		MessageType: "RAW",
-// 		Message: Buffer.from(
-// 		  `${tokenComponents.header}.${tokenComponents.payload}`
-// 		),
-// 	  })
-// 	);
-// 	if (res?.Signature == null) {
-// 	  throw res as unknown as AWS.AWSError;
-// 	}
-// 	console.log("Creating Signature...")
-// 	// tokenComponents.signature = format.derToJose(
-// 	//   Buffer.from(res.Signature),
-// 	//   "ES256"
-// 	// );
-// 	// return `${tokenComponents.header}.${tokenComponents.payload}.${tokenComponents.signature}`;
-// 	// const signature = res.Signature?.toString('base64');
-// 	// console.log("Signature.....:" + signature);
-// 	// const token = jwt.sign(tokenComponents.payload, signature, { algorithm: 'RS256' });
-//   	// return token;
-
-// 	  const signature = util.base64url.encode(
-// 		Buffer.from(res.Signature),
-// 		"utf8"
-// 	  );
-// 	  console.log("Signature----:" + signature);
-// 	  return `${tokenComponents.header}.${tokenComponents.payload}.${signature}`;
-// }
 
 async function sign(jwtPayload: JarPayload, keyId: string): Promise<string> {
 	const kms : AWS.KMS = new AWS.KMS({

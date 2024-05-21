@@ -40,11 +40,13 @@ Mappings:
 
   EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
     dev:
-      GOVNOTIFYSTUBURL: "govnotifystub.return.dev.account.gov.uk"
+      OIDCSTUBDNS: "oidcstub.return.dev.account.gov.uk"
       JWKSURI: "https://ipvreturn-api.return.dev.account.gov.uk"
+      OIDCURL: "https://ipr-oidc-stub-bhav-oidcstub.return.dev.account.gov.uk/" 
     build:
-      GOVNOTIFYSTUBURL: "govnotifystub.return.build.account.gov.uk"
+      OIDCSTUBDNS: "oidcstub.return.build.account.gov.uk"
       JWKSURI: "https://ipvreturn-api.return.dev.account.gov.uk"
+      OIDCURL: "https://ipr-oidc-stub-bhav-oidcstub.return.build.account.gov.uk/" 
 
 Conditions:
   CreateDevResources: !Equals
@@ -110,6 +112,16 @@ Resources:
           ToPort: 443
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
+  
+  ## OIDC Provider as IAM entity- Local deployment
+  OIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      ClientIdList:
+        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
+      ThumbprintList:
+        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
+      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
   ### Start of API Gateway definition.
 
@@ -338,10 +350,10 @@ Resources:
       DomainName: !If
         - CreateDevResources
         - !Sub
-          - "${AWS::StackName}-${GOVNOTIFYSTUBURL}"
-          - GOVNOTIFYSTUBURL:
-              !FindInMap [ EnvironmentVariables, !Ref Environment, GOVNOTIFYSTUBURL ]
-        - !FindInMap [ EnvironmentVariables, !Ref Environment, GOVNOTIFYSTUBURL ]
+          - "${AWS::StackName}-${OIDCSTUBDNS}"
+          - OIDCSTUBDNS:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCSTUBDNS ]
+        - !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCSTUBDNS ]
       DomainNameConfigurations:
         - CertificateArn: !Sub "{{resolve:ssm:/${Environment}/Platform/ACM/PrimaryZoneWildcardCertificateARN}}"
           EndpointType: REGIONAL

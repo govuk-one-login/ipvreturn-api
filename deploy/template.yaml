@@ -58,6 +58,10 @@ Parameters:
     Description: "Set to true to apply reserved concurrency when deploying in DEV environments"
     Type: String
     Default: "false"
+  OIDCDNS:
+    Description: "Mock OIDC DNS"
+    Type: String
+    Default: "ipr-oidc-stub-bhav-oidcstub.return.dev.account.gov.uk"
 
 Mappings:
   EnvironmentConfiguration: # This is where you store per-environment settings.
@@ -117,7 +121,7 @@ Mappings:
       INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
       DNSSUFFIX: "return.dev.account.gov.uk"
       #OIDCURL: "https://oidc.staging.account.gov.uk/"
-      OIDCURL: "https://ipr-oidc-stub-bhav-govnotifystub.return.dev.account.gov.uk/"
+      OIDCURL: "https://ipr-oidc-stub-bhav-oidcstub.return.dev.account.gov.uk/"      
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
     build:
@@ -250,6 +254,8 @@ Conditions:
               - Fn::Equals:
                   - !Sub "${AWS::StackName}"
                   - "ipvreturn-api"
+  IsLocalTestStack: !Not
+    - !Condition NotLocalTestStack
 
 Globals:
   Function:
@@ -486,16 +492,6 @@ Resources:
       ThumbprintList:
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
       Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
-  
-  ### OIDC Provider as IAM entity- Local deployment
-  OIDCProvider:
-    Type: AWS::IAM::OIDCProvider
-    Properties:
-      ClientIdList:
-        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-      ThumbprintList:
-        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
   ### AssumeRoleWithWebIdentityRole
   AssumeRoleWithWebIdentityRole:
@@ -532,13 +528,14 @@ Resources:
   ### AssumeRoleWithWebIdentityRole-local testing
   AssumeRoleWithWebIdentityRole:
     Type: "AWS::IAM::Role"
+    Condition: IsLocalTestStack
     Properties:
       AssumeRolePolicyDocument:
         Statement:
           - Action: "sts:AssumeRoleWithWebIdentity"
             Effect: Allow
-            Principal:
-              Federated: !GetAtt OIDCProvider.Arn
+            Principal:              
+              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/${OIDCDNS}/"
         Version: 2012-10-17
       Policies:
         - PolicyName: GetSessionEventPolicy
@@ -558,7 +555,7 @@ Resources:
       PermissionsBoundary: !If
         - UsePermissionsBoundary
         - !Ref PermissionsBoundary
-        - !Ref AWS::NoValue
+        - !Ref AWS::NoValue  
 
   ### Start of API Gateway definition.
   IPVRRestApi:
@@ -695,7 +692,6 @@ Resources:
   
   IPVRApiCertificateRecord:
     Type: AWS::Route53::RecordSet
-    #Condition: NotLocalTestStack
     Properties:
       Name: !Ref IPVRApiCustomDomain
       Type: A
@@ -706,7 +702,6 @@ Resources:
 
   IPVRApiMapping:
     Type: AWS::ApiGateway::BasePathMapping
-    #Condition: NotLocalTestStack
     DependsOn: IPVRApiCustomDomain
     Properties:
       DomainName: !Ref IPVRApiCustomDomain
@@ -1299,11 +1294,6 @@ Resources:
           OIDC_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
           RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
           ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
-          # ASSUMEROLE_WITH_WEB_IDENTITY_ARN:
-          #   Fn::If:
-          #     - NotLocalTestStack
-          #     - !GetAtt AssumeRoleWithWebIdentityRole.Arn
-          #     - !Ref AWS::NoValue
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
       Policies:
         - AWSLambdaBasicExecutionRole
@@ -2619,4 +2609,5 @@ Outputs:
     Condition: IsNotProdLikeEnvironment
     Description: "Gov Notify Stub"
     Value: !FindInMap [EnvironmentVariables, !Ref Environment, GOVUKNOTIFYAPI]
+  
 
