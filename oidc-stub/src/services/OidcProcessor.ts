@@ -13,18 +13,15 @@ export class OidcProcessor {
     private static instance: OidcProcessor;
 
     private readonly logger: Logger;
-
-    private readonly metrics: Metrics;
 	
-    constructor(logger: Logger, metrics: Metrics) {
+    constructor(logger: Logger) {
     	this.logger = logger;
-
-    	this.metrics = metrics;
     }
 
     static getInstance(logger: Logger, metrics: Metrics): OidcProcessor {
+		if (!checkRequiredEnvVars(["JWKS_URI", "SIGNING_KEY", "OIDC_URL"])) throw new Error("Missing Configuration");
     	if (!OidcProcessor.instance) {
-    		OidcProcessor.instance = new OidcProcessor(logger, metrics);
+    		OidcProcessor.instance = new OidcProcessor(logger);
     	}
     	return OidcProcessor.instance;
     }
@@ -43,7 +40,7 @@ export class OidcProcessor {
 		const payload: JarPayload = {
 			sub: code as string,
 			aud: "ppcQQGGNxghc-QJiqhRyGIJ5Its", //TODO get it from the env var
-			iss: "https://ipr-oidc-stub-bhav-oidcstub.return.dev.account.gov.uk/", //TODO get this from env var
+			iss: process.env.OIDC_URL,
 			iat,
 			nbf: iat - 1,
 			exp: iat + 3 * 60,
@@ -70,7 +67,7 @@ export class OidcProcessor {
      */
     async returnOpenIdConfig(): Promise<any> {
     	this.logger.info({ message: "Fetching OpenId configuration response" });
-		const baseUrl = "https://ipr-oidc-stub-bhav-oidcstub.return.dev.account.gov.uk/"; //TODO get it from env variable.
+		const baseUrl = process.env.OIDC_URL;
 		return {
 			statusCode: HttpCodesEnum.OK,
 			body: JSON.stringify({
@@ -200,30 +197,27 @@ async function sign(jwtPayload: JarPayload, keyId: string): Promise<string> {
 	if (res.Signature == null) {
 		throw new Error("Failed to sign Jwt");
 	}
-	//const base64EncodedSignature = res.Signature.toString('base64');
-	// const token = jwt.sign(jwtPayload, base64EncodedSignature, { algorithm: 'RS256' });
-    // return token;
 	const signature = util.base64url.encode(
 		Buffer.from(res.Signature),
 		"utf8"
 	  );
-	  console.log("Signature----:" + signature);
 	  return `${tokenComponents.header}.${tokenComponents.payload}.${signature}`;
 }
 
 export function getConfig(): {
 	jwksUri: string;
 	signingKey: string;
-  } {
-	if (
-	  process.env.JWKS_URI == null ||
-	  process.env.SIGNING_KEY == null
-	) {
-	  throw new Error("Missing configuration");
-	}
-  
+  } {  
 	return {
 	  jwksUri: process.env.JWKS_URI,
 	  signingKey: process.env.SIGNING_KEY,
 	};
+}
+
+function checkRequiredEnvVars(requiredVars: string[]): boolean {
+	const missingVars = requiredVars.filter(varName => !process.env[varName]);
+	if (missingVars.length > 0) {
+		return false;
+	}
+	return true;
 }

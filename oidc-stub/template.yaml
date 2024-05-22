@@ -214,6 +214,7 @@ Resources:
           POWERTOOLS_SERVICE_NAME: MockOidcHandler
           SIGNING_KEY: !Ref OIDCStubKMSSigningKey
           JWKS_URI: !FindInMap [EnvironmentVariables, !Ref Environment, JWKSURI]
+          OIDC_URL: !FindInMap [EnvironmentVariables, !Ref Environment, OIDCURL]
 
       Policies:
         - AWSLambdaBasicExecutionRole
