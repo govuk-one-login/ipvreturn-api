@@ -147,6 +147,7 @@ describe("PostEventProcessor", () => {
 			const AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_MISSING_EMAIL: ReturnSQSEvent = {
 				event_id: "588f4a66-f75a-4728-9f7b-8afd865c233c",
 				client_id: "ekwU",
+				clientLandingPageUrl: "REDIRECT_URL",
 				event_name: "AUTH_IPV_AUTHORISATION_REQUESTED",
 				timestamp: 1681902001,
 				event_timestamp_ms: 1681902001713,
@@ -157,7 +158,46 @@ describe("PostEventProcessor", () => {
 			};
 			const result = await postEventProcessorMockServices.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_MISSING_EMAIL));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockLogger.warn).toHaveBeenCalledWith({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+			expect(mockLogger.warn).toHaveBeenCalledWith({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+			expect(result).toBe(`Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`);
+		});
+
+		it("Throws error if clientLandingPageUrl is missing", async () => {
+			const AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_MISSING_LANDINGURL: ReturnSQSEvent = {
+				event_id: "588f4a66-f75a-4728-9f7b-8afd865c233c",
+				client_id: "ekwU",
+				event_name: "AUTH_IPV_AUTHORISATION_REQUESTED",
+				timestamp: 1681902001,
+				event_timestamp_ms: 1681902001713,
+				timestamp_formatted: "2023-04-19T11:00:01.000Z",
+				user: {
+					user_id: "01333e01-dde3-412f-a484-4444",
+					email: "test@jest.com",
+				},
+			};
+			const result = await postEventProcessorMockServices.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_MISSING_LANDINGURL));
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockLogger.warn).toHaveBeenCalledWith({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+			expect(result).toBe(`Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`);
+		});
+
+		it("Throws error if clientLandingPageUrl is only spaces", async () => {
+			const AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_URL_SPACES: ReturnSQSEvent = {
+				event_id: "588f4a66-f75a-4728-9f7b-8afd865c233c",
+				client_id: "ekwU",
+				clientLandingPageUrl: "  ",
+				event_name: "AUTH_IPV_AUTHORISATION_REQUESTED",
+				timestamp: 1681902001,
+				event_timestamp_ms: 1681902001713,
+				timestamp_formatted: "2023-04-19T11:00:01.000Z",
+				user: {
+					user_id: "01333e01-dde3-412f-a484-4444",
+					email: "test@jest.com",
+				},
+			};
+			const result = await postEventProcessorMockServices.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_URL_SPACES));
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockLogger.warn).toHaveBeenCalledWith({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 			expect(result).toBe(`Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`);
 		});
 	});
