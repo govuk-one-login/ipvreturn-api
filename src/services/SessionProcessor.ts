@@ -132,7 +132,6 @@ export class SessionProcessor {
 			// to rows where the leading key (partition key)
 			// is equal to the sub of the ID.
 			const sub = jwtIdTokenPayload.sub!;
-			//const sub = "01333e01-dde3-412f-a484-4444"
 			const session = await iprService.getSessionBySub(sub);
 			if (!session) {
 				this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
