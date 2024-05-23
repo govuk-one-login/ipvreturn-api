@@ -5,12 +5,12 @@ import { SessionEventProcessor } from "../../../services/SessionEventProcessor";
 import { mock } from "jest-mock-extended";
 import { DynamoDBStreamEvent } from "aws-lambda";
 import { VALID_DYNAMODB_STREAM_EVENT, VALID_DYNAMODB_STREAM_EVENT_WITH_PO_DETAILS } from "../data/dynamodb-stream-record";
-import { IPRService } from "../../../services/IPRService";
+import { IPRServiceSession } from "../../../services/IPRServiceSession";
 import { Constants } from "../../../utils/Constants";
 const { unmarshall } = require("@aws-sdk/util-dynamodb");
 
 let sessionEventProcessorTest: SessionEventProcessor;
-const mockIprService = mock<IPRService>();
+const mockIprService = mock<IPRServiceSession>();
 const mockLogger = mock<Logger>();
 const metrics = new Metrics({ namespace: "F2F" });
 let streamEvent: DynamoDBStreamEvent;

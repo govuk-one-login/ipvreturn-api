@@ -25,6 +25,7 @@ paths:
         - Backend
       parameters:
         - $ref: "#/components/parameters/AuthCode"
+        - $ref: '#/components/parameters/AuditHeader'
       x-amazon-apigateway-request-validator: "both"
       x-amazon-apigateway-integration:
         httpMethod: "POST"
@@ -108,6 +109,13 @@ components:
       in: query
       description: The authorization code returned from GOV.UK Signin
       required: true
+      schema:
+        type: string
+    AuditHeader:
+      name: txma-audit-encoded
+      in: header
+      description: An encoded header sent by the FE containing info about request origin
+      required: false
       schema:
         type: string
 

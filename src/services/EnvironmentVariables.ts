@@ -27,10 +27,12 @@ export class EnvironmentVariables {
 	private readonly GOV_NOTIFY_QUEUE_URL = process.env.GOV_NOTIFY_QUEUE_URL;
 
 	private readonly SESSION_EVENTS_TABLE = process.env.SESSION_EVENTS_TABLE;
+	
+	private readonly AUTH_EVENTS_TABLE = process.env.AUTH_EVENTS_TABLE;
+
+	private readonly AUTH_EVENT_TTL_SECS = process.env.AUTH_EVENT_TTL_SECS;
 
 	private readonly SESSION_RETURN_RECORD_TTL_SECS = process.env.SESSION_RETURN_RECORD_TTL_SECS;
-
-	private readonly INITIAL_SESSION_RECORD_TTL_SECS = process.env.INITIAL_SESSION_RECORD_TTL_SECS;
 
 	private readonly KMS_KEY_ARN = process.env.KMS_KEY_ARN;
 
@@ -86,7 +88,7 @@ export class EnvironmentVariables {
 			}
 			case ServicesEnum.POST_EVENT_SERVICE: {
 				if (!this.SESSION_EVENTS_TABLE || this.SESSION_EVENTS_TABLE.trim().length === 0 ||
-					!this.SESSION_RETURN_RECORD_TTL_SECS || !this.INITIAL_SESSION_RECORD_TTL_SECS ) {
+					!this.SESSION_RETURN_RECORD_TTL_SECS || !this.AUTH_EVENT_TTL_SECS ) {
 					logger.error({ message: "PostEvent Handler - Missing SessionEvents Tablename or SESSION_RETURN_RECORD_TTL_SECS or INITIAL_SESSION_RECORD_TTL_SECS" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
 				}
@@ -161,12 +163,16 @@ export class EnvironmentVariables {
 		return this.SESSION_EVENTS_TABLE;
 	}
 
-	sessionReturnRecordTtlSecs(): number {
-		return +this.SESSION_RETURN_RECORD_TTL_SECS!;
+	authEventsTable(): any {
+		return this.AUTH_EVENTS_TABLE;
 	}
 
-	initialSessionReturnRecordTtlSecs(): number {
-		return +this.INITIAL_SESSION_RECORD_TTL_SECS!;
+	authEventTtlSecs(): number {
+		return +this.AUTH_EVENT_TTL_SECS!;
+	}
+
+	sessionReturnRecordTtlSecs(): number {
+		return +this.SESSION_RETURN_RECORD_TTL_SECS!;
 	}
 
 	getGovNotifyQueueURL(logger: Logger): string {

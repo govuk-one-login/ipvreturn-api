@@ -14,7 +14,7 @@ import { ExtSessionEvent } from "../models/SessionEvent";
 import { MessageCodes } from "../models/enums/MessageCodes";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
 
-export class IPRService {
+export class IPRServiceSession {
 	readonly tableName: string;
 
 	private readonly dynamo: DynamoDBDocument;
@@ -23,7 +23,7 @@ export class IPRService {
 
 	private readonly environmentVariables: EnvironmentVariables;
 
-	private static instance: IPRService;
+	private static instance: IPRServiceSession;
 
 	private readonly eventAttributeMap = new Map<string, string>([
 		[Constants.AUTH_IPV_AUTHORISATION_REQUESTED, "ipvStartedOn"],
@@ -39,11 +39,11 @@ export class IPRService {
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.NA);
 	}
 
-	static getInstance(tableName: string, logger: Logger, dynamoDbClient: DynamoDBDocument): IPRService {
-		if (!IPRService.instance) {
-			IPRService.instance = new IPRService(tableName, logger, dynamoDbClient);
+	static getInstance(tableName: string, logger: Logger, dynamoDbClient: DynamoDBDocument): IPRServiceSession {
+		if (!IPRServiceSession.instance) {
+			IPRServiceSession.instance = new IPRServiceSession(tableName, logger, dynamoDbClient);
 		}
-		return IPRService.instance;
+		return IPRServiceSession.instance;
 	}
 
 	async getSessionBySub(userId: string): Promise<ExtSessionEvent | undefined> {
@@ -79,7 +79,6 @@ export class IPRService {
 				userId,
 			},
 		});
-
 		try {
 			const session = await this.dynamo.send(getSessionCommand);
 			const eventAttribute = this.eventAttributeMap.get(eventType);
@@ -139,8 +138,13 @@ export class IPRService {
 		}
 	}
 
-	async sendToTXMA(event: TxmaEvent): Promise<void> {
+	async sendToTXMA(event: TxmaEvent, encodedHeader?: string): Promise<void> {
 		try {
+			if (encodedHeader) {
+				event.restricted = event.restricted ?? { device_information: { encoded: "" } };
+				event.restricted.device_information = { encoded: encodedHeader };
+			}
+
 			const messageBody = JSON.stringify(event);
 			const params = {
 				MessageBody: messageBody,
@@ -153,8 +157,11 @@ export class IPRService {
 			const obfuscatedObject = await this.obfuscateJSONValues(event, Constants.TXMA_FIELDS_TO_SHOW);
 			this.logger.info({ message: "Obfuscated TxMA Event", txmaEvent: JSON.stringify(obfuscatedObject, null, 2) });
 		} catch (error) {
-			this.logger.error({ message: "Error when sending message to TXMA Queue", error });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "sending event to txma queue - failed");
+			this.logger.error({
+				message: `Error when sending event ${event.event_name} to TXMA Queue`,
+				error,
+				messageCode: MessageCodes.FAILED_TO_WRITE_TXMA,
+			});
 		}
 	}
 

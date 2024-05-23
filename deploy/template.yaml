@@ -117,8 +117,8 @@ Mappings:
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk/resume"
-      SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
+      AUTHEVENTTTLINSECS: 21600 # Default 6hrs
+      SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
       DNSSUFFIX: "return.dev.account.gov.uk"
       #OIDCURL: "https://oidc.staging.account.gov.uk/"
       OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"      
@@ -132,8 +132,8 @@ Mappings:
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.build.account.gov.uk/resume"
-      SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
+      AUTHEVENTTTLINSECS: 21600 # Default 6hrs
+      SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
       DNSSUFFIX: "return.build.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
@@ -146,8 +146,8 @@ Mappings:
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk/resume"
-      SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
+      AUTHEVENTTTLINSECS: 21600 # Default 6hrs
+      SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
       DNSSUFFIX: "return.staging.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
@@ -159,8 +159,8 @@ Mappings:
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk/resume"
-      SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
+      AUTHEVENTTTLINSECS: 21600 # Default 6hrs
+      SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
       DNSSUFFIX: "return.integration.account.gov.uk"
       OIDCURL: "https://oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
@@ -172,8 +172,8 @@ Mappings:
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.account.gov.uk/resume"
-      SESSIONRETURNRECORDTTLINSECS: 950400 # Default 11 days
-      INITIALSESSIONRECORDTTLINSECS: 43200 # Default 12hrs
+      AUTHEVENTTTLINSECS: 21600 # Default 6hrs
+      SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
       DNSSUFFIX: "return.account.gov.uk"
       OIDCURL: "https://oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
@@ -520,6 +520,20 @@ Resources:
                   - "kms:Decrypt"
                 Resource:
                   Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
+        - PolicyName: GetAuthEventPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:GetItem"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-arn"
+              - Effect: Allow
+                Action:
+                  - "kms:Decrypt"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-key-arn"
       PermissionsBoundary: !If
         - UsePermissionsBoundary
         - !Ref PermissionsBoundary
@@ -727,8 +741,10 @@ Resources:
           POWERTOOLS_SERVICE_NAME: PostEventHandler
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+          AUTH_EVENT_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, AUTHEVENTTTLINSECS ]
           SESSION_RETURN_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, SESSIONRETURNRECORDTTLINSECS ]
-          INITIAL_SESSION_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, INITIALSESSIONRECORDTTLINSECS ]
+          AUTH_EVENTS_TABLE:
+            Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
@@ -740,10 +756,22 @@ Resources:
             TableName:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-name"
+        - DynamoDBWritePolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-auth-events-table-name"
+        - DynamoDBReadPolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-auth-events-table-name"
         - KMSDecryptPolicy:
             KeyId:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-key-id"
+        - KMSDecryptPolicy:
+            KeyId:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-auth-events-table-key-id"
         - Statement:
             - Sid: TxMAKMSDecryptkeysPolicy
               Effect: Allow
@@ -811,7 +839,7 @@ Resources:
         - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
       FunctionName: !Ref PostEventFunction
 
-  PostEventFunctionFatalErorMetricFilter:
+  PostEventFunctionFatalErrorMetricFilter:
     Type: AWS::Logs::MetricFilter
     Condition: "DeployAlarms"
     Properties:
@@ -823,13 +851,13 @@ Resources:
           MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
           MetricName: "PostEventFunction-Fatalerror"
 
-  PostEventFunctionnFatalErrorAlarm:
+  PostEventFunctionFatalErrorAlarm:
     DependsOn:
-      - "PostEventFunctionFatalErorMetricFilter"
+      - "PostEventFunctionFatalErrorMetricFilter"
     Type: AWS::CloudWatch::Alarm
     Condition: "DeployAlarms"
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-PostEventFunctionn-FatalErrorAlarm"
+      AlarmName: !Sub "${AWS::StackName}-PostEventFunction-FatalErrorAlarm"
       AlarmDescription: !Sub "Trigger an alarm when Fatal Error occurs. ${SupportManualURL}"
       ActionsEnabled: true
       OKActions:
@@ -1104,6 +1132,8 @@ Resources:
           GOV_NOTIFY_QUEUE_URL: !Ref GovNotifySQSQueue
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+          AUTH_EVENTS_TABLE:
+            Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
@@ -1115,6 +1145,14 @@ Resources:
             TableName:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-name"
+        - DynamoDBWritePolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-auth-events-table-name"
+        - DynamoDBReadPolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-auth-events-table-name"
         - KMSDecryptPolicy:
             KeyId:
               Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-id"
@@ -2192,7 +2230,7 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       LogGroupName: !Ref StreamProcessorFunctionLogGroup
-      FilterPattern: '{ $.level = "ERROR" || $.message = "*trying to send the fallback template email." }'
+      FilterPattern: '{ $.level = "ERROR" && $.message = "*trying to send the fallback template email." }'
       MetricTransformations:
         -
           MetricValue: "1"
@@ -2206,7 +2244,7 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-FallbackEmailErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fallback email is trigerred due to missing mandatory fields. ${SupportManualURL}"
+      AlarmDescription: !Sub "Trigger an alarm when Fallback email is triggered due to missing mandatory fields. ${SupportManualURL}"
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -2214,6 +2252,43 @@ Resources:
         - !ImportValue platform-alarm-topic-slack-warning-alert
       InsufficientDataActions: [ ]
       MetricName: StreamProcessorFunction-FallbackEmail-error
+      Namespace: !Sub "${AWS::StackName}/LogMessages"
+      Statistic: Sum
+      Dimensions: [ ]
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  OutOfSyncSQSEventsErrorMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Condition: "DeployAlarms"
+    Properties:
+      LogGroupName: !Ref PostEventFunctionLogGroup
+      FilterPattern: '{ $.level = "ERROR" && $.message = "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event." }'
+      MetricTransformations:
+        -
+          MetricValue: "1"
+          MetricNamespace: !Sub "${AWS::StackName}/LogMessages"
+          MetricName: "PostEventFunction-OutOfSyncSQSEvents-error"
+
+  OutOfSyncSQSEventsErrorAlarm:
+    DependsOn:
+      - "OutOfSyncSQSEventsErrorMetricFilter"
+    Type: AWS::CloudWatch::Alarm
+    Condition: "DeployAlarms"
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-OutOfSyncSQSEventsErrorAlarm"
+      AlarmDescription: !Sub "Trigger an alarm when F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event"
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      MetricName: PostEventFunction-OutOfSyncSQSEvents-error
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
       Dimensions: [ ]
@@ -2569,6 +2644,10 @@ Outputs:
     Description: "SessionEvents Table Name"
     Value:
       Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
+  AuthEventsTable:
+    Description: "AuthEvents Table Name"
+    Value:
+      Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
   TxMASQSQueue: 
     Description: "Arn of the TxMASQSQueue"
     Value: !GetAtt TxMASQSQueue.Arn
@@ -2601,6 +2680,18 @@ Outputs:
       Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
     Export:
       Name: !Sub ${AWS::StackName}-SessionTableEncryptionKey-arn
+  AuthTableARN: 
+    Description: "Arn of the Auth DynamoDB table"
+    Value:
+      Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-arn"
+    Export:
+      Name: !Sub ${AWS::StackName}-AuthTable-arn
+  AuthTableEcryptionARN: 
+    Description: "Arn of the AuthTableEncryptionKey"
+    Value:
+      Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-key-arn"
+    Export:
+      Name: !Sub ${AWS::StackName}-AuthEventsTableEncryptionKey-arn
   IpvReturnTestHarnessURL:
     Condition: IsNotProdLikeEnvironment
     Description: "IPR Test Harness"
