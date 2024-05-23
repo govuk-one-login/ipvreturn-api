@@ -19,7 +19,6 @@ import { Constants } from "../utils/Constants";
 import { SessionEventStatusEnum } from "../models/enums/SessionEventStatusEnum";
 import { stsClient } from "../utils/StsClient";
 import { MessageCodes } from "../models/enums/MessageCodes";
-import { TxmaEventNames } from "../models/enums/TxmaEvents";
 
 export class SessionProcessor {
 	private static instance: SessionProcessor;
@@ -77,9 +76,6 @@ export class SessionProcessor {
 			}
 			const idToken = await this.generateIdToken(authCode);
 
-			console.log("----issuer: " + issuer);
-			console.log("----jwks_uri: " + jwksEndpoint);
-			console.log("----IDTOKEN: " + idToken);
 			let parsedIdTokenJwt: Jwt;
 			try {
 				parsedIdTokenJwt = this.kmsJwtAdapter.decode(idToken);
@@ -163,7 +159,7 @@ export class SessionProcessor {
 
 			try {
 				await iprService.sendToTXMA({
-					event_name: TxmaEventNames.IPR_USER_REDIRECTED,
+					event_name: "IPR_USER_REDIRECTED",
 					...buildCoreEventFields({ user_id: sub }),
 					extensions: {
 						previous_govuk_signin_journey_id: session.clientSessionId,

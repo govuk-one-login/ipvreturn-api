@@ -2,8 +2,8 @@ version = 0.1
 [dev]
 [dev.deploy]
 [dev.deploy.parameters]
-stack_name = "ipr-oidc-stub-bhav"
-s3_prefix = "ipr-oidc-stub-bhav"
+stack_name = "ipr-oidc-stub"
+s3_prefix = "ipr-oidc-stub"
 region = "eu-west-2"
 confirm_changeset = false
 capabilities = "CAPABILITY_IAM"

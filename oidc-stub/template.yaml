@@ -42,11 +42,11 @@ Mappings:
     dev:
       OIDCSTUBDNS: "oidcstub.return.dev.account.gov.uk"
       JWKSURI: "https://ipvreturn-api.return.dev.account.gov.uk"
-      OIDCURL: "https://ipr-oidc-stub-bhav-oidcstub.return.dev.account.gov.uk/" 
+      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/" 
     build:
       OIDCSTUBDNS: "oidcstub.return.build.account.gov.uk"
       JWKSURI: "https://ipvreturn-api.return.dev.account.gov.uk"
-      OIDCURL: "https://ipr-oidc-stub-bhav-oidcstub.return.build.account.gov.uk/" 
+      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.build.account.gov.uk/" 
 
 Conditions:
   CreateDevResources: !Equals
