@@ -120,7 +120,6 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
       DNSSUFFIX: "return.dev.account.gov.uk"
-      #OIDCURL: "https://oidc.staging.account.gov.uk/"
       OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"      
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
@@ -539,8 +538,8 @@ Resources:
         - !Ref PermissionsBoundary
         - !Ref AWS::NoValue
 
-  ### AssumeRoleWithWebIdentityRole-local testing
-  AssumeRoleWithWebIdentityRole:
+  ### AssumeRoleWithWebIdentityRole-dev testing
+  DevAssumeRoleWithWebIdentityRole:
     Type: "AWS::IAM::Role"
     Condition: IsLocalTestStack
     Properties:
@@ -692,7 +691,6 @@ Resources:
 
   IPVRApiCustomDomain:
     Type: AWS::ApiGateway::DomainName
-    #Condition: NotLocalTestStack
     Properties:
       DomainName: !Sub
         - "api-${AWS::StackName}.${DNSSUFFIX}"
@@ -707,7 +705,10 @@ Resources:
   IPVRApiCertificateRecord:
     Type: AWS::Route53::RecordSet
     Properties:
-      Name: !Ref IPVRApiCustomDomain
+      Name: !Sub
+        - "api-${AWS::StackName}.${DNSSUFFIX}"
+        - DNSSUFFIX:
+            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       Type: A
       HostedZoneId: !Sub "{{resolve:ssm:/${Environment}/Platform/Route53/PrimaryZoneID}}"
       AliasTarget:
@@ -718,7 +719,10 @@ Resources:
     Type: AWS::ApiGateway::BasePathMapping
     DependsOn: IPVRApiCustomDomain
     Properties:
-      DomainName: !Ref IPVRApiCustomDomain
+      DomainName: !Sub
+        - "api-${AWS::StackName}.${DNSSUFFIX}"
+        - DNSSUFFIX:
+            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       RestApiId: !Ref IPVRRestApi
       Stage: !Sub "${IPVRRestApi.Stage}"
 
@@ -1331,7 +1335,11 @@ Resources:
           CLIENT_ID_SSM_PATH: !Sub "/${Environment}/ipvreturn/CLIENT_ID"
           OIDC_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
           RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
-          ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
+          ASSUMEROLE_WITH_WEB_IDENTITY_ARN:
+            Fn::If:
+              - NotLocalTestStack
+              - !GetAtt AssumeRoleWithWebIdentityRole.Arn
+              - !GetAtt DevAssumeRoleWithWebIdentityRole.Arn
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
       Policies:
         - AWSLambdaBasicExecutionRole
