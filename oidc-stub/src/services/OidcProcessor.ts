@@ -19,7 +19,7 @@ export class OidcProcessor {
     }
 
     static getInstance(logger: Logger, metrics: Metrics): OidcProcessor {
-		if (!checkRequiredEnvVars(["JWKS_URI", "SIGNING_KEY", "OIDC_URL"])) throw new Error("Missing Configuration");
+		if (!checkRequiredEnvVars(["JWKS_URI", "SIGNING_KEY", "OIDC_URL", "OIDC_CLIENT_ID"])) throw new Error("Missing Configuration");
     	if (!OidcProcessor.instance) {
     		OidcProcessor.instance = new OidcProcessor(logger);
     	}
@@ -39,7 +39,7 @@ export class OidcProcessor {
 		const iat = Math.floor(Date.now() / 1000);
 		const payload: JarPayload = {
 			sub: code as string,
-			aud: "ppcQQGGNxghc-QJiqhRyGIJ5Its", //TODO get it from the env var
+			aud: process.env.OIDC_CLIENT_ID,
 			iss: process.env.OIDC_URL,
 			iat,
 			nbf: iat - 1,
