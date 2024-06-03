@@ -17,7 +17,6 @@ Parameters:
     Type: "String"
     AllowedValues:
       - "dev"
-      - "build"
 
     ConstraintDescription: Ensure environment variable is set to one of dev, build.
   PermissionsBoundary:
@@ -34,19 +33,12 @@ Mappings:
     dev:
       logretentionindays: 3
       apiTracingEnabled: true
-    build:
-      logretentionindays: 3
-      apiTracingEnabled: true
 
   EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
     dev:
       OIDCSTUBDNS: "oidcstub.return.dev.account.gov.uk"
       JWKSURI: "https://ipvreturn-api.return.dev.account.gov.uk"
-      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/" 
-    build:
-      OIDCSTUBDNS: "oidcstub.return.build.account.gov.uk"
-      JWKSURI: "https://ipvreturn-api.return.dev.account.gov.uk"
-      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.build.account.gov.uk/" 
+      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"  
 
 Conditions:
   CreateDevResources: !Equals
@@ -201,17 +193,17 @@ Resources:
   ### End of API Gateway definition.
 
   ### Function Definition
-  ## OIDC
-  MockOidcFunction:
+  ## OIDCToken
+  MockOidcTokenFunction:
     Type: AWS::Serverless::Function
-    DependsOn: MockOidcFunctionLogGroup
+    DependsOn: MockOidcTokenFunctionLogGroup
     Properties:
-      FunctionName: !Sub "Oidc-Stub-${AWS::StackName}"
-      Handler: MockOidcHandler.lambdaHandler
+      FunctionName: !Sub "OidcToken-Stub-${AWS::StackName}"
+      Handler: MockOidcTokenHandler.lambdaHandler
       CodeUri: ./src/
       Environment:
         Variables:
-          POWERTOOLS_SERVICE_NAME: MockOidcHandler
+          POWERTOOLS_SERVICE_NAME: MockOidcTokenHandler
           SIGNING_KEY: !Ref OIDCStubKMSSigningKey
           OIDC_CLIENT_ID: !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
           JWKS_URI: !FindInMap [EnvironmentVariables, !Ref Environment, JWKSURI]
@@ -234,12 +226,103 @@ Resources:
             Path: /token
             Method: post
             RestApiId: !Ref MockOidcRestApi
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
+        EntryPoints:
+          - MockOidcTokenHandler.ts
+
+  MockOidcTokenFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/OidcToken-${AWS::StackName}"
+      RetentionInDays: !FindInMap [ EnvironmentConfiguration, !Ref Environment, logretentionindays ]
+
+  MockOidcTokenFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref MockOidcTokenFunction
+      Principal: apigateway.amazonaws.com
+
+  ## OIDCOpenIdConfig
+  MockOidcOpenIdConfigFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: MockOidcOpenIdConfigFunctionLogGroup
+    Properties:
+      FunctionName: !Sub "OidcOpenIdConfig-Stub-${AWS::StackName}"
+      Handler: MockOidcOpenIdConfigHandler.lambdaHandler
+      CodeUri: ./src/
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: MockOidcOpenIdConfigHandler
+          OIDC_URL: !FindInMap [EnvironmentVariables, !Ref Environment, OIDCURL]
+
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSXrayWriteOnlyAccess
+        - Statement:
+            - Sid: KMSSignPolicy
+              Effect: Allow
+              Action:
+                - kms:Sign
+              Resource:
+                - !GetAtt OIDCStubKMSSigningKey.Arn
+      Events:
         openidConfiguration:
           Type: Api
           Properties:
             Path: /.well-known/openid-configuration
             Method: get
             RestApiId: !Ref MockOidcRestApi
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
+        EntryPoints:
+          - MockOidcOpenIdConfigHandler.ts
+
+  MockOidcOpenIdConfigFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/OidcOpenIdConfig-${AWS::StackName}"
+      RetentionInDays: !FindInMap [ EnvironmentConfiguration, !Ref Environment, logretentionindays ]
+
+  MockOidcOpenIdConfigFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref MockOidcOpenIdConfigFunction
+      Principal: apigateway.amazonaws.com
+
+  ## OIDCAuthorize
+  MockOidcAuthorizeFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: MockOidcAuthorizeFunctionLogGroup
+    Properties:
+      FunctionName: !Sub "OidcAuthorize-Stub-${AWS::StackName}"
+      Handler: MockOidcAuthorizeHandler.lambdaHandler
+      CodeUri: ./src/
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: MockOidcAuthorizeHandler
+
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSXrayWriteOnlyAccess
+        - Statement:
+            - Sid: KMSSignPolicy
+              Effect: Allow
+              Action:
+                - kms:Sign
+              Resource:
+                - !GetAtt OIDCStubKMSSigningKey.Arn
+      Events:
         authorize:
           Type: Api
           Properties:
@@ -253,19 +336,19 @@ Resources:
         Target: "es2020"
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
-          - MockOidcHandler.ts
+          - MockOidcAuthorizeHandler.ts
 
-  MockOidcFunctionLogGroup:
+  MockOidcAuthorizeFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/lambda/Oidc-${AWS::StackName}"
+      LogGroupName: !Sub "/aws/lambda/OidcAuthorize-${AWS::StackName}"
       RetentionInDays: !FindInMap [ EnvironmentConfiguration, !Ref Environment, logretentionindays ]
 
-  MockOidcFunctionPermission:
+  MockOidcAuthorizeFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref MockOidcFunction
+      FunctionName: !Ref MockOidcAuthorizeFunction
       Principal: apigateway.amazonaws.com
   
   JwksFunction:

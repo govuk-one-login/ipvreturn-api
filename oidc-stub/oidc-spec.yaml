@@ -39,7 +39,7 @@ paths:
       x-amazon-apigateway-integration:
         httpMethod: "POST"
         uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:Oidc-Stub-${AWS::StackName}:live/invocations
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:OidcToken-Stub-${AWS::StackName}:live/invocations
         responses:
           default:
             statusCode: "201"
@@ -86,7 +86,7 @@ paths:
       x-amazon-apigateway-integration:
         httpMethod: "POST"
         uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:Oidc-Stub-${AWS::StackName}:live/invocations
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:OidcOpenIdConfig-Stub-${AWS::StackName}:live/invocations
         responses:
           default:
             statusCode: "200"
@@ -157,7 +157,7 @@ paths:
       x-amazon-apigateway-integration:
         httpMethod: "POST"
         uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:Oidc-Stub-${AWS::StackName}:live/invocations
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:OidcAuthorize-Stub-${AWS::StackName}:live/invocations
         responses:
           default:
             statusCode: "200"
