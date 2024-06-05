@@ -2,7 +2,6 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Response } from "./utils/Response";
-import { ResourcesEnum } from "./models/enums/ResourcesEnum";
 
 import { HttpCodesEnum } from "./utils/HttpCodesEnum";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
@@ -25,26 +24,17 @@ class MockOidcAutorizeHandler implements LambdaInterface {
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
 	async handler(event: APIGatewayProxyEvent, context: any): Promise<APIGatewayProxyResult> {
-		 switch (event.resource) {
-			case ResourcesEnum.OIDC_AUTHORIZE_ENDPOINT:
-				 if (event.httpMethod === "GET") {
-					 try {
-						 logger.info("Event received: OIDC Authorize endpoint");
-						 return await OidcAuthorizeProcessor.getInstance(logger, metrics).returnAuthCode(event);						 
-					 } catch (err: any) {
-						 logger.error({ message: "An error has occurred.", err });
-						 if (err instanceof AppError) {
-							 return new Response(err.statusCode, err.message);
-						 }
-						 return new Response(HttpCodesEnum.SERVER_ERROR, "An error has occurred");
-					 }
-				 }
-				 break;					
-			default:
-				throw new AppError(`Requested resource does not exist: ${event.resource}`, HttpCodesEnum.NOT_FOUND);
-		}
+		try {
+			logger.info("Event received: OIDC Authorize endpoint");
+			return await OidcAuthorizeProcessor.getInstance(logger, metrics).returnAuthCode(event);						 
+		} catch (err: any) {
+			logger.error({ message: "An error has occurred.", err });
+			if (err instanceof AppError) {
+				return new Response(err.statusCode, err.message);
+			}
+			return new Response(HttpCodesEnum.SERVER_ERROR, "An error has occurred");
+		}				 
 	}
-
 }
 const handlerClass = new MockOidcAutorizeHandler();
 export const lambdaHandler = handlerClass.handler.bind(handlerClass);
