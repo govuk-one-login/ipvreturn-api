@@ -58,6 +58,10 @@ Parameters:
     Description: "Set to true to apply reserved concurrency when deploying in DEV environments"
     Type: String
     Default: "false"
+  OIDCDNS:
+    Description: "Mock OIDC DNS"
+    Type: String
+    Default: "ipr-oidc-stub-oidcstub.return.dev.account.gov.uk"
 
 Mappings:
   EnvironmentConfiguration: # This is where you store per-environment settings.
@@ -116,7 +120,7 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
       DNSSUFFIX: "return.dev.account.gov.uk"
-      OIDCURL: "https://oidc.staging.account.gov.uk/"
+      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"      
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
     build:
@@ -249,6 +253,8 @@ Conditions:
               - Fn::Equals:
                   - !Sub "${AWS::StackName}"
                   - "ipvreturn-api"
+  IsLocalTestStack: !Not
+    - !Condition NotLocalTestStack
 
 Globals:
   Function:
@@ -532,6 +538,38 @@ Resources:
         - !Ref PermissionsBoundary
         - !Ref AWS::NoValue
 
+  ### AssumeRoleWithWebIdentityRole-dev testing
+  DevAssumeRoleWithWebIdentityRole:
+    Type: "AWS::IAM::Role"
+    Condition: IsLocalTestStack
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: "sts:AssumeRoleWithWebIdentity"
+            Effect: Allow
+            Principal:              
+              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/${OIDCDNS}/"
+        Version: 2012-10-17
+      Policies:
+        - PolicyName: GetSessionEventPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:GetItem"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
+              - Effect: Allow
+                Action:
+                  - "kms:Decrypt"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue  
+
   ### Start of API Gateway definition.
   IPVRRestApi:
     Type: AWS::Serverless::Api
@@ -653,10 +691,9 @@ Resources:
 
   IPVRApiCustomDomain:
     Type: AWS::ApiGateway::DomainName
-    Condition: NotLocalTestStack
     Properties:
       DomainName: !Sub
-        - "api.${DNSSUFFIX}"
+        - "api-${AWS::StackName}.${DNSSUFFIX}"
         - DNSSUFFIX:
             !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       EndpointConfiguration:
@@ -664,13 +701,12 @@ Resources:
           - REGIONAL
       RegionalCertificateArn: !Sub "{{resolve:ssm:/${Environment}/Platform/ACM/PrimaryZoneWildcardCertificateARN}}"
       SecurityPolicy: TLS_1_2
-
+  
   IPVRApiCertificateRecord:
     Type: AWS::Route53::RecordSet
-    Condition: NotLocalTestStack
     Properties:
       Name: !Sub
-        - "api.${DNSSUFFIX}"
+        - "api-${AWS::StackName}.${DNSSUFFIX}"
         - DNSSUFFIX:
             !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       Type: A
@@ -681,11 +717,10 @@ Resources:
 
   IPVRApiMapping:
     Type: AWS::ApiGateway::BasePathMapping
-    Condition: NotLocalTestStack
     DependsOn: IPVRApiCustomDomain
     Properties:
       DomainName: !Sub
-        - "api.${DNSSUFFIX}"
+        - "api-${AWS::StackName}.${DNSSUFFIX}"
         - DNSSUFFIX:
             !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       RestApiId: !Ref IPVRRestApi
@@ -1304,7 +1339,7 @@ Resources:
             Fn::If:
               - NotLocalTestStack
               - !GetAtt AssumeRoleWithWebIdentityRole.Arn
-              - !Ref AWS::NoValue
+              - !GetAtt DevAssumeRoleWithWebIdentityRole.Arn
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
       Policies:
         - AWSLambdaBasicExecutionRole
@@ -2673,4 +2708,5 @@ Outputs:
     Condition: IsNotProdLikeEnvironment
     Description: "Gov Notify Stub"
     Value: !FindInMap [EnvironmentVariables, !Ref Environment, GOVUKNOTIFYAPI]
+  
 

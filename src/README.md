@@ -32,3 +32,7 @@ To check if there are any linting issues, run `npm lint`. If there are any criti
 will fail prompting developer to fix those issues. The report will be present under `reports` folder as an
 html file. Once those critical errors are fixed, re running `npm lint` should not return any errors.
 In order to fix some simple formatting issues, one can run `npm lint:fix` which should fix most of those automatically.
+
+### How to test your custom OIDC stub
+
+If you have your custom OIDC stub deployed and would like to connect your BE stack to your OIDC stub, then update the URLs in OIDCDNS and OIDCURL in the template.yaml file before deploying your custom BE stack.
