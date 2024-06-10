@@ -120,7 +120,7 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
       DNSSUFFIX: "return.dev.account.gov.uk"
-      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"      
+      OIDCURL: "https://oidc.staging.account.gov.uk/"      
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
     build:
