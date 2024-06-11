@@ -691,9 +691,10 @@ Resources:
 
   IPVRApiCustomDomain:
     Type: AWS::ApiGateway::DomainName
+    Condition: NotLocalTestStack
     Properties:
       DomainName: !Sub
-        - "api-${AWS::StackName}.${DNSSUFFIX}"
+        - "api.${DNSSUFFIX}"
         - DNSSUFFIX:
             !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       EndpointConfiguration:
@@ -704,9 +705,10 @@ Resources:
   
   IPVRApiCertificateRecord:
     Type: AWS::Route53::RecordSet
+    Condition: NotLocalTestStack
     Properties:
       Name: !Sub
-        - "api-${AWS::StackName}.${DNSSUFFIX}"
+        - "api.${DNSSUFFIX}"
         - DNSSUFFIX:
             !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       Type: A
@@ -717,10 +719,11 @@ Resources:
 
   IPVRApiMapping:
     Type: AWS::ApiGateway::BasePathMapping
+    Condition: NotLocalTestStack
     DependsOn: IPVRApiCustomDomain
     Properties:
       DomainName: !Sub
-        - "api-${AWS::StackName}.${DNSSUFFIX}"
+        - "api.${DNSSUFFIX}"
         - DNSSUFFIX:
             !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
       RestApiId: !Ref IPVRRestApi
