@@ -17,7 +17,7 @@ const logger = mock<Logger>();
 let sqsEvent: SQSEvent;
 let sqsEventNewEmail: SQSEvent;
 
-describe("SendEmailProcessor", () => {
+describe("SendEmailService", () => {
 	beforeAll(() => {
 		sendEmailServiceTest = SendEmailService.getInstance(logger, GOVUKNOTIFY_API_KEY, "serviceId");
 		// @ts-ignore
@@ -33,8 +33,13 @@ describe("SendEmailProcessor", () => {
 	});
 
 	it("Returns EmailResponse when oldEmail is sent successfully", async () => {
-		const mockEmailResponse = new EmailResponse(new Date().toISOString(), "", 201);
-		mockGovNotify.sendEmail.mockResolvedValue(mockEmailResponse);
+		mockGovNotify.sendEmail.mockResolvedValue({
+			"status": 201,
+			"data": {
+				"id": "oldEmail-test-id",
+				"status_code": 201,
+			},			
+		});
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
 		const emailResponse = await sendEmailServiceTest.sendEmail(email, Constants.VIST_PO_EMAIL_STATIC);
@@ -49,7 +54,9 @@ describe("SendEmailProcessor", () => {
     	});
 
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(1);
-		expect(emailResponse.emailFailureMessage).toBe("");
+		expect(emailResponse.emailFailureMessage).toBe("");		
+		expect(emailResponse.metadata.emailResponseStatus).toBe(201);
+		expect(emailResponse.metadata.emailResponseId).toBe("oldEmail-test-id");
 	});
 
 	it("SendEmailService fails and doesnt retry when GovNotify throws an error", async () => {
@@ -118,8 +125,13 @@ describe("SendEmailProcessor", () => {
 	});
 
 	it("Returns EmailResponse when newEmail is sent successfully", async () => {
-		const mockEmailResponse = new EmailResponse(new Date().toISOString(), "", 201);
-		mockGovNotify.sendEmail.mockResolvedValue(mockEmailResponse);
+		mockGovNotify.sendEmail.mockResolvedValue({
+			"status": 201,
+			"data": {
+				"id": "newEmail-test-id",
+				"status_code": 201,
+			},			
+		});
 		const eventBody = JSON.parse(sqsEventNewEmail.Records[0].body);
 		const newEmail = DynamicEmail.parseRequest(JSON.stringify(eventBody.Message));
 		const emailResponse = await sendEmailServiceTest.sendEmail(newEmail, Constants.VIST_PO_EMAIL_DYNAMIC);
@@ -140,6 +152,8 @@ describe("SendEmailProcessor", () => {
 
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(1);
 		expect(emailResponse.emailFailureMessage).toBe("");
+		expect(emailResponse.metadata.emailResponseStatus).toBe(201);
+		expect(emailResponse.metadata.emailResponseId).toBe("newEmail-test-id");
 	});
 
 });

@@ -122,7 +122,7 @@ export class SendEmailService {
     			this.logger.info("govNotify URL: " + this.environmentVariables.govukNotifyApiUrl());
     			const emailResponse = await this.govNotify.sendEmail(templateId, message.emailAddress, options);
     			this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
-    			return new EmailResponse(new Date().toISOString(), "", emailResponse.status);
+    			return new EmailResponse(new Date().toISOString(), "", { emailResponseStatus: emailResponse.status, emailResponseId: emailResponse.data.id });
     		} catch (err: any) {
     			this.logger.error("sendEmail - GOV UK Notify threw an error");
 
