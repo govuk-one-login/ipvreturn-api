@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - 'gov-notify-stub/**'
+      - .github/workflows/post-merge-gov-notify-stub-to-dev.yml
 
 permissions:
   id-token: write
