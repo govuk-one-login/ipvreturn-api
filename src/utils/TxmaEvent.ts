@@ -1,3 +1,5 @@
+import { EnvironmentVariables } from "../services/EnvironmentVariables";
+
 export type TxmaEventName =
 	"IPR_RESULT_NOTIFICATION_EMAILED"
 	| "IPR_USER_REDIRECTED";
@@ -22,6 +24,7 @@ export interface ExtensionObject {
 
 export interface TxmaEvent extends BaseTxmaEvent {
 	"event_name": TxmaEventName;
+	component_id: string;
 	"restricted"?: RestrictedObject;
 	"extensions"?: ExtensionObject;
 }
@@ -32,7 +35,7 @@ export interface RestrictedObject {
 	};
 }
 
-export const buildCoreEventFields = (user: TxmaUser ): BaseTxmaEvent => {
+export const buildCoreEventFields = (user: TxmaUser, envVars: Pick<EnvironmentVariables, "componentId">): BaseTxmaEvent & { component_id: string } => {
 	const now = Date.now();
 
 	return {
@@ -41,5 +44,6 @@ export const buildCoreEventFields = (user: TxmaUser ): BaseTxmaEvent => {
 		},
 		timestamp: Math.floor(now / 1000),
 		event_timestamp_ms: now,
+		component_id: envVars.componentId(),
 	};
 };
