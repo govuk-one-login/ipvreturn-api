@@ -4,9 +4,9 @@ import { Logger } from "@aws-lambda-powertools/logger";
 import { Response } from "../../../utils/Response";
 import { HttpCodesEnum } from "../../../utils/HttpCodesEnum";
 import {
-	MockFailingKmsJwtAdapter,
-	MockFailingKmsSigningJwtAdapter,
-	MockKmsJwtAdapter,
+  MockFailingKmsJwtAdapter,
+  MockFailingKmsSigningJwtAdapter,
+  MockKmsJwtAdapter,
 } from "../utils/MockJwtVerifierSigner";
 import { SessionProcessor } from "../../../services/SessionProcessor";
 import { IPRServiceSession } from "../../../services/IPRServiceSession";
@@ -26,24 +26,27 @@ let sessionProcessorTest: SessionProcessor;
 const mockIprService = mock<IPRServiceSession>();
 let mockSessionEvent: SessionEvent;
 const validPayload = {
-	iss: "issuer",
-	sub: "userId",
-	aud: "oidc-client-id",
-	exp: absoluteTimeNow() + 1000,
-	iat: absoluteTimeNow(),
-	nonce: "nonce",
+  iss: "issuer",
+  sub: "userId",
+  aud: "oidc-client-id",
+  exp: absoluteTimeNow() + 1000,
+  iat: absoluteTimeNow(),
+  nonce: "nonce",
 };
-const wrongPayload : JWTPayload = {
-	iss: "issuer",
-	sub: "userId",
-	aud: "wrong_id",
-	exp: absoluteTimeNow() + 1000,
-	iat: absoluteTimeNow(),
-	nonce: "nonce",
+const wrongPayload: JWTPayload = {
+  iss: "issuer",
+  sub: "userId",
+  aud: "wrong_id",
+  exp: absoluteTimeNow() + 1000,
+  iat: absoluteTimeNow(),
+  nonce: "nonce",
 };
-const passingKmsJwtAdapterFactory = () => new MockKmsJwtAdapter(true, validPayload);
-const failingKmsJwtAdapterFactory = () => new MockKmsJwtAdapter(false, validPayload);
-const failingKmsJwtSigningAdapterFactory = () => new MockFailingKmsSigningJwtAdapter();
+const passingKmsJwtAdapterFactory = () =>
+  new MockKmsJwtAdapter(true, validPayload);
+const failingKmsJwtAdapterFactory = () =>
+  new MockKmsJwtAdapter(false, validPayload);
+const failingKmsJwtSigningAdapterFactory = () =>
+  new MockFailingKmsSigningJwtAdapter();
 const failingKmsJwtDecodeAdapterFactory = () => new MockFailingKmsJwtAdapter();
 
 const logger = mock<Logger>();
@@ -53,319 +56,376 @@ const mockStsClient = jest.mocked(stsClient);
 const validRequest = VALID_SESSION;
 const CLIENT_ID = "oidc-client-id";
 jest.spyOn(TxmaEventUtils, "buildCoreEventFields");
+jest.mock("../../../services/EnvironmentVariables");
 
 function getMockSessionEventItem(): SessionEvent {
-	const sess: SessionEvent = {
-		userId: "userId",
-		clientName: "ipv",
-		clientSessionId: "sdfssg",
-		userEmail: "testuser@test.gov.uk",
-		notified: true,
-		ipvStartedOn: 1681902001,
-		journeyWentAsyncOn: 1681902002,
-		readyToResumeOn: 1681902003,
-		redirectUri: "http://redirect.url",
-		nameParts: [
-			{
-				type: "GivenName",
-				value: "ANGELA",
-			},
-			{
-				type: "GivenName",
-				value: "ZOE",
-			},
-			{
-				type: "FamilyName",
-				value: "UK SPECIMEN",
-			},
-		],
-	};
-	return sess;
+  const sess: SessionEvent = {
+    userId: "userId",
+    clientName: "ipv",
+    clientSessionId: "sdfssg",
+    userEmail: "testuser@test.gov.uk",
+    notified: true,
+    ipvStartedOn: 1681902001,
+    journeyWentAsyncOn: 1681902002,
+    readyToResumeOn: 1681902003,
+    redirectUri: "http://redirect.url",
+    nameParts: [
+      {
+        type: "GivenName",
+        value: "ANGELA",
+      },
+      {
+        type: "GivenName",
+        value: "ZOE",
+      },
+      {
+        type: "FamilyName",
+        value: "UK SPECIMEN",
+      },
+    ],
+  };
+  return sess;
 }
 
 describe("SessionProcessor", () => {
-	beforeAll(() => {
-		mockSessionEvent = getMockSessionEventItem();
-		sessionProcessorTest = new SessionProcessor(logger, metrics, CLIENT_ID);
-	});
+  beforeAll(() => {
+    mockSessionEvent = getMockSessionEventItem();
+    sessionProcessorTest = new SessionProcessor(logger, metrics, CLIENT_ID);
 
-	beforeEach(() => {
-		jest.clearAllMocks();
-		// @ts-ignore
-		sessionProcessorTest.kmsJwtAdapter = passingKmsJwtAdapterFactory();
-		mockSessionEvent = getMockSessionEventItem();
-		const oidcConfig = { data:{ issuer: "issuer", jwks_uri: "jwks_url" } };
-		// @ts-ignore
-		axios.get.mockResolvedValueOnce(oidcConfig);
-		const credential = {
-			AccessKeyId: "AccessKeyId",
-			SecAccessKey: "SecAccessKey",
-			SessionToken: "SessionToken",
-		};
-		IPRServiceSession.getInstance = jest.fn().mockReturnValue(mockIprService);
-		const mockGetCredentials = jest.fn().mockReturnValue({ Credentials: credential });
-		mockStsClient.assumeRoleWithWebIdentity = mockGetCredentials;
-	});
+    // Mock EnvironmentVariables methods
+    // @ts-ignore
+    sessionProcessorTest.environmentVariables = {
+      kmsKeyArn: jest.fn().mockReturnValue("mock-kms-key-arn"),
+      oidcUrl: jest.fn().mockReturnValue("https://mock-oidc-url.com"),
+      oidcJwtAssertionTokenExpiry: jest.fn().mockReturnValue("900"),
+      assumeRoleWithWebIdentityArn: jest
+        .fn()
+        .mockReturnValue("mock-assume-role-arn"),
+      sessionEventsTable: jest
+        .fn()
+        .mockReturnValue("mock-session-events-table"),
+      returnRedirectUrl: jest
+        .fn()
+        .mockReturnValue("https://mock-redirect-url.com"),
+      componentId: jest.fn().mockReturnValue("mock-component-id"),
+    };
+  });
 
-	afterEach(() => {
-		jest.useRealTimers();
-	});
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // @ts-ignore
+    sessionProcessorTest.kmsJwtAdapter = passingKmsJwtAdapterFactory();
+    mockSessionEvent = getMockSessionEventItem();
+    const oidcConfig = { data: { issuer: "issuer", jwks_uri: "jwks_url" } };
+    // @ts-ignore
+    axios.get.mockResolvedValueOnce(oidcConfig);
+    const credential = {
+      AccessKeyId: "AccessKeyId",
+      SecAccessKey: "SecAccessKey",
+      SessionToken: "SessionToken",
+    };
+    IPRServiceSession.getInstance = jest.fn().mockReturnValue(mockIprService);
+    const mockGetCredentials = jest
+      .fn()
+      .mockReturnValue({ Credentials: credential });
+    mockStsClient.assumeRoleWithWebIdentity = mockGetCredentials;
+  });
 
-	it("Return 401 when auth_code is missing in the request", async () => {
-		const out: Response = await sessionProcessorTest.processRequest(MISSING_AUTH_CODE);
-		expect(out.body).toBe("Missing authCode to generate id_token");
-		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
-		expect(logger.error).toHaveBeenCalledTimes(1);
-		expect(logger.error).toHaveBeenCalledWith(
-			expect.anything(),
-			expect.objectContaining({
-				messageCode: MessageCodes.MISSING_CONFIGURATION,
-			}),
-		);
-	});
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
-	it("Return 500 ServerError when an error occurred while retrieving id_token from OIDC endpoint", async () => {
-		// @ts-ignore
-		axios.post.mockRejectedValueOnce(new Error("error"));
-		const out: Response = await sessionProcessorTest.processRequest(validRequest);
+  it("Return 401 when auth_code is missing in the request", async () => {
+    const out: Response =
+      await sessionProcessorTest.processRequest(MISSING_AUTH_CODE);
+    expect(out.body).toBe("Missing authCode to generate id_token");
+    expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        messageCode: MessageCodes.MISSING_CONFIGURATION,
+      }),
+    );
+  });
 
-		expect(out.body).toBe("An error occurred when fetching OIDC token response");
-		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
-		expect(logger.error).toHaveBeenCalledTimes(1);
-		expect(logger.error).toHaveBeenCalledWith(
-			expect.anything(),
-			expect.objectContaining({
-				messageCode: MessageCodes.UNEXPECTED_ERROR_FETCHING_OIDC_TOKEN,
-			}),
-		);
-	});
+  it("Return 500 ServerError when an error occurred while retrieving id_token from OIDC endpoint", async () => {
+    // @ts-ignore
+    axios.post.mockRejectedValueOnce(new Error("error"));
+    const out: Response =
+      await sessionProcessorTest.processRequest(validRequest);
 
-	it("Return 500 ServerError when failed to decode the id_token jwt", async () => {
-		// @ts-ignore
-		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-ignore
-		sessionProcessorTest.kmsJwtAdapter = failingKmsJwtDecodeAdapterFactory();
-		const out: Response = await sessionProcessorTest.processRequest(validRequest);
+    expect(out.body).toBe(
+      "An error occurred when fetching OIDC token response",
+    );
+    expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        messageCode: MessageCodes.UNEXPECTED_ERROR_FETCHING_OIDC_TOKEN,
+      }),
+    );
+  });
 
-		expect(out.body).toBe("Invalid request: Rejected jwt");
-		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
-		expect(logger.error).toHaveBeenCalledTimes(1);
-		expect(logger.error).toHaveBeenCalledWith(
-			expect.anything(),
-			expect.objectContaining({
-				messageCode: MessageCodes.FAILED_DECODING_JWT,
-			}),
-		);
-	});
+  it("Return 500 ServerError when failed to decode the id_token jwt", async () => {
+    // @ts-ignore
+    axios.post.mockResolvedValueOnce({ data: { id_token: "id_token_jwt" } });
+    // @ts-ignore
+    sessionProcessorTest.kmsJwtAdapter = failingKmsJwtDecodeAdapterFactory();
+    const out: Response =
+      await sessionProcessorTest.processRequest(validRequest);
 
-	it("Return 500 ServerError when failed to sign the client_assertion_jwt", async () => {
-		// @ts-ignore
-		sessionProcessorTest.kmsJwtAdapter = failingKmsJwtSigningAdapterFactory();
-		const out: Response = await sessionProcessorTest.processRequest(validRequest);
+    expect(out.body).toBe("Invalid request: Rejected jwt");
+    expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        messageCode: MessageCodes.FAILED_DECODING_JWT,
+      }),
+    );
+  });
 
-		expect(out.body).toBe("Failed to sign the client_assertion Jwt");
-		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
-		expect(logger.error).toHaveBeenCalledTimes(1);
-		expect(logger.error).toHaveBeenCalledWith(
-			expect.anything(),
-			expect.objectContaining({
-				messageCode: MessageCodes.ERROR_SIGNING_JWT,
-			}),
-		);
-	});
+  it("Return 500 ServerError when failed to sign the client_assertion_jwt", async () => {
+    // @ts-ignore
+    sessionProcessorTest.kmsJwtAdapter = failingKmsJwtSigningAdapterFactory();
+    const out: Response =
+      await sessionProcessorTest.processRequest(validRequest);
 
-	it("Return 401 when verification of id_token fails", async () => {
-		// @ts-ignore
-		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-ignore
-		sessionProcessorTest.kmsJwtAdapter = failingKmsJwtAdapterFactory();
-		const out: Response = await sessionProcessorTest.processRequest(validRequest);
+    expect(out.body).toBe("Failed to sign the client_assertion Jwt");
+    expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        messageCode: MessageCodes.ERROR_SIGNING_JWT,
+      }),
+    );
+  });
 
-		expect(out.body).toBe("JWT verification failed");
-		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
-		expect(logger.error).toHaveBeenCalledTimes(1);
-		expect(logger.error).toHaveBeenCalledWith(
-			expect.anything(),
-			expect.objectContaining({
-				messageCode: MessageCodes.FAILED_VERIFYING_JWT,
-			}),
-		);
-	});
+  it("Return 401 when verification of id_token fails", async () => {
+    // @ts-ignore
+    axios.post.mockResolvedValueOnce({ data: { id_token: "id_token_jwt" } });
+    // @ts-ignore
+    sessionProcessorTest.kmsJwtAdapter = failingKmsJwtAdapterFactory();
+    const out: Response =
+      await sessionProcessorTest.processRequest(validRequest);
 
-	it.each([
-		"iss",
-		"aud",
-		"sub",
-		"exp",
-		"iat",
-	])("Return 401 when verification of jwt claims fails", async (claim) => {
-		// @ts-ignore
-		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		wrongPayload[claim] = "";
-		// @ts-ignore
-		sessionProcessorTest.kmsJwtAdapter = new MockKmsJwtAdapter(true, wrongPayload);
-		const out: Response = await sessionProcessorTest.processRequest(validRequest);
+    expect(out.body).toBe("JWT verification failed");
+    expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        messageCode: MessageCodes.FAILED_VERIFYING_JWT,
+      }),
+    );
+  });
 
-		expect(out.body).toBe("JWT validation/verification failed");
-		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
-		expect(logger.error).toHaveBeenCalledTimes(1);
-		expect(logger.error).toHaveBeenCalledWith(
-			expect.anything(),
-			expect.objectContaining({
-				messageCode: MessageCodes.FAILED_VALIDATING_JWT,
-			}),
-		);
-	});
+  it.each(["iss", "aud", "sub", "exp", "iat"])(
+    "Return 401 when verification of jwt claims fails",
+    async (claim) => {
+      // @ts-ignore
+      axios.post.mockResolvedValueOnce({ data: { id_token: "id_token_jwt" } });
+      wrongPayload[claim] = "";
+      // @ts-ignore
+      sessionProcessorTest.kmsJwtAdapter = new MockKmsJwtAdapter(
+        true,
+        wrongPayload,
+      );
+      const out: Response =
+        await sessionProcessorTest.processRequest(validRequest);
 
-	it("Return 401 Unauthorized error when session event not found for a given userId", async () => {
-		// @ts-ignore
-		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-ignore
-		mockIprService.getSessionBySub.mockReturnValue(null);
-		const out: Response = await sessionProcessorTest.processRequest(validRequest);
+      expect(out.body).toBe("JWT validation/verification failed");
+      expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+      expect(logger.error).toHaveBeenCalledTimes(1);
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          messageCode: MessageCodes.FAILED_VALIDATING_JWT,
+        }),
+      );
+    },
+  );
 
-		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
-		expect(out.body).toBe("No session event found for this userId");
-		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
-		expect(logger.error).toHaveBeenCalledTimes(1);
-		expect(logger.error).toHaveBeenCalledWith(
-			expect.anything(),
-			expect.objectContaining({
-				messageCode: MessageCodes.SESSION_NOT_FOUND,
-			}),
-		);
-	});
+  it("Return 401 Unauthorized error when session event not found for a given userId", async () => {
+    // @ts-ignore
+    axios.post.mockResolvedValueOnce({ data: { id_token: "id_token_jwt" } });
+    // @ts-ignore
+    mockIprService.getSessionBySub.mockReturnValue(null);
+    const out: Response =
+      await sessionProcessorTest.processRequest(validRequest);
 
-	it("Return successful response with 200 OK when session event data was retrieved and returns redirect_uri", async () => {
-		// @ts-ignore
-		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-ignore
-		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-		const out: Response = await sessionProcessorTest.processRequest(validRequest);
+    expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
+    expect(out.body).toBe("No session event found for this userId");
+    expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        messageCode: MessageCodes.SESSION_NOT_FOUND,
+      }),
+    );
+  });
 
-		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
+  it("Return successful response with 200 OK when session event data was retrieved and returns redirect_uri", async () => {
+    // @ts-ignore
+    axios.post.mockResolvedValueOnce({ data: { id_token: "id_token_jwt" } });
+    // @ts-ignore
+    mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+    const out: Response =
+      await sessionProcessorTest.processRequest(validRequest);
 
-		expect(out.body).toEqual(JSON.stringify({
-			status: SessionEventStatusEnum.COMPLETED,
-			redirect_uri: mockSessionEvent.redirectUri,
-		}));
-		expect(out.statusCode).toBe(HttpCodesEnum.OK);
-	});
+    expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
 
-	describe("should send correct TXMA event", () => {
-		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date(1585695600000)); // == 2020-03-31T23:00:00.000
-		});
+    expect(out.body).toEqual(
+      JSON.stringify({
+        status: SessionEventStatusEnum.COMPLETED,
+        redirect_uri: mockSessionEvent.redirectUri,
+      }),
+    );
+    expect(out.statusCode).toBe(HttpCodesEnum.OK);
+  });
 
-		it("ip_address is X_FORWARDED_FOR if header is present", async () => {
-			// @ts-ignore
-			axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-			// @ts-ignore
-			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-			// @ts-ignore
-			jest.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
-			const validSession = JSON.parse(JSON.stringify(VALID_SESSION));
-			await sessionProcessorTest.processRequest(validSession);
+  describe("should send correct TXMA event", () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date(1585695600000)); // == 2020-03-31T23:00:00.000
+    });
 
-			expect(mockIprService.sendToTXMA).toHaveBeenCalledWith(
-				{
-					"event_name": "IPR_USER_REDIRECTED",
-					"event_timestamp_ms": 1585695600000,
-					"extensions": { "previous_govuk_signin_journey_id": "sdfssg" },
-					"timestamp": 1585695600,
-					"user": { "ip_address": "1.1.1", "user_id": "userId" },
-				},
-				"ABCDEFG",
-			);
-		});
+    it("ip_address is X_FORWARDED_FOR if header is present", async () => {
+      // @ts-ignore
+      axios.post.mockResolvedValueOnce({ data: { id_token: "id_token_jwt" } });
+      // @ts-ignore
+      mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+      // @ts-ignore
+      jest
+        // @ts-ignore
+        .spyOn(sessionProcessorTest.validationHelper, "isJwtValid")
+        .mockReturnValue("");
+      const validSession = JSON.parse(JSON.stringify(VALID_SESSION));
+      await sessionProcessorTest.processRequest(validSession);
 
-		it("ip_address is source IP if no X_FORWARDED_FOR header is present", async () => {
-			// @ts-ignore
-			axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-			// @ts-ignore
-			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-			// @ts-ignore
-			jest.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
-			const missingXForwardedFor = { ...VALID_SESSION, headers: { "txma-audit-encoded": "ABCDEFG" }, requestContext: { identity: { sourceIp: "2.2.2" } } };
-			const missingXForwardedForSession = JSON.parse(JSON.stringify(missingXForwardedFor));
+      expect(mockIprService.sendToTXMA).toHaveBeenCalledWith(
+        {
+          event_name: "IPR_USER_REDIRECTED",
+          event_timestamp_ms: 1585695600000,
+          component_id: "mock-component-id",
+          extensions: { previous_govuk_signin_journey_id: "sdfssg" },
+          timestamp: 1585695600,
+          user: { ip_address: "1.1.1", user_id: "userId" },
+        },
+        "ABCDEFG",
+      );
+    });
 
-			await sessionProcessorTest.processRequest(missingXForwardedForSession);
+    it("ip_address is source IP if no X_FORWARDED_FOR header is present", async () => {
+      // @ts-ignore
+      axios.post.mockResolvedValueOnce({ data: { id_token: "id_token_jwt" } });
+      // @ts-ignore
+      mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+      // @ts-ignore
+      jest
+        // @ts-ignore
+        .spyOn(sessionProcessorTest.validationHelper, "isJwtValid")
+        .mockReturnValue("");
+      const missingXForwardedFor = {
+        ...VALID_SESSION,
+        headers: { "txma-audit-encoded": "ABCDEFG" },
+        requestContext: { identity: { sourceIp: "2.2.2" } },
+      };
+      const missingXForwardedForSession = JSON.parse(
+        JSON.stringify(missingXForwardedFor),
+      );
 
-			expect(mockIprService.sendToTXMA).toHaveBeenCalledWith(
-				{
-					"event_name": "IPR_USER_REDIRECTED",
-					"event_timestamp_ms": 1585695600000,
-					"extensions": { "previous_govuk_signin_journey_id": "sdfssg" },
-					"timestamp": 1585695600,
-					"user": { "ip_address": "2.2.2", "user_id": "userId" },
-				},
-				"ABCDEFG",
-			);
-		});
+      await sessionProcessorTest.processRequest(missingXForwardedForSession);
 
-		it("when no headers are included defaults are used", async () => {
-			// @ts-ignore
-			axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-			// @ts-ignore
-			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-			// @ts-ignore
-			jest.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
-			const sessionWithOutHeaders = JSON.parse(JSON.stringify(VALID_SESSION));
-			delete sessionWithOutHeaders.headers;
-			console.log("result", await sessionProcessorTest.processRequest(sessionWithOutHeaders));
-			expect(mockIprService.sendToTXMA).toHaveBeenCalledWith(
-				{
-					"event_name": "IPR_USER_REDIRECTED",
-					"event_timestamp_ms": 1585695600000,
-					"extensions": { "previous_govuk_signin_journey_id": "sdfssg" },
-					"timestamp": 1585695600,
-					"user": { "ip_address": "", "user_id": "userId" },
-				},
-				undefined,
-			);
-		});
-	});
+      expect(mockIprService.sendToTXMA).toHaveBeenCalledWith(
+        {
+          event_name: "IPR_USER_REDIRECTED",
+          event_timestamp_ms: 1585695600000,
+          component_id: "mock-component-id",
+          extensions: { previous_govuk_signin_journey_id: "sdfssg" },
+          timestamp: 1585695600,
+          user: { ip_address: "2.2.2", user_id: "userId" },
+        },
+        "ABCDEFG",
+      );
+    });
 
-	it.each([
-		"journeyWentAsyncOn",
-		"ipvStartedOn",
-		"readyToResumeOn",
-	])("Throws 200 OK status with pending status when session event record is missing necessary Event timestamps fields", async (attribute) => {
-		// @ts-ignore
-		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-ignore
-		delete mockSessionEvent[attribute];
-		// @ts-ignore
-		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-		const out: Response = await sessionProcessorTest.processRequest(validRequest);
+    it("when no headers are included defaults are used", async () => {
+      // @ts-ignore
+      axios.post.mockResolvedValueOnce({ data: { id_token: "id_token_jwt" } });
+      // @ts-ignore
+      mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+      // @ts-ignore
+      jest
+        // @ts-ignore
+        .spyOn(sessionProcessorTest.validationHelper, "isJwtValid")
+        .mockReturnValue("");
+      const sessionWithOutHeaders = JSON.parse(JSON.stringify(VALID_SESSION));
+      delete sessionWithOutHeaders.headers;
+      console.log(
+        "result",
+        await sessionProcessorTest.processRequest(sessionWithOutHeaders),
+      );
+      expect(mockIprService.sendToTXMA).toHaveBeenCalledWith(
+        {
+          event_name: "IPR_USER_REDIRECTED",
+          event_timestamp_ms: 1585695600000,
+          component_id: "mock-component-id",
+          extensions: { previous_govuk_signin_journey_id: "sdfssg" },
+          timestamp: 1585695600,
+          user: { ip_address: "", user_id: "userId" },
+        },
+        undefined,
+      );
+    });
+  });
 
-		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
-		expect(out.body).toEqual(JSON.stringify({
-			status: SessionEventStatusEnum.PENDING,
-			message: `${attribute} is not yet populated, unable to process the DB record.`,
-		}));
-		expect(out.statusCode).toBe(HttpCodesEnum.OK);
-	});
+  it.each(["journeyWentAsyncOn", "ipvStartedOn", "readyToResumeOn"])(
+    "Throws 200 OK status with pending status when session event record is missing necessary Event timestamps fields",
+    async (attribute) => {
+      // @ts-ignore
+      axios.post.mockResolvedValueOnce({ data: { id_token: "id_token_jwt" } });
+      // @ts-ignore
+      delete mockSessionEvent[attribute];
+      // @ts-ignore
+      mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+      const out: Response =
+        await sessionProcessorTest.processRequest(validRequest);
 
-	it("Throws 401 Unauthorized error when User is not yet notified", async () => {
-		// @ts-ignore
-		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-ignore
-		mockSessionEvent.notified = false;
-		// @ts-ignore
-		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-		const out: Response = await sessionProcessorTest.processRequest(validRequest);
+      expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
+      expect(out.body).toEqual(
+        JSON.stringify({
+          status: SessionEventStatusEnum.PENDING,
+          message: `${attribute} is not yet populated, unable to process the DB record.`,
+        }),
+      );
+      expect(out.statusCode).toBe(HttpCodesEnum.OK);
+    },
+  );
 
-		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
-		expect(out.body).toBe("User is not yet notified for this session event.");
-		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
-		expect(logger.error).toHaveBeenCalledTimes(1);
-		expect(logger.error).toHaveBeenCalledWith(
-			expect.anything(),
-			expect.objectContaining({
-				messageCode: MessageCodes.USER_NOT_NOTIFIED,
-			}),
-		);
-	});
+  it("Throws 401 Unauthorized error when User is not yet notified", async () => {
+    // @ts-ignore
+    axios.post.mockResolvedValueOnce({ data: { id_token: "id_token_jwt" } });
+    // @ts-ignore
+    mockSessionEvent.notified = false;
+    // @ts-ignore
+    mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+    const out: Response =
+      await sessionProcessorTest.processRequest(validRequest);
+
+    expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
+    expect(out.body).toBe("User is not yet notified for this session event.");
+    expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        messageCode: MessageCodes.USER_NOT_NOTIFIED,
+      }),
+    );
+  });
 });
