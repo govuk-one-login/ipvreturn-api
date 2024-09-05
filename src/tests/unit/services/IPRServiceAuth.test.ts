@@ -37,6 +37,7 @@ function getTXMAEventPayload(): TxmaEvent {
 		},
 		timestamp: 123,
 		event_timestamp_ms: 123000,
+		component_id: "test-component-id",
 	};
 	return txmaEventPayload;
 }
