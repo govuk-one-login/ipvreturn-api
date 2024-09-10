@@ -24,7 +24,7 @@ export interface ExtensionObject {
 
 export interface TxmaEvent extends BaseTxmaEvent {
 	"event_name": TxmaEventName;
-	component_id: string;
+	"component_id": string;
 	"restricted"?: RestrictedObject;
 	"extensions"?: ExtensionObject;
 }
