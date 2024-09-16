@@ -50,7 +50,7 @@ export class EnvironmentVariables {
 
 	private readonly GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID = process.env.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID;
 
-  	private readonly COMPONENT_ID = process.env.COMPONENT_ID;
+  	private readonly ISSUER = process.env.ISSUER;
 
   	/*
 	 * This function performs validation on env variable values.
@@ -216,7 +216,7 @@ export class EnvironmentVariables {
   		return this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID;
   	}
 
-  	componentId(): string {
-  		return this.COMPONENT_ID!;
+  	issuer(): string {
+  		return this.ISSUER!;
   	}
 }
