@@ -15,7 +15,6 @@ jest.mock("../../services/EnvironmentVariables");
 describe("SessionHandler", () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		process.env.ISSUER = "test-issuer";
 		process.env.CLIENT_ID_SSM_PATH = "/test/client-id-path";
 		process.env.KMS_KEY_ARN = "test-kms-key-arn";
 		process.env.SESSION_EVENTS_TABLE = "test-session-events-table";
@@ -38,7 +37,6 @@ describe("SessionHandler", () => {
 	});
 
 	afterEach(() => {
-		delete process.env.ISSUER;
 		delete process.env.CLIENT_ID_SSM_PATH;
 		delete process.env.KMS_KEY_ARN;
 		delete process.env.SESSION_EVENTS_TABLE;

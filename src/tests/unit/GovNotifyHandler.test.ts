@@ -43,7 +43,6 @@ describe("GovNotifyHandler", () => {
 			returnRedirectUrl: jest.fn().mockReturnValue("https://test-return-redirect-url.com"),
 			assumeRoleWithWebIdentityArn: jest.fn().mockReturnValue("test-assume-role-arn"),
 			oidcJwtAssertionTokenExpiry: jest.fn().mockReturnValue("900"),
-			componentId: jest.fn().mockReturnValue("test-component-id"),
 		}));
 	});
 
