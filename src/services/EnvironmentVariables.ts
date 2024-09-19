@@ -66,7 +66,8 @@ export class EnvironmentVariables {
 					!this.GOVUKNOTIFY_API || this.GOVUKNOTIFY_API.trim().length === 0 ||
 					!this.GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID || this.GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID.trim().length === 0 ||
 					!this.GOVUKNOTIFY_TEMPLATE_ID || this.GOVUKNOTIFY_TEMPLATE_ID.trim().length === 0 ||
-					!this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID || this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID.trim().length === 0) {
+					!this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID || this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID.trim().length === 0 ||
+					!this.ISSUER || this.ISSUER.trim().length === 0) {
   					logger.error({ message: "GovNotifyService - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
   					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
   				}
