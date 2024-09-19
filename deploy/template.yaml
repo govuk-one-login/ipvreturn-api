@@ -311,6 +311,7 @@ Globals:
         AWS_STACK_NAME: !Sub ${AWS::StackName} # The AWS Stack Name, as passed into the template.
         POWERTOOLS_LOG_LEVEL: !If [IsNotProdLikeEnvironment, "DEBUG", "INFO"] # The LogLevel for the AWS PowerTools LogHelper
         POWERTOOLS_METRICS_NAMESPACE: IPR-CRI # The Metric Namespace for the AWS PowerTools MetricHelper
+        ISSUER: !FindInMap [EnvironmentVariables, !Ref Environment, ISSUER]
     AutoPublishAlias: live
 
 Resources:
@@ -960,6 +961,7 @@ Resources:
           GOVUKNOTIFY_API_KEY_SSM_PATH: !Sub "/${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY"
           RETURN_JOURNEY_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNJOURNEYURL ]
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
+          ISSUER: !FindInMap [EnvironmentVariables, !Ref Environment, ISSUER]
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
       Policies:

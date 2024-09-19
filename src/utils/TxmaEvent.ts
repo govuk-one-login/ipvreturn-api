@@ -14,6 +14,7 @@ export interface BaseTxmaEvent {
 	"user"?: TxmaUser;
 	"timestamp": number;
 	"event_timestamp_ms": number;
+	"component_id": string;
 }
 
 export interface ExtensionObject {
@@ -22,7 +23,6 @@ export interface ExtensionObject {
 
 export interface TxmaEvent extends BaseTxmaEvent {
 	"event_name": TxmaEventName;
-	"component_id": string;
 	"restricted"?: RestrictedObject;
 	"extensions"?: ExtensionObject;
 }
@@ -33,7 +33,7 @@ export interface RestrictedObject {
 	};
 }
 
-export const buildCoreEventFields = (user: TxmaUser, issuer: string): BaseTxmaEvent & { component_id: string } => {
+export const buildCoreEventFields = (user: TxmaUser, issuer: string): BaseTxmaEvent => {
 	const now = Date.now();
 
 	return {

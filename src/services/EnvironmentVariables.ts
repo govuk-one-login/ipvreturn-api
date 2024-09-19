@@ -216,7 +216,7 @@ export class EnvironmentVariables {
   		return this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID;
   	}
 
-  	issuer(): string {
-  		return this.ISSUER!;
+  	issuer(): any {
+  		return this.ISSUER;
   	}
 }
