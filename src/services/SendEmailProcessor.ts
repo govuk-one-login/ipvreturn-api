@@ -33,6 +33,8 @@ export class SendEmailProcessor {
 
 	private readonly environmentVariables: EnvironmentVariables;
 
+	private readonly issuer: string;
+
 	constructor(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string) {
 		this.logger = logger;
 		this.validationHelper = new ValidationHelper();
@@ -41,6 +43,7 @@ export class SendEmailProcessor {
 		this.sessionEventsTable = sessionEventsTable;
 		this.iprService = IPRServiceSession.getInstance(this.sessionEventsTable, this.logger, createDynamoDbClient());
 		this.environmentVariables = new EnvironmentVariables(this.logger, ServicesEnum.GOV_NOTIFY_SERVICE);
+		this.issuer = this.environmentVariables.issuer();
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string): SendEmailProcessor {
@@ -103,7 +106,7 @@ export class SendEmailProcessor {
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
 		await this.iprService.sendToTXMA({
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-			...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }, this.environmentVariables.issuer()),
+			...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }, this.issuer),
 			extensions: {
 				previous_govuk_signin_journey_id: session.clientSessionId,
 			},
