@@ -54,6 +54,7 @@ const mockStsClient = jest.mocked(stsClient);
 const validRequest = VALID_SESSION;
 const CLIENT_ID = "oidc-client-id";
 jest.spyOn(TxmaEventUtils, "buildCoreEventFields");
+jest.mock("../../../services/EnvironmentVariables");
 
 function getMockSessionEventItem(): SessionEvent {
 	const sess: SessionEvent = {
@@ -88,7 +89,9 @@ describe("SessionProcessor", () => {
 	beforeAll(() => {
 		mockSessionEvent = getMockSessionEventItem();
 		sessionProcessorTest = new SessionProcessor(logger, metrics, CLIENT_ID);
-		
+
+		// @ts-ignore
+		sessionProcessorTest.issuer = MOCK_ISSUER;
 		// @ts-ignore
 		sessionProcessorTest.environmentVariables = {
 			kmsKeyArn: jest.fn().mockReturnValue("mock-kms-key-arn"),
@@ -105,8 +108,6 @@ describe("SessionProcessor", () => {
 		jest.clearAllMocks();
 		// @ts-ignore
 		sessionProcessorTest.kmsJwtAdapter = passingKmsJwtAdapterFactory();
-		// @ts-ignore
-		sessionProcessorTest.issuer = MOCK_ISSUER;
 		mockSessionEvent = getMockSessionEventItem();
 		const oidcConfig = { data:{ issuer: "issuer", jwks_uri: "jwks_url" } };
 		// @ts-ignore
@@ -286,7 +287,7 @@ describe("SessionProcessor", () => {
 				{
 					"event_name": "IPR_USER_REDIRECTED",
 					"event_timestamp_ms": 1585695600000,
-					"component_id": MOCK_ISSUER,
+					component_id: MOCK_ISSUER,
 					"extensions": { "previous_govuk_signin_journey_id": "sdfssg" },
 					"timestamp": 1585695600,
 					"user": { "ip_address": "1.1.1", "user_id": "userId" },
@@ -311,7 +312,7 @@ describe("SessionProcessor", () => {
 				{
 					"event_name": "IPR_USER_REDIRECTED",
 					"event_timestamp_ms": 1585695600000,
-					"component_id": MOCK_ISSUER,
+					component_id: MOCK_ISSUER,
 					"extensions": { "previous_govuk_signin_journey_id": "sdfssg" },
 					"timestamp": 1585695600,
 					"user": { "ip_address": "2.2.2", "user_id": "userId" },
@@ -334,7 +335,7 @@ describe("SessionProcessor", () => {
 				{
 					"event_name": "IPR_USER_REDIRECTED",
 					"event_timestamp_ms": 1585695600000,
-					"component_id": MOCK_ISSUER,
+					component_id: MOCK_ISSUER,
 					"extensions": { "previous_govuk_signin_journey_id": "sdfssg" },
 					"timestamp": 1585695600,
 					"user": { "ip_address": "", "user_id": "userId" },

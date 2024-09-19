@@ -4,7 +4,6 @@ process.env.GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID = "new-template-id"
 process.env.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID = "fallback-template-id"
 process.env.GOVUKNOTIFY_API_KEY_SSM_PATH = "/dev/f2f-gov-notify/lsdkgl"
 process.env.TXMA_QUEUE_URL = "MYQUEUE"
-process.env.ISSUER = "test-mock-issuer"
 process.env.RETURN_JOURNEY_URL = "www.test.com/return_journey_url";
 process.env.SESSION_EVENTS_TABLE = 'SessionEventsTable';
 process.env.AUTH_EVENT_TTL_SECS = '21600';

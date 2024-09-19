@@ -3,7 +3,7 @@ import { EnvironmentVariables } from "../../../services/EnvironmentVariables";
 
 const user_id = "userId";
 const email = "test@test.com";
-const issuer = "test-issuer";
+const mockIssuer = "test-issuer";
 
 describe("TxmaEvents", () => {
 	beforeEach(() => {
@@ -18,20 +18,20 @@ describe("TxmaEvents", () => {
 
 	describe("buildCoreEventFields", () => {
 		it("Returns object with default values user and timestamp", () => {
-			expect(buildCoreEventFields({ user_id }, issuer)).toEqual({
+			expect(buildCoreEventFields({ user_id }, mockIssuer)).toEqual({
 				user: { user_id },
 				timestamp: 1585695600,
 				event_timestamp_ms: 1585695600000,
-				component_id: issuer,
+				component_id: mockIssuer,
 			});
 		});
 
 		it("Returns object with user with email if provided", () => {
-			expect(buildCoreEventFields({ user_id, email }, issuer)).toEqual({
+			expect(buildCoreEventFields({ user_id, email }, mockIssuer)).toEqual({
 				user: { user_id, email },
 				timestamp: 1585695600,
 				event_timestamp_ms: 1585695600000,
-				component_id: issuer,
+				component_id: mockIssuer,
 			});
 		});
 	});
