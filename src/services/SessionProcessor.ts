@@ -34,9 +34,7 @@ export class SessionProcessor {
 	private readonly validationHelper: ValidationHelper;
 
 	private CLIENT_ID;
-
-	private readonly issuer: string;
-
+	
 	constructor(logger: Logger, metrics: Metrics, CLIENT_ID: string) {
 		this.logger = logger;
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GET_SESSION_EVENT_DATA_SERVICE);
@@ -44,7 +42,6 @@ export class SessionProcessor {
 		this.metrics = metrics;
 		this.CLIENT_ID = CLIENT_ID;
 		this.validationHelper = new ValidationHelper();
-		this.issuer = this.environmentVariables.issuer();
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics, CLIENT_ID: string): SessionProcessor {
@@ -166,7 +163,7 @@ export class SessionProcessor {
 			try {
 				await iprService.sendToTXMA({
 					event_name: "IPR_USER_REDIRECTED",
-					...buildCoreEventFields({ user_id: sub, ip_address: clientIpAddress }, this.issuer),
+					...buildCoreEventFields({ user_id: sub, ip_address: clientIpAddress }, this.environmentVariables.issuer()),
 					extensions: {
 						previous_govuk_signin_journey_id: session.clientSessionId,
 				  },
