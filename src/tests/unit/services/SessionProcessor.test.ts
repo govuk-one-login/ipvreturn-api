@@ -87,7 +87,18 @@ function getMockSessionEventItem(): SessionEvent {
 describe("SessionProcessor", () => {
 	beforeAll(() => {
 		mockSessionEvent = getMockSessionEventItem();
-		sessionProcessorTest = new SessionProcessor(logger, metrics, CLIENT_ID);		
+		sessionProcessorTest = new SessionProcessor(logger, metrics, CLIENT_ID);
+		
+		// @ts-ignore
+		sessionProcessorTest.environmentVariables = {
+			kmsKeyArn: jest.fn().mockReturnValue("mock-kms-key-arn"),
+			oidcUrl: jest.fn().mockReturnValue("https://mock-oidc-url.com"),
+			oidcJwtAssertionTokenExpiry: jest.fn().mockReturnValue("900"),
+			assumeRoleWithWebIdentityArn: jest.fn().mockReturnValue("mock-assume-role-arn"),
+			sessionEventsTable: jest.fn().mockReturnValue("mock-session-events-table"),
+			returnRedirectUrl: jest.fn().mockReturnValue("https://mock-redirect-url.com"),
+			issuer: jest.fn().mockReturnValue(MOCK_ISSUER),
+		};
 	});
 
 	beforeEach(() => {
