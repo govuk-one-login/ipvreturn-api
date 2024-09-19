@@ -26,7 +26,7 @@ let sqsEvent: SQSEvent;
 let sqsEventNewEmail: SQSEvent;
 let mockSessionEvent: SessionEvent;
 let mockExtSessionEvent: ExtSessionEvent;
-const sessionEventsTable = "mock-table"
+const sessionEventsTable = "mock-table";
 const MOCK_ISSUER = "test-mock-issuer";
 function getMockSessionEventItem(): SessionEvent {
 	const sess: SessionEvent = {
@@ -173,38 +173,38 @@ describe("SendEmailProcessor", () => {
 		mockExtSessionEvent = getMockExtSessionEventItem();
 
 		jest.clearAllMocks();
-	process.env.CLIENT_ID_SSM_PATH = "/test/client-id-path";
-	process.env.KMS_KEY_ARN = "test-kms-key-arn";
-	process.env.SESSION_EVENTS_TABLE = "test-session-events-table";
-	process.env.OIDC_URL = "https://test-oidc-url.com";
-	process.env.RETURN_REDIRECT_URL = "https://test-return-redirect-url.com";
-	process.env.ASSUMEROLE_WITH_WEB_IDENTITY_ARN = "test-assume-role-arn";
-	process.env.TXMA_QUEUE_URL = "https://test-txma-queue-url.com";
-	process.env.OIDC_JWT_ASSERTION_TOKEN_EXP = "900";
+		process.env.CLIENT_ID_SSM_PATH = "/test/client-id-path";
+		process.env.KMS_KEY_ARN = "test-kms-key-arn";
+		process.env.SESSION_EVENTS_TABLE = "test-session-events-table";
+		process.env.OIDC_URL = "https://test-oidc-url.com";
+		process.env.RETURN_REDIRECT_URL = "https://test-return-redirect-url.com";
+		process.env.ASSUMEROLE_WITH_WEB_IDENTITY_ARN = "test-assume-role-arn";
+		process.env.TXMA_QUEUE_URL = "https://test-txma-queue-url.com";
+		process.env.OIDC_JWT_ASSERTION_TOKEN_EXP = "900";
 
-	(EnvironmentVariables as jest.Mock).mockImplementation(() => ({
-		clientIdSsmPath: jest.fn().mockReturnValue("/test/client-id-path"),
-		kmsKeyArn: jest.fn().mockReturnValue("test-kms-key-arn"),
-		sessionEventsTable: jest.fn().mockReturnValue("test-session-events-table"),
-		oidcUrl: jest.fn().mockReturnValue("https://test-oidc-url.com"),
-		returnRedirectUrl: jest.fn().mockReturnValue("https://test-return-redirect-url.com"),
-		assumeRoleWithWebIdentityArn: jest.fn().mockReturnValue("test-assume-role-arn"),
-		oidcJwtAssertionTokenExpiry: jest.fn().mockReturnValue("900"),
-	}));
+		(EnvironmentVariables as jest.Mock).mockImplementation(() => ({
+			clientIdSsmPath: jest.fn().mockReturnValue("/test/client-id-path"),
+			kmsKeyArn: jest.fn().mockReturnValue("test-kms-key-arn"),
+			sessionEventsTable: jest.fn().mockReturnValue("test-session-events-table"),
+			oidcUrl: jest.fn().mockReturnValue("https://test-oidc-url.com"),
+			returnRedirectUrl: jest.fn().mockReturnValue("https://test-return-redirect-url.com"),
+			assumeRoleWithWebIdentityArn: jest.fn().mockReturnValue("test-assume-role-arn"),
+			oidcJwtAssertionTokenExpiry: jest.fn().mockReturnValue("900"),
+		}));
 	});
 
 	afterEach(() => {
 		jest.useRealTimers();
 
 		
-	delete process.env.CLIENT_ID_SSM_PATH;
-	delete process.env.KMS_KEY_ARN;
-	delete process.env.SESSION_EVENTS_TABLE;
-	delete process.env.OIDC_URL;
-	delete process.env.RETURN_REDIRECT_URL;
-	delete process.env.ASSUMEROLE_WITH_WEB_IDENTITY_ARN;
-	delete process.env.TXMA_QUEUE_URL;
-	delete process.env.OIDC_JWT_ASSERTION_TOKEN_EXP;
+		delete process.env.CLIENT_ID_SSM_PATH;
+		delete process.env.KMS_KEY_ARN;
+		delete process.env.SESSION_EVENTS_TABLE;
+		delete process.env.OIDC_URL;
+		delete process.env.RETURN_REDIRECT_URL;
+		delete process.env.ASSUMEROLE_WITH_WEB_IDENTITY_ARN;
+		delete process.env.TXMA_QUEUE_URL;
+		delete process.env.OIDC_JWT_ASSERTION_TOKEN_EXP;
 	});
 
 	it("Returns success response when all required Email attributes exists to send static template Email messageType", async () => {
