@@ -1,6 +1,9 @@
 import { Logger } from "@aws-lambda-powertools/logger";
 import { EnvironmentVariables } from "../../../services/EnvironmentVariables";
 import { ServicesEnum } from "../../../models/enums/ServicesEnum";
+import { AppError } from "../../../utils/AppError";
+import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
+import { Constants } from "../../../utils/Constants";
 
 describe("EnvironmentVariables", () => {
 	let logger: Logger;
@@ -105,6 +108,28 @@ describe("EnvironmentVariables", () => {
 			const result = envVars.getFallbackEmailTemplateId();
 
 			expect(result).toBe("fallback-template-id");
+		});
+	});
+
+	describe("missingEnvVars", () => {
+		const envVarsList = [
+			"GOVUKNOTIFY_TEMPLATE_ID",
+			"GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID",
+			"GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID",
+			"GOVUKNOTIFY_API_KEY_SSM_PATH",
+			"TXMA_QUEUE_URL",
+			"ISSUER",
+			"RETURN_JOURNEY_URL",
+			"SESSION_EVENTS_TABLE",
+			"GOVUKNOTIFY_API",
+		];
+  
+		envVarsList.forEach((envVar) => {
+			it(`should throw an error if ${envVar} is empty`, () => {
+				process.env[envVar] = "";
+				expect(() => new EnvironmentVariables(logger, ServicesEnum.GOV_NOTIFY_SERVICE))
+					.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED));
+			});
 		});
 	});
 });
