@@ -31,16 +31,6 @@ describe("EnvironmentVariables", () => {
 		});
 	});
 
-	describe("txmaQueueUrl", () => {
-		it("should return the value of TXMA_QUEUE_URL", () => {
-			const envVars = new EnvironmentVariables(logger, ServicesEnum.GOV_NOTIFY_SERVICE);
-
-			const result = envVars.txmaQueueUrl();
-
-			expect(result).toBe("MYQUEUE");
-		});
-	});
-
 	describe("issuer", () => {
 		it("should return the value of ISSUER", () => {
 			const envVars = new EnvironmentVariables(logger, ServicesEnum.GOV_NOTIFY_SERVICE);
@@ -91,7 +81,7 @@ describe("EnvironmentVariables", () => {
 		});
 	});
 
-	describe("govuk Notify templat ID", () => {
+	describe("govuk Notify template ID", () => {
 		it("should return the value of GOVUKNOTIFY_TEMPLATE_ID", () => {
 			const envVars = new EnvironmentVariables(logger, ServicesEnum.GOV_NOTIFY_SERVICE);
 

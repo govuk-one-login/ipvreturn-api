@@ -220,8 +220,4 @@ export class EnvironmentVariables {
   	issuer(): any {
   		return this.ISSUER;
   	}
-
-  	txmaQueueUrl(): any {
-  		return this.TXMA_QUEUE_URL;
-  	}
 }
