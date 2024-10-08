@@ -10,7 +10,6 @@ jest.mock("../../utils/Config", () => {
 		getParameter: jest.fn(() => {return "client-id";}),
 	};
 });
-jest.mock("../../services/EnvironmentVariables");
 
 describe("SessionHandler", () => {
 	it("returns an not found response for an invalid resource request", async () => {

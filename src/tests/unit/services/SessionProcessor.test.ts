@@ -54,7 +54,6 @@ const mockStsClient = jest.mocked(stsClient);
 const validRequest = VALID_SESSION;
 const CLIENT_ID = "oidc-client-id";
 jest.spyOn(TxmaEventUtils, "buildCoreEventFields");
-jest.mock("../../../services/EnvironmentVariables");
 
 function getMockSessionEventItem(): SessionEvent {
 	const sess: SessionEvent = {
