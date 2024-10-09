@@ -29,7 +29,7 @@
     "notifications-node-client": "^7.0.0"
   },
   "scripts": {
-    "unit": "./node_modules/.bin/jest --testPathPattern=tests/unit --coverage",
+    "unit": "./node_modules/.bin/jest --testPathPattern=tests/unit --no-cache  --coverage",
     "test:unit": "npm run compile && npm run unit",
     "lint:fix": "eslint --fix --output-file ./reports/eslint/report.html --format html -c .eslintrc.js --ext .ts .",
     "compile": "./node_modules/.bin/tsc",
@@ -42,7 +42,7 @@
   "devDependencies": {
     "aws-cdk-lib": "^2.147.3",
     "@types/aws-lambda": "^8.10.109",
-    "@types/jest": "^29.4.0",
+    "@types/jest": "29.5.13",
     "@types/js-yaml": "^4.0.5",
     "@types/node": "^18.11.18",
     "@types/node-jose": "^1.1.10",
@@ -61,11 +61,11 @@
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-security": "^1.6.0",
     "fast-xml-parser": "^4.2.7",
-    "jest": "^29.4.1",
-    "jest-junit": "^16.0.0",
+    "jest": "29.7.0",
+    "jest-junit": "16.0.0",
     "jest-mock-extended": "^3.0.1",
     "prettier": "^2.8.4",
-    "ts-jest": "^29.0.5",
+    "ts-jest": "29.2.5",
     "ts-node": "^10.9.1",
     "ts-standard": "^12.0.2",
     "tslint": "^6.1.3",
