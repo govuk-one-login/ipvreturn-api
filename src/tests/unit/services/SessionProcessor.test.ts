@@ -85,26 +85,20 @@ function getMockSessionEventItem(): SessionEvent {
 }
 
 describe("SessionProcessor", () => {
-	beforeAll(() => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+
+		process.env.KMS_KEY_ARN = "mock-kms-key-arn";
+		process.env.OIDC_URL = "https://mock-oidc-url.com";
+		process.env.OIDC_JWT_ASSERTION_TOKEN_EXP = "900";
+		process.env.ASSUMEROLE_WITH_WEB_IDENTITY_ARN = "mock-assume-role-arn";
+		process.env.SESSION_EVENTS_TABLE = "mock-session-events-table";
+		process.env.RETURN_REDIRECT_URL = "https://mock-redirect-url.com";
+		process.env.ISSUER = MOCK_ISSUER;
+
 		mockSessionEvent = getMockSessionEventItem();
 		sessionProcessorTest = new SessionProcessor(logger, metrics, CLIENT_ID);
 
-		// @ts-ignore
-		sessionProcessorTest.issuer = MOCK_ISSUER;
-		// @ts-ignore
-		sessionProcessorTest.environmentVariables = {
-			kmsKeyArn: jest.fn().mockReturnValue("mock-kms-key-arn"),
-			oidcUrl: jest.fn().mockReturnValue("https://mock-oidc-url.com"),
-			oidcJwtAssertionTokenExpiry: jest.fn().mockReturnValue("900"),
-			assumeRoleWithWebIdentityArn: jest.fn().mockReturnValue("mock-assume-role-arn"),
-			sessionEventsTable: jest.fn().mockReturnValue("mock-session-events-table"),
-			returnRedirectUrl: jest.fn().mockReturnValue("https://mock-redirect-url.com"),
-			issuer: jest.fn().mockReturnValue(MOCK_ISSUER),
-		};
-	});
-
-	beforeEach(() => {
-		jest.clearAllMocks();
 		// @ts-ignore
 		sessionProcessorTest.kmsJwtAdapter = passingKmsJwtAdapterFactory();
 		mockSessionEvent = getMockSessionEventItem();
