@@ -144,7 +144,6 @@ export class IPRServiceSession {
 				event.restricted = event.restricted ?? { device_information: { encoded: "" } };
 				event.restricted.device_information = { encoded: encodedHeader };
 			}
-
 			const messageBody = JSON.stringify(event);
 			const params = {
 				MessageBody: messageBody,

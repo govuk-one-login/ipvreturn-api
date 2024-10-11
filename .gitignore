@@ -21,3 +21,7 @@ bin-release/
 /docker_vars.env
 results/
 cf-output.txt
+
+.DS_Store
+
+.idea/

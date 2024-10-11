@@ -25,6 +25,7 @@ import * as TxmaEventUtils from "../../../utils/TxmaEvent";
 let sessionProcessorTest: SessionProcessor;
 const mockIprService = mock<IPRServiceSession>();
 let mockSessionEvent: SessionEvent;
+const MOCK_ISSUER = "mock-issuer";
 const validPayload = {
 	iss: "issuer",
 	sub: "userId",
@@ -84,13 +85,20 @@ function getMockSessionEventItem(): SessionEvent {
 }
 
 describe("SessionProcessor", () => {
-	beforeAll(() => {
-		mockSessionEvent = getMockSessionEventItem();
-		sessionProcessorTest = new SessionProcessor(logger, metrics, CLIENT_ID);
-	});
-
 	beforeEach(() => {
 		jest.clearAllMocks();
+
+		process.env.KMS_KEY_ARN = "mock-kms-key-arn";
+		process.env.OIDC_URL = "https://mock-oidc-url.com";
+		process.env.OIDC_JWT_ASSERTION_TOKEN_EXP = "900";
+		process.env.ASSUMEROLE_WITH_WEB_IDENTITY_ARN = "mock-assume-role-arn";
+		process.env.SESSION_EVENTS_TABLE = "mock-session-events-table";
+		process.env.RETURN_REDIRECT_URL = "https://mock-redirect-url.com";
+		process.env.ISSUER = MOCK_ISSUER;
+
+		mockSessionEvent = getMockSessionEventItem();
+		sessionProcessorTest = new SessionProcessor(logger, metrics, CLIENT_ID);
+
 		// @ts-ignore
 		sessionProcessorTest.kmsJwtAdapter = passingKmsJwtAdapterFactory();
 		mockSessionEvent = getMockSessionEventItem();
@@ -272,6 +280,7 @@ describe("SessionProcessor", () => {
 				{
 					"event_name": "IPR_USER_REDIRECTED",
 					"event_timestamp_ms": 1585695600000,
+					"component_id": MOCK_ISSUER,
 					"extensions": { "previous_govuk_signin_journey_id": "sdfssg" },
 					"timestamp": 1585695600,
 					"user": { "ip_address": "1.1.1", "user_id": "userId" },
@@ -296,6 +305,7 @@ describe("SessionProcessor", () => {
 				{
 					"event_name": "IPR_USER_REDIRECTED",
 					"event_timestamp_ms": 1585695600000,
+					"component_id": MOCK_ISSUER,
 					"extensions": { "previous_govuk_signin_journey_id": "sdfssg" },
 					"timestamp": 1585695600,
 					"user": { "ip_address": "2.2.2", "user_id": "userId" },
@@ -318,6 +328,7 @@ describe("SessionProcessor", () => {
 				{
 					"event_name": "IPR_USER_REDIRECTED",
 					"event_timestamp_ms": 1585695600000,
+					"component_id": MOCK_ISSUER,
 					"extensions": { "previous_govuk_signin_journey_id": "sdfssg" },
 					"timestamp": 1585695600,
 					"user": { "ip_address": "", "user_id": "userId" },
