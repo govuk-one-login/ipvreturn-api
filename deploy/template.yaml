@@ -1918,8 +1918,10 @@ Resources:
       AlarmDescription: !Sub "There has been a significant proportion of 5XX errors on the Session endpoint. ${SupportManualURL}"
       ActionsEnabled: true
       OKActions:
+        - !ImportValue platform-alarm-pagerduty-alert-topic
         - !ImportValue platform-alarm-topic-critical-alert
       AlarmActions:
+        - !ImportValue platform-alarm-pagerduty-alert-topic
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: [ ]
       Dimensions: [ ]
