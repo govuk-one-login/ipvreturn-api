@@ -1800,14 +1800,16 @@ Resources:
 
   5XXErrorCriticalAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: "DeployAlarms"
+    Condition: IsNotDevelopment
     Properties:
       AlarmName: !Sub "${AWS::StackName}-5XXErrorCriticalAlarm"
       AlarmDescription: !Sub "There has been a significant proportion of 5XX errors on the backend api-gateway. ${SupportManualURL}"
       ActionsEnabled: true
       OKActions:
+        - !ImportValue platform-alarm-pagerduty-alert-topic
         - !ImportValue platform-alarm-topic-critical-alert
       AlarmActions:
+        - !ImportValue platform-alarm-pagerduty-alert-topic
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: [ ]
       Dimensions: [ ]
@@ -1912,7 +1914,7 @@ Resources:
 
   Session5XXApiGwErrorCriticalAlarm:
     Type: AWS::CloudWatch::Alarm
-    Condition: DeployAlarms
+    Condition: IsNotDevelopment
     Properties:
       AlarmName: !Sub "${AWS::StackName}-Session5XXApiGwErrorCriticalAlarm"
       AlarmDescription: !Sub "There has been a significant proportion of 5XX errors on the Session endpoint. ${SupportManualURL}"
@@ -2458,7 +2460,7 @@ Resources:
 
   CriticalAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
-    Condition: DeployAlarms
+    Condition: IsNotDevelopment
     Properties:
       DashboardName: !Sub '${AWS::StackName}-Critical-Alarm-Overview'
       DashboardBody:
