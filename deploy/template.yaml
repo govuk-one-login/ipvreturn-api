@@ -1377,7 +1377,7 @@ Resources:
     Type: AWS::Serverless::Function
     DependsOn: SessionFunctionLogGroup
     Properties:
-      FunctionName: !Sub "Session-${AWS::StackName}"
+      FunctionName: !Sub "Session-test-${AWS::StackName}"
       Handler: SessionHandler.lambdaHandler
       CodeUri: ../src/
       ReservedConcurrentExecutions: !If
