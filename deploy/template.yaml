@@ -1409,19 +1409,19 @@ Resources:
               Action:
                 - "sqs:SendMessage"
               Resource: !GetAtt TxMASQSQueue.Arn
-            - Effect: Allow
-              Action:
-                - "kms:Encrypt"
-                - "kms:Decrypt"
-                - "kms:GenerateDataKey"
-              Resource: !GetAtt TxMAKMSEncryptionKey.Arn
-        - Statement:
-            - Sid: KMSPolicy
-              Effect: Allow
-              Action:
-                - kms:Sign
-              Resource:
-                Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
+        #     - Effect: Allow
+        #       Action:
+        #         - "kms:Encrypt"
+        #         - "kms:Decrypt"
+        #         - "kms:GenerateDataKey"
+        #       Resource: !GetAtt TxMAKMSEncryptionKey.Arn
+        # - Statement:
+        #     - Sid: KMSPolicy
+        #       Effect: Allow
+        #       Action:
+        #         - kms:Sign
+        #       Resource:
+        #         Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
       Events:
         userInfo:
           Type: Api
