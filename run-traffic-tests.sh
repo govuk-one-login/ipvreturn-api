@@ -15,7 +15,11 @@ export DEV_IPR_TEST_HARNESS_URL=$(remove_quotes $CFN_IpvReturnTestHarnessURL)
 
 # disabling error_check to allow report generation for successful + failed tests
 set +e
-cd /src; npm run test:api 
+cd /src; 
+for i in {1..3}
+do
+  npm run test:api 
+done  
 error_code=$?
 cp -rf results $TEST_REPORT_ABSOLUTE_DIR
 if [ $error_code -ne 0 ]
