@@ -51,7 +51,7 @@ jobs:
           DEV_TEST_ECR_REPOSITORY: ${{ secrets.DEV_TEST_ECR_REPOSITORY }}
           IMAGE_TAG: latest
         run: |
-          docker build -t $ECR_REGISTRY/$DEV_TEST_ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -t $ECR_REGISTRY/$DEV_TEST_ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile-traffic-test .
           docker push $ECR_REGISTRY/$DEV_TEST_ECR_REPOSITORY:$IMAGE_TAG
 
       # ... Push build artefacts to S3 ...
