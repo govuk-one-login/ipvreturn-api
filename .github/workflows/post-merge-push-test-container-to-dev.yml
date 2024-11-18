@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - IPS-1241-traffic-test
     paths-ignore:
       - 'infra-l2-dynamo/**'
       - 'infra-l2-kms/**'
@@ -49,10 +50,14 @@ jobs:
           DEV_CONTAINER_SIGN_KMS_KEY: ${{ secrets.DEV_CONTAINER_SIGN_KMS_KEY }}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           DEV_TEST_ECR_REPOSITORY: ${{ secrets.DEV_TEST_ECR_REPOSITORY }}
+          DEV_TRAFFIC_TEST_ECR_REPOSITORY: ${{ secrets.DEV_TRAFFIC_TEST_ECR_REPOSITORY }}
           IMAGE_TAG: latest
         run: |
           docker build -t $ECR_REGISTRY/$DEV_TEST_ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$DEV_TEST_ECR_REPOSITORY:$IMAGE_TAG
           # cosign sign --key awskms:///${DEV_CONTAINER_SIGN_KMS_KEY} $ECR_REGISTRY/$DEV_TEST_ECR_REPOSITORY:$IMAGE_TAG
+          # traffic tests
+          docker build -t $ECR_REGISTRY/$DEV_TRAFFIC_TEST_ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile-traffic-test .
+          docker push $ECR_REGISTRY/$DEV_TRAFFIC_TEST_ECR_REPOSITORY:$IMAGE_TAG
 
       # ... Push build artefacts to S3 ...
