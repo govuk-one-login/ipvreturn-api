@@ -21,7 +21,7 @@ do
   npm run test:api 
 done  
 error_code=$?
-cp -rf results $TEST_REPORT_ABSOLUTE_DIR
+# cp -rf results $TEST_REPORT_ABSOLUTE_DIR
 if [ $error_code -ne 0 ]
 then
   exit $error_code
