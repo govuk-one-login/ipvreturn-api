@@ -61,12 +61,11 @@ jobs:
 #          docker push $ECR_REGISTRY/$DEV_TRAFFIC_TEST_ECR_REPOSITORY:$IMAGE_TAG
       # ... Push build artefacts to S3 ...
 
-      - name: Push Docker traffic-test image
+      - name: Push docker traffic-test image to Amazon ECR
         uses: govuk-one-login/github-actions/aws/ecr/build-docker-image@d201191485b645ec856a34e5ca48636cf97b2574
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           DEV_TRAFFIC_TEST_ECR_REPOSITORY: ${{ secrets.DEV_TRAFFIC_TEST_ECR_REPOSITORY }}
-          IMAGE_TAG: latest
         with:
           immutable-tags: false
           image-version: ${{ github.sha }}
@@ -74,4 +73,8 @@ jobs:
           repository: ${{ secrets.DEV_TRAFFIC_TEST_ECR_REPOSITORY }}
           dockerfile: Dockerfile-traffic-test
           registry: ${{ steps.login-ecr.outputs.registry }}
-          image-tags: $ECR_REGISTRY/$DEV_TRAFFIC_TEST_ECR_REPOSITORY:$IMAGE_TAG
+          image-tags: |
+            ${{ github.head_ref || github.ref_name }}-${{ github.sha }}
+            ${{ github.head_ref || github.ref_name }}
+            smoke-tests-${{ github.sha }}
+            latest
