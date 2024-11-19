@@ -16,8 +16,9 @@ export DEV_IPR_TEST_HARNESS_URL=$(remove_quotes $CFN_IpvReturnTestHarnessURL)
 # disabling error_check to allow report generation for successful + failed tests
 set +e
 cd /src; 
-for i in {1..5}
+for i in {1..10}
 do
+  echo "Test# $i"
   npm run test:api 
 done  
 error_code=$?
