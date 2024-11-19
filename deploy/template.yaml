@@ -1016,36 +1016,36 @@ Resources:
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
-        - DynamoDBWritePolicy:
-            TableName:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-name"
-        - DynamoDBReadPolicy:
-            TableName:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-name"
-        - KMSDecryptPolicy:
-            KeyId:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-key-id"
-        - SSMParameterReadPolicy:
-            ParameterName: !Sub "${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY"
-        - Statement:
-            - Effect: Allow
-              Action:
-                - "kms:Decrypt"
-              Resource: !GetAtt GovNotifyEncryptionKey.Arn
-        - Statement:
-            - Effect: Allow
-              Action:
-                - "sqs:SendMessage"
-              Resource: !GetAtt TxMASQSQueue.Arn
-            - Effect: Allow
-              Action:
-                - "kms:Encrypt"
-                - "kms:Decrypt"
-                - "kms:GenerateDataKey"
-              Resource: !GetAtt TxMAKMSEncryptionKey.Arn
+#        - DynamoDBWritePolicy:
+#            TableName:
+#              Fn::ImportValue:
+#                !Sub "${L2DynamoStackName}-session-events-table-name"
+#        - DynamoDBReadPolicy:
+#            TableName:
+#              Fn::ImportValue:
+#                !Sub "${L2DynamoStackName}-session-events-table-name"
+#        - KMSDecryptPolicy:
+#            KeyId:
+#              Fn::ImportValue:
+#                !Sub "${L2DynamoStackName}-session-events-table-key-id"
+#        - SSMParameterReadPolicy:
+#            ParameterName: !Sub "${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY"
+#        - Statement:
+#            - Effect: Allow
+#              Action:
+#                - "kms:Decrypt"
+#              Resource: !GetAtt GovNotifyEncryptionKey.Arn
+#        - Statement:
+#            - Effect: Allow
+#              Action:
+#                - "sqs:SendMessage"
+#              Resource: !GetAtt TxMASQSQueue.Arn
+#            - Effect: Allow
+#              Action:
+#                - "kms:Encrypt"
+#                - "kms:Decrypt"
+#                - "kms:GenerateDataKey"
+#              Resource: !GetAtt TxMAKMSEncryptionKey.Arn
 
       Events:
         SQSEvent:
