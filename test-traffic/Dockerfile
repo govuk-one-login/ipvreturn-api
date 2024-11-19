@@ -20,7 +20,6 @@ COPY run-tests.sh .
 
 WORKDIR /
 
-RUN mv run-traffic-tests.sh run-tests.sh
 RUN chmod +x run-tests.sh
 
 RUN cd /src && npm ci
