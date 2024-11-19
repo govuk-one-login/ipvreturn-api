@@ -71,7 +71,7 @@ jobs:
           image-version: ${{ github.sha }}
           aws-role-arn: ${{ secrets.DEV_RETURN_GH_ACTIONS_ROLE_ARN }}
           repository: ${{ secrets.DEV_TRAFFIC_TEST_ECR_REPOSITORY }}
-          dockerfile: Dockerfile-traffic-test
+          dockerfile: test-traffic/Dockerfile
           registry: ${{ steps.login-ecr.outputs.registry }}
           image-tags: |
             ${{ github.head_ref || github.ref_name }}-${{ github.sha }}
