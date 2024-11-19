@@ -16,6 +16,7 @@ RUN unzip awscliv2.zip
 RUN ./aws/install
 
 COPY ../. .
+
 COPY run-tests.sh .
 
 WORKDIR /
