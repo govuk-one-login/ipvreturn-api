@@ -76,5 +76,5 @@ jobs:
           image-tags: |
             ${{ github.head_ref || github.ref_name }}-${{ github.sha }}
             ${{ github.head_ref || github.ref_name }}
-            smoke-tests-${{ github.sha }}
+            traffic-tests-${{ github.sha }}
             latest
