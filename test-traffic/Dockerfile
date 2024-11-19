@@ -15,12 +15,11 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 RUN unzip awscliv2.zip
 RUN ./aws/install
 
-COPY ../. .
-
-COPY run-tests.sh .
+COPY . /
+COPY test-traffic/run-tests.sh /
 
 WORKDIR /
-RUN cat run-tests.sh
+
 RUN chmod +x run-tests.sh
 
 RUN cd /src && npm ci
