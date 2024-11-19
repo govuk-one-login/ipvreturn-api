@@ -19,7 +19,7 @@ COPY ../. .
 COPY run-tests.sh .
 
 WORKDIR /
-RUN ls
+RUN cat run-tests.sh
 RUN chmod +x run-tests.sh
 
 RUN cd /src && npm ci
