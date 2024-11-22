@@ -192,8 +192,14 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_USER_CANCEL_END: {
-					expressionAttributeValues = {}
-					await this.iprServiceSession.deleteUserRecord(userId);
+					updateExpression = "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
+					expressionAttributeValues = {
+						":accountDeletedOn": returnRecord.accountDeletedOn,
+						":userEmail": returnRecord.userEmail,
+						":nameParts":returnRecord.nameParts,
+						":clientName": returnRecord.clientName,
+						":redirectUri": returnRecord.redirectUri,
+					};
 					break;
 				}
 				default:

@@ -51,6 +51,7 @@ export const VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT: ReturnSQSEvent =
 	client_id: "ekwU",
 	clientLandingPageUrl: "REDIRECT_URL",
 	event_name: "AUTH_IPV_AUTHORISATION_REQUESTED",
+	// rp_name: "replay",
 	timestamp: 1681902001,
 	event_timestamp_ms: 1681902001713,
 	timestamp_formatted: "2023-04-19T11:00:01.000Z",
