@@ -191,13 +191,18 @@ export class PostEventProcessor {
 					};
 					break;
 				}
+				case Constants.IPV_F2F_USER_CANCEL_END: {
+					expressionAttributeValues = {}
+					await this.iprServiceSession.deleteUserRecord(userId);
+					break;
+				}
 				default:
 					this.logger.error({ message: "Unexpected event received in SQS queue:", eventName });
 					throw new AppError(HttpCodesEnum.SERVER_ERROR, "Unexpected event received");
 			}
 
 			if (!updateExpression || !expressionAttributeValues) {
-				this.logger.error({ message: "Missing config to update DynamboDB for event:", eventName });
+				this.logger.error({ message: "Missing config to update DynamoDB for event:", eventName });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 			}
 

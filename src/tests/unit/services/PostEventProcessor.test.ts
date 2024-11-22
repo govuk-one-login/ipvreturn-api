@@ -448,4 +448,10 @@ describe("PostEventProcessor", () => {
 			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event" }, { "messageCode": "SQS_OUT_OF_SYNC" });	
 		});
 	});
+
+	describe("IPV_F2F_USER_CANCEL_END event", () => {
+		it("deletes the user Dynano DB record in the session table", async () => {
+			
+		})
+	})
 });
