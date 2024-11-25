@@ -62,7 +62,7 @@ Parameters:
     Description: "Mock OIDC DNS"
     Type: String
     Default: "ipr-oidc-stub-oidcstub.return.dev.account.gov.uk"
-  LambdaCanaryDeployment:
+  LambdaDeploymentPreference:
     Description: >
       Canary strategy to be used with your Lambda applications please refer to documentation for configurations -
       https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/automating-updates-to-serverless-apps.html
@@ -265,9 +265,6 @@ Conditions:
     Fn::Or:
       - Fn::Equals: [ !Ref Environment, "dev" ]
       - Fn::Equals: [ !Ref Environment, "build" ]
-      - Fn::Equals: [ !Ref Environment, "staging" ]
-      - Fn::Equals: [ !Ref Environment, "integration" ]
-      - Fn::Equals: [ !Ref Environment, "production" ]
 
 Globals:
   Function:
@@ -329,7 +326,7 @@ Globals:
       Type:
         Fn::If:
           - UseCanaryDeploy
-          - !Ref LambdaCanaryDeployment
+          - !Ref LambdaDeploymentPreference
           - !Ref "AWS::NoValue"
       Role:
         Fn::If:

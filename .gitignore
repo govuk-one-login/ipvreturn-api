@@ -21,3 +21,5 @@ bin-release/
 /docker_vars.env
 results/
 cf-output.txt
+
+.idea
