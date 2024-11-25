@@ -116,7 +116,7 @@ Mappings:
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
       GOVUKNOTIFYAPI: "https://ipvr-gov-notify-stub-govnotifystub.return.dev.account.gov.uk/govnotify"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
+      TXMAMESSAGERETENTIONPERIODDAYS: 1209600 # Default: 14 days
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
@@ -131,7 +131,7 @@ Mappings:
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
       GOVUKNOTIFYAPI: "https://govnotifystub.return.build.account.gov.uk/govnotify"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
+      TXMAMESSAGERETENTIONPERIODDAYS: 1209600 # Default: 14 days
       RETURNJOURNEYURL: "https://return.build.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
@@ -146,7 +146,7 @@ Mappings:
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
+      TXMAMESSAGERETENTIONPERIODDAYS: 1209600 # Default: 14 days
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
@@ -160,7 +160,7 @@ Mappings:
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
+      TXMAMESSAGERETENTIONPERIODDAYS: 1209600 # Default: 14 days
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
@@ -174,7 +174,7 @@ Mappings:
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "b1f0f510-7501-4e49-b5d4-aced6e36ad90"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
-      TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
+      TXMAMESSAGERETENTIONPERIODDAYS: 1209600 # Default: 14 days
       RETURNJOURNEYURL: "https://return.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
@@ -1585,7 +1585,7 @@ Resources:
           !Ref Environment,
           TXMAMESSAGERETENTIONPERIODDAYS,
         ]
-      VisibilityTimeout: 60
+      VisibilityTimeout: 70
       KmsMasterKeyId: !Ref MockTxMAKeyAlias
       RedrivePolicy:
         deadLetterTargetArn:
@@ -1672,7 +1672,7 @@ Resources:
           !Ref Environment,
           TXMAMESSAGERETENTIONPERIODDAYS,
         ]
-      VisibilityTimeout: 60
+      VisibilityTimeout: 70
       KmsMasterKeyId: !Ref TxMAKeyAlias
       RedrivePolicy:
         deadLetterTargetArn:
