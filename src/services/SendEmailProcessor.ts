@@ -12,6 +12,8 @@ import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
 import { Constants } from "../utils/Constants";
+import { EnvironmentVariables } from "./EnvironmentVariables";
+import { ServicesEnum } from "../models/enums/ServicesEnum";
 
 export class SendEmailProcessor {
 
@@ -29,6 +31,8 @@ export class SendEmailProcessor {
 
 	private readonly iprService: IPRServiceSession;
 
+	private readonly issuer: string;
+
 	constructor(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string) {
 		this.logger = logger;
 		this.validationHelper = new ValidationHelper();
@@ -36,6 +40,9 @@ export class SendEmailProcessor {
 		this.govNotifyService = SendEmailService.getInstance(this.logger, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
 		this.sessionEventsTable = sessionEventsTable;
 		this.iprService = IPRServiceSession.getInstance(this.sessionEventsTable, this.logger, createDynamoDbClient());
+
+		const environmentVariables = new EnvironmentVariables(this.logger, ServicesEnum.GOV_NOTIFY_SERVICE);
+		this.issuer = environmentVariables.issuer();
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string): SendEmailProcessor {
@@ -98,7 +105,7 @@ export class SendEmailProcessor {
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
 		await this.iprService.sendToTXMA({
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-			...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }),
+			...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }, this.issuer),
 			extensions: {
 				previous_govuk_signin_journey_id: session.clientSessionId,
 			},

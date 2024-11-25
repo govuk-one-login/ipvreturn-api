@@ -25,6 +25,7 @@ let sqsEvent: SQSEvent;
 let sqsEventNewEmail: SQSEvent;
 let mockSessionEvent: SessionEvent;
 let mockExtSessionEvent: ExtSessionEvent;
+const MOCK_ISSUER = "test-mock-issuer";
 function getMockSessionEventItem(): SessionEvent {
 	const sess: SessionEvent = {
 		userId: "userId",
@@ -114,6 +115,8 @@ describe("SendEmailProcessor", () => {
 		sendEmailProcessorTest.govNotifyService = mockGovNotifyService;
 		// @ts-ignore
 		sendEmailProcessorTest.iprService = mockIprService;
+		// @ts-ignore
+		sendEmailProcessorTest.issuer = MOCK_ISSUER;
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
 		mockSessionEvent = getMockSessionEventItem();
@@ -151,6 +154,7 @@ describe("SendEmailProcessor", () => {
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
 			timestamp: 1585695600,
 			event_timestamp_ms: 1585695600000,
+			component_id: MOCK_ISSUER,
 			user: {
 				email: "test.user@digital.cabinet-office.gov.uk",
 				user_id: "user_id",
@@ -272,6 +276,7 @@ describe("SendEmailProcessor", () => {
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
 			timestamp: 1585695600,
 			event_timestamp_ms: 1585695600000,
+			component_id: MOCK_ISSUER,
 			user: {
 				email: "test.user@digital.cabinet-office.gov.uk",
 				user_id: "user_id",
@@ -312,6 +317,7 @@ describe("SendEmailProcessor", () => {
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
 			timestamp: 1585695600,
 			event_timestamp_ms: 1585695600000,
+			component_id: MOCK_ISSUER,
 			user: {
 				email: "test.user@digital.cabinet-office.gov.uk",
 				user_id: "user_id",
