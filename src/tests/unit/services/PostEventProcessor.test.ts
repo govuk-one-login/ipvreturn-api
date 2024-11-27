@@ -458,6 +458,6 @@ describe("PostEventProcessor", () => {
 	describe("IPV_F2F_USER_CANCEL_END event", () => {
 		it("deletes the user Dynano DB record in the session table", async () => {
 			
-		})
-	})
+		});
+	});
 });
