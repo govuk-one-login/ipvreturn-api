@@ -86,12 +86,16 @@ export class IPRServiceSession {
 			if (eventType === Constants.AUTH_DELETE_ACCOUNT && (!session.Item || (session.Item && session.Item.accountDeletedOn))) {
 				this.logger.info({ message: "Received AUTH_DELETE_ACCOUNT event and no session with that userId was found OR session was found but accountDeletedOn was already set" });
 				return true;
+			// If Event type is IPV_F2F_USER_CANCEL_END and no record was found, or flagged for deletion then do not process the event.
+			} else if (eventType === Constants.IPV_F2F_USER_CANCEL_END && (!session.Item || (session.Item && session.Item.accountDeletedOn))) {
+				this.logger.info({ message: "Received IPV_F2F_USER_CANCEL_END event and no session with that userId was found OR session was found but accountDeletedOn was already set" });
+				return true;
 			} else if (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!])) {
 				// Do not process the event if the record is flagged for deletion or the event mapped attribute exists.
 				this.logger.info({ message: `Session record with that userId was found with either accountDeletedOn set or with ${eventAttribute} already set` });
 				return true;
 			} else {
-				// Process all events except AUTH_DELETE_ACCOUNT when no record exists.
+				// Process all events except AUTH_DELETE_ACCOUNT or IPV_F2F_USER_CANCEL_END when no record exists.
 				return false;
 			}
 		} catch (e: any) {

@@ -84,6 +84,15 @@ export class SessionReturnRecord {
 				this.nameParts = [];
 				break;
 			}
+			case Constants.IPV_F2F_USER_CANCEL_END: {
+				this.accountDeletedOn = data.timestamp;
+				this.clientSessionId = "";
+				this.clientName = "";
+				this.redirectUri = "";
+				this.userEmail = "";
+				this.nameParts = [];
+				break;
+			}
 			default: {
 				break;
 			}
