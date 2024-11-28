@@ -75,7 +75,8 @@ export class SessionReturnRecord {
 				this.postOfficeVisitDetails = data.extensions?.post_office_visit_details;
 				break;
 			}
-			case Constants.AUTH_DELETE_ACCOUNT || Constants.IPV_F2F_USER_CANCEL_END: {
+			case Constants.AUTH_DELETE_ACCOUNT:
+			case Constants.IPV_F2F_USER_CANCEL_END: {
 				this.accountDeletedOn = data.timestamp;
 				this.clientSessionId = "";
 				this.clientName = "";
