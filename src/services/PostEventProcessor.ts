@@ -198,7 +198,7 @@ export class PostEventProcessor {
 			}
 
 			if (!updateExpression || !expressionAttributeValues) {
-				this.logger.error({ message: "Missing config to update DynamoDB for event:", eventName });
+				this.logger.error({ message: "Missing config to update DynamboDB for event:", eventName });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 			}
 
