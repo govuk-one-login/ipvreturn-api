@@ -30,6 +30,7 @@ export class IPRServiceSession {
 		[Constants.F2F_YOTI_START, "journeyWentAsyncOn"],
 		[Constants.IPV_F2F_CRI_VC_CONSUMED, "readyToResumeOn"],
 		[Constants.AUTH_DELETE_ACCOUNT, "accountDeletedOn"],
+		[Constants.IPV_F2F_USER_CANCEL_END, "accountDeletedOn"],
 	]);
 
 	constructor(tableName: any, logger: Logger, dynamoDbClient: DynamoDBDocument) {
@@ -82,13 +83,9 @@ export class IPRServiceSession {
 		try {
 			const session = await this.dynamo.send(getSessionCommand);
 			const eventAttribute = this.eventAttributeMap.get(eventType);
-			// If Event type is AUTH_DELETE_ACCOUNT and no record was found, or flagged for deletion then do not process the event.
-			if (eventType === Constants.AUTH_DELETE_ACCOUNT && (!session.Item || (session.Item && session.Item.accountDeletedOn))) {
-				this.logger.info({ message: "Received AUTH_DELETE_ACCOUNT event and no session with that userId was found OR session was found but accountDeletedOn was already set" });
-				return true;
-			// If Event type is IPV_F2F_USER_CANCEL_END and no record was found, or flagged for deletion then do not process the event.
-			} else if (eventType === Constants.IPV_F2F_USER_CANCEL_END && (!session.Item || session?.Item?.accountDeletedOn)) {
-				this.logger.info({ message: "Received IPV_F2F_USER_CANCEL_END event and no session with that userId was found OR session was found but accountDeletedOn was already set" });
+			// If Event type is AUTH_DELETE_ACCOUNT or IPV_F2F_USER_CANCEL_END and no record was found, or flagged for deletion then do not process the event.
+			if ((eventType === Constants.AUTH_DELETE_ACCOUNT || Constants.IPV_F2F_USER_CANCEL_END) && (!session.Item || (session.Item && session.Item.accountDeletedOn))) {
+				this.logger.info({ message: `Received ${eventType} event and no session with that userId was found OR session was found but accountDeletedOn was already set` });
 				return true;
 			} else if (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!])) {
 				// Do not process the event if the record is flagged for deletion or the event mapped attribute exists.
