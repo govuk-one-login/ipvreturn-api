@@ -84,7 +84,7 @@ export class IPRServiceSession {
 			const session = await this.dynamo.send(getSessionCommand);
 			const eventAttribute = this.eventAttributeMap.get(eventType);
 			// If Event type is AUTH_DELETE_ACCOUNT or IPV_F2F_USER_CANCEL_END and no record was found, or flagged for deletion then do not process the event.
-			if ((eventType === Constants.AUTH_DELETE_ACCOUNT || eventType === Constants.IPV_F2F_USER_CANCEL_END) && (!session.Item || (session.Item && session.Item.accountDeletedOn))) {
+			if ((eventType === Constants.AUTH_DELETE_ACCOUNT || eventType === Constants.IPV_F2F_USER_CANCEL_END) && (!session.Item || session?.Item?.accountDeletedOn)) {
 				this.logger.info({ message: `Received ${eventType} event and no session with that userId was found OR session was found but accountDeletedOn was already set` });
 				return true;
 			} else if (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!])) {
