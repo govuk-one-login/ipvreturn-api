@@ -171,6 +171,24 @@ describe("IPR Service", () => {
 			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_DELETE_ACCOUNT);
 			expect(result).toBe(true);
 		});
+
+		it("Should not process the IPV_F2F_USER_CANCEL_END event if value is set for accountDeletedOn", async () => {
+			const recordFlaggedForAlreadyProcessed = {
+				Item: {
+					accountDeletedOn: 1681902001,
+					userId: "SESSID",
+				},
+			};
+			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
+			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.IPV_F2F_USER_CANCEL_END);
+			expect(result).toBe(true);
+		});
+	
+		it("Should not process the IPV_F2F_USER_CANCEL_END session record is not found", async () => {
+			mockDynamoDbClient.send = jest.fn().mockResolvedValue({});
+			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.IPV_F2F_USER_CANCEL_END);
+			expect(result).toBe(true);
+		});
 	});
 
 	describe("saveEventData", () => {
