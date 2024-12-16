@@ -164,6 +164,7 @@ describe("post event processor", () => {
 		expect(response?.notified).toBe(true);
 		expect(response?.nameParts).toEqual([]);
 		expect(response?.clientName).toBe("");
+		expect(response?.accountDeletedOn).toBeTruthy();
 		expect(response?.redirectUri).toBe("");
 		expect(response?.userEmail).toBe("");
 		expect(response?.documentType).toBe("PASSPORT");
