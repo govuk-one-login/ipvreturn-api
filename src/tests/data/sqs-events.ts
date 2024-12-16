@@ -189,7 +189,6 @@ export const VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING = JSON.stringify(VALID_
 export const VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT: ReturnSQSEvent = {
 	"event_name": "IPV_F2F_USER_CANCEL_END",
 	"event_id": "588f4a66-f75a-4728-9f7b-8afd865c233f",
-	"component_id": "https://identity.build.account.gov.uk",
 	"client_id": "ekwU",
 	"user": {
 	  "user_id": "7561b2c4-7466-4d58-ad02-d52c1b900bf9",
