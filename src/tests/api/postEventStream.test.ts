@@ -151,7 +151,7 @@ describe("post event processor", () => {
 		]);
 	}, 20000); // timeout set to 20s to avoid infinite loop
 
-	it.only("Dynamo record deleted when IPV_F2F_USER_CANCEL_END event is sent", async () => {
+	it("Dynamo record deleted when IPV_F2F_USER_CANCEL_END event is sent", async () => {
 		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);
 		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
 		await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
