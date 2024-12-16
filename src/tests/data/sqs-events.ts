@@ -186,20 +186,17 @@ export const VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT = {
 
 export const VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING = JSON.stringify(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT);
 
-export const VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT = {
-	event_id: "588f4a66-f75a-4728-9f7b-8afd865c233f",
-	client_id: "ekwU",
-	component_id: "UNKNOWN",
-	event_name: "IPV_F2F_USER_CANCEL_END",
-	redirect_uri: "www.localhost.com",
-	timestamp: 1681902001,
-	timestamp_formatted: "2023-04-19T11:00:01.000Z",
-	user: {
-		user_id: "01333e01-dde3-412f-a484-3333",
-		// pragma: allowlist nextline secret
-		email: "e914e32172adcdad6c0906f7e5a0f4f43a6e99847c4370df783c7142f71ba454",
+export const VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT: ReturnSQSEvent = {
+	"event_name": "IPV_F2F_USER_CANCEL_END",
+	"event_id": "588f4a66-f75a-4728-9f7b-8afd865c233f",
+	"client_id": "ekwU",
+	"user": {
+	  "user_id": "7561b2c4-7466-4d58-ad02-d52c1b900bf9",
 	},
-};
+	"timestamp": 1681902001,
+	"event_timestamp_ms": 1681902001713,
+	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
+  };
 
 export const VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT);
 

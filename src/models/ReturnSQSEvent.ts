@@ -6,6 +6,8 @@ export type EventType = "AUTH_IPV_AUTHORISATION_REQUESTED" | "F2F_YOTI_START" | 
 export interface ReturnSQSEvent {
 	event_id: string;
 	client_id: string;
+	component_id?: string;
+	redirect_uri?: string;
 	clientLandingPageUrl?: string;
 	event_name: EventType;
 	timestamp: number;
