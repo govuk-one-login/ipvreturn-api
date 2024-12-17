@@ -271,6 +271,7 @@ components:
             - "F2F_YOTI_START"
             - "AUTH_IPV_AUTHORISATION_REQUESTED"
             - "F2F_DOCUMENT_UPLOADED"
+            - "IPV_F2F_USER_CANCEL_END"
           description: name of the event
           example: "IPV_F2F_CRI_VC_CONSUMED"
         clientLandingPageUrl:
