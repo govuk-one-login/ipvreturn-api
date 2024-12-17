@@ -459,8 +459,8 @@ describe("PostEventProcessor", () => {
 		it("throws AppError when IPRServiceSession throws AppError for IPV_F2F_USER_CANCEL_END event", async () => {
 			mockIprServiceSession.saveEventData.mockImplementation(() => {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
-			})
+			});
 			await expect(postEventProcessorMockServices.processRequest(VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record"));
-		})
-	})
+		});
+	});
 });

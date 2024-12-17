@@ -48,7 +48,7 @@ class PostEventHandler implements LambdaInterface {
 
 			} catch (error: any) {
 				logger.error({ message: "SQS Event could not be processed", error });
-				if(body.event_name === Constants.IPV_F2F_USER_CANCEL_END && error.message === "Error updating session record") {
+				if (body.event_name === Constants.IPV_F2F_USER_CANCEL_END && error.message === "Error updating session record") {
 					throw new AppError(HttpCodesEnum.BAD_REQUEST, "SQS Event could not be processed");
 				} else {
 					return { batchItemFailures:[] };
