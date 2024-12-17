@@ -217,8 +217,13 @@ export class PostEventProcessor {
 			}
 
 		} catch (error: any) {
-			this.logger.error({ message: "Cannot parse event data", error });
-			throw new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse event data");
+			if (error.message === "Error updating session record") {
+				this.logger.error({ message: "Failed to update session record in dynamo", error });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
+			} else {
+				this.logger.error({ message: "Cannot parse event data", error });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data");
+			}
 		}
 	}
 

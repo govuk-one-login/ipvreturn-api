@@ -1,8 +1,11 @@
 import { SQSBatchResponse, SQSEvent, SQSRecord } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
+import { AppError } from "./utils/AppError";
+import { HttpCodesEnum } from "./models/enums/HttpCodesEnum";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
 import { PostEventProcessor } from "./services/PostEventProcessor";
+import { Constants } from "./utils/Constants";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE;
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL;
@@ -18,7 +21,7 @@ const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceNa
 class PostEventHandler implements LambdaInterface {
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
-	async handler(event: SQSEvent, context: any): Promise<SQSBatchResponse> {
+	async handler(event: SQSEvent, context: any): Promise<any> {
 
 		// clear PersistentLogAttributes set by any previous invocation, and add lambda context for this invocation
 		logger.setPersistentLogAttributes({});
@@ -45,7 +48,11 @@ class PostEventHandler implements LambdaInterface {
 
 			} catch (error: any) {
 				logger.error({ message: "SQS Event could not be processed", error });
-				return { batchItemFailures:[] };
+				if (body.event_name === Constants.IPV_F2F_USER_CANCEL_END && error.message === "Error updating session record") {
+					throw new AppError(HttpCodesEnum.SERVER_ERROR, "SQS Event could not be processed");
+				} else {
+					return { batchItemFailures:[] };
+				}
 			}
 
 		} else {

@@ -49,7 +49,7 @@ describe("PostEventProcessor", () => {
 		postEventProcessorMockSessionService.iprServiceSession = mockIprServiceSession;
 		// @ts-ignore
 		postEventProcessorMockSessionService.iprServiceAuth = iprServiceAuth;
-		mockIprServiceSession.saveEventData.mockResolvedValueOnce();
+		mockIprServiceSession.saveEventData.mockResolvedValue();
 		mockIprServiceAuth.saveEventData.mockResolvedValueOnce();
 		mockIprServiceSession.obfuscateJSONValues.mockResolvedValue({ "event_name":"IPR_RESULT_NOTIFICATION_EMAILED", "user":{ "user_id":"***" }, "timestamp":"***" });
 	});
@@ -452,6 +452,15 @@ describe("PostEventProcessor", () => {
 			);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event" }, { "messageCode": "SQS_OUT_OF_SYNC" });	
+		});
+	});
+
+	describe("IPV_F2F_USER_CANCEL_END", () => {
+		it("throws AppError when IPRServiceSession throws AppError for IPV_F2F_USER_CANCEL_END event", async () => {
+			mockIprServiceSession.saveEventData.mockImplementation(() => {
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
+			});
+			await expect(postEventProcessorMockServices.processRequest(VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record"));
 		});
 	});
 });
