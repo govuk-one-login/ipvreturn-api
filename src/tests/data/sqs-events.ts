@@ -196,7 +196,7 @@ export const VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT: ReturnSQSEvent = {
 	"timestamp": 1681902001,
 	"event_timestamp_ms": 1681902001713,
 	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
-  };
+};
 
 export const VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT);
 
