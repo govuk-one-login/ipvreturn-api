@@ -102,6 +102,8 @@ export class ExtSessionEvent extends SessionEvent {
 	@IsNotEmpty()
 	documentUploadedOn!: number;
 
+	accountDeletedOn?: number;
+
 	@IsString()
 	@IsNotEmpty()
 	documentType!: string;
@@ -109,6 +111,7 @@ export class ExtSessionEvent extends SessionEvent {
 	@IsString()
 	@IsNotEmpty()
 	documentExpiryDate!: string;
+	
 
 	@IsArray()
 	@IsNotEmpty()

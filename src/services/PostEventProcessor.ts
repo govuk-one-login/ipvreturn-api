@@ -180,7 +180,8 @@ export class PostEventProcessor {
 					};
 					break;
 				}
-				case Constants.AUTH_DELETE_ACCOUNT: {
+				case Constants.AUTH_DELETE_ACCOUNT:
+				case Constants.IPV_F2F_USER_CANCEL_END: {
 					updateExpression = "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
 					expressionAttributeValues = {
 						":accountDeletedOn": returnRecord.accountDeletedOn,

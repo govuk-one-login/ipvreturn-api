@@ -13,9 +13,9 @@ import { AppError } from "../../../utils/AppError";
 import { Constants } from "../../../utils/Constants";
 import {
 	VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING,
+	VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING,
 	VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT_STRING,
 	VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT,
-	VALID_F2F_YOTI_START_TXMA_EVENT,
 	VALID_F2F_YOTI_START_TXMA_EVENT_STRING, VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT,
 	VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING,
 	VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT_STRING,
@@ -267,6 +267,12 @@ describe("PostEventProcessor", () => {
 			await postEventProcessorMockSessionService.processRequest(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING);
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-3333", "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri", { ":accountDeletedOn": 1681902001, ":clientName": "", ":nameParts": [], ":redirectUri": "", ":userEmail": "" });
+		});
+
+		it("Calls saveEventData with appropriate payload for IPV_F2F_USER_CANCEL_END event", async () => {
+			await postEventProcessorMockSessionService.processRequest(VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING);
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("7561b2c4-7466-4d58-ad02-d52c1b900bf9", "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri", { ":accountDeletedOn": 1681902001, ":clientName": "", ":nameParts": [], ":redirectUri": "", ":userEmail": "" });
 		});
 	});
 

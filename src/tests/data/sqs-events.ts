@@ -186,6 +186,20 @@ export const VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT = {
 
 export const VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING = JSON.stringify(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT);
 
+export const VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT: ReturnSQSEvent = {
+	"event_name": "IPV_F2F_USER_CANCEL_END",
+	"event_id": "588f4a66-f75a-4728-9f7b-8afd865c233f",
+	"client_id": "ekwU",
+	"user": {
+	  "user_id": "7561b2c4-7466-4d58-ad02-d52c1b900bf9",
+	},
+	"timestamp": 1681902001,
+	"event_timestamp_ms": 1681902001713,
+	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
+};
+
+export const VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT);
+
 
 export const VALID_GOV_NOTIFY_SQS_TXMA_EVENT = {
 	Message: {
