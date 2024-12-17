@@ -37,7 +37,7 @@ describe("PostEventHandler", () => {
 		PostEventProcessor.getInstance = jest.fn().mockImplementation(() => {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
 		});
-		await expect(lambdaHandler(VALID_IPV_F2F_USER_CANCEL_END_SQS_EVENT, "IPR")).rejects.toThrow(new AppError(HttpCodesEnum.BAD_REQUEST, "SQS Event could not be processed"));
+		await expect(lambdaHandler(VALID_IPV_F2F_USER_CANCEL_END_SQS_EVENT, "IPR")).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "SQS Event could not be processed"));
 	});
 
 	it("errors with batchItemFailures when postEvent processor throws AppError for all other events", async () => {
