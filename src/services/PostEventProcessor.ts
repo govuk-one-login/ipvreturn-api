@@ -222,7 +222,7 @@ export class PostEventProcessor {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
 			} else {
 				this.logger.error({ message: "Cannot parse event data", error });
-				throw new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse event data");
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data");
 			}
 		}
 	}
