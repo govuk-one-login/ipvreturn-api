@@ -1,7 +1,7 @@
 import { mock } from "jest-mock-extended";
 import { lambdaHandler } from "../../PostEventHandler";
 import { PostEventProcessor } from "../../services/PostEventProcessor";
-import { VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT } from "../data/sqs-events";
+import { VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT, VALID_IPV_F2F_USER_CANCEL_END_SQS_EVENT } from "../data/sqs-events";
 import { AppError } from "../../utils/AppError";
 import { HttpCodesEnum } from "../../models/enums/HttpCodesEnum";
 
@@ -33,7 +33,14 @@ describe("PostEventHandler", () => {
 		expect(response.batchItemFailures).toEqual([]);
 	});
 
-	it("errors when postEvent processor throws AppError", async () => {
+	it("throws AppError when postEvent processor throws AppError for IPV_F2F_USER_CANCEL_END event", async () => {
+		PostEventProcessor.getInstance = jest.fn().mockImplementation(() => {
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
+		});
+		await expect(lambdaHandler(VALID_IPV_F2F_USER_CANCEL_END_SQS_EVENT, "IPR")).rejects.toThrow(new AppError(HttpCodesEnum.BAD_REQUEST, "SQS Event could not be processed"));
+	});
+
+	it("errors with batchItemFailures when postEvent processor throws AppError for all other events", async () => {
 		PostEventProcessor.getInstance = jest.fn().mockImplementation(() => {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 		});

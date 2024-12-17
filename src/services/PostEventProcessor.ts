@@ -217,10 +217,15 @@ export class PostEventProcessor {
 			}
 
 		} catch (error: any) {
+			if(error.message === "Error updating session record") {
+				this.logger.error({ message: "Failed to update session record in dynamo", error });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
+			} else {
 			this.logger.error({ message: "Cannot parse event data", error });
 			throw new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse event data");
 		}
 	}
+}
 
 	/**
 	 * Checks if all string values in the array are defined and does not
