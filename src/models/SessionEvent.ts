@@ -102,8 +102,6 @@ export class ExtSessionEvent extends SessionEvent {
 	@IsNotEmpty()
 	documentUploadedOn!: number;
 
-	@IsNumber()
-	@IsNotEmpty()
 	accountDeletedOn?: number;
 
 	@IsString()
