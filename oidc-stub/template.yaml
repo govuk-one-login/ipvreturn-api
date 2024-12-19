@@ -153,8 +153,6 @@ Resources:
         Source: oidc
 
   MockOidcRestApiUsagePlan:
-    DependsOn:
-      - "MockOidcRestApi"
     Type: AWS::ApiGateway::UsagePlan
     Properties:
       ApiStages:
