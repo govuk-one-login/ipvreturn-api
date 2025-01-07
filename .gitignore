@@ -22,6 +22,5 @@ bin-release/
 results/
 cf-output.txt
 
+.idea
 .DS_Store
-
-.idea/
