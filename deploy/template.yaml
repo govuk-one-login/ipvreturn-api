@@ -666,6 +666,8 @@ Resources:
         Service: backend
         Name: CICRestApi
         Source: alphagov/di-devplatform-demo-sam-app/sam-app/template.yaml
+        FMSRegionalPolicy: false
+        CustomPolicy: true
 
   IPVRAPIGatewayAccessLogGroup:
     Type: AWS::Logs::LogGroup
