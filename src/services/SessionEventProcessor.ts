@@ -1,6 +1,6 @@
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { Logger } from "@aws-lambda-powertools/logger";
-import { Metrics } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { buildGovNotifyEventFields } from "../utils/GovNotifyEvent";
@@ -97,8 +97,13 @@ export class SessionEventProcessor {
 		
 		// Send SQS message to GovNotify queue to send email to the user.
 		try {
-			this.logger.info({ message: `Trying to send  ${emailType} type message to GovNotify handler` });			
+			this.logger.info({ message: `Trying to send  ${emailType} type message to GovNotify handler` });
+			
+			this.metrics.addMetric("visit_email_added_to_queue", MetricUnit.Count, 1);
+			
 			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEvent, emailType, this.logger));
+			
+			this.metrics.addMetric("GovNotify_visit_email_sent", MetricUnit.Count, 1);
 		} catch (error) {
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
 				reason: `Processing Event session data, failed to post ${emailType} type message to GovNotify SQS Queue`,
