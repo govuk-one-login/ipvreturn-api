@@ -37,7 +37,7 @@ export class SendEmailProcessor {
 		this.logger = logger;
 		this.validationHelper = new ValidationHelper();
 		this.metrics = metrics;
-		this.govNotifyService = SendEmailService.getInstance(this.logger, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
+		this.govNotifyService = SendEmailService.getInstance(this.logger, this.metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
 		this.sessionEventsTable = sessionEventsTable;
 		this.iprService = IPRServiceSession.getInstance(this.sessionEventsTable, this.logger, createDynamoDbClient());
 
