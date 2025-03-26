@@ -1,4 +1,4 @@
-import { SQSBatchResponse, SQSEvent, SQSRecord } from "aws-lambda";
+import { SQSEvent, SQSRecord } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { AppError } from "./utils/AppError";
@@ -33,6 +33,8 @@ class PostEventHandler implements LambdaInterface {
 
 			try {
 				body = JSON.parse(record.body);
+				// ignored so as not log PII
+				/* eslint-disable @typescript-eslint/no-unused-vars */
 			} catch (error) {
 				logger.error({ message:"Received invalid JSON in the SQS event record.body" });
 				return { batchItemFailures:[] };

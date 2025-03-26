@@ -56,6 +56,8 @@ export class SendEmailProcessor {
 		// Validate Email model
 		try {
 			await this.validationHelper.validateModel(message, this.logger);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error) {
 			this.logger.error("Failed to Validate Email model data", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Failed to Validate Email model data.");
@@ -73,7 +75,8 @@ export class SendEmailProcessor {
 				govuk_signin_journey_id: session.clientSessionId,
 			});
 			this.logger.info("Session retrieved from session store");
-
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error) {
 			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:" }, { messageCode: MessageCodes.ERROR_RETRIEVING_SESSION });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");

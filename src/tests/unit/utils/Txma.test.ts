@@ -1,5 +1,4 @@
 import { buildCoreEventFields } from "../../../utils/TxmaEvent";
-import { EnvironmentVariables } from "../../../services/EnvironmentVariables";
 
 const user_id = "userId";
 const email = "test@test.com";

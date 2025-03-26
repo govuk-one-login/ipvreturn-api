@@ -6,7 +6,7 @@ import { Constants } from "./utils/Constants";
 import { SessionEventProcessor } from "./services/SessionEventProcessor";
 import { DynamoDBBatchResponse } from "aws-lambda/trigger/dynamodb-stream";
 
-const { unmarshall } = require("@aws-sdk/util-dynamodb");
+import { unmarshall } from "@aws-sdk/util-dynamodb";
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : Constants.IPVRETURN_METRICS_NAMESPACE;
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : Constants.DEBUG;
 const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME ? process.env.POWERTOOLS_SERVICE_NAME : Constants.STREAM_PROCESSOR_LOGGER_SVC_NAME;
@@ -33,6 +33,7 @@ class StreamProcessorHandler implements LambdaInterface {
 			logger.info("Starting to process stream record");
 			try {
 				if (record.eventName === "MODIFY") {
+					// @ts-expect-error allow undefined to be passed
 					const sessionEvent = unmarshall(record.dynamodb?.NewImage);
 					await SessionEventProcessor.getInstance(logger, metrics).processRequest(sessionEvent);
 					return { batchItemFailures:[] };

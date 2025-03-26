@@ -20,7 +20,6 @@ import {
 	VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING,
 	VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT_STRING,
 } from "../../data/sqs-events";
-import { table } from "console";
 
 let postEventProcessorMockSessionService: PostEventProcessor;
 let postEventProcessorMockServices: PostEventProcessor;
@@ -41,13 +40,13 @@ describe("PostEventProcessor", () => {
 		iprServiceAuth = new IPRServiceAuth(tableName, mockLogger, mockDynamoDbClient);
 		postEventProcessorMockSessionService = new PostEventProcessor(mockLogger, metrics);
 		postEventProcessorMockServices = new PostEventProcessor(mockLogger, metrics);
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		postEventProcessorMockServices.iprServiceSession = mockIprServiceSession;
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		postEventProcessorMockServices.iprServiceAuth = mockIprServiceAuth;
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		postEventProcessorMockSessionService.iprServiceSession = mockIprServiceSession;
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		postEventProcessorMockSessionService.iprServiceAuth = iprServiceAuth;
 		mockIprServiceSession.saveEventData.mockResolvedValue();
 		mockIprServiceAuth.saveEventData.mockResolvedValueOnce();

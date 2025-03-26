@@ -41,10 +41,10 @@ jobs:
         with:
           extra_args: "detect-secrets --all-files"
 
-      - name: Setup nodeJS v18
+      - name: Setup nodeJS v20
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Set offline mirror path
         id: offline-mirror-path
@@ -59,11 +59,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-#      - name: Run lint
-#        run: npm run lint
-#
-#      - name: Run Tests
-#        run: npm run test
   sam-validate:
     name: SAM Validate
     runs-on: ubuntu-latest
@@ -99,12 +94,6 @@ jobs:
 
       - name: SAM Validate
         run: sam validate --region ${{ env.AWS_REGION }} -t template.yaml
-
-#      - name: Install Nodejs Npm Esbuild Builder
-#        run: npm -g install esbuild
-#
-#      - name: Install Dependencies
-#        run: npm install
 
       - name: SAM Build
         run: sam build -t template.yaml
