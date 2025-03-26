@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEmail, IsBoolean, IsNumber, IsArray } from "class-validator";
+import { IsString, IsNotEmpty, IsEmail, IsNumber } from "class-validator";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "./enums/HttpCodesEnum";
 
@@ -18,6 +18,8 @@ export class AuthEvent {
 		try {
 			const obj = JSON.parse(data);
 			return new AuthEvent(obj);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error: any) {
 			console.log("Cannot parse AuthEvent data", AuthEvent.name, "parseBody", { data });
 			throw new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse AuthEvent data");

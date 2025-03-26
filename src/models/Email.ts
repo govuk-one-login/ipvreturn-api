@@ -22,6 +22,8 @@ export class Email {
 		try {
 			const obj = JSON.parse(data);
 			return new Email(obj);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error: any) {
 			console.log("Cannot parse Email data", Email.name, "parseBody", { data });
 			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse Email data");
@@ -73,6 +75,8 @@ export class DynamicEmail extends Email {
 		try {
 			const obj = JSON.parse(data);
 			return new DynamicEmail(obj);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error: any) {
 			console.log("Cannot parse NewEmail data", Email.name, "parseBody", { data });
 			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse NewEmail data");
@@ -114,6 +118,8 @@ export class FallbackEmail {
 		try {
 			const obj = JSON.parse(data);
 			return new FallbackEmail(obj);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error: any) {
 			console.log("Cannot parse Email data", FallbackEmail.name, "parseBody", { data });
 			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse Email data");

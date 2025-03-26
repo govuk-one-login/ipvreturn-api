@@ -55,8 +55,6 @@ jobs:
           docker push $ECR_REGISTRY/$BUILD_TEST_ECR_REPOSITORY:$IMAGE_TAG
           cosign sign --key awskms:///${BUILD_CONTAINER_SIGN_KMS_KEY} $ECR_REGISTRY/$BUILD_TEST_ECR_REPOSITORY:$IMAGE_TAG
 
-      # ... Push build artefacts to S3 ...
-
       - name: Push docker traffic-test image to Amazon ECR
         uses: govuk-one-login/github-actions/aws/ecr/build-docker-image@d201191485b645ec856a34e5ca48636cf97b2574
         env:

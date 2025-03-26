@@ -23,6 +23,8 @@ export class SessionEvent {
 		try {
 			const obj = JSON.parse(data);
 			return new SessionEvent(obj);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error: any) {
 			console.log("Cannot parse SessionEvent data", SessionEvent.name, "parseBody", { data });
 			throw new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse SessionEvent data");
@@ -91,6 +93,8 @@ export class ExtSessionEvent extends SessionEvent {
 		try {
 			const obj = JSON.parse(data);
 			return new ExtSessionEvent(obj);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error: any) {
 			console.log("Cannot parse ExtSessionEvent data", SessionEvent.name, "parseBody", { data });
 			throw new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse ExtSessionEvent data");

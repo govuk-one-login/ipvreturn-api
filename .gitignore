@@ -23,6 +23,7 @@ results/
 cf-output.txt
 
 .idea
+settings.json
 .DS_Store
 
 oidc-provider/
