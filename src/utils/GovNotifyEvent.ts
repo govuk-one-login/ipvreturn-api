@@ -1,4 +1,3 @@
-import { FallbackEmail } from "../models/Email";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
 import { MessageCodes } from "../models/enums/MessageCodes";
 import { AppError } from "./AppError";

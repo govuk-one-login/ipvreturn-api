@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SQSEvent } from "aws-lambda";
-// @ts-ignore
+// @ts-expect-error Ignores import error needs addressed
 import { NotifyClient } from "notifications-node-client";
 import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL } from "../../data/sqs-events";
 import { SendEmailService } from "../../../services/SendEmailService";
@@ -22,7 +22,7 @@ let sqsEventNewEmail: SQSEvent;
 describe("SendEmailService", () => {
 	beforeAll(() => {
 		sendEmailServiceTest = SendEmailService.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY, "serviceId");
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		sendEmailServiceTest.govNotify = mockGovNotify;
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;

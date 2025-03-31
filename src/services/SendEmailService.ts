@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-expect-error Ignores import error needs addressed
 import { NotifyClient } from "notifications-node-client";
 import { EmailResponse } from "../models/EmailResponse";
 import { GovNotifyErrorMapper } from "./GovNotifyErrorMapper";

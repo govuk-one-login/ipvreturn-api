@@ -1,5 +1,5 @@
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
+import { NodeHttpHandler } from "@smithy/node-http-handler";
 import AWSXRay from "aws-xray-sdk-core";
 
 AWSXRay.setContextMissingStrategy("LOG_ERROR");
@@ -7,7 +7,6 @@ AWSXRay.setContextMissingStrategy("LOG_ERROR");
 const sqsClientRaw = new SQSClient({
 	region: process.env.REGION,
 	maxAttempts: 2,
-	// @ts-ignore
 	requestHandler: new NodeHttpHandler({
 		connectionTimeout: 29000,
 		socketTimeout: 29000,

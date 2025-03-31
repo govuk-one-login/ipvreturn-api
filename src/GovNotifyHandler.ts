@@ -85,7 +85,8 @@ class GovNotifyHandler implements LambdaInterface {
 				// return an empty batchItemFailures array to mark the batch as a success
 				// see https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
 				return { batchItemFailures: [] };			
-
+				// ignored so as not log PII
+				/* eslint-disable @typescript-eslint/no-unused-vars */
 			} catch (error: any) {
 				logger.error("Email could not be sent. Returning failed message", "Handler");
 

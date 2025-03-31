@@ -71,7 +71,9 @@ export class SessionEventProcessor {
 		let data;
 		try {
 			// Validate for fields and confirm the emailType
-			data = await this.validationHelper.validateSessionEvent(sessionEventData, emailType, this.logger);	
+			data = await this.validationHelper.validateSessionEvent(sessionEventData, emailType, this.logger);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */	
 		} catch (error)	{
 			sessionEventData = new SessionEvent(sessionEventData);
 			data = { sessionEvent: sessionEventData, emailType: Constants.VISIT_PO_EMAIL_FALLBACK };

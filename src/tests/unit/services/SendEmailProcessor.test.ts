@@ -111,11 +111,11 @@ function getMockExtSessionEventItem(): ExtSessionEvent {
 describe("SendEmailProcessor", () => {
 	beforeAll(() => {
 		sendEmailProcessorTest = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY, "serviceId", SESSION_EVENTS_TABLE);
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		sendEmailProcessorTest.govNotifyService = mockGovNotifyService;
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		sendEmailProcessorTest.iprService = mockIprService;
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		sendEmailProcessorTest.issuer = MOCK_ISSUER;
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
@@ -142,7 +142,7 @@ describe("SendEmailProcessor", () => {
 		const mockEmailResponse = new EmailResponse(expectedDateTime, "", 201);
 		mockGovNotifyService.sendEmail.mockResolvedValue(mockEmailResponse);
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
-		// @ts-ignore
+		// @ts-expect-error allow direct value passed to promise
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		const emailResponse = await sendEmailProcessorTest.processRequest(message);
@@ -200,9 +200,9 @@ describe("SendEmailProcessor", () => {
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const eventBodyMessage = eventBody.Message;
 		eventBody.Message = eventBodyMessage;
-		// @ts-ignore
+		// @ts-expect-error allow direct value passed to promise
 		delete mockSessionEvent[attribute];
-		// @ts-ignore
+		// @ts-expect-error allow direct value passed to promise
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
@@ -220,9 +220,9 @@ describe("SendEmailProcessor", () => {
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
 		const eventBodyMessage = eventBody.Message;
 		eventBody.Message = eventBodyMessage;
-		// @ts-ignore
+		// @ts-expect-error allow direct value passed to promise
 		delete mockSessionEvent[attribute];
-		// @ts-ignore
+		// @ts-expect-error allow direct value passed to promise
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
@@ -236,7 +236,7 @@ describe("SendEmailProcessor", () => {
 		const eventBodyMessage = eventBody.Message;
 		eventBody.Message = eventBodyMessage;
 		mockSessionEvent.notified = false;
-		// @ts-ignore
+		// @ts-expect-error allow direct value passed to promise
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
@@ -249,7 +249,7 @@ describe("SendEmailProcessor", () => {
 		const eventBodyMessage = eventBody.Message;
 		eventBody.Message = eventBodyMessage;
 		mockSessionEvent.notified = false;
-		// @ts-ignore
+		// @ts-expect-error allow direct value passed to promise
 		mockIprService.getSessionBySub.mockReturnValue(null);
 		const message = Email.parseRequest(JSON.stringify(eventBody.Message));
 		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
@@ -262,7 +262,7 @@ describe("SendEmailProcessor", () => {
 		const mockEmailResponse = new EmailResponse(expectedDateTime, "", 201);
 		mockGovNotifyService.sendEmail.mockResolvedValue(mockEmailResponse);
 		const eventBody = JSON.parse(sqsEventNewEmail.Records[0].body);
-		// @ts-ignore
+		// @ts-expect-error allow direct value passed to promise
 		mockIprService.getSessionBySub.mockReturnValue(mockExtSessionEvent);
 		const newEmailmessage = DynamicEmail.parseRequest(JSON.stringify(eventBody.Message));
 		const emailResponse = await sendEmailProcessorTest.processRequest(newEmailmessage);
@@ -299,9 +299,9 @@ describe("SendEmailProcessor", () => {
 		const eventBody = JSON.parse(sqsEventNewEmail.Records[0].body);
 		const eventBodyMessage = eventBody.Message;
 		eventBody.Message = eventBodyMessage;
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		delete mockExtSessionEvent[attribute];
-		// @ts-ignore
+		// @ts-expect-error allow direct value passed to promise
 		mockIprService.getSessionBySub.mockReturnValue(mockExtSessionEvent);
 		const newEmailmessage = DynamicEmail.parseRequest(JSON.stringify(eventBody.Message));
 		const emailResponse = await sendEmailProcessorTest.processRequest(newEmailmessage);
