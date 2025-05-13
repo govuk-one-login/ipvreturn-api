@@ -45,7 +45,7 @@ Parameters:
   SupportManualURL:
     Description: "Link to the IPV Return Journey support manual"
     Type: String
-    Default: 'https://govukverify.atlassian.net/wiki/spaces/FTFCRI/pages/3626565651/IPR+BE+Metrics+Alerts'
+    Default: 'https://govukverify.atlassian.net/wiki/spaces/Kiwi/pages/4371940793/6.5+IPR+Support+Documentation'
   LambdaConcurrency:
     Description: "Reserved concurrency for Lambdas running in non-DEV environments"
     Type: Number
