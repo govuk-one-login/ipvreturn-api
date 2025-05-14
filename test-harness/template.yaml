@@ -35,12 +35,6 @@ Mappings:
       logretentionindays: 3
       apiTracingEnabled: true
 
-  PlatformConfiguration:
-    dev:
-      CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
-    build:
-      CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
-
   EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
     dev:
       TESTHARNESSURL: "testharness.return.dev.account.gov.uk"
@@ -151,15 +145,6 @@ Resources:
             Enabled: true
             FunctionResponseTypes:
               - ReportBatchItemFailures
-    Metadata: # Manage esbuild properties
-      BuildMethod: esbuild
-      BuildProperties:
-        Minify: true
-        Target: "es2020"
-        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
-        EntryPoints:
-          - DequeueHandler.ts
-
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
       BuildProperties:
