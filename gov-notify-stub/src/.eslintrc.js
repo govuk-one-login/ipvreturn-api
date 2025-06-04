@@ -307,25 +307,6 @@ const CODE_STYLING_RULES = {
   ]
 }
 
-const JEST_RULES = {
-  // @see https://github.com/jest-community/eslint-plugin-jest/blob/v25.3.0/docs/rules/no-hooks.md
-  // Enable use of hooks (beforeEach/afterEach) - state is useful in most testsuites
-  'jest/no-hooks': 'off',
-
-  // @see https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/require-top-level-describe.md
-  'jest/require-top-level-describe': 'error',
-
-  'jest/prefer-expect-resolves': 'error',
-
-  'jest/no-alias-methods': 'error',
-
-  'jest/consistent-test-it': [
-    'error', {
-      fn: 'it'
-    }
-  ]
-}
-
 const OVERRIDE_DEFAULTS_RULES = {
   // Allow defining functions (incl. arrow expressions) after use as per "Stepdown Rule" best practice
   '@typescript-eslint/no-use-before-define': 'off',
@@ -362,8 +343,7 @@ module.exports = {
   env: {
     browser: true,
     es6: true,
-    node: true,
-    jest: true
+    node: true
   },
   extends: [
     'eslint:recommended',
@@ -372,8 +352,6 @@ module.exports = {
     'plugin:import/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'plugin:security/recommended',
-    'plugin:jest/recommended',
-    'plugin:jest/style'
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -386,14 +364,12 @@ module.exports = {
     'eslint-plugin-prefer-arrow',
     '@typescript-eslint',
     '@typescript-eslint/tslint',
-    'jest',
     'security'
   ],
   ignorePatterns: ['**/*.js', '/dist', '**/*.d.ts', '/**/*.config.ts', '/**/*.setup.ts', '/__tests__'],
   rules: {
     ...CODE_COMPLEXITY_RULES,
     ...CODE_STYLING_RULES,
-    ...JEST_RULES,
     ...OVERRIDE_DEFAULTS_RULES
   }
 }
