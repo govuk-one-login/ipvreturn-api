@@ -188,7 +188,7 @@ describe("post event processor", () => {
 	}, 30000); // timeout set to 20s to avoid infinite loop
 
 	it("when AUTH_IPV_AUTHORISATION_REQUESTED, F2F_YOTI_START, F2F_DOCUMENT_UPLOADED, IPV_F2F_CRI_VC_CONSUMED events are sent, a Dynamo record with the details of both events is recorded. Then if these events are played again the details are updated", async () => {
-		if (process.env.REDRIVE_ENABLED) {
+		if (process.env.REDRIVE_ENABLED === "true") {
 			console.log("when AUTH_IPV_AUTHORISATION_REQUESTED, F2F_YOTI_START, F2F_DOCUMENT_UPLOADED, IPV_F2F_CRI_VC_CONSUMED events are sent, a Dynamo record with the details of both events is recorded.")
 			const userId = randomUUID();
 			console.log("userId: ", userId)

@@ -86,8 +86,8 @@ export class PostEventProcessor {
 			const userId = userDetails.user_id;
 			//Do not process the event if the event is already processed or flagged for deletion
 			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, eventName);
-			const isRedrive = process.env.REDRIVE_ENABLED
-			if (isFlaggedForDeletionOrEventAlreadyProcessed && !isRedrive) {
+			const isRedrive = process.env.REDRIVE_ENABLED === "true"
+			if (!isRedrive && isFlaggedForDeletionOrEventAlreadyProcessed) {
 				this.logger.info( { message: "Record flagged for deletion or event already processed, skipping update" });
 				
 				const singleMetric = this.metrics.singleMetric();

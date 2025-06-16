@@ -54,6 +54,10 @@ describe("PostEventProcessor", () => {
 		mockIprServiceSession.obfuscateJSONValues.mockResolvedValue({ "event_name":"IPR_RESULT_NOTIFICATION_EMAILED", "user":{ "user_id":"***" }, "timestamp":"***" });
 	});
 
+	beforeEach(() => {
+		jest.resetAllMocks();
+	});
+
 	it("Returns success response when call to save event data is successful", async () => {
 		const response = await postEventProcessorMockServices.processRequest(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT_STRING);
 		expect(response.statusCode).toBe(HttpCodesEnum.CREATED);
@@ -61,9 +65,11 @@ describe("PostEventProcessor", () => {
 	});
 
 	it("Early exits if event is already processed", async () => {
+		process.env.REDRIVE_ENABLED="false";
 		mockIprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed.mockResolvedValue(true);
 		const response = await postEventProcessorMockServices.processRequest(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT_STRING);
 		expect(response).toBe("Record flagged for deletion or event already processed, skipping update");
+		process.env.REDRIVE_ENABLED=undefined;
 	});
 
 	it("Does not early exits if event is already processed if redrive enabled", async () => {
