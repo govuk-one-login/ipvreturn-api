@@ -90,6 +90,7 @@ export class SessionEventProcessor {
 			};
 			await this.iprService.saveEventData(data.sessionEvent.userId, updateExpression, expressionAttributeValues);
 			this.logger.info({ message: "Updated the session event record with notified flag" });
+			this.metrics.addMetric("SessionEventProcessor_successfully_processed_events", MetricUnits.Count, 1);
 		} catch (error: any) {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}

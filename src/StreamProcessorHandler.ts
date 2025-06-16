@@ -1,6 +1,6 @@
 import { DynamoDBRecord, DynamoDBStreamEvent } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
-import { Metrics } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
 import { Constants } from "./utils/Constants";
 import { SessionEventProcessor } from "./services/SessionEventProcessor";
@@ -41,7 +41,12 @@ class StreamProcessorHandler implements LambdaInterface {
 					logger.warn("Record eventName doesnt match MODIFY state");
 					return { batchItemFailures:[] };
 				}
-			} catch (error) {
+			} catch (error: any) {
+				// Reorganise to only run on specific events
+				const singleMetric = metrics.singleMetric();
+				singleMetric.addDimension("reason", error.message);
+				singleMetric.addMetric("StreamEventProcessor_unprocessed_events", MetricUnits.Count, 1);
+				
 				logger.info({ message: "An error has occurred when processing the session record ", error });
 				return { batchItemFailures:[] };
 			}
