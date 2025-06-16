@@ -1,5 +1,5 @@
 import { Logger } from "@aws-lambda-powertools/logger";
-import { Metrics } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
 
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
@@ -51,6 +51,10 @@ export class PostEventProcessor {
 			const eventDetails: ReturnSQSEvent = JSON.parse(eventBody);
 			const eventName = eventDetails.event_name;
 
+			const singleMetric = this.metrics.singleMetric();
+			singleMetric.addDimension("eventType", eventName);
+			singleMetric.addMetric("PostEventProcessor_event", MetricUnits.Count, 1);
+
 			const obfuscatedObject = await this.iprServiceSession.obfuscateJSONValues(eventDetails, Constants.TXMA_FIELDS_TO_SHOW);
 			this.logger.info({ message: "Obfuscated TxMA Event", txmaEvent: obfuscatedObject });
 
@@ -78,11 +82,17 @@ export class PostEventProcessor {
 				this.logger.error({ message: "Missing or invalid value for userDetails.user_id in event payload" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
+
 			const userId = userDetails.user_id;
 			//Do not process the event if the event is already processed or flagged for deletion
 			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, eventName);
-			if (isFlaggedForDeletionOrEventAlreadyProcessed) {
+			const isRedrive = process.env.REDRIVE_ENABLED
+			if (isFlaggedForDeletionOrEventAlreadyProcessed && !isRedrive) {
 				this.logger.info( { message: "Record flagged for deletion or event already processed, skipping update" });
+				
+				const singleMetric = this.metrics.singleMetric();
+				singleMetric.addDimension("reason", "isFlaggedForDeletionOrEventAlreadyProcessed");
+				singleMetric.addMetric("PostEventProcessor_unprocessed_events", MetricUnits.Count, 1);
 				return "Record flagged for deletion or event already processed, skipping update";
 			}
 			let updateExpression, expressionAttributeValues: { [key: string]: any }, expiresOn;
@@ -95,13 +105,27 @@ export class PostEventProcessor {
 				expiresOn = absoluteTimeNow() + this.environmentVariables.sessionReturnRecordTtlSecs();
 			}
 
-			const returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
+			let returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {
-					if (!this.checkIfValidString([userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl])) {
-						this.logger.warn({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+					if (!this.checkIfValidString([userDetails.email, eventDetails.client_id])) {
+						this.logger.warn({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+						
+						const singleMetric = this.metrics.singleMetric();
+						singleMetric.addDimension("reason", "missing_mandatory_details");
+						singleMetric.addMetric("PostEventProcessor_unprocessed_events", MetricUnits.Count, 1);
 						return `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`;
 					}
+					if (isRedrive && eventDetails?.clientLandingPageUrl === "invalidUndefinedRedirect") {
+						return "";
+					}
+					if(!this.checkIfValidString([eventDetails.clientLandingPageUrl])) {
+						//test for redrive specific error conditions
+						this.logger.info(`Landing page not set setting it based on client or to a deafult value`);
+						const clientLandingPageUrl = this.getLandingPageFromClientId(eventDetails.client_id);
+						returnRecord.redirectUri = clientLandingPageUrl;
+					}
+
 					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn";
 					expressionAttributeValues = {
 						":userEmail": returnRecord.userEmail,
@@ -204,12 +228,18 @@ export class PostEventProcessor {
 
 			if (eventName === Constants.AUTH_IPV_AUTHORISATION_REQUESTED) {
 				const saveEventData = await this.iprServiceAuth.saveEventData(userId, updateExpression, expressionAttributeValues);
+				const singleMetric = this.metrics.singleMetric();
+				singleMetric.addDimension("eventType", eventName);
+				singleMetric.addMetric("PostEventProcessor_event_processed_successfully", MetricUnits.Count, 1);
 				return {
 					statusCode: HttpCodesEnum.CREATED,
 					eventBody: saveEventData ? saveEventData : "OK",
 				};
 			} else {
 				const saveEventData = await this.iprServiceSession.saveEventData(userId, updateExpression, expressionAttributeValues);
+				const singleMetric = this.metrics.singleMetric();
+				singleMetric.addDimension("eventType", eventName);
+				singleMetric.addMetric("PostEventProcessor_event_processed_successfully", MetricUnits.Count, 1);
 				return {
 					statusCode: HttpCodesEnum.CREATED,
 					eventBody: saveEventData ? saveEventData : "OK",
@@ -224,6 +254,49 @@ export class PostEventProcessor {
 				this.logger.error({ message: "Cannot parse event data", error });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data");
 			}
+		}
+	}
+
+	getLandingPageFromClientId(clientId: string): string {
+		const clientIdToPageMap = new Map<string, string> ([
+			// pragma: allowlist nextline secret
+			["HPAUPxK87FyljocDdQxijxdti08", "https://www.gov.uk/driver-vehicles-account"],
+			// pragma: allowlist nextline secret
+			["Hp9xO0Wda9EcI_2IO8OGeYJyrT0", ""],
+			// pragma: allowlist nextline secret
+			["RqFZ83csmS4Mi4Y7s7ohD9-ekwU", ""],
+			// pragma: allowlist nextline secret
+			["zFeCxrwpLCUHFm-C4_CztwWtLfQ", ""],
+			// pragma: allowlist nextline secret
+			["VsAkrtMBzAosSveAv4xsuUDyiSs", ""],
+			// pragma: allowlist nextline secret
+			["kvGpTatgWm3YqXHbG41eOdDf91k", ""],
+			// pragma: allowlist nextline secret
+			["Gk-D7WMvytB44Nze7oEC5KcThQZ4yl7sAA", ""],
+			// pragma: allowlist nextline secret
+			["XwwVDyl5oJKtK0DVsuw3sICWkPU", ""],
+			// pragma: allowlist nextline secret
+			["iJNgycwBNEWGQvkuiLxOdVmVzG9", "https://www.gov.uk/browse/driving/disability-health-condition"],
+			// pragma: allowlist nextline secret
+			["LUIZbIuJ_xVZxwhkNAApcO4O_6o", ""],
+			// pragma: allowlist nextline secret
+			["IJ_TuVEgIqAWT2mCe9b5uocMyNs", ""],
+			// pragma: allowlist nextline secret
+			["sXr5F6w5QytPPJN-Dtsgbl6hegQ", ""],
+			// pragma: allowlist nextline secret
+			["L8SSq5Iz8DstkBgno0Hx5aujelE", ""],
+			// pragma: allowlist nextline secret
+			["CKM7lHoxwJdjPzgUAxp-Rdbi_04", ""],
+			// pragma: allowlist nextline secret
+			["sdlgbEirK30fvgbrf0C78XY60qN", ""],
+			// pragma: allowlist nextline secret
+			["SdpFRM0HdX38FfdbgRX8qzTl8sm", ""]
+   	 	]);
+		const page = clientIdToPageMap.get(clientId);
+		if (page && page !== "") {
+			return page;
+		} else {
+			return "https://home.account.gov.uk/your-services"
 		}
 	}
 

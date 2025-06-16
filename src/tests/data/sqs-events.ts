@@ -1,4 +1,5 @@
 import { ReturnSQSEvent } from "../../models/ReturnSQSEvent";
+import { constants } from "../api/utils/ApiConstants";
 
 export const VALID_GOV_NOTIFY_HANDLER_SQS_EVENT = {
 	"Records": [
@@ -57,7 +58,7 @@ export const VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT: ReturnSQSEvent =
 	timestamp_formatted: "2023-04-19T11:00:01.000Z",
 	user: {
 		user_id: "01333e01-dde3-412f-a484-4444",
-		email: "jest@test.com",
+		email: constants.API_TEST_EMAIL_ADDRESS,
 	},
 };
 
@@ -95,7 +96,7 @@ export const VALID_F2F_YOTI_START_TXMA_EVENT: ReturnSQSEvent = {
 	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
 	"user": {
 		"user_id": "01333e01-dde3-412f-a484-4444",
-		"email": "jest@test.com",
+		"email": constants.API_TEST_EMAIL_ADDRESS,
 	},
 };
 
@@ -225,7 +226,7 @@ export const VALID_IPV_F2F_USER_CANCEL_END_SQS_EVENT = {
 
 export const VALID_GOV_NOTIFY_SQS_TXMA_EVENT = {
 	Message: {
-		emailAddress: "jest@test.com",
+		emailAddress: constants.API_TEST_EMAIL_ADDRESS,
 		firstName: "Test",
 		lastName: "User",
 		messageType: "email",
@@ -264,7 +265,7 @@ export const VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT: ReturnSQSEvent
 	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
 	"user": {
 		"user_id": "01333e01-dde3-412f-a484-4444",
-		"email": "jest@test.com",
+		"email": constants.API_TEST_EMAIL_ADDRESS,
 		"govuk_signin_journey_id": "asdfadsfasdf",
 	},
 	"extensions": {

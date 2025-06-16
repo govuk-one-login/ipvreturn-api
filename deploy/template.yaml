@@ -801,6 +801,7 @@ Resources:
           SESSION_RETURN_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, SESSIONRETURNRECORDTTLINSECS ]
           AUTH_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
+          REDRIVE_ENABLED: true
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
