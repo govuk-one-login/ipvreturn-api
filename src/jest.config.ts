@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export default {
+  verbose: true,
   transform: {
     '^.+\\.ts?$': 'ts-jest'
   },
