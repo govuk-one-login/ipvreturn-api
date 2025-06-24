@@ -24,7 +24,7 @@
     "esbuild": "0.25.2",
     "jose": "5.10.0",
     "node-jose": "2.2.0",
-    "notifications-node-client": "7.0.0"
+    "notifications-node-client": "7.0.6"
   },
   "scripts": {
     "unit": "./node_modules/.bin/jest --testPathPattern=tests/unit --no-cache  --coverage",
@@ -38,7 +38,7 @@
     "test:api": "npm run compile && npm run api"
   },
   "devDependencies": {
-    "aws-cdk-lib": "2.196.0",
+    "aws-cdk-lib": "2.202.0",
     "@types/aws-lambda": "8.10.148",
     "@types/jest": "29.5.14",
     "@types/js-yaml": "4.0.5",
