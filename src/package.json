@@ -44,7 +44,7 @@
     "@types/js-yaml": "4.0.5",
     "@types/node": "20.14.8",
     "@types/node-jose": "1.1.10",
-    "@typescript-eslint/eslint-plugin": "8.26.0",
+    "@typescript-eslint/eslint-plugin": "8.36.0",
     "ajv": "8.17.1",
     "aws4-axios": "3.4.0",
     "dotenv": "16.4.7",
