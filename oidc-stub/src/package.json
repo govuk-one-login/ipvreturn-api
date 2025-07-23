@@ -8,13 +8,13 @@
   "dependencies": {
     "@aws-lambda-powertools/logger": "1.5.1",
     "@aws-lambda-powertools/metrics": "1.5.1",
-    "@smithy/node-http-handler": "4.0.4",
     "@aws-sdk/client-kms": "3.782.0",
+    "@smithy/node-http-handler": "4.0.4",
     "aws-xray-sdk-core": "3.10.3",
     "axios": "1.8.4",
     "class-validator": "0.14.1",
-    "esbuild": "0.25.2",
     "ecdsa-sig-formatter": "1.0.11",
+    "esbuild": "0.25.2",
     "node-jose": "2.2.0"
   },
   "scripts": {
@@ -41,5 +41,8 @@
   },
   "engines": {
     "node": "20.18.3"
+  },
+  "overrides": {
+    "form-data": ">=4.0.4"
   }
 }
