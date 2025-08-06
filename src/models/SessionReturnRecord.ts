@@ -36,7 +36,6 @@ export interface DocumentTypeDetails {
 
 export class SessionReturnRecord {
 	constructor(data: ReturnSQSEvent, expiresOn: number) {
-		this.userId = data.user.user_id;
 		switch (data.event_name) {
 			case Constants.AUTH_IPV_AUTHORISATION_REQUESTED:{
 				this.clientName = data.client_id!;
@@ -49,6 +48,7 @@ export class SessionReturnRecord {
 			case Constants.F2F_YOTI_START: {
 				this.journeyWentAsyncOn = data.timestamp;
 				this.expiresDate = expiresOn;
+				this.nameParts = data.restricted?.nameParts;
 				if (data.user.govuk_signin_journey_id && (data.user.govuk_signin_journey_id).toLowerCase() !== "unknown") {
 					this.clientSessionId = data.user.govuk_signin_journey_id;
 				}
@@ -85,13 +85,18 @@ export class SessionReturnRecord {
 				this.nameParts = [];
 				break;
 			}
+			case Constants.IPV_F2F_CRI_VC_ERROR: {
+				this.userId = data.user.user_id;
+				this.error_description = data.extensions?.error_description;
+				break;
+			}
 			default: {
 				break;
 			}
 		}
 	}
 
-    userId: string;
+    userId?: string;
 
     userEmail?: string;
 
@@ -122,4 +127,6 @@ export class SessionReturnRecord {
 	documentType?: string;
 
 	documentExpiryDate?: string;
+
+	error_description?: string;
 }
