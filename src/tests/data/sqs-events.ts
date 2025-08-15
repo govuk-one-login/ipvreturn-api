@@ -296,3 +296,37 @@ export const VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT: ReturnSQSEvent
 		},
 	},
 };
+
+export const VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT: ReturnSQSEvent = {
+	"event_id": "588f4a66-f75a-4728-9f7b-8afd865c233g",
+	"client_id": "ekwU",
+	"event_name": "IPV_F2F_CRI_VC_ERROR",
+	"timestamp": 1681902001,
+	"event_timestamp_ms": 1681902001713,
+	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
+	"user": {
+		"user_id": "01333e01-dde3-412f-a484-4444",
+	},
+	"extensions": {
+		"error_description": "VC generation failed : Unable to create credential",
+	},
+};
+
+export const VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT);
+
+export const VALID_IPV_F2F_CRI_VC_ERROR_WITH_SESSION_EXPIRED_TXMA_EVENT: ReturnSQSEvent = {
+	"event_id": "588f4a66-f75a-4728-9f7b-8afd865c233h",
+	"client_id": "ekwU",
+	"event_name": "IPV_F2F_CRI_VC_ERROR",
+	"timestamp": 1681902001,
+	"event_timestamp_ms": 1681902001713,
+	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
+	"user": {
+		"user_id": "01333e01-dde3-412f-a484-4444",
+	},
+	"extensions": {
+		"error_description": "Session expired",
+	},
+};
+
+export const VALID_IPV_F2F_CRI_VC_ERROR_WITH_SESSION_EXPIRED_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_CRI_VC_ERROR_WITH_SESSION_EXPIRED_TXMA_EVENT);

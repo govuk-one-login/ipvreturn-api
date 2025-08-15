@@ -19,6 +19,8 @@ import {
 	VALID_F2F_YOTI_START_TXMA_EVENT_STRING, VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT,
 	VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING,
 	VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT_STRING,
+	VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT_STRING,
+	VALID_IPV_F2F_CRI_VC_ERROR_WITH_SESSION_EXPIRED_TXMA_EVENT_STRING,
 } from "../../data/sqs-events";
 import { constants } from "../../api/utils/ApiConstants";
 
@@ -530,6 +532,35 @@ describe("PostEventProcessor", () => {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
 			});
 			await expect(postEventProcessorMockServices.processRequest(VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record"));
+		});
+	});
+
+	describe("IPV_F2F_CRI_VC_ERROR event", () => {
+		it("Sets readyToResumeOn when error_description indicates VC generation failure", async () => {
+			await postEventProcessorMockServices.processRequest(VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT_STRING);
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith(
+				"01333e01-dde3-412f-a484-4444", 
+				"SET userId = :userId, errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn", 
+				{ 
+					":userId": "01333e01-dde3-412f-a484-4444",
+					":errorDescription": "VC generation failed : Unable to create credential",
+					":readyToResumeOn": absoluteTimeNow(),
+				}
+			);
+		});
+
+		it("Does NOT set readyToResumeOn when error_description indicates session expired", async () => {
+			await postEventProcessorMockServices.processRequest(VALID_IPV_F2F_CRI_VC_ERROR_WITH_SESSION_EXPIRED_TXMA_EVENT_STRING);
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith(
+				"01333e01-dde3-412f-a484-4444", 
+				"SET userId = :userId, errorDescription = :errorDescription", 
+				{ 
+					":userId": "01333e01-dde3-412f-a484-4444",
+					":errorDescription": "Session expired",
+				}
+			);
 		});
 	});
 });

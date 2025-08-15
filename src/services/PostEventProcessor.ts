@@ -150,6 +150,7 @@ export class PostEventProcessor {
 						":redirectUri": fetchedRecord.redirectUri,
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
 						":expiresOn": returnRecord.expiresDate,
+						":nameParts": returnRecord.nameParts,
 					};
 					if (returnRecord.postOfficeInfo) {
 						updateExpression += ", postOfficeInfo = :postOfficeInfo";
@@ -202,6 +203,26 @@ export class PostEventProcessor {
 						":documentUploadedOn": returnRecord.documentUploadedOn,
 						":postOfficeVisitDetails": returnRecord.postOfficeVisitDetails,
 					};
+					break;
+				}
+				case Constants.IPV_F2F_CRI_VC_ERROR: {
+					// Check if error_description indicates VC generation failure
+					const isVCFailure = this.isVCGenerationFailure(returnRecord.error_description);
+					
+					if (isVCFailure) {
+						updateExpression = "SET userId = :userId, errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn";
+						expressionAttributeValues = {
+							":userId": returnRecord.userId,
+							":errorDescription": returnRecord.error_description,
+							":readyToResumeOn": absoluteTimeNow(),
+						};
+					} else {
+						updateExpression = "SET userId = :userId, errorDescription = :errorDescription";
+						expressionAttributeValues = {
+							":userId": returnRecord.userId,
+							":errorDescription": returnRecord.error_description,
+						};
+					}
 					break;
 				}
 				case Constants.AUTH_DELETE_ACCOUNT:
@@ -298,6 +319,16 @@ export class PostEventProcessor {
 		} else {
 			return "https://home.account.gov.uk/your-services"
 		}
+	}
+
+
+	private isVCGenerationFailure(errorDescription?: string): boolean {
+		if (!errorDescription) {
+			return false;
+		}
+		
+		// f2f returns error_description: `VC generation failed : ${errorMessage}`,
+		return errorDescription.toLowerCase().includes("vc generation failed");
 	}
 
 	/**
