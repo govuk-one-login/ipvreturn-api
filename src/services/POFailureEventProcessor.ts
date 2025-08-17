@@ -60,14 +60,14 @@ export class POFailureEventProcessor {
 		// Send the PO failure email notification message
 		await this.sendPOFailureEmailToGovNotify(completeSessionRecord);
 
-		// Update the DB table with notified flag set to true
+		// Update the DB table with PO failure notified flag set to true
 		try {
 			const updateExpression = "SET poFailureNotified = :poFailureNotified";
 			const expressionAttributeValues = {
 				":poFailureNotified": true,
 			};
 			await this.iprService.saveEventData(sessionEvent.userId, updateExpression, expressionAttributeValues);
-			this.logger.info({ message: "Updated the PO failure event record with notified flag" });
+			this.logger.info({ message: "Updated the PO failure event record with poFailureNotified flag" });
 			this.metrics.addMetric("POFailureEventProcessor_successfully_processed_events", MetricUnits.Count, 1);
 		} catch (error: any) {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
