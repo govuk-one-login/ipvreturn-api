@@ -42,26 +42,31 @@ export class POFailureEventProcessor {
 	}
 
 	async processRequest(sessionEvent: any): Promise<void> {
-		let sessionEventData: any = ExtSessionEvent.parseRequest(JSON.stringify(sessionEvent));
+		// Fetch complete session record from DynamoDB to get email-related fields (nameParts, userEmail, etc.)
+		const completeSessionRecord = await this.iprService.getSessionBySub(sessionEvent.userId);
+		if (!completeSessionRecord) {
+			this.logger.error("Session record not found for PO failure event", { messageCode: MessageCodes.SESSION_NOT_FOUND });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Session record not found for PO failure event");
+		}
 
-		this.logger.appendKeys({ govuk_signin_journey_id: sessionEventData.clientSessionId });
+		this.logger.appendKeys({ govuk_signin_journey_id: completeSessionRecord.clientSessionId });
 
 		// Validate the notified field is set to false
-		if (sessionEventData.notified) {
+		if (completeSessionRecord.poFailureNotified) {
 			this.logger.warn("User is already notified for this PO failure event.", { messageCode: MessageCodes.USER_ALREADY_NOTIFIED });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "User is already notified for this PO failure event.");
 		}
 
 		// Send the PO failure email notification message
-		await this.sendPOFailureEmailToGovNotify(sessionEventData);
+		await this.sendPOFailureEmailToGovNotify(completeSessionRecord);
 
 		// Update the DB table with notified flag set to true
 		try {
-			const updateExpression = "SET notified = :notified";
+			const updateExpression = "SET poFailureNotified = :poFailureNotified";
 			const expressionAttributeValues = {
-				":notified": true,
+				":poFailureNotified": true,
 			};
-			await this.iprService.saveEventData(sessionEventData.userId, updateExpression, expressionAttributeValues);
+			await this.iprService.saveEventData(sessionEvent.userId, updateExpression, expressionAttributeValues);
 			this.logger.info({ message: "Updated the PO failure event record with notified flag" });
 			this.metrics.addMetric("POFailureEventProcessor_successfully_processed_events", MetricUnits.Count, 1);
 		} catch (error: any) {
@@ -70,6 +75,18 @@ export class POFailureEventProcessor {
 	}
 
 	async sendPOFailureEmailToGovNotify(sessionEvent: ExtSessionEvent | SessionEvent): Promise<void> {
-		throw new Error("Not implemented");
+		// Send SQS message to GovNotify queue to send PO failure email to the user.
+		try {
+			this.logger.info({ message: "Trying to send PO_FAILURE_EMAIL type message to GovNotify handler" });
+
+			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEvent, Constants.PO_FAILURE_EMAIL, this.logger));
+			this.metrics.addMetric("po_failure_email_added_to_queue", MetricUnits.Count, 1);
+		} catch (error) {
+			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
+				reason: "Processing Event session data, failed to post PO_FAILURE_EMAIL type message to GovNotify SQS Queue",
+				error,
+			}, { messageCode: MessageCodes.FAILED_TO_WRITE_GOV_NOTIFY });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "An error occurred when sending PO_FAILURE_EMAIL type message to GovNotify handler");
+		}
 	}
 }

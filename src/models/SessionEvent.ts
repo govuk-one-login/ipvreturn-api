@@ -17,6 +17,7 @@ export class SessionEvent {
 		this.journeyWentAsyncOn = data.journeyWentAsyncOn!;
 		this.readyToResumeOn = data.readyToResumeOn!;
 		this.notified = data.notified === undefined ? false : data.notified;
+		this.poFailureNotified = data.poFailureNotified === undefined ? false : data.poFailureNotified;
 	}
 
 	static parseRequest(data: string): SessionEvent {
@@ -73,6 +74,8 @@ export class SessionEvent {
 	@IsBoolean()
 	notified!: boolean;
 
+	@IsBoolean()
+	poFailureNotified!: boolean;
 }
 
 /**
