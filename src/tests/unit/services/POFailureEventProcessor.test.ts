@@ -8,7 +8,7 @@ import { Constants } from "../../../utils/Constants";
 import { AppError } from "../../../utils/AppError";
 import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
 import { DynamoDBStreamEvent } from "aws-lambda";
-import { VALID_DYNAMODB_STREAM_EVENT_PO_FAILURE, VALID_DYNAMODB_STREAM_EVENT } from "../data/dynamodb-stream-record";
+import { VALID_DYNAMODB_STREAM_EVENT_PO_FAILURE } from "../data/dynamodb-stream-record";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
 import { SessionEvent } from "../../../models/SessionEvent";
 import { MessageCodes } from "../../../models/enums/MessageCodes";
