@@ -148,7 +148,7 @@ describe("POFailureEventProcessor", () => {
 
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
 		expect(mockIprService.saveEventData).toHaveBeenCalledTimes(1);
-		expect(metrics.addMetric).toHaveBeenCalledWith("po_failure_email_added_to_queue", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenCalledWith("PO_failure_email_added_to_queue", MetricUnits.Count, 1);
 	});
 
 	it("Logs correct message when sending PO failure email", async () => {

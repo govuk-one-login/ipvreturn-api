@@ -80,7 +80,7 @@ export class POFailureEventProcessor {
 			this.logger.info({ message: "Trying to send PO_FAILURE_EMAIL type message to GovNotify handler" });
 
 			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEvent, Constants.PO_FAILURE_EMAIL, this.logger));
-			this.metrics.addMetric("po_failure_email_added_to_queue", MetricUnits.Count, 1);
+			this.metrics.addMetric("PO_failure_email_added_to_queue", MetricUnits.Count, 1);
 		} catch (error) {
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
 				reason: "Processing Event session data, failed to post PO_FAILURE_EMAIL type message to GovNotify SQS Queue",

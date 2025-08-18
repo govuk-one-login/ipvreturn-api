@@ -3,14 +3,14 @@
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SQSEvent } from "aws-lambda";
-import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL } from "../../data/sqs-events";
+import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_PO_FAILURE_EMAIL } from "../../data/sqs-events";
 import { SendEmailProcessor } from "../../../services/SendEmailProcessor";
 import { SendEmailService } from "../../../services/SendEmailService";
 import { IPRServiceSession } from "../../../services/IPRServiceSession";
 import { mock } from "jest-mock-extended";
 import { EmailResponse } from "../../../models/EmailResponse";
 import { ExtSessionEvent, SessionEvent } from "../../../models/SessionEvent";
-import { Email, DynamicEmail } from "../../../models/Email";
+import { Email, DynamicEmail, POFailureEmail } from "../../../models/Email";
 import { Constants } from "../../../utils/Constants";
 
 let sendEmailProcessorTest: SendEmailProcessor;
@@ -23,6 +23,7 @@ const logger = mock<Logger>();
 const metrics = new Metrics({ namespace: "IPR" });
 let sqsEvent: SQSEvent;
 let sqsEventNewEmail: SQSEvent;
+let sqsEventPOFailureEmail: SQSEvent;
 let mockSessionEvent: SessionEvent;
 let mockExtSessionEvent: ExtSessionEvent;
 const MOCK_ISSUER = "test-mock-issuer";
@@ -119,6 +120,7 @@ describe("SendEmailProcessor", () => {
 		sendEmailProcessorTest.issuer = MOCK_ISSUER;
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
+		sqsEventPOFailureEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_PO_FAILURE_EMAIL;
 		mockSessionEvent = getMockSessionEventItem();
 		mockExtSessionEvent = getMockExtSessionEventItem();
 	});
@@ -129,6 +131,7 @@ describe("SendEmailProcessor", () => {
 		jest.setSystemTime(new Date(1585695600000));
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
+		sqsEventPOFailureEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_PO_FAILURE_EMAIL;
 		mockSessionEvent = getMockSessionEventItem();
 		mockExtSessionEvent = getMockExtSessionEventItem();
 	});
@@ -326,6 +329,76 @@ describe("SendEmailProcessor", () => {
 				previous_govuk_signin_journey_id: "sdfssg",
 			},
 		});
+	});
+
+	it("Returns success response when all required Email attributes exists to send po Failure messageType", async () => {
+		const expectedDateTime = new Date().toISOString();
+		const mockEmailResponse = new EmailResponse(expectedDateTime, "", 201);
+		mockSessionEvent.poFailureNotified = true;
+		mockGovNotifyService.sendEmail.mockResolvedValue(mockEmailResponse);
+		const eventBody = JSON.parse(sqsEventPOFailureEmail.Records[0].body);
+		// @ts-expect-error allow direct value passed to promise
+		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+		const poFailureEmailmessage = POFailureEmail.parseRequest(JSON.stringify(eventBody.Message));
+		const emailResponse = await sendEmailProcessorTest.processRequest(poFailureEmailmessage);
+
+		expect(mockGovNotifyService.sendEmail).toHaveBeenCalledWith(poFailureEmailmessage, Constants.PO_FAILURE_EMAIL);
+
+		expect(emailResponse.emailSentDateTime).toEqual(expectedDateTime);
+		expect(emailResponse.emailFailureMessage).toBe("");
+		expect(mockIprService.sendToTXMA).toHaveBeenCalledTimes(1);
+		expect(mockIprService.sendToTXMA).toHaveBeenCalledWith({
+			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
+			timestamp: 1585695600,
+			event_timestamp_ms: 1585695600000,
+			component_id: MOCK_ISSUER,
+			user: {
+				email: "test.user@digital.cabinet-office.gov.uk",
+				user_id: "user_id",
+			},
+			extensions: {
+				previous_govuk_signin_journey_id: "sdfssg",
+			},
+		});
+	});
+
+	it.each([
+		"userId",
+		"firstName",
+		"lastName",
+		"emailAddress",
+	])("Throws error when event body message is missing required attributes to send PO Failure Email", async (attribute) => {
+		const eventBody = JSON.parse(sqsEventPOFailureEmail.Records[0].body);
+		const eventBodyMessage = eventBody.Message;
+		delete eventBodyMessage[attribute];
+		eventBody.Message = eventBodyMessage;
+		const message = POFailureEmail.parseRequest(JSON.stringify(eventBody.Message));
+		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
+	});
+
+	it.each([
+		"userId",
+		"firstName",
+		"lastName",
+		"emailAddress",
+	])("Throws error when the Email modal validation fails to send PO Failure Email", async (attribute) => {
+		const eventBody = JSON.parse(sqsEventPOFailureEmail.Records[0].body);
+		const eventBodyMessage = eventBody.Message;
+		eventBodyMessage[attribute] = 0;
+		eventBody.Message = eventBodyMessage;
+		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
+	});
+
+	it("Throws error when PoFailureNotified flag is not set to true for the user session event record", async () => {
+		const eventBody = JSON.parse(sqsEventPOFailureEmail.Records[0].body);
+		const eventBodyMessage = eventBody.Message;
+		eventBody.Message = eventBodyMessage;
+		// mockSessionEvent.poFailureNotified = false;
+		// @ts-expect-error allow direct value passed to promise
+		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+		const message = POFailureEmail.parseRequest(JSON.stringify(eventBody.Message));
+		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
+		expect(logger.error).toHaveBeenCalledWith("PoFailureNotified flag is not set to true for this user session event", { "messageCode": "PO_FAILURE_NOTIFIED_FLAG_NOT_SET_TO_TRUE" });
 	});
 
 });

@@ -144,3 +144,53 @@ export class FallbackEmail {
     messageType!: string;	
 
 }
+
+export class POFailureEmail {
+
+	constructor(data: Partial<POFailureEmail>) {
+		this.userId = data.userId!;
+		this.emailAddress = data.emailAddress!;
+		this.firstName = data.firstName!;
+		this.lastName = data.lastName!;
+		this.messageType = data.messageType!;
+		this.referenceId = randomUUID();
+	}
+
+	static parseRequest(data: any): POFailureEmail {
+		try {
+			const obj = JSON.parse(data);
+			return new POFailureEmail(obj);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
+		} catch (error: any) {
+			console.log("Cannot parse POFailureEmail data", POFailureEmail.name, "parseBody", { data });
+			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse POFailureEmail data");
+		}
+	}
+
+	@IsString()
+	@IsNotEmpty()
+	userId!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    @IsEmail()
+    emailAddress!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    firstName!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	lastName!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    referenceId!: string;
+
+	@IsString()
+    @IsNotEmpty()
+    messageType!: string;	
+
+}
