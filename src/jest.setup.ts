@@ -2,6 +2,7 @@ process.env.REGION = 'eu-west-2'
 process.env.GOVUKNOTIFY_TEMPLATE_ID = "old-template-id"
 process.env.GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID = "new-template-id"
 process.env.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID = "fallback-template-id"
+process.env.GOVUKNOTIFY_PO_FAILURE_EMAIL_TEMPLATE_ID = "po-failure-template-id"
 process.env.GOVUKNOTIFY_API_KEY_SSM_PATH = "/dev/f2f-gov-notify/lsdkgl"
 process.env.TXMA_QUEUE_URL = "MYQUEUE"
 process.env.ISSUER = "ISSUER"
