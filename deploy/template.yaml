@@ -353,7 +353,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-S3Bucket-changes"
       AlarmDescription: !Sub 
-        - A CloudWatch Alarm that triggers when changes are made to S3 Bucket {RunbookUrl}"
+        - A CloudWatch Alarm that triggers when changes are made to S3 Bucket ${RunbookUrl}
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
@@ -390,7 +390,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-IGW-changes"
       AlarmDescription: !Sub 
-        - "Triggers CloudWatch Alarm when changes are made to an Internet Gateway in a VPC {RunbookUrl}"
+        - "Triggers CloudWatch Alarm when changes are made to an Internet Gateway in a VPC ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       MetricName: IGatewayActivityEvent
       Namespace: !Sub "${AWS::StackName}/LogMessages"
@@ -422,7 +422,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-vpc-route-changes"
       AlarmDescription: !Sub 
-        - "A CloudWatch Alarm that triggers when changes are made to a VPC's Route Table {RunbookUrl}"
+        - "A CloudWatch Alarm that triggers when changes are made to a VPC's Route Table ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       MetricName: VpcRouteTableEvent
       Namespace: !Sub "${AWS::StackName}/LogMessages"
@@ -454,7 +454,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-vpc-changes"
       AlarmDescription: !Sub 
-        - "A CloudWatch Alarm that triggers when changes are made to a VPC {RunbookUrl}"
+        - "A CloudWatch Alarm that triggers when changes are made to a VPC ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       MetricName: VpcEventChanges
       Namespace: !Sub "${AWS::StackName}/LogMessages"
@@ -487,7 +487,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-organisations-changes"
       AlarmDescription: !Sub 
-        - "A CloudWatch Alarm that triggers when changes are made to AWS Organisations {RunbookUrl}"
+        - "A CloudWatch Alarm that triggers when changes are made to AWS Organisations ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       MetricName: OrganisationsEventChange
       Namespace: !Sub "${AWS::StackName}/LogMessages"
@@ -721,7 +721,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-IPVRAPIGateway-FatalErrorAlarm"
       AlarmDescription: !Sub 
-        - "Trigger an alarm when Fatal Error occurs. {RunbookUrl}"
+        - "Trigger an alarm when Fatal Error occurs. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
@@ -928,7 +928,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-PostEventFunction-FatalErrorAlarm"
       AlarmDescription: !Sub
-        - "Trigger an alarm when Fatal Error occurs. {RunbookUrl}"
+        - "Trigger an alarm when Fatal Error occurs. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
@@ -958,7 +958,7 @@ Resources:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
       AlarmDescription: !Sub 
-        - "Trigger the alarm if over 80% of reserved concurrency is used. {RunbookUrl}"
+        - "Trigger the alarm if over 80% of reserved concurrency is used. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-PostEventFunction-concurrency"
       MetricName: ConcurrentExecutions
@@ -985,7 +985,7 @@ Resources:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
       AlarmDescription: !Sub 
-        - "Trigger if the ${PostEventFunction} lambda throttles. {RunbookUrl}"
+        - "Trigger if the ${PostEventFunction} lambda throttles. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-PostEventFunction-throttles"
       MetricName: Throttles
@@ -1124,7 +1124,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-GovNotifyFunctionn-FatalErrorAlarm"
       AlarmDescription: !Sub 
-        - "Trigger an alarm when Fatal Error occurs. {RunbookUrl}"
+        - "Trigger an alarm when Fatal Error occurs. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
@@ -1154,7 +1154,7 @@ Resources:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
       AlarmDescription: !Sub 
-        - "Trigger the alarm if over 80% of reserved concurrency is used. {RunbookUrl}"
+        - "Trigger the alarm if over 80% of reserved concurrency is used. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-GovNotifyFunction-concurrency"
       MetricName: ConcurrentExecutions
@@ -1181,7 +1181,7 @@ Resources:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
       AlarmDescription: !Sub 
-        - "Trigger if the ${GovNotifyFunction} lambda throttles. {RunbookUrl}"
+        - "Trigger if the ${GovNotifyFunction} lambda throttles. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-GovNotifyFunction-throttles"
       MetricName: Throttles
@@ -1324,7 +1324,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunctionn-FatalErrorAlarm"
       AlarmDescription: !Sub 
-        - "Trigger an alarm when Fatal Error occurs. {RunbookUrl}"
+        - "Trigger an alarm when Fatal Error occurs. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
@@ -1354,7 +1354,7 @@ Resources:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
       AlarmDescription: !Sub 
-        - "Trigger the alarm if over 80% of reserved concurrency is used. {RunbookUrl}"
+        - "Trigger the alarm if over 80% of reserved concurrency is used. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-concurrency"
       MetricName: ConcurrentExecutions
@@ -1381,7 +1381,7 @@ Resources:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
       AlarmDescription: !Sub 
-        - "Trigger if the ${StreamProcessorFunction} lambda throttles. {RunbookUrl}"
+        - "Trigger if the ${StreamProcessorFunction} lambda throttles. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-throttles"
       MetricName: Throttles
@@ -1510,7 +1510,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-SessionFunctionn-FatalErrorAlarm"
       AlarmDescription: !Sub 
-        - "Trigger an alarm when Fatal Error occurs. {RunbookUrl}"
+        - "Trigger an alarm when Fatal Error occurs. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
@@ -1540,7 +1540,7 @@ Resources:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
       AlarmDescription: !Sub 
-        - "Trigger the alarm if over 80% of reserved concurrency is used. {RunbookUrl}"
+        - "Trigger the alarm if over 80% of reserved concurrency is used. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-SessionFunction-concurrency"
       MetricName: ConcurrentExecutions
@@ -1567,7 +1567,7 @@ Resources:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
       AlarmDescription: !Sub 
-        - "Trigger if the ${SessionFunction} lambda throttles. {RunbookUrl}"
+        - "Trigger if the ${SessionFunction} lambda throttles. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-SessionFunction-throttles"
       MetricName: Throttles
@@ -1841,7 +1841,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-5XXErrorAlarm"
       AlarmDescription: !Sub 
-        - "There has been a small proportion of 5XX errors on the backend api-gateway. {RunbookUrl}"
+        - "There has been a small proportion of 5XX errors on the backend api-gateway. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
@@ -1893,7 +1893,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-5XXErrorCriticalAlarm"
       AlarmDescription: !Sub 
-        - "There has been a significant proportion of 5XX errors on the backend api-gateway. {RunbookUrl}"
+        - "There has been a significant proportion of 5XX errors on the backend api-gateway. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
@@ -1947,7 +1947,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-Session5XXApiGwErrorAlarm"
       AlarmDescription: !Sub 
-        - "There has been a small proportion of 5XX errors on the Session endpoint. {RunbookUrl}"
+        - "There has been a small proportion of 5XX errors on the Session endpoint. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
@@ -2011,7 +2011,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-Session5XXApiGwErrorCriticalAlarm"
       AlarmDescription: !Sub 
-        - "There has been a significant proportion of 5XX errors on the Session endpoint. {RunbookUrl}"
+        - "There has been a significant proportion of 5XX errors on the Session endpoint. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
@@ -2080,7 +2080,7 @@ Resources:
         Fn::Sub: 
           - >-
             >=50% of invocations to the Session endpoint have generated a 4XX error in
-            4 or more out of the last 10 minutes. {RunbookUrl}
+            4 or more out of the last 10 minutes. ${RunbookUrl}
           - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
@@ -2144,7 +2144,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-apiGWLatencyAlarm"
       AlarmDescription: !Sub 
-        - "There has been increased latency on backend api-gateway. {RunbookUrl}"
+        - "There has been increased latency on backend api-gateway. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: false  # disabled until we're ready for alarm actions to fire
       AlarmActions:
@@ -2192,7 +2192,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-TXMASQSOldMessagesAlarm"
       AlarmDescription: !Sub 
-        - "Trigger an alarm when the age of the oldest TXMA message is 5 or more minutes. {RunbookUrl}"
+        - "Trigger an alarm when the age of the oldest TXMA message is 5 or more minutes. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
@@ -2219,7 +2219,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-TXMADLQMessagesVisibleAlarm"
       AlarmDescription: !Sub 
-        - "Trigger an alarm when message gets added to TXMA DLQ. {RunbookUrl}"
+        - "Trigger an alarm when message gets added to TXMA DLQ. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
@@ -2246,7 +2246,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-GovNotifySQSOldMessagesAlarm"
       AlarmDescription: !Sub 
-        - "Trigger an alarm when the age of the oldest TXMA message is 5 or more minutes. {RunbookUrl}"
+        - "Trigger an alarm when the age of the oldest TXMA message is 5 or more minutes. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
@@ -2273,7 +2273,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-GovNotifyDLQMessagesVisibleAlarm"
       AlarmDescription: !Sub 
-        - "Trigger an alarm when message gets added to GovNotify DLQ. {RunbookUrl}"
+        - "Trigger an alarm when message gets added to GovNotify DLQ. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
@@ -2369,7 +2369,7 @@ Resources:
     Properties:
       AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-FallbackEmailErrorAlarm"
       AlarmDescription: !Sub 
-        - "Trigger an alarm when Fallback email is triggered due to missing mandatory fields. {RunbookUrl}"
+        - "Trigger an alarm when Fallback email is triggered due to missing mandatory fields. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
