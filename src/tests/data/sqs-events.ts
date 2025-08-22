@@ -317,6 +317,20 @@ export const VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT: ReturnSQSEvent
 			"drivingPermit":null,
 			"idCard":null,
 		},
+		"nameParts": [
+			{
+				"type": "GivenName",
+				"value": "ANGELA",
+			},
+			{
+				"type": "GivenName",
+				"value": "ZOE",
+			},
+			{
+				"type": "FamilyName",
+				"value": "UK SPECIMEN",
+			},
+		],
 	},
 };
 

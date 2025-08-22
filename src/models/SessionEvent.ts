@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEmail, IsBoolean, IsNumber, IsArray } from "class-validator";
+import { IsString, IsNotEmpty, IsEmail, IsBoolean, IsNumber, IsArray, IsOptional } from "class-validator";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "./enums/HttpCodesEnum";
 
@@ -17,8 +17,6 @@ export class SessionEvent {
 		this.journeyWentAsyncOn = data.journeyWentAsyncOn!;
 		this.readyToResumeOn = data.readyToResumeOn!;
 		this.notified = data.notified === undefined ? false : data.notified;
-		this.poFailureNotified = data.poFailureNotified ?? false;
-
 	}
 
 	static parseRequest(data: string): SessionEvent {
@@ -75,8 +73,13 @@ export class SessionEvent {
 	@IsBoolean()
 	notified!: boolean;
 
+	@IsOptional()
 	@IsBoolean()
 	poFailureNotified?: boolean;
+
+	@IsOptional()
+	@IsString()
+	errorDescription?: string;
 }
 
 /**

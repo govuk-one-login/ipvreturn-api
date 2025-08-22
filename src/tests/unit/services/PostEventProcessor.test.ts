@@ -436,7 +436,7 @@ describe("PostEventProcessor", () => {
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			await postEventProcessorMockSessionService.processRequest(JSON.stringify(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, postOfficeInfo = :postOfficeInfo, documentType = :documentType, clientSessionId = :clientSessionId", { 
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, postOfficeInfo = :postOfficeInfo, documentType = :documentType, clientSessionId = :clientSessionId, nameParts = :nameParts", { 
 				":journeyWentAsyncOn": 1681902001, 
 				":clientName": "test",
 				":ipvStartedOn": "test",
@@ -458,6 +458,20 @@ describe("PostEventProcessor", () => {
 				],
 				":documentType": "PASSPORT",
 				":clientSessionId": "asdfadsfasdf",
+				":nameParts": [
+					{ 
+						"type": "GivenName", 
+						"value": "ANGELA" 
+					}, 
+					{ 
+						"type": "GivenName", 
+						
+						"value": "ZOE" }, 
+					{ 
+						"type":"FamilyName", 
+						"value":"UK SPECIMEN" 
+					}
+				]
 			});
 		});
 
@@ -476,7 +490,7 @@ describe("PostEventProcessor", () => {
 			delete yotiStartEvent.extensions;
 			await postEventProcessorMockSessionService.processRequest(JSON.stringify(yotiStartEvent));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, documentType = :documentType, clientSessionId = :clientSessionId", { 
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, documentType = :documentType, clientSessionId = :clientSessionId, nameParts = :nameParts", { 
 				":journeyWentAsyncOn": 1681902001, 
 				":clientName": "test",
 				":ipvStartedOn": "test",
@@ -485,6 +499,20 @@ describe("PostEventProcessor", () => {
 				":expiresOn": expiresOn,
 				":documentType": "PASSPORT",
 				":clientSessionId": "asdfadsfasdf",
+				":nameParts": [
+					{ 
+						"type": "GivenName", 
+						"value": "ANGELA" 
+					}, 
+					{ 
+						"type": "GivenName", 
+						
+						"value": "ZOE" }, 
+					{ 
+						"type":"FamilyName", 
+						"value":"UK SPECIMEN" 
+					}
+				]
 			});
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No post_office_details in F2F_YOTI_START event");
@@ -541,9 +569,8 @@ describe("PostEventProcessor", () => {
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith(
 				"01333e01-dde3-412f-a484-4444", 
-				"SET userId = :userId, errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn", 
+				"SET errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn", 
 				{ 
-					":userId": "01333e01-dde3-412f-a484-4444",
 					":errorDescription": "VC generation failed : Unable to create credential",
 					":readyToResumeOn": absoluteTimeNow(),
 				}
@@ -555,9 +582,8 @@ describe("PostEventProcessor", () => {
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith(
 				"01333e01-dde3-412f-a484-4444", 
-				"SET userId = :userId, errorDescription = :errorDescription", 
+				"SET errorDescription = :errorDescription", 
 				{ 
-					":userId": "01333e01-dde3-412f-a484-4444",
 					":errorDescription": "Session expired",
 				}
 			);

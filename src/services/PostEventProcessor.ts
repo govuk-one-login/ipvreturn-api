@@ -150,7 +150,6 @@ export class PostEventProcessor {
 						":redirectUri": fetchedRecord.redirectUri,
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
 						":expiresOn": returnRecord.expiresDate,
-						":nameParts": returnRecord.nameParts,
 					};
 					if (returnRecord.postOfficeInfo) {
 						updateExpression += ", postOfficeInfo = :postOfficeInfo";
@@ -171,6 +170,13 @@ export class PostEventProcessor {
 						expressionAttributeValues[":clientSessionId"] = returnRecord.clientSessionId;
 					} else {
 						this.logger.info(`No govuk_signin_journey_id in ${eventName} event`);
+					}
+
+					if (returnRecord.nameParts) {
+						updateExpression += ", nameParts = :nameParts";
+						expressionAttributeValues[":nameParts"] = returnRecord.nameParts;
+					} else {
+						this.logger.info(`No nameParts in ${eventName} event`);
 					}
 					break;
 				}
@@ -210,16 +216,14 @@ export class PostEventProcessor {
 					const isVCFailure = this.isVCGenerationFailure(returnRecord.error_description);
 					
 					if (isVCFailure) {
-						updateExpression = "SET userId = :userId, errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn";
+						updateExpression = "SET errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn";
 						expressionAttributeValues = {
-							":userId": returnRecord.userId,
 							":errorDescription": returnRecord.error_description,
 							":readyToResumeOn": absoluteTimeNow(),
 						};
 					} else {
-						updateExpression = "SET userId = :userId, errorDescription = :errorDescription";
+						updateExpression = "SET errorDescription = :errorDescription";
 						expressionAttributeValues = {
-							":userId": returnRecord.userId,
 							":errorDescription": returnRecord.error_description,
 						};
 					}
