@@ -359,6 +359,7 @@ components:
             - "AUTH_IPV_AUTHORISATION_REQUESTED"
             - "F2F_DOCUMENT_UPLOADED"
             - "IPV_F2F_USER_CANCEL_END"
+            - "IPV_F2F_CRI_VC_ERROR"
           description: name of the event
           example: "IPV_F2F_CRI_VC_CONSUMED"
         clientLandingPageUrl:
@@ -387,6 +388,12 @@ components:
             nameParts:
               type: array
           description: "additional details"
+        extensions:
+          type: object
+          properties:
+            error_description:
+              type: string
+          description: "Further extended additional details"
 
   securitySchemes:
     sigv4Reference:
