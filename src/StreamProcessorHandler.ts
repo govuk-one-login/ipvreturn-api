@@ -37,8 +37,7 @@ class StreamProcessorHandler implements LambdaInterface {
 					// @ts-expect-error allow undefined to be passed
 					const sessionEvent = unmarshall(record.dynamodb?.NewImage);
 					
-					if (sessionEvent.readyToResumeOn && sessionEvent.errorDescription && 
-						sessionEvent.errorDescription.toLowerCase().includes("vc generation failed")) {
+					if (sessionEvent.readyToResumeOn && sessionEvent.errorDescription?.toLowerCase().includes("vc generation failed")) {
 						await POFailureEventProcessor.getInstance(logger, metrics).processRequest(sessionEvent);
 					} else {
 						await SessionEventProcessor.getInstance(logger, metrics).processRequest(sessionEvent);

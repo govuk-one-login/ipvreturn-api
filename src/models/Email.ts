@@ -145,15 +145,10 @@ export class FallbackEmail {
 
 }
 
-export class POFailureEmail {
+export class POFailureEmail extends Email {
 
 	constructor(data: Partial<POFailureEmail>) {
-		this.userId = data.userId!;
-		this.emailAddress = data.emailAddress!;
-		this.firstName = data.firstName!;
-		this.lastName = data.lastName!;
-		this.messageType = data.messageType!;
-		this.referenceId = randomUUID();
+		super(data);
 	}
 
 	static parseRequest(data: any): POFailureEmail {
@@ -167,30 +162,4 @@ export class POFailureEmail {
 			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse POFailureEmail data");
 		}
 	}
-
-	@IsString()
-	@IsNotEmpty()
-	userId!: string;
-
-    @IsString()
-    @IsNotEmpty()
-    @IsEmail()
-    emailAddress!: string;
-
-    @IsString()
-    @IsNotEmpty()
-    firstName!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	lastName!: string;
-
-    @IsString()
-    @IsNotEmpty()
-    referenceId!: string;
-
-	@IsString()
-    @IsNotEmpty()
-    messageType!: string;	
-
 }
