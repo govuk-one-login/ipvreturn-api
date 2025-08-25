@@ -147,18 +147,12 @@ export class FallbackEmail {
 
 export class POFailureEmail extends Email {
 
-	constructor(data: Partial<POFailureEmail>) {
-		super(data);
-	}
-
 	static parseRequest(data: any): POFailureEmail {
 		try {
 			const obj = JSON.parse(data);
 			return new POFailureEmail(obj);
-			// ignored so as not log PII
-			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error: any) {
-			console.log("Cannot parse POFailureEmail data", POFailureEmail.name, "parseBody", { data });
+			console.log("Cannot parse POFailureEmail data", POFailureEmail.name, "parseBody", { data }, error);
 			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse POFailureEmail data");
 		}
 	}
