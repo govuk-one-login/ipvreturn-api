@@ -45,9 +45,6 @@ export class ValidationHelper {
 		if (!sessionEventData.nameParts || !Array.isArray(sessionEventData.nameParts) || sessionEventData.nameParts.length === 0) {
 			throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, "nameParts is not yet populated, unable to process the DB record.");
 		}
-		else if (!sessionEventData.readyToResumeOn || !(sessionEventData.readyToResumeOn > 0)) {
-			throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, "readyToResumeOn is not yet populated, unable to process the DB record.");
-		}
 	}
 
 	async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent | FallbackEmail; emailType: string }> {
