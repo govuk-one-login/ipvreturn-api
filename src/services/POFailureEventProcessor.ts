@@ -42,7 +42,7 @@ export class POFailureEventProcessor {
 	}
 
 	async processRequest(sessionEvent: any): Promise<void> {
-		// Fetch complete session record from DynamoDB to get email-related fields (nameParts, userEmail, etc.)
+		// Fetch complete session record from DynamoDB to get email required fields (nameParts, userEmail, etc.)
 		const completeSessionRecord = await this.iprService.getSessionBySub(sessionEvent.userId);
 		if (!completeSessionRecord) {
 			this.logger.error("Session record not found for PO failure event", { messageCode: MessageCodes.SESSION_NOT_FOUND });
@@ -52,22 +52,30 @@ export class POFailureEventProcessor {
 		this.logger.appendKeys({ govuk_signin_journey_id: completeSessionRecord.clientSessionId });
 
 		// Validate the notified field is set to false
-		if (completeSessionRecord.poFailureNotified) {
+		if (completeSessionRecord.notified) {
 			this.logger.warn("User is already notified for this PO failure event.", { messageCode: MessageCodes.USER_ALREADY_NOTIFIED });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "User is already notified for this PO failure event.");
+		}
+
+		// Validate if the record is missing some fields related to the Events and log the details and stop record processing.
+		try {
+			this.validationHelper.validatePOFailureEventFields(completeSessionRecord);
+		} catch (error: any) {
+			this.logger.warn(error.message, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 
 		// Send the PO failure email notification message
 		await this.sendPOFailureEmailToGovNotify(completeSessionRecord);
 
-		// Update the DB table with PO failure notified flag set to true
+		// Update the DB table with notified flag set to true
 		try {
-			const updateExpression = "SET poFailureNotified = :poFailureNotified";
+			const updateExpression = "SET notified = :notified";
 			const expressionAttributeValues = {
-				":poFailureNotified": true,
+				":notified": true,
 			};
 			await this.iprService.saveEventData(sessionEvent.userId, updateExpression, expressionAttributeValues);
-			this.logger.info({ message: "Updated the PO failure event record with poFailureNotified flag" });
+			this.logger.info({ message: "Updated the session event record with notified flag" });
 			this.metrics.addMetric("POFailureEventProcessor_successfully_processed_events", MetricUnits.Count, 1);
 		} catch (error: any) {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);

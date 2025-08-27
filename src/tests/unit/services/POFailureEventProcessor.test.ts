@@ -25,7 +25,7 @@ const mockSessionEvent: SessionEvent = {
 		clientName: "ipv",
 		clientSessionId: "clientSessionId",
 		userEmail: "test.user@digital.cabinet-office.gov.uk",
-		notified: true,
+		notified: false,
 		ipvStartedOn: 1681902001,
 		journeyWentAsyncOn: 1681902002,
 		readyToResumeOn: 1681902003,
@@ -64,9 +64,9 @@ describe("POFailureEventProcessor", () => {
 	it("Successfully processes PO failure event and sends email", async () => {
 		// @ts-expect-error allow undefined to be passed
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
-		const updateExpression = "SET poFailureNotified = :poFailureNotified";
+		const updateExpression = "SET notified = :notified";
 		const expressionAttributeValues = {
-			":poFailureNotified": true,
+			":notified": true,
 		};
 
 		await poFailureEventProcessorTest.processRequest(sessionEvent);
@@ -107,7 +107,7 @@ describe("POFailureEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		const alreadyNotifiedRecord = {
 			...mockSessionEvent,
-			poFailureNotified: true
+			notified: true
 		};
 		// @ts-expect-error allow direct value passed to promise
 		mockIprService.getSessionBySub.mockResolvedValue(alreadyNotifiedRecord);
@@ -137,7 +137,7 @@ describe("POFailureEventProcessor", () => {
 		expect(mockIprService.saveEventData).not.toHaveBeenCalled();
 	});
 
-	it("Throws error when failed to update session record with PO failure notified flag", async () => {
+	it("Throws error when failed to update session record with notified flag", async () => {
 		// @ts-expect-error allow undefined to be passed
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		mockIprService.saveEventData.mockRejectedValueOnce(new Error("Error updating session record"));
@@ -157,6 +157,28 @@ describe("POFailureEventProcessor", () => {
 		await poFailureEventProcessorTest.processRequest(sessionEvent);
 
 		expect(mockLogger.info).toHaveBeenCalledWith({ message: "Trying to send PO_FAILURE_EMAIL type message to GovNotify handler" });
-		expect(mockLogger.info).toHaveBeenCalledWith({ message: "Updated the PO failure event record with poFailureNotified flag" });
+		expect(mockLogger.info).toHaveBeenCalledWith({ message: "Updated the session event record with notified flag" });
+	});
+
+	it("Throws error when nameParts validation fails", async () => {
+		// @ts-expect-error allow undefined to be passed
+		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
+		const sessionRecordWithoutNameParts = {
+			...mockSessionEvent,
+			nameParts: []
+		};
+		// @ts-expect-error allow direct value passed to promise
+		mockIprService.getSessionBySub.mockResolvedValue(sessionRecordWithoutNameParts);
+
+		await expect(poFailureEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow(
+			new AppError(HttpCodesEnum.SERVER_ERROR, "nameParts is not yet populated, unable to process the DB record.")
+		);
+
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			"nameParts is not yet populated, unable to process the DB record.",
+			{ messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT }
+		);
+		expect(mockIprService.sendToGovNotify).not.toHaveBeenCalled();
+		expect(mockIprService.saveEventData).not.toHaveBeenCalled();
 	});
 });

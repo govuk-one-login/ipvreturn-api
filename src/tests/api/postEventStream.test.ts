@@ -274,7 +274,7 @@ describe("post event processor", () => {
 		await postMockEvent(VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT, userId, false);
 
 		const response = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
-		expect(response?.poFailureNotified).toBe(true);
+		expect(response?.notified).toBe(true);
 		expect(response?.nameParts).toEqual([
 			{
 				M: {

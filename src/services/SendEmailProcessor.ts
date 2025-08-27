@@ -83,15 +83,9 @@ export class SendEmailProcessor {
 		}
 
 		// Validate the notified field is set to true
-		if (!session.notified && message.messageType !== Constants.PO_FAILURE_EMAIL) {
+		if (!session.notified) {
 			this.logger.error("Notified flag is not set to true for this user session event", { messageCode: MessageCodes.NOTIFIED_FLAG_NOT_SET_TO_TRUE });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Notified flag is not set to true for this user session event");
-		}
-
-		// Validate PO failure notification hasn't been sent already
-		if (!session.poFailureNotified && message.messageType === Constants.PO_FAILURE_EMAIL) {
-			this.logger.error("PoFailureNotified flag is not set to true for this user session event", { messageCode: MessageCodes.PO_FAILURE_NOTIFIED_FLAG_NOT_SET_TO_TRUE });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "PoFailureNotified flag is not set to true for this user session event");
 		}
 
 		// Validate if the record is missing some fields related to the Events and log the details and do not notify the User.

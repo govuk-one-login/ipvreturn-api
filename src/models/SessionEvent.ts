@@ -74,10 +74,6 @@ export class SessionEvent {
 	notified!: boolean;
 
 	@IsOptional()
-	@IsBoolean()
-	poFailureNotified?: boolean;
-
-	@IsOptional()
 	@IsString()
 	errorDescription?: string;
 }

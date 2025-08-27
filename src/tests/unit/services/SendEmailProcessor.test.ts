@@ -334,7 +334,7 @@ describe("SendEmailProcessor", () => {
 	it("Returns success response when all required Email attributes exists to send po Failure messageType", async () => {
 		const expectedDateTime = new Date().toISOString();
 		const mockEmailResponse = new EmailResponse(expectedDateTime, "", 201);
-		mockSessionEvent.poFailureNotified = true;
+		mockSessionEvent.notified = true;
 		mockGovNotifyService.sendEmail.mockResolvedValue(mockEmailResponse);
 		const eventBody = JSON.parse(sqsEventPOFailureEmail.Records[0].body);
 		// @ts-expect-error allow direct value passed to promise
@@ -389,16 +389,16 @@ describe("SendEmailProcessor", () => {
 		await expect(sendEmailProcessorTest.processRequest(eventBody)).rejects.toThrow();
 	});
 
-	it("Throws error when PoFailureNotified flag is not set to true for the user session event record", async () => {
+	it("Throws error when notified flag is not set to true for the user session event record when sending po failure email", async () => {
 		const eventBody = JSON.parse(sqsEventPOFailureEmail.Records[0].body);
 		const eventBodyMessage = eventBody.Message;
 		eventBody.Message = eventBodyMessage;
-		// mockSessionEvent.poFailureNotified = false;
+		mockSessionEvent.notified = false;
 		// @ts-expect-error allow direct value passed to promise
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 		const message = POFailureEmail.parseRequest(JSON.stringify(eventBody.Message));
 		await expect(sendEmailProcessorTest.processRequest(message)).rejects.toThrow();
-		expect(logger.error).toHaveBeenCalledWith("PoFailureNotified flag is not set to true for this user session event", { "messageCode": "PO_FAILURE_NOTIFIED_FLAG_NOT_SET_TO_TRUE" });
+		expect(logger.error).toHaveBeenCalledWith("Notified flag is not set to true for this user session event", { "messageCode": "NOTIFIED_FLAG_NOT_SET_TO_TRUE" });
 	});
 
 });
