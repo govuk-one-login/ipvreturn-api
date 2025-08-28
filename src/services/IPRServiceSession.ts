@@ -31,6 +31,7 @@ export class IPRServiceSession {
 		[Constants.IPV_F2F_CRI_VC_CONSUMED, "readyToResumeOn"],
 		[Constants.AUTH_DELETE_ACCOUNT, "accountDeletedOn"],
 		[Constants.IPV_F2F_USER_CANCEL_END, "accountDeletedOn"],
+		[Constants.IPV_F2F_CRI_VC_ERROR, "readyToResumeOn"],
 	]);
 
 	constructor(tableName: any, logger: Logger, dynamoDbClient: DynamoDBDocument) {

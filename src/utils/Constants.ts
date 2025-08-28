@@ -18,6 +18,8 @@ export class Constants {
 
     static readonly IPV_F2F_CRI_VC_CONSUMED = "IPV_F2F_CRI_VC_CONSUMED";
 
+    static readonly IPV_F2F_CRI_VC_ERROR = "IPV_F2F_CRI_VC_ERROR";
+
     static readonly F2F_DOCUMENT_UPLOADED = "F2F_DOCUMENT_UPLOADED";
 
     static readonly AUTH_DELETE_ACCOUNT = "AUTH_DELETE_ACCOUNT";
@@ -45,6 +47,8 @@ export class Constants {
     static readonly VIST_PO_EMAIL_DYNAMIC = "VIST_PO_EMAIL_DYNAMIC";
 
     static readonly VISIT_PO_EMAIL_FALLBACK = "VISIT_PO_EMAIL_FALLBACK";
+
+    static readonly PO_FAILURE_EMAIL = "PO_FAILURE_EMAIL";
 
 	static readonly X_FORWARDED_FOR = "x-forwarded-for";
 
