@@ -22,7 +22,7 @@ describe("SessionHandler", () => {
 		mockedSessionProcessor.processRequest.mockResolvedValue({ statusCode: 200, body: JSON.stringify({ message: "Success" }) });
 		const response = await lambdaHandler(VALID_SESSION, "IPR");
 
-		// eslint-disable-next-line @typescript-eslint/unbound-method
+		 
 		expect(mockedSessionProcessor.processRequest).toHaveBeenCalledTimes(1);
 		expect(response.statusCode).toBe(200);
 		expect(JSON.parse(response.body)).toEqual({ message: "Success" });

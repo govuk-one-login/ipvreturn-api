@@ -23,7 +23,7 @@ describe("PostEventHandler", () => {
 		PostEventProcessor.getInstance = jest.fn().mockReturnValue(mockPostEventProcessor);
 		await lambdaHandler(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT, "IPR");
 
-		// eslint-disable-next-line @typescript-eslint/unbound-method
+		 
 		expect(mockPostEventProcessor.processRequest).toHaveBeenCalledTimes(1);
 	});
 
