@@ -1,5 +1,5 @@
-/* eslint-disable max-lines-per-function */
-/* eslint-disable @typescript-eslint/unbound-method */
+ 
+ 
 import { mock } from "jest-mock-extended";
 import { IPRServiceAuth } from "../../../services/IPRServiceAuth";
 import { Logger } from "@aws-lambda-powertools/logger";
