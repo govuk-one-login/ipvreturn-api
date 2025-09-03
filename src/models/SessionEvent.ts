@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEmail, IsBoolean, IsNumber, IsArray } from "class-validator";
+import { IsString, IsNotEmpty, IsEmail, IsBoolean, IsNumber, IsArray, IsOptional } from "class-validator";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "./enums/HttpCodesEnum";
 
@@ -73,6 +73,9 @@ export class SessionEvent {
 	@IsBoolean()
 	notified!: boolean;
 
+	@IsOptional()
+	@IsString()
+	errorDescription?: string;
 }
 
 /**

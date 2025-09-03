@@ -49,6 +49,7 @@ export class SessionReturnRecord {
 			case Constants.F2F_YOTI_START: {
 				this.journeyWentAsyncOn = data.timestamp;
 				this.expiresDate = expiresOn;
+				this.nameParts = data.restricted?.nameParts;
 				if (data.user.govuk_signin_journey_id && (data.user.govuk_signin_journey_id).toLowerCase() !== "unknown") {
 					this.clientSessionId = data.user.govuk_signin_journey_id;
 				}
@@ -73,6 +74,11 @@ export class SessionReturnRecord {
 			case Constants.F2F_DOCUMENT_UPLOADED: {
 				this.documentUploadedOn = data.timestamp;
 				this.postOfficeVisitDetails = data.extensions?.post_office_visit_details;
+				break;
+			}
+			case Constants.IPV_F2F_CRI_VC_ERROR: {
+				this.userId = data.user.user_id;
+				this.error_description = data.extensions?.error_description;
 				break;
 			}
 			case Constants.AUTH_DELETE_ACCOUNT:
@@ -122,4 +128,6 @@ export class SessionReturnRecord {
 	documentType?: string;
 
 	documentExpiryDate?: string;
+
+	error_description?: string;
 }

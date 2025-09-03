@@ -144,3 +144,16 @@ export class FallbackEmail {
     messageType!: string;	
 
 }
+
+export class POFailureEmail extends Email {
+
+	static parseRequest(data: any): POFailureEmail {
+		try {
+			const obj = JSON.parse(data);
+			return new POFailureEmail(obj);
+		} catch (error: any) {
+			console.log("Cannot parse POFailureEmail data", POFailureEmail.name, "parseBody", { data }, error);
+			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse POFailureEmail data");
+		}
+	}
+}
