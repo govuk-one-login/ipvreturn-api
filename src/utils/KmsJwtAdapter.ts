@@ -9,7 +9,7 @@ import { MessageType, SigningAlgorithmSpec } from "@aws-sdk/client-kms";
 export class KmsJwtAdapter {
 	readonly kid: string;
 
-	private kms = new AWS.KMS({
+	readonly kms = new AWS.KMS({
 		region: process.env.REGION,
 	});
 
