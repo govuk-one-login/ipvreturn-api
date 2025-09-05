@@ -150,6 +150,7 @@ export class PostEventProcessor {
 						":redirectUri": fetchedRecord.redirectUri,
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
 						":expiresOn": returnRecord.expiresDate,
+						":nameParts": returnRecord.nameParts,
 					};
 					if (returnRecord.postOfficeInfo) {
 						updateExpression += ", postOfficeInfo = :postOfficeInfo";
@@ -210,9 +211,17 @@ export class PostEventProcessor {
 					expressionAttributeValues = {
 						":accountDeletedOn": returnRecord.accountDeletedOn,
 						":userEmail": returnRecord.userEmail,
-						":nameParts":returnRecord.nameParts,
+						":nameParts": returnRecord.nameParts,
 						":clientName": returnRecord.clientName,
 						":redirectUri": returnRecord.redirectUri,
+					};
+					break;
+				}
+				case Constants.IPV_F2F_CRI_VC_ERROR: {
+					updateExpression = "SET userId = :userId, errorDescription = :errorDescription";
+					expressionAttributeValues = {
+						":userId": returnRecord.userId,
+						":errorDescription": returnRecord.error_description,
 					};
 					break;
 				}
