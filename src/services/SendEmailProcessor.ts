@@ -106,12 +106,15 @@ export class SendEmailProcessor {
 		}
 		
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
-		// What event should we send to TXMA after PO Failure email was sent???
+		
+		const txmaEmailType = message instanceof POFailureEmail ? Constants.F2F_VC_GENERATION_FAILURE : Constants.F2F_RESULT_AVILABLE;
+		
 		await this.iprService.sendToTXMA({
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
 			...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }, this.issuer),
 			extensions: {
 				previous_govuk_signin_journey_id: session.clientSessionId,
+				emailType: txmaEmailType,
 			},
 		});
 

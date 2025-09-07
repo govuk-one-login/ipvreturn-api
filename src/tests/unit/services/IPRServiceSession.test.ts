@@ -268,6 +268,25 @@ describe("IPR Service", () => {
 			expect(sqsClient.send).toHaveBeenCalled();
 			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
+
+		it("Should send event to TxMA with the correct details for a payload with extensions present", async () => {  
+			const extensions = {
+				previous_govuk_signin_journey_id: "test_previous_govuk_signin_journey_id",
+				emailType: "testEmailType"
+			};
+	
+			const payload = { ...txmaEventPayload, ...extensions };
+	
+			await iprServiceSession.sendToTXMA(payload);
+			const messageBody = JSON.stringify(payload);
+	
+			expect(SendMessageCommand).toHaveBeenCalledWith({
+				MessageBody: messageBody,
+				QueueUrl: process.env.TXMA_QUEUE_URL,
+			});
+			expect(sqsClient.send).toHaveBeenCalled();
+			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+		});
 	
 		it("Should throw error if is fails to send to TXMA queue", async () => {
 			sqsClient.send.mockRejectedValueOnce({});

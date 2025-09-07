@@ -19,6 +19,7 @@ export interface BaseTxmaEvent {
 
 export interface ExtensionObject {
 	"previous_govuk_signin_journey_id"?: string;
+	"emailType"?: string;
 }
 
 export interface TxmaEvent extends BaseTxmaEvent {

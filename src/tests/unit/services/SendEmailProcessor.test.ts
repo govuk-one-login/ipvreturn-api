@@ -164,6 +164,7 @@ describe("SendEmailProcessor", () => {
 			},
 			extensions: {
 				previous_govuk_signin_journey_id: "sdfssg",
+				emailType: Constants.F2F_RESULT_AVILABLE,
 			},
 		});
 	});
@@ -286,6 +287,7 @@ describe("SendEmailProcessor", () => {
 			},
 			extensions: {
 				previous_govuk_signin_journey_id: "sdfssg",
+				emailType: Constants.F2F_RESULT_AVILABLE,
 			},
 		});
 	});
@@ -327,6 +329,7 @@ describe("SendEmailProcessor", () => {
 			},
 			extensions: {
 				previous_govuk_signin_journey_id: "sdfssg",
+				emailType: Constants.F2F_RESULT_AVILABLE,
 			},
 		});
 	});
@@ -358,6 +361,7 @@ describe("SendEmailProcessor", () => {
 			},
 			extensions: {
 				previous_govuk_signin_journey_id: "sdfssg",
+				emailType: Constants.F2F_VC_GENERATION_FAILURE,
 			},
 		});
 	});

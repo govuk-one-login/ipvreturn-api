@@ -7,8 +7,15 @@
         "previous_govuk_signin_journey_id": {
           "description": "Previous journey id in case of session recovery\n",
           "type": "string"
+        },
+        "emailType": {
+          "description": "Type of email sent to the user\n",
+          "type": "string"
         }
       },
+      "required": [
+        "emailType"
+      ],
       "title": "IprResultNotificationEmailedExtensions",
       "type": "object"
     },
