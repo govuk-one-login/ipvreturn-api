@@ -129,6 +129,20 @@ export class SendEmailService {
 				const singleMetric = this.metrics.singleMetric();
 				singleMetric.addDimension("emailType", emailType);
 				singleMetric.addMetric("GovNotify_visit_email_sent", MetricUnits.Count, 1);
+
+				const env = (globalThis as any)?.process?.env?.ENV ?? "unknown";
+				const totals = this.metrics.singleMetric();
+				totals.addDimension("Service", "IPR");
+				totals.addDimension("Env", env);
+				totals.addMetric("EmailsSentTotal", MetricUnits.Count, 1);
+
+				if (emailType === Constants.VISIT_PO_EMAIL_FALLBACK) {
+					const fails = this.metrics.singleMetric();
+					fails.addDimension("Service", "IPR");
+					fails.addDimension("Env", env);
+					fails.addMetric("EmailsPOFailure", MetricUnits.Count, 1);
+				}
+
     			this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
 
     			return new EmailResponse(new Date().toISOString(), "", { emailResponseStatus: emailResponse.status, emailResponseId: emailResponse.data.id });

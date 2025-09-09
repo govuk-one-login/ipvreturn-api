@@ -319,6 +319,7 @@ Globals:
         AWS_STACK_NAME: !Sub ${AWS::StackName} # The AWS Stack Name, as passed into the template.
         POWERTOOLS_LOG_LEVEL: !If [IsNotProdLikeEnvironment, "DEBUG", "INFO"] # The LogLevel for the AWS PowerTools LogHelper
         POWERTOOLS_METRICS_NAMESPACE: IPR-CRI # The Metric Namespace for the AWS PowerTools MetricHelper
+        ENV: !Ref Environment
         ISSUER: !FindInMap [EnvironmentVariables, !Ref Environment, ISSUER]
     AutoPublishAlias: live
     DeploymentPreference:
@@ -2423,6 +2424,57 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
 
+    POFailureEmailsWarningAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: DeployAlarms
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-POFailureEmails-100pct-5h"
+      AlarmDescription: !Sub
+        - "WARNING: For each of the last 5 hours, >=5 emails were sent and 100% were PO graceful failure emails. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
+      TreatMissingData: notBreaching
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 1
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 5
+      Metrics:
+        - Id: total
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: IPR-CRI
+              MetricName: EmailsSentTotal
+              Dimensions:
+                - Name: Service
+                  Value: IPR
+                - Name: Env
+                  Value: !Ref Environment
+            Period: 3600
+            Stat: Sum
+        - Id: failure
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: IPR-CRI
+              MetricName: EmailsPOFailure
+              Dimensions:
+                - Name: Service
+                  Value: IPR
+                - Name: Env
+                  Value: !Ref Environment
+            Period: 3600
+            Stat: Sum
+        - Id: allfail
+          Label: HourIsAllFailures
+          ReturnData: true
+          Expression: IF(AND(total>=5, (failure/total)>=0.999), 1, 0)
+
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
     Condition: ApplyReservedConcurrency
@@ -2734,6 +2786,21 @@ Resources:
                   "annotations": {
                     "alarms": ["${GovNotifyDLQMessagesVisibleAlarm.Arn}"]
                      },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 84,
+                "x": 12,
+                "type": "metric",
+                "properties": {
+                  "title": "PO Failure Emails (100% for 5h) - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${POFailureEmailsWarningAlarm.Arn}"]
+                  },
                   "view": "timeSeries",
                   "stacked": false
                 }
