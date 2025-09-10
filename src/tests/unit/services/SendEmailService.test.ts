@@ -171,4 +171,20 @@ describe("SendEmailService", () => {
 		expect(metrics.addDimension).toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_DYNAMIC);
 	});
 
+	it("emits EmailsSentTotal and EmailsPOFailure when sending the fallback email", async () => {
+		mockGovNotify.sendEmail.mockResolvedValue({
+			status: 201,
+			data: { id: "fallback-id", status_code: 201 },
+		});
+
+		const fallbackMsg = { emailAddress: "test.user@digital.cabinet-office.gov.uk", referenceId: "ref-123" };
+
+		await sendEmailServiceTest.sendEmail(fallbackMsg as any, Constants.VISIT_PO_EMAIL_FALLBACK);
+
+		expect(metrics.addMetric).toHaveBeenCalledWith("GovNotify_visit_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenCalledWith("EmailsSentTotal", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenCalledWith("EmailsPOFailure", MetricUnits.Count, 1);
+		});
+
+
 });

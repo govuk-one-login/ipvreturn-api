@@ -1,16 +1,15 @@
+
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { load } from "js-yaml";
 
 describe("PO Failure Emails Warning Alarm", () => {
-  test("alarm exists with expected metric math", () => {
+  it("alarm exists with expected metric math", () => {
     const tpl = load(
-      readFileSync(resolve(__dirname, "../../../deploy/template.yaml"), "utf8"),
+      readFileSync(resolve(process.cwd(), "deploy/template.yaml"), "utf8"),
     ) as any;
 
-    const res: any = tpl.Resources ?? {};
-    const alarm: any = res.POFailureEmailsWarningAlarm;
-
+    const alarm: any = tpl?.Resources?.POFailureEmailsWarningAlarm;
     expect(alarm).toBeDefined();
     expect(alarm.Type).toBe("AWS::CloudWatch::Alarm");
 
@@ -41,7 +40,7 @@ describe("PO Failure Emails Warning Alarm", () => {
     expect(m2.MetricStat.Metric.MetricName).toBe("EmailsPOFailure");
     expect(m2.MetricStat.Period).toBe(3600);
 
-    const normalize = (s: string) => s.replace(/\s+/g, "");
+    const normalize = (s: string) => (s as string).replace(/\s+/g, "");
     expect(normalize(r.Expression)).toBe("IF(m1>0,m2/m1,0)");
     expect(normalize(x.Expression)).toBe("IF(m1>=5,IF(r>=0.999,1,0),0)");
     expect(x.ReturnData).toBe(true);
