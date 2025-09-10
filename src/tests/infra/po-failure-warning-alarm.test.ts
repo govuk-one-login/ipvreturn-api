@@ -1,11 +1,7 @@
 import { readFileSync } from "fs";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
+import { resolve } from "path";
 import { load } from "js-yaml";
 import { schema } from "yaml-cfn";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 function dbg(label: string, v: unknown) {
   console.log(`[po-failure-warning-alarm.test] ${label}:`, JSON.stringify(v, null, 2));
@@ -13,9 +9,11 @@ function dbg(label: string, v: unknown) {
 
 describe("PO Failure Emails Warning Alarm", () => {
   it("alarm exists with expected metric math", () => {
+    const cwd = (globalThis as any)?.process?.cwd?.() ?? "";
+
     const tpl = load(
       readFileSync(
-        resolve(__dirname, "../../../deploy/template.yaml"),
+        resolve(cwd, "deploy/template.yaml"),
         "utf8",
       ),
       { schema },
@@ -43,14 +41,12 @@ describe("PO Failure Emails Warning Alarm", () => {
     expect(props.DatapointsToAlarm).toBe(5);
 
     const metrics: any[] = props.Metrics;
-    const byId = (id: string) => metrics.find((m: any) => m.Id === id);
+    const byId = (id: string) => metrics.find((m: any) => m.Id === id)!;
 
     const m1 = byId("m1");
     const m2 = byId("m2");
     const r  = byId("r");
     const x  = byId("x");
-
-    if (!m1 || !m2 || !r || !x) dbg("Metrics", metrics);
 
     expect(m1.MetricStat.Metric.Namespace).toBe("IPR-CRI");
     expect(m1.MetricStat.Metric.MetricName).toBe("EmailsSentTotal");

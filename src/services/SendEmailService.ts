@@ -130,16 +130,20 @@ export class SendEmailService {
 				singleMetric.addDimension("emailType", emailType);
 				singleMetric.addMetric("GovNotify_visit_email_sent", MetricUnits.Count, 1);
 
-				const env = (globalThis as any)?.process?.env?.ENV ?? "unknown";
+				const envName =
+					(globalThis as any)?.process?.env?.Environment ??
+					(globalThis as any)?.process?.env?.ENV ??
+					"unknown";
+
 				const totals = this.metrics.singleMetric();
 				totals.addDimension("Service", "IPR");
-				totals.addDimension("Env", env);
+				totals.addDimension("Env", envName);
 				totals.addMetric("EmailsSentTotal", MetricUnits.Count, 1);
 
 				if (emailType === Constants.VISIT_PO_EMAIL_FALLBACK) {
 					const fails = this.metrics.singleMetric();
 					fails.addDimension("Service", "IPR");
-					fails.addDimension("Env", env);
+					fails.addDimension("Env", envName);
 					fails.addMetric("EmailsPOFailure", MetricUnits.Count, 1);
 				}
 
