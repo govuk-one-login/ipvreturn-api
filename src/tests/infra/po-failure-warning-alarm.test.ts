@@ -1,17 +1,30 @@
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 import { load } from "js-yaml";
 import { schema } from "yaml-cfn";
 
+function findTemplatePath(): string {
+  const cwd = (globalThis as any)?.process?.cwd?.() ?? "";
+  const candidates = [
+    // when tests run from compiled path
+    resolve(__dirname, "../../../deploy/template.yaml"),
+    // when tests run from source path
+    resolve(__dirname, "../../deploy/template.yaml"),
+    // fallback to cwd if runner is at repo root
+    resolve(cwd, "deploy/template.yaml"),
+    "deploy/template.yaml",
+  ];
+  const found = candidates.find((p) => existsSync(p));
+  if (!found) {
+    throw new Error(`Cannot locate deploy/template.yaml. Tried:\n${candidates.join("\n")}`);
+  }
+  return found;
+}
+
 describe("PO Failure Emails Warning Alarm", () => {
   it("alarm exists with expected metric math", () => {
-    const tpl = load(
-      readFileSync(
-        resolve(__dirname, "../../deploy/template.yaml"),
-        "utf8",
-      ),
-      { schema },
-    ) as any;
+    const tplPath = findTemplatePath();
+    const tpl = load(readFileSync(tplPath, "utf8"), { schema }) as any;
 
     const resources: any = tpl?.Resources ?? {};
     const alarm: any = resources.POFailureEmailsWarningAlarm;
