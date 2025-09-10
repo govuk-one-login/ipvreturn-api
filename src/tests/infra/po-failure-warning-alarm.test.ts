@@ -3,17 +3,11 @@ import { resolve } from "path";
 import { load } from "js-yaml";
 import { schema } from "yaml-cfn";
 
-function dbg(label: string, v: unknown) {
-  console.log(`[po-failure-warning-alarm.test] ${label}:`, JSON.stringify(v, null, 2));
-}
-
 describe("PO Failure Emails Warning Alarm", () => {
   it("alarm exists with expected metric math", () => {
-    const cwd = (globalThis as any)?.process?.cwd?.() ?? "";
-
     const tpl = load(
       readFileSync(
-        resolve(cwd, "deploy/template.yaml"),
+        resolve(__dirname, "../../deploy/template.yaml"),
         "utf8",
       ),
       { schema },
@@ -21,10 +15,6 @@ describe("PO Failure Emails Warning Alarm", () => {
 
     const resources: any = tpl?.Resources ?? {};
     const alarm: any = resources.POFailureEmailsWarningAlarm;
-
-    if (!alarm) {
-      dbg("available resource logical IDs", Object.keys(resources));
-    }
 
     expect(alarm).toBeDefined();
     expect(alarm.Type).toBe("AWS::CloudWatch::Alarm");
