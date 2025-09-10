@@ -2424,7 +2424,7 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
 
-    POFailureEmailsWarningAlarm:
+  POFailureEmailsWarningAlarm:
     Type: AWS::CloudWatch::Alarm
     Condition: DeployAlarms
     Properties:
@@ -2432,11 +2432,9 @@ Resources:
       AlarmDescription: !Sub
         - "WARNING: For each of the last 5 hours, >=5 emails were sent and 100% were PO graceful failure emails. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
-      ActionsEnabled: true
-      OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
-      AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+      ActionsEnabled: false
+      OKActions: []
+      AlarmActions: []
       InsufficientDataActions: []
       TreatMissingData: notBreaching
       ComparisonOperator: GreaterThanOrEqualToThreshold
@@ -2444,7 +2442,7 @@ Resources:
       EvaluationPeriods: 5
       DatapointsToAlarm: 5
       Metrics:
-        - Id: total
+        - Id: m1
           ReturnData: false
           MetricStat:
             Metric:
@@ -2457,7 +2455,8 @@ Resources:
                   Value: !Ref Environment
             Period: 3600
             Stat: Sum
-        - Id: failure
+
+        - Id: m2
           ReturnData: false
           MetricStat:
             Metric:
@@ -2470,10 +2469,14 @@ Resources:
                   Value: !Ref Environment
             Period: 3600
             Stat: Sum
-        - Id: allfail
-          Label: HourIsAllFailures
+
+        - Id: r
+          ReturnData: false
+          Expression: IF(m1>0,m2/m1,0)
+
+        - Id: x
           ReturnData: true
-          Expression: IF(AND(total>=5, (failure/total)>=0.999), 1, 0)
+          Expression: IF(m1>=5,IF(r>=0.999,1,0),0)
 
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
