@@ -130,6 +130,7 @@ Mappings:
       OIDCURL: "https://oidc.staging.account.gov.uk/"      
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
+      POFAILUREEMAILENABLED: false
     build:
       ISSUER: "https://return.build.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
@@ -145,6 +146,7 @@ Mappings:
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
       TESTHARNESSURL: "https://testharness.return.build.account.gov.uk"
+      POFAILUREEMAILENABLED: true
     staging:
       ISSUER: "https://return.staging.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
@@ -159,6 +161,7 @@ Mappings:
       DNSSUFFIX: "return.staging.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
+      POFAILUREEMAILENABLED: true
     integration:
       ISSUER: "https://return.integration.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
@@ -173,6 +176,7 @@ Mappings:
       DNSSUFFIX: "return.integration.account.gov.uk"
       OIDCURL: "https://oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
+      POFAILUREEMAILENABLED: false
     production:
       ISSUER: "https://return.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "206971e2-d576-4d12-b34f-b0de442d39ab"
@@ -187,6 +191,7 @@ Mappings:
       DNSSUFFIX: "return.account.gov.uk"
       OIDCURL: "https://oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
+      POFAILUREEMAILENABLED: false
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
@@ -812,6 +817,8 @@ Resources:
           AUTH_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
           REDRIVE_ENABLED: "true"
+          PO_FAILURE_EMAIL_ENABLED:
+            !FindInMap [EnvironmentVariables, !Ref Environment, POFAILUREEMAILENABLED]
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
