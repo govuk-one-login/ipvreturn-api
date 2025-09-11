@@ -130,7 +130,7 @@ Mappings:
       OIDCURL: "https://oidc.staging.account.gov.uk/"      
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
-      POFAILUREEMAILENABLED: false
+      POFAILUREEMAILENABLED: true
     build:
       ISSUER: "https://return.build.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
