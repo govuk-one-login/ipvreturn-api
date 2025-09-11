@@ -2424,64 +2424,118 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
 
-POFailureEmailsWarningAlarm:
-  Type: AWS::CloudWatch::Alarm
-  Condition: DeployAlarms
-  Properties:
-    AlarmName: !Sub "${AWS::StackName}-POFailureEmails-100pct-5h"
-    AlarmDescription: !Sub
-      - "WARNING: For each of the last 5 hours, >=5 emails were sent and 100% were PO graceful failure emails. ${RunbookUrl}"
-      - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
+  POFailureEmailsWarningAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: DeployAlarms
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-POFailureEmails-100pct-5h"
+      AlarmDescription: !Sub
+        - "WARNING: For each of the last 5 hours, >=5 emails were sent and 100% were PO graceful failure emails. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
 
-    ActionsEnabled: true
-    OKActions:
-      - !ImportValue platform-alarm-topic-slack-warning-alert
-    AlarmActions:
-      - !ImportValue platform-alarm-topic-slack-warning-alert
-    InsufficientDataActions: [ ]
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
 
-    TreatMissingData: notBreaching
-    ComparisonOperator: GreaterThanOrEqualToThreshold
-    Threshold: 1
-    EvaluationPeriods: 5
-    DatapointsToAlarm: 5
+      TreatMissingData: notBreaching
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 1
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 5
 
-    Metrics:
-      - Id: m1
-        ReturnData: false
-        MetricStat:
-          Metric:
-            Namespace: IPR-CRI
-            MetricName: EmailsSentTotal
-            Dimensions:
-              - Name: Service
-                Value: IPR
-              - Name: Env
-                Value: !Ref Environment
-          Period: 3600
-          Stat: Sum
+      Metrics:
+        - Id: m1
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: IPR-CRI
+              MetricName: EmailsSentTotal
+              Dimensions:
+                - Name: Service
+                  Value: IPR
+                - Name: Env
+                  Value: !Ref Environment
+            Period: 3600
+            Stat: Sum
 
-      - Id: m2
-        ReturnData: false
-        MetricStat:
-          Metric:
-            Namespace: IPR-CRI
-            MetricName: EmailsPOFailure
-            Dimensions:
-              - Name: Service
-                Value: IPR
-              - Name: Env
-                Value: !Ref Environment
-          Period: 3600
-          Stat: Sum
+        - Id: m2
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: IPR-CRI
+              MetricName: EmailsPOFailure
+              Dimensions:
+                - Name: Service
+                  Value: IPR
+                - Name: Env
+                  Value: !Ref Environment
+            Period: 3600
+            Stat: Sum
 
-      - Id: r
-        ReturnData: false
-        Expression: IF(m1>0,m2/m1,0)
+        - Id: r
+          ReturnData: false
+          Expression: IF(m1>0,m2/m1,0)
 
-      - Id: x
-        ReturnData: true
-        Expression: IF(m1>=5,IF(r>=0.999,1,0),0)
+        - Id: x
+          ReturnData: true
+          Expression: IF(m1>=5,IF(r>=0.999,1,0),0)
+
+  POFailureEmailsDevTestAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreateDevResources
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-POFailureEmails-DEVTEST-1m"
+      AlarmDescription: "DEV TEST: every 1m, raise if ALL emails are graceful failure and >=5 in the period, for the last 5 periods"
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: [ ]
+      TreatMissingData: notBreaching
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 1
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 5
+      Metrics:
+        - Id: m1
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: IPR-CRI
+              MetricName: EmailsSentTotal
+              Dimensions:
+                - Name: Service
+                  Value: IPR
+                - Name: Env
+                  Value: !Ref Environment
+            Period: 60         # 1 minute
+            Stat: Sum
+
+        - Id: m2
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: IPR-CRI
+              MetricName: EmailsPOFailure
+              Dimensions:
+                - Name: Service
+                  Value: IPR
+                - Name: Env
+                  Value: !Ref Environment
+            Period: 60         # 1 minute
+            Stat: Sum
+
+        - Id: r
+          ReturnData: false
+          Expression: IF(m1>0,m2/m1,0)
+
+        - Id: x
+          ReturnData: true
+          Expression: IF(m1>=5,IF(r>=0.999,1,0),0)
 
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
