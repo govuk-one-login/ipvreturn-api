@@ -1,4 +1,4 @@
-
+ 
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SQSEvent } from "aws-lambda";
 // @ts-expect-error Ignores import error needs addressed
@@ -62,7 +62,7 @@ describe("SendEmailService", () => {
 		expect(emailResponse.metadata.emailResponseId).toBe("oldEmail-test-id");
 		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnits.Count, 1);
 		expect(metrics.addDimension).toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_STATIC);
-		
+
 	});
 
 	it("SendEmailService fails and doesnt retry when GovNotify throws an error", async () => {
@@ -77,7 +77,7 @@ describe("SendEmailService", () => {
 					],
 					"status_code": 400,
 				},
-				
+
 			},
 		});
 		const eventBody = JSON.parse(sqsEvent.Records[0].body);
@@ -100,7 +100,7 @@ describe("SendEmailService", () => {
 					],
 					"status_code": 500,
 				},
-				
+
 			},
 		});
 
@@ -124,7 +124,7 @@ describe("SendEmailService", () => {
 					],
 					"status_code": 429,
 				},
-				
+
 			},
 		});
 
@@ -135,7 +135,7 @@ describe("SendEmailService", () => {
 		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnits.Count, 1);
 		expect(metrics.addDimension).not.toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_STATIC);
 	});
-	
+
 	 
 	it("Returns EmailResponse when newEmail is sent successfully", async () => {
 		mockGovNotify.sendEmail.mockResolvedValue({
