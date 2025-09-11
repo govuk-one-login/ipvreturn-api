@@ -204,6 +204,16 @@ export class PostEventProcessor {
 					};
 					break;
 				}
+				case Constants.IPV_F2F_CRI_VC_ERROR: {
+					if (process.env.PO_FAILURE_EMAIL_ENABLED === "true"){
+						// Logic for KIWI-1515 goes here
+						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, flag = true", txmaEvent: eventDetails });
+						return;
+					} else {
+						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, flag = false", txmaEvent: eventDetails });
+						return;
+					}
+				}
 				case Constants.AUTH_DELETE_ACCOUNT:
 				case Constants.IPV_F2F_USER_CANCEL_END: {
 					updateExpression = "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
