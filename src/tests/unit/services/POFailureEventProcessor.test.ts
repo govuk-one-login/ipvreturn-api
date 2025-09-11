@@ -57,8 +57,6 @@ describe("POFailureEventProcessor", () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		streamEvent = VALID_DYNAMODB_STREAM_EVENT_PO_FAILURE; 
-		// @ts-expect-error allow direct value passed to promise
-		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 	});
 
 	it("Successfully processes PO failure event and sends email", async () => {
@@ -71,7 +69,7 @@ describe("POFailureEventProcessor", () => {
 
 		await poFailureEventProcessorTest.processRequest(sessionEvent);
 
-		expect(mockIprService.getSessionBySub).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444");
+		expect(mockIprService.getSessionBySub).not.toHaveBeenCalled();
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
 			Message: {
@@ -83,39 +81,19 @@ describe("POFailureEventProcessor", () => {
 			},
 		});
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", updateExpression, expressionAttributeValues);
-		expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: "clientSessionId" });
 		expect(metrics.addMetric).toHaveBeenCalledWith("POFailureEventProcessor_successfully_processed_events", MetricUnits.Count, 1);
 	});
 
-	it("Throws error when session record not found", async () => {
+	it("Throws error when user is already notified", async () => {
 		// @ts-expect-error allow undefined to be passed
-		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
-		// @ts-expect-error allow direct value passed to promise
-		mockIprService.getSessionBySub.mockResolvedValue(null);
+		const sessionEventWithNotified = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
+		sessionEventWithNotified.notified = true;
 
-		await expect(poFailureEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow(
-			new AppError(HttpCodesEnum.SERVER_ERROR, "Session record not found for PO failure event")
-		);
-
-		expect(mockIprService.getSessionBySub).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444");
-		expect(mockIprService.sendToGovNotify).not.toHaveBeenCalled();
-		expect(mockIprService.saveEventData).not.toHaveBeenCalled();
-	});
-
-	it("Throws error when user is already notified for PO failure", async () => {
-		// @ts-expect-error allow undefined to be passed
-		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
-		const alreadyNotifiedRecord = {
-			...mockSessionEvent,
-			notified: true
-		};
-		// @ts-expect-error allow direct value passed to promise
-		mockIprService.getSessionBySub.mockResolvedValue(alreadyNotifiedRecord);
-
-		await expect(poFailureEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow(
+		await expect(poFailureEventProcessorTest.processRequest(sessionEventWithNotified)).rejects.toThrow(
 			new AppError(HttpCodesEnum.SERVER_ERROR, "User is already notified for this PO failure event.")
 		);
 
+		expect(mockIprService.getSessionBySub).not.toHaveBeenCalled();
 		expect(mockIprService.sendToGovNotify).not.toHaveBeenCalled();
 		expect(mockIprService.saveEventData).not.toHaveBeenCalled();
 	});
@@ -160,17 +138,15 @@ describe("POFailureEventProcessor", () => {
 		expect(mockLogger.info).toHaveBeenCalledWith({ message: "Updated the session event record with notified flag" });
 	});
 
-	it("Throws error when nameParts validation fails", async () => {
+it("Throws error when nameParts validation fails", async () => {
 		// @ts-expect-error allow undefined to be passed
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		const sessionRecordWithoutNameParts = {
 			...mockSessionEvent,
 			nameParts: []
 		};
-		// @ts-expect-error allow direct value passed to promise
-		mockIprService.getSessionBySub.mockResolvedValue(sessionRecordWithoutNameParts);
 
-		await expect(poFailureEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow(
+		await expect(poFailureEventProcessorTest.processRequest(sessionRecordWithoutNameParts)).rejects.toThrow(
 			new AppError(HttpCodesEnum.SERVER_ERROR, "nameParts is not yet populated, unable to process the DB record.")
 		);
 
