@@ -42,31 +42,24 @@ export class POFailureEventProcessor {
 	}
 
 	async processRequest(sessionEvent: any): Promise<void> {
-		// Fetch complete session record from DynamoDB to get email required fields (nameParts, userEmail, etc.)
-		const completeSessionRecord = await this.iprService.getSessionBySub(sessionEvent.userId);
-		if (!completeSessionRecord) {
-			this.logger.error("Session record not found for PO failure event", { messageCode: MessageCodes.SESSION_NOT_FOUND });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Session record not found for PO failure event");
-		}
-
-		this.logger.appendKeys({ govuk_signin_journey_id: completeSessionRecord.clientSessionId });
-
+		let poFailureEventData: any = ExtSessionEvent.parseRequest(JSON.stringify(sessionEvent));
+		
 		// Validate the notified field is set to false
-		if (completeSessionRecord.notified) {
+		if (poFailureEventData.notified) {
 			this.logger.warn("User is already notified for this PO failure event.", { messageCode: MessageCodes.USER_ALREADY_NOTIFIED });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "User is already notified for this PO failure event.");
 		}
 
 		// Validate if the record is missing some fields related to the Events and log the details and stop record processing.
 		try {
-			this.validationHelper.validatePOFailureEventFields(completeSessionRecord);
+			this.validationHelper.validatePOFailureEventFields(poFailureEventData);
 		} catch (error: any) {
 			this.logger.warn(error.message, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 
 		// Send the PO failure email notification message
-		await this.sendPOFailureEmailToGovNotify(completeSessionRecord);
+		await this.sendPOFailureEmailToGovNotify(poFailureEventData);
 
 		// Update the DB table with notified flag set to true
 		try {
