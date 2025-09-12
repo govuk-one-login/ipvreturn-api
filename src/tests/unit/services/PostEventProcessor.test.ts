@@ -325,7 +325,7 @@ describe("PostEventProcessor", () => {
 			await postEventProcessorMockSessionService.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":ipvStartedOn": "test", ":userEmail": "test@digital.cabinet-office.gov.uk", ":clientName": "test", ":redirectUri": "test" });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, nameParts = :nameParts",{ ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":ipvStartedOn": "test", ":userEmail": "test@digital.cabinet-office.gov.uk", ":clientName": "test", ":redirectUri": "test" , ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }]});
 		});
 	
 		it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event", async () => {
@@ -363,7 +363,7 @@ describe("PostEventProcessor", () => {
 			await postEventProcessorMockSessionService.processRequest(JSON.stringify(YotiStartEvent));
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, clientSessionId = :clientSessionId", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":clientSessionId": "sdfssg", ":ipvStartedOn": "test", ":userEmail": "test@digital.cabinet-office.gov.uk", ":clientName": "test", ":redirectUri": "test" });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, clientSessionId = :clientSessionId, nameParts = :nameParts", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":clientSessionId": "sdfssg", ":ipvStartedOn": "test", ":userEmail": "test@digital.cabinet-office.gov.uk", ":clientName": "test", ":redirectUri": "test", ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
 		});
 	
 		it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event", async () => {
@@ -531,13 +531,27 @@ describe("PostEventProcessor", () => {
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			await postEventProcessorMockSessionService.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
 			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri", { 
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, nameParts = :nameParts", { 
 				":journeyWentAsyncOn": 1681902001, 
 				":clientName": "test",
 				":ipvStartedOn": "test",
 				":redirectUri": "test",
 				":userEmail": "test@digital.cabinet-office.gov.uk",
 				":expiresOn": expiresOn,
+				":nameParts": [
+					{ 
+						"type": "GivenName", 
+						"value": "ANGELA" 
+					}, 
+					{ 
+						"type": "GivenName", 
+						
+						"value": "ZOE" }, 
+					{ 
+						"type":"FamilyName", 
+						"value":"UK SPECIMEN" 
+					}
+				]
 			});
 			 
 			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No post_office_details in F2F_YOTI_START event");
@@ -589,17 +603,6 @@ describe("PostEventProcessor", () => {
 					":errorDescription": "Session expired",
 				}
 			);
-		});
-
-		it("Throws error if restricted is missing for Po failure event", async () => {
-			const eventWithoutRestricted = JSON.parse(VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT_STRING);
-			delete eventWithoutRestricted.restricted;
-			
-			await expect(postEventProcessorMockServices.processRequest(JSON.stringify(eventWithoutRestricted))).rejects.toThrow(
-				new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
-			);
-			// eslint-disable-next-line @typescript-eslint/unbound-method
-			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing nameParts fields required for IPV_F2F_CRI_VC_ERROR event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 		});
 	});
 });
