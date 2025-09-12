@@ -50,6 +50,7 @@ describe("PostEventProcessor", () => {
 		postEventProcessorMockSessionService.iprServiceSession = mockIprServiceSession;
 		// @ts-expect-error private access manipulation used for testing
 		postEventProcessorMockSessionService.iprServiceAuth = iprServiceAuth;
+		process.env.PO_FAILURE_EMAIL_ENABLED = "true";
 		mockIprServiceSession.saveEventData.mockResolvedValue();
 		mockIprServiceAuth.saveEventData.mockResolvedValueOnce();
 		mockIprServiceSession.obfuscateJSONValues.mockResolvedValue({ "event_name":"IPR_RESULT_NOTIFICATION_EMAILED", "user":{ "user_id":"***" }, "timestamp":"***" });
