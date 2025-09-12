@@ -180,7 +180,6 @@ export class PostEventProcessor {
 						updateExpression += ", nameParts = :nameParts";
 						expressionAttributeValues[":nameParts"] = returnRecord.nameParts;
 					} else {
-						// this.logger.info(`No nameParts in ${eventName} event`);
 						this.logger.error( { message: "Missing nameParts fields required for F2F_YOTI_START event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.F2F_YOTI_START} event`);
 					}
@@ -218,10 +217,6 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_ERROR: {
-					// if (!returnRecord.nameParts) {
-					// 	this.logger.error( { message: "Missing nameParts fields required for IPV_F2F_CRI_VC_ERROR event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
-					// 	throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.IPV_F2F_CRI_VC_ERROR} event`);
-					// }
 					if (process.env.PO_FAILURE_EMAIL_ENABLED === "true"){
 						// Logic for KIWI-1515 goes here
 						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, flag = true", txmaEvent: eventDetails });
