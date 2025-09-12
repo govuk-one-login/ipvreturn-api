@@ -19,6 +19,7 @@ import {
 	VALID_F2F_YOTI_START_TXMA_EVENT_STRING, VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT,
 	VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING,
 	VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT_STRING,
+	VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT_STRING,
 } from "../../data/sqs-events";
 import { constants } from "../../api/utils/ApiConstants";
 
@@ -49,6 +50,7 @@ describe("PostEventProcessor", () => {
 		postEventProcessorMockSessionService.iprServiceSession = mockIprServiceSession;
 		// @ts-expect-error private access manipulation used for testing
 		postEventProcessorMockSessionService.iprServiceAuth = iprServiceAuth;
+		process.env.PO_FAILURE_EMAIL_ENABLED = "true";
 		mockIprServiceSession.saveEventData.mockResolvedValue();
 		mockIprServiceAuth.saveEventData.mockResolvedValueOnce();
 		mockIprServiceSession.obfuscateJSONValues.mockResolvedValue({ "event_name":"IPR_RESULT_NOTIFICATION_EMAILED", "user":{ "user_id":"***" }, "timestamp":"***" });
@@ -323,7 +325,7 @@ describe("PostEventProcessor", () => {
 			await postEventProcessorMockSessionService.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":ipvStartedOn": "test", ":userEmail": "test@digital.cabinet-office.gov.uk", ":clientName": "test", ":redirectUri": "test" });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, nameParts = :nameParts",{ ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":ipvStartedOn": "test", ":userEmail": "test@digital.cabinet-office.gov.uk", ":clientName": "test", ":redirectUri": "test" , ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }]});
 		});
 	
 		it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event", async () => {
@@ -361,7 +363,7 @@ describe("PostEventProcessor", () => {
 			await postEventProcessorMockSessionService.processRequest(JSON.stringify(YotiStartEvent));
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, clientSessionId = :clientSessionId", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":clientSessionId": "sdfssg", ":ipvStartedOn": "test", ":userEmail": "test@digital.cabinet-office.gov.uk", ":clientName": "test", ":redirectUri": "test" });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, clientSessionId = :clientSessionId, nameParts = :nameParts", { ":journeyWentAsyncOn": 1681902001, ":expiresOn": expiresOn, ":clientSessionId": "sdfssg", ":ipvStartedOn": "test", ":userEmail": "test@digital.cabinet-office.gov.uk", ":clientName": "test", ":redirectUri": "test", ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
 		});
 	
 		it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event", async () => {
@@ -433,8 +435,8 @@ describe("PostEventProcessor", () => {
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			await postEventProcessorMockSessionService.processRequest(JSON.stringify(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT));
-			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, postOfficeInfo = :postOfficeInfo, documentType = :documentType, clientSessionId = :clientSessionId", { 
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, postOfficeInfo = :postOfficeInfo, documentType = :documentType, clientSessionId = :clientSessionId, nameParts = :nameParts", { 
 				":journeyWentAsyncOn": 1681902001, 
 				":clientName": "test",
 				":ipvStartedOn": "test",
@@ -456,6 +458,20 @@ describe("PostEventProcessor", () => {
 				],
 				":documentType": "PASSPORT",
 				":clientSessionId": "asdfadsfasdf",
+				":nameParts": [
+					{ 
+						"type": "GivenName", 
+						"value": "ANGELA" 
+					}, 
+					{ 
+						"type": "GivenName", 
+						
+						"value": "ZOE" }, 
+					{ 
+						"type":"FamilyName", 
+						"value":"UK SPECIMEN" 
+					}
+				]
 			});
 		});
 
@@ -473,8 +489,8 @@ describe("PostEventProcessor", () => {
 			const yotiStartEvent = VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT;
 			delete yotiStartEvent.extensions;
 			await postEventProcessorMockSessionService.processRequest(JSON.stringify(yotiStartEvent));
-			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, documentType = :documentType, clientSessionId = :clientSessionId", { 
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, documentType = :documentType, clientSessionId = :clientSessionId, nameParts = :nameParts", { 
 				":journeyWentAsyncOn": 1681902001, 
 				":clientName": "test",
 				":ipvStartedOn": "test",
@@ -483,6 +499,20 @@ describe("PostEventProcessor", () => {
 				":expiresOn": expiresOn,
 				":documentType": "PASSPORT",
 				":clientSessionId": "asdfadsfasdf",
+				":nameParts": [
+					{ 
+						"type": "GivenName", 
+						"value": "ANGELA" 
+					}, 
+					{ 
+						"type": "GivenName", 
+						
+						"value": "ZOE" }, 
+					{ 
+						"type":"FamilyName", 
+						"value":"UK SPECIMEN" 
+					}
+				]
 			});
 			 
 			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No post_office_details in F2F_YOTI_START event");
@@ -501,13 +531,27 @@ describe("PostEventProcessor", () => {
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			await postEventProcessorMockSessionService.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
 			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri", { 
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, nameParts = :nameParts", { 
 				":journeyWentAsyncOn": 1681902001, 
 				":clientName": "test",
 				":ipvStartedOn": "test",
 				":redirectUri": "test",
 				":userEmail": "test@digital.cabinet-office.gov.uk",
 				":expiresOn": expiresOn,
+				":nameParts": [
+					{ 
+						"type": "GivenName", 
+						"value": "ANGELA" 
+					}, 
+					{ 
+						"type": "GivenName", 
+						
+						"value": "ZOE" }, 
+					{ 
+						"type":"FamilyName", 
+						"value":"UK SPECIMEN" 
+					}
+				]
 			});
 			 
 			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No post_office_details in F2F_YOTI_START event");
@@ -530,6 +574,35 @@ describe("PostEventProcessor", () => {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
 			});
 			await expect(postEventProcessorMockServices.processRequest(VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record"));
+		});
+	});
+
+	describe("IPV_F2F_CRI_VC_ERROR event", () => {
+		it("Sets readyToResumeOn when error_description indicates VC generation failure", async () => {
+			await postEventProcessorMockServices.processRequest(VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT_STRING);
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith(
+				"01333e01-dde3-412f-a484-4444", 
+				"SET errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn", 
+				{ 
+					":errorDescription": "VC generation failed : Unable to create credential",
+					":readyToResumeOn": absoluteTimeNow(),
+				}
+			);
+		});
+
+		it("Does NOT set readyToResumeOn when error_description indicates session expired", async () => {
+			const sessionExpiredEvent = JSON.parse(VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT_STRING);
+			sessionExpiredEvent.extensions.error_description = "Session expired";
+			await postEventProcessorMockServices.processRequest(JSON.stringify(sessionExpiredEvent));
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith(
+				"01333e01-dde3-412f-a484-4444", 
+				"SET errorDescription = :errorDescription", 
+				{ 
+					":errorDescription": "Session expired",
+				}
+			);
 		});
 	});
 });
