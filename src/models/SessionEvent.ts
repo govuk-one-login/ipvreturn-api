@@ -17,6 +17,7 @@ export class SessionEvent {
 		this.journeyWentAsyncOn = data.journeyWentAsyncOn!;
 		this.readyToResumeOn = data.readyToResumeOn!;
 		this.notified = data.notified === undefined ? false : data.notified;
+		this.errorDescription = data.errorDescription;
 	}
 
 	static parseRequest(data: string): SessionEvent {

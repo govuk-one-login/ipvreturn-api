@@ -41,12 +41,6 @@ export class ValidationHelper {
 		}
 	}
 
-	validatePOFailureEventFields(sessionEventData: SessionEvent): void {
-		if (!sessionEventData.nameParts || !Array.isArray(sessionEventData.nameParts) || sessionEventData.nameParts.length === 0) {
-			throw new AppError(HttpCodesEnum.UNPROCESSABLE_ENTITY, "nameParts is not yet populated, unable to process the DB record.");
-		}
-	}
-
 	async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent | FallbackEmail; emailType: string }> {
 		//Validate all necessary fields are populated required to send the email before processing the data.
 		try {
@@ -94,5 +88,14 @@ export class ValidationHelper {
 
 		return "";
 	};
+
+	isVCGenerationFailure(errorDescription?: string): boolean {
+		if (!errorDescription) {
+			return false;
+		}
+		
+		// f2f returns error_description: `VC generation failed : ${errorMessage}`,
+		return errorDescription.toLowerCase().includes(Constants.VC_FAILURE_MESSAGE);
+	}
 
 }

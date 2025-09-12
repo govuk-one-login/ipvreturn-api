@@ -2,12 +2,10 @@ import { mock } from "jest-mock-extended";
 import { lambdaHandler } from "../../StreamProcessorHandler";
 import { HttpCodesEnum } from "../../models/enums/HttpCodesEnum";
 import { SessionEventProcessor } from "../../services/SessionEventProcessor";
-import { POFailureEventProcessor } from "../../services/POFailureEventProcessor";
-import { EventNameEnum, VALID_DYNAMODB_STREAM_EVENT, VALID_DYNAMODB_STREAM_EVENT_PO_FAILURE } from "./data/dynamodb-stream-record";
+import { EventNameEnum, VALID_DYNAMODB_STREAM_EVENT } from "./data/dynamodb-stream-record";
 import { AppError } from "../../utils/AppError";
 
 const mockedSessionEventProcessor = mock<SessionEventProcessor>();
-const mockedPOFailureEventProcessor = mock<POFailureEventProcessor>();
 
 describe("StreamProcessorHandler", () => {
 	it("return success response for streamProcessor", async () => {
@@ -39,10 +37,4 @@ describe("StreamProcessorHandler", () => {
 		expect(response).toEqual({ "batchItemFailures": [] });
 	});
 
-	it("return success response for POFailureEventProcessor", async () => {
-		POFailureEventProcessor.getInstance = jest.fn().mockReturnValue(mockedPOFailureEventProcessor);
-		await lambdaHandler(VALID_DYNAMODB_STREAM_EVENT_PO_FAILURE, "IPR");
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		expect(mockedPOFailureEventProcessor.processRequest).toHaveBeenCalledTimes(1);
-	});
 });

@@ -4,7 +4,6 @@ import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
 import { Constants } from "./utils/Constants";
 import { SessionEventProcessor } from "./services/SessionEventProcessor";
-import { POFailureEventProcessor } from "./services/POFailureEventProcessor";
 import { DynamoDBBatchResponse } from "aws-lambda/trigger/dynamodb-stream";
 
 import { unmarshall } from "@aws-sdk/util-dynamodb";
@@ -36,12 +35,7 @@ class StreamProcessorHandler implements LambdaInterface {
 				if (record.eventName === "MODIFY") {
 					// @ts-expect-error allow undefined to be passed
 					const sessionEvent = unmarshall(record.dynamodb?.NewImage);
-					
-					if (sessionEvent.readyToResumeOn && sessionEvent.errorDescription?.toLowerCase().includes("vc generation failed")) {
-						await POFailureEventProcessor.getInstance(logger, metrics).processRequest(sessionEvent);
-					} else {
-						await SessionEventProcessor.getInstance(logger, metrics).processRequest(sessionEvent);
-					}
+					await SessionEventProcessor.getInstance(logger, metrics).processRequest(sessionEvent);
 					return { batchItemFailures:[] };
 				} else {
 					logger.warn("Record eventName doesnt match MODIFY state");

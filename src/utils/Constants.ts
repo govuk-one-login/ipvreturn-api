@@ -57,4 +57,6 @@ export class Constants {
     static readonly SQS_OUT_OF_SYNC = "SQS_OUT_OF_SYNC";
     
 	static readonly TXMA_FIELDS_TO_SHOW = ["event_name", "documentType", "docExpiryDate", "govuk_signin_journey_id", "event_id", "timestamp", "configVersion"];
+
+    static readonly VC_FAILURE_MESSAGE = "vc generation failed";
 }

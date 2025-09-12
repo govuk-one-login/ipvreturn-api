@@ -211,38 +211,3 @@ export const VALID_DYNAMODB_STREAM_EVENT_WITH_PO_DETAILS = {
 }
 ;
 
-export const VALID_DYNAMODB_STREAM_EVENT_PO_FAILURE = {
-	"Records": [
-		{
-			"eventID": "testId",
-			"eventName": EventNameEnum.MODIFY,
-			"eventVersion": "1.1",
-			"eventSource": "aws:dynamodb",
-			"awsRegion": "eu-west-2",
-			"dynamodb": {
-				"ApproximateCreationDateTime": 1479499740,
-				"Keys": {
-					"userId": {
-						"S": "userId",
-					},
-				},
-				"NewImage": {
-					"userId": {
-						"S": "01333e01-dde3-412f-a484-4444",
-					},
-					"readyToResumeOn": {
-						"N": "1681902003",
-					},
-					"errorDescription": {
-						"S": "VC generation failed : Unable to create credential",
-					},
-				},
-				"SequenceNumber": "13021600000000001596893679",
-				"SizeBytes": 112,
-				"StreamViewType": StreamViewType.NEW_IMAGE,
-			},
-			"eventSourceARN": "arn:aws:dynamodb:region:123456789012:table/SessionEventsTable/stream/2016-11-16T20:42:48.104",
-		},
-	],
-}
-;

@@ -156,4 +156,25 @@ export class POFailureEmail extends Email {
 			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse POFailureEmail data");
 		}
 	}
+
+	@IsString()
+	@IsNotEmpty()
+	userId!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	@IsEmail()
+	emailAddress!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	firstName!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	lastName!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	messageType!: string;
 }

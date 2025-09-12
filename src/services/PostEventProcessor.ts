@@ -15,6 +15,7 @@ import {
 import { SessionReturnRecord } from "../models/SessionReturnRecord";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
 import { MessageCodes } from "../models/enums/MessageCodes";
+import { ValidationHelper } from "../utils/ValidationHelper";
 
 
 export class PostEventProcessor {
@@ -30,12 +31,15 @@ export class PostEventProcessor {
 
 	private readonly iprServiceAuth: IPRServiceAuth;
 
+	private readonly validationHelper: ValidationHelper;
+
 	constructor(logger: Logger, metrics: Metrics) {
 		this.logger = logger;
 		this.metrics = metrics;
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.POST_EVENT_SERVICE);
 		this.iprServiceSession = IPRServiceSession.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 		this.iprServiceAuth = IPRServiceAuth.getInstance(this.environmentVariables.authEventsTable(), this.logger, createDynamoDbClient());
+		this.validationHelper = new ValidationHelper();
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics): PostEventProcessor {
@@ -212,8 +216,13 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_ERROR: {
+					if (!eventDetails.restricted || !eventDetails.restricted.nameParts) {
+						this.logger.error( { message: "Missing nameParts fields required for IPV_F2F_CRI_VC_ERROR event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.IPV_F2F_CRI_VC_ERROR} event`);
+					}
+
 					// Check if error_description indicates VC generation failure
-					const isVCFailure = this.isVCGenerationFailure(returnRecord.error_description);
+					const isVCFailure = this.validationHelper.isVCGenerationFailure(returnRecord.error_description);
 					
 					if (isVCFailure) {
 						updateExpression = "SET errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn";
@@ -323,16 +332,6 @@ export class PostEventProcessor {
 		} else {
 			return "https://home.account.gov.uk/your-services"
 		}
-	}
-
-
-	private isVCGenerationFailure(errorDescription?: string): boolean {
-		if (!errorDescription) {
-			return false;
-		}
-		
-		// f2f returns error_description: `VC generation failed : ${errorMessage}`,
-		return errorDescription.toLowerCase().includes("vc generation failed");
 	}
 
 	/**

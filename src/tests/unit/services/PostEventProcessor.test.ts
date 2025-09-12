@@ -20,7 +20,6 @@ import {
 	VALID_IPV_F2F_CRI_VC_CONSUMED_TXMA_EVENT_STRING,
 	VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT_STRING,
 	VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT_STRING,
-	VALID_IPV_F2F_CRI_VC_ERROR_WITH_SESSION_EXPIRED_TXMA_EVENT_STRING,
 } from "../../data/sqs-events";
 import { constants } from "../../api/utils/ApiConstants";
 
@@ -578,7 +577,9 @@ describe("PostEventProcessor", () => {
 		});
 
 		it("Does NOT set readyToResumeOn when error_description indicates session expired", async () => {
-			await postEventProcessorMockServices.processRequest(VALID_IPV_F2F_CRI_VC_ERROR_WITH_SESSION_EXPIRED_TXMA_EVENT_STRING);
+			const sessionExpiredEvent = JSON.parse(VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT_STRING);
+			sessionExpiredEvent.extensions.error_description = "Session expired";
+			await postEventProcessorMockServices.processRequest(JSON.stringify(sessionExpiredEvent));
 			// eslint-disable-next-line @typescript-eslint/unbound-method
 			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith(
 				"01333e01-dde3-412f-a484-4444", 
@@ -587,6 +588,17 @@ describe("PostEventProcessor", () => {
 					":errorDescription": "Session expired",
 				}
 			);
+		});
+
+		it("Throws error if restricted is missing for Po failure event", async () => {
+			const eventWithoutRestricted = JSON.parse(VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT_STRING);
+			delete eventWithoutRestricted.restricted;
+			
+			await expect(postEventProcessorMockServices.processRequest(JSON.stringify(eventWithoutRestricted))).rejects.toThrow(
+				new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
+			);
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing nameParts fields required for IPV_F2F_CRI_VC_ERROR event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 		});
 	});
 });
