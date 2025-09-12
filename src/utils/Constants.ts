@@ -22,8 +22,6 @@ export class Constants {
 
     static readonly F2F_DOCUMENT_UPLOADED = "F2F_DOCUMENT_UPLOADED";
 
-    static readonly IPV_F2F_CRI_VC_ERROR = "IPV_F2F_CRI_VC_ERROR";
-
     static readonly AUTH_DELETE_ACCOUNT = "AUTH_DELETE_ACCOUNT";
 
     static readonly IPV_F2F_USER_CANCEL_END = "IPV_F2F_USER_CANCEL_END";

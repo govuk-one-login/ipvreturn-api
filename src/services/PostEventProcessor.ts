@@ -220,30 +220,30 @@ export class PostEventProcessor {
 						this.logger.error( { message: "Missing nameParts fields required for IPV_F2F_CRI_VC_ERROR event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.IPV_F2F_CRI_VC_ERROR} event`);
 					}
-          if (process.env.PO_FAILURE_EMAIL_ENABLED === "true"){
-             // Logic for KIWI-1515 goes here
-             this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, flag = true", txmaEvent: eventDetails });
-            
-             // Check if error_description indicates VC generation failure
-             const isVCFailure = this.validationHelper.isVCGenerationFailure(returnRecord.error_description);
+					if (process.env.PO_FAILURE_EMAIL_ENABLED === "true"){
+						// Logic for KIWI-1515 goes here
+						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, flag = true", txmaEvent: eventDetails });
+						
+						// Check if error_description indicates VC generation failure
+						const isVCFailure = this.validationHelper.isVCGenerationFailure(returnRecord.error_description);
 
-            if (isVCFailure) {
-              updateExpression = "SET errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn";
-              expressionAttributeValues = {
-                ":errorDescription": returnRecord.error_description,
-                ":readyToResumeOn": absoluteTimeNow(),
-              };
-            } else {
-              updateExpression = "SET errorDescription = :errorDescription";
-              expressionAttributeValues = {
-                ":errorDescription": returnRecord.error_description,
-              };
-            }
-            break;
-					} else {
-						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, flag = false", txmaEvent: eventDetails });
-						return;
-					}
+						if (isVCFailure) {
+						updateExpression = "SET errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn";
+						expressionAttributeValues = {
+							":errorDescription": returnRecord.error_description,
+							":readyToResumeOn": absoluteTimeNow(),
+						};
+						} else {
+						updateExpression = "SET errorDescription = :errorDescription";
+						expressionAttributeValues = {
+							":errorDescription": returnRecord.error_description,
+						};
+						}
+						break;
+								} else {
+									this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, flag = false", txmaEvent: eventDetails });
+									return;
+								}
 				}
 				case Constants.AUTH_DELETE_ACCOUNT:
 				case Constants.IPV_F2F_USER_CANCEL_END: {
