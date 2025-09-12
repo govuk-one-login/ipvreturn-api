@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/unbound-method */
+ 
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SQSEvent } from "aws-lambda";
 // @ts-expect-error Ignores import error needs addressed
@@ -139,7 +139,7 @@ describe("SendEmailService", () => {
 		expect(metrics.addDimension).not.toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_STATIC);
 	});
 
-	// eslint-disable-next-line max-lines-per-function
+	 
 	it("Returns EmailResponse when newEmail is sent successfully", async () => {
 		mockGovNotify.sendEmail.mockResolvedValue({
 			"status": 201,
