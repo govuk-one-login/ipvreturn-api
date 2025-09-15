@@ -47,13 +47,13 @@ export const VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL = {
 	],
 };
 
-export const VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_PO_FAILURE_EMAIL = {
+export const VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_VC_GENERATION_FAILURE_EMAIL = {
 	"Records": [
 		{
 			"messageId": "6e67a34a-94f1-493f-b9eb-3d421aa701a8",
 			// pragma: allowlist nextline secret
 			"receiptHandle": "AQEBDzpW+TMqnd6I8zcqmrq8g8BTsuDjI745ci0bJ46g0Ej",
-			"body": "{\"Message\":{\"userId\":\"user_id\",\"emailAddress\":\"test.user@digital.cabinet-office.gov.uk\",\"firstName\":\"Frederick\",\"lastName\":\"Flintstone\",\"messageType\":\"PO_FAILURE_EMAIL\"}}",
+			"body": "{\"Message\":{\"userId\":\"user_id\",\"emailAddress\":\"test.user@digital.cabinet-office.gov.uk\",\"firstName\":\"Frederick\",\"lastName\":\"Flintstone\",\"messageType\":\"VC_GENERATION_FAILURE_EMAIL\"}}",
 			"attributes": {
 				"ApproximateReceiveCount": "1",
 				"SentTimestamp": "1588867971441",

@@ -101,13 +101,13 @@ export class SendEmailService {
     			templateId = this.environmentVariables.getFallbackEmailTemplateId();
     			break;
     		}
-    		case Constants.PO_FAILURE_EMAIL: {
-    			// Send PO Failure template email
+    		case Constants.VC_GENERATION_FAILURE_EMAIL: {
+    			// Send VC generation failure template email
     			personalisation = {
     				"first name": message.firstName,
     				"last name": message.lastName,
     			};
-    			templateId = this.environmentVariables.getPOFailureEmailTemplateId();
+    			templateId = this.environmentVariables.getVCGenerationFailureEmailTemplateId();
     			break;
     		}
     		default: {
@@ -137,7 +137,7 @@ export class SendEmailService {
 
 				const singleMetric = this.metrics.singleMetric();
 				singleMetric.addDimension("emailType", emailType);
-				const metricName = emailType === Constants.PO_FAILURE_EMAIL ? "GovNotify_po_failure_email_sent" : "GovNotify_visit_email_sent";
+				const metricName = emailType === Constants.VC_GENERATION_FAILURE_EMAIL ? "GovNotify_vc_generation_failure_email_sent" : "GovNotify_visit_email_sent";
 				singleMetric.addMetric(metricName, MetricUnits.Count, 1);
     			this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
 

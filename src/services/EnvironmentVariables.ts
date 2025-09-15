@@ -50,7 +50,7 @@ export class EnvironmentVariables {
 
 	private readonly GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID = process.env.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID;
 
-	private readonly GOVUKNOTIFY_PO_FAILURE_EMAIL_TEMPLATE_ID = process.env.GOVUKNOTIFY_PO_FAILURE_EMAIL_TEMPLATE_ID;
+	private readonly GOVUKNOTIFY_VC_GENERATION_FAILURE_EMAIL_TEMPLATE_ID = process.env.GOVUKNOTIFY_VC_GENERATION_FAILURE_EMAIL_TEMPLATE_ID;
 
   	private readonly ISSUER = process.env.ISSUER;
 
@@ -69,7 +69,7 @@ export class EnvironmentVariables {
 					!this.GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID || this.GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID.trim().length === 0 ||
 					!this.GOVUKNOTIFY_TEMPLATE_ID || this.GOVUKNOTIFY_TEMPLATE_ID.trim().length === 0 ||
 					!this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID || this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID.trim().length === 0 ||
-					!this.GOVUKNOTIFY_PO_FAILURE_EMAIL_TEMPLATE_ID || this.GOVUKNOTIFY_PO_FAILURE_EMAIL_TEMPLATE_ID.trim().length === 0 ||
+					!this.GOVUKNOTIFY_VC_GENERATION_FAILURE_EMAIL_TEMPLATE_ID || this.GOVUKNOTIFY_VC_GENERATION_FAILURE_EMAIL_TEMPLATE_ID.trim().length === 0 ||
 					!this.ISSUER || this.ISSUER.trim().length === 0) {
   					logger.error({ message: "GovNotifyService - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
   					throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);
@@ -220,8 +220,8 @@ export class EnvironmentVariables {
   		return this.GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID;
   	}
 
-  	getPOFailureEmailTemplateId(): any {
-  		return this.GOVUKNOTIFY_PO_FAILURE_EMAIL_TEMPLATE_ID;
+  	getVCGenerationFailureEmailTemplateId(): any {
+  		return this.GOVUKNOTIFY_VC_GENERATION_FAILURE_EMAIL_TEMPLATE_ID;
   	}
 
   	issuer(): any {

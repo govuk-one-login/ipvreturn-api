@@ -145,15 +145,15 @@ export class FallbackEmail {
 
 }
 
-export class POFailureEmail extends Email {
+export class VCGenerationFailureEmail extends Email {
 
-	static parseRequest(data: any): POFailureEmail {
+	static parseRequest(data: any): VCGenerationFailureEmail {
 		try {
 			const obj = JSON.parse(data);
-			return new POFailureEmail(obj);
+			return new VCGenerationFailureEmail(obj);
 		} catch (error: any) {
-			console.log("Cannot parse POFailureEmail data", POFailureEmail.name, "parseBody", { data }, error);
-			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse POFailureEmail data");
+			console.log("Cannot parse VCGenerationFailureEmail data", VCGenerationFailureEmail.name, "parseBody", { data }, error);
+			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse VCGenerationFailureEmail data");
 		}
 	}
 

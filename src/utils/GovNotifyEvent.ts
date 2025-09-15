@@ -62,7 +62,7 @@ export const buildGovNotifyEventFields = (sessionEvent: ExtSessionEvent | Sessio
 					messageType: Constants.VISIT_PO_EMAIL_FALLBACK,
 				},
 			};
-		case Constants.PO_FAILURE_EMAIL:{
+		case Constants.VC_GENERATION_FAILURE_EMAIL:{
 			const nameParts = personalIdentityUtils.getNames(sessionEvent.nameParts);
 			return {
 				Message : {
@@ -70,7 +70,7 @@ export const buildGovNotifyEventFields = (sessionEvent: ExtSessionEvent | Sessio
 					emailAddress: sessionEvent.userEmail,
 					firstName: nameParts.givenNames[0],
 					lastName: nameParts.familyNames[0],
-					messageType: Constants.PO_FAILURE_EMAIL,
+					messageType: Constants.VC_GENERATION_FAILURE_EMAIL,
 				},
 			};
 		}

@@ -48,7 +48,7 @@ export class Constants {
 
     static readonly VISIT_PO_EMAIL_FALLBACK = "VISIT_PO_EMAIL_FALLBACK";
 
-    static readonly PO_FAILURE_EMAIL = "PO_FAILURE_EMAIL";
+    static readonly VC_GENERATION_FAILURE_EMAIL = "VC_GENERATION_FAILURE_EMAIL";
 
 	static readonly X_FORWARDED_FOR = "x-forwarded-for";
 

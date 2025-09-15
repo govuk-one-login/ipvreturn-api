@@ -1,4 +1,4 @@
-import { Email, DynamicEmail, FallbackEmail, POFailureEmail } from "../models/Email";
+import { Email, DynamicEmail, FallbackEmail, VCGenerationFailureEmail } from "../models/Email";
 import { EmailResponse } from "../models/EmailResponse";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
@@ -52,7 +52,7 @@ export class SendEmailProcessor {
 		return SendEmailProcessor.instance;
 	}
 
-	async processRequest(message: Email | DynamicEmail | FallbackEmail | POFailureEmail): Promise<EmailResponse> {
+	async processRequest(message: Email | DynamicEmail | FallbackEmail | VCGenerationFailureEmail): Promise<EmailResponse> {
 		// Validate Email model
 		try {
 			await this.validationHelper.validateModel(message, this.logger);
@@ -106,7 +106,6 @@ export class SendEmailProcessor {
 		}
 		
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
-		
 		await this.iprService.sendToTXMA({
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
 			...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }, this.issuer),

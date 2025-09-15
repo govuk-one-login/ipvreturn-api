@@ -214,7 +214,7 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_ERROR: {
-					if (process.env.PO_FAILURE_EMAIL_ENABLED === "true"){
+					if (process.env.VC_GENERATION_FAILURE_EMAIL_ENABLED === "true"){
 						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, failure email enabled", txmaEvent: eventDetails });
 						
 						// Check if error_description indicates VC generation failure

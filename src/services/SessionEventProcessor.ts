@@ -61,8 +61,8 @@ export class SessionEventProcessor {
 
 		const isVCFailure = this.validationHelper.isVCGenerationFailure(sessionEvent.errorDescription ); 
 		if (isVCFailure && sessionEvent.readyToResumeOn) {
-			// Send PO failure email
-			await this.sendEmailMessageToGovNotify(sessionEventData, Constants.PO_FAILURE_EMAIL);	
+			// Send VC generation failure email
+			await this.sendEmailMessageToGovNotify(sessionEventData, Constants.VC_GENERATION_FAILURE_EMAIL);	
 		} else {	
 			// send visit email
 			let emailType = Constants.VIST_PO_EMAIL_DYNAMIC;
@@ -111,7 +111,7 @@ export class SessionEventProcessor {
 
 			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEvent, emailType, this.logger));
 			this.metrics.addMetric(
-				emailType === Constants.PO_FAILURE_EMAIL ? "PO_failure_email_added_to_queue" : "visit_email_added_to_queue",
+				emailType === Constants.VC_GENERATION_FAILURE_EMAIL ? "VC_generation_failure_email_added_to_queue" : "visit_email_added_to_queue",
 				MetricUnits.Count,
 				1
 			);	
