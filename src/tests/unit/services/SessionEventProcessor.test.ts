@@ -237,11 +237,11 @@ describe("SessionEventProcessor", () => {
 		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
 	});
 
-	describe("PO Failure Email Tests", () => {
+	describe("PO Failure Email", () => {
 		it("Sends PO failure email when errorDescription contains 'vc generation failed' and readyToResumeOn exists", async () => {
 			// @ts-expect-error allow undefined to be passed
 			const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
-			sessionEvent.errorDescription = Constants.VC_FAILURE_MESSAGE+": Unable to create credential";		
+			sessionEvent.errorDescription = Constants.VC_FAILURE_MESSAGE;		
 			
 			const updateExpression = "SET notified = :notified";
 			const expressionAttributeValues = {

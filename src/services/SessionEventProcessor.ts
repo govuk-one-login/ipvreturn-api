@@ -59,7 +59,8 @@ export class SessionEventProcessor {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 
-		if (sessionEvent.errorDescription && sessionEvent.readyToResumeOn) {
+		const isVCFailure = this.validationHelper.isVCGenerationFailure(sessionEvent.errorDescription ); 
+		if (isVCFailure && sessionEvent.readyToResumeOn) {
 			// Send PO failure email
 			await this.sendEmailMessageToGovNotify(sessionEventData, Constants.PO_FAILURE_EMAIL);	
 		} else {	
@@ -109,11 +110,11 @@ export class SessionEventProcessor {
 			this.logger.info({ message: `Trying to send  ${emailType} type message to GovNotify handler` });
 
 			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEvent, emailType, this.logger));
-			if (emailType === Constants.PO_FAILURE_EMAIL) {
-				this.metrics.addMetric("PO_failure_email_added_to_queue", MetricUnits.Count, 1);
-			} else {
-				this.metrics.addMetric("visit_email_added_to_queue", MetricUnits.Count, 1);
-			}	
+			this.metrics.addMetric(
+				emailType === Constants.PO_FAILURE_EMAIL ? "PO_failure_email_added_to_queue" : "visit_email_added_to_queue",
+				MetricUnits.Count,
+				1
+			);	
 		} catch (error) {
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
 				reason: `Processing Event session data, failed to post ${emailType} type message to GovNotify SQS Queue`,

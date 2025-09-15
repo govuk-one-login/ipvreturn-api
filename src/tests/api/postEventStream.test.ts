@@ -5,7 +5,7 @@ import {
 	VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT,
 	VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT,
 	VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT,
-	VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT,
+	VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT,
 } from "../data/sqs-events";
 import "dotenv/config";
 import { randomUUID } from "crypto";
@@ -271,7 +271,7 @@ describe("post event processor", () => {
 		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
 		// Simulated delay between F2F and the PO
 		await sleep(3000);	
-		await postMockEvent(VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT, userId, false);
+		await postMockEvent(VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT, userId, false);
 
 		const response = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
 		expect(response?.notified).toBe(true);

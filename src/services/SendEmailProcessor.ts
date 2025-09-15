@@ -106,7 +106,7 @@ export class SendEmailProcessor {
 		}
 		
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
-		// What event should we send to TXMA after PO Failure email was sent???
+		
 		await this.iprService.sendToTXMA({
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
 			...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }, this.issuer),
