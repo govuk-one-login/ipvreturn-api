@@ -61,7 +61,19 @@ export const buildGovNotifyEventFields = (sessionEvent: ExtSessionEvent | Sessio
 					emailAddress: sessionEvent.userEmail,
 					messageType: Constants.VISIT_PO_EMAIL_FALLBACK,
 				},
-			};		
+			};
+		case Constants.VC_GENERATION_FAILURE_EMAIL:{
+			const nameParts = personalIdentityUtils.getNames(sessionEvent.nameParts);
+			return {
+				Message : {
+					userId: sessionEvent.userId,
+					emailAddress: sessionEvent.userEmail,
+					firstName: nameParts.givenNames[0],
+					lastName: nameParts.familyNames[0],
+					messageType: Constants.VC_GENERATION_FAILURE_EMAIL,
+				},
+			};
+		}
 		default:
 			logger.error(`Unrecognised emailType ${emailType}, unable to build Gov Notify message.`);
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, `Could not build Gov Notify fields for ${emailType} emailType.`, { messageCode: MessageCodes.UNRECOGNISED_EMAIL_TYPE });

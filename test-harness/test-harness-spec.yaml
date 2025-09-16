@@ -388,6 +388,12 @@ components:
             nameParts:
               type: array
           description: "additional details"
+        extensions:
+          type: object
+          properties:
+            error_description:
+              type: string
+          description: "Further extended additional details"
 
   securitySchemes:
     sigv4Reference:

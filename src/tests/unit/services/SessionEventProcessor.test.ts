@@ -54,7 +54,6 @@ describe("SessionEventProcessor", () => {
 		});
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
 		expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
-		expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
 		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
 
 	});
@@ -236,6 +235,60 @@ describe("SessionEventProcessor", () => {
 		};
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
 		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
+	});
+
+	describe("VC Generation Failure Email", () => {
+		it("Sends VC generation failure email when errorDescription contains 'vc generation failed' and readyToResumeOn exists", async () => {
+			// @ts-expect-error allow undefined to be passed
+			const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
+			sessionEvent.errorDescription = Constants.VC_FAILURE_MESSAGE;		
+			
+			const updateExpression = "SET notified = :notified";
+			const expressionAttributeValues = {
+				":notified": true,
+			};
+
+			await sessionEventProcessorTest.processRequest(sessionEvent);
+
+			expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
+			expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
+				Message: {
+					userId: "01333e01-dde3-412f-a484-4444",
+					emailAddress: "test.user@digital.cabinet-office.gov.uk",
+					firstName: "ANGELA",
+					lastName: "UK SPECIMEN",
+					messageType: Constants.VC_GENERATION_FAILURE_EMAIL,
+				},
+			});
+			expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
+			expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
+			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "VC_generation_failure_email_added_to_queue", MetricUnits.Count, 1);
+		});
+
+		it("Throws error when session event record is already processed and user is notified via email", async () => {
+			// @ts-expect-error allow undefined to be passed
+			const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
+			sessionEvent.errorDescription = Constants.VC_FAILURE_MESSAGE + ": Unable to create credential";
+			sessionEvent.notified = true;
+
+			await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
+			
+			expect(mockIprService.sendToGovNotify).not.toHaveBeenCalled();
+			expect(mockIprService.saveEventData).not.toHaveBeenCalled();
+			expect(metrics.addMetric).not.toHaveBeenCalledWith("VC_generation_failure_email_added_to_queue", MetricUnits.Count, 1);
+		});
+		
+		it("Throws error if failure to send PO failure email to GovNotify queue", async () => {
+			// @ts-expect-error allow undefined to be passed
+			const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
+			sessionEvent.errorDescription = Constants.VC_FAILURE_MESSAGE + ": Unable to create credential";
+			mockIprService.sendToGovNotify.mockRejectedValueOnce("Failed to send to GovNotify Queue");
+
+			await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
+			
+			expect(mockLogger.error).toHaveBeenCalledWith("FAILED_TO_WRITE_GOV_NOTIFY", { "error": "Failed to send to GovNotify Queue", "reason": "Processing Event session data, failed to post VC_GENERATION_FAILURE_EMAIL type message to GovNotify SQS Queue" }, { "messageCode": "FAILED_TO_WRITE_GOV_NOTIFY_SQS" });
+			expect(metrics.addMetric).not.toHaveBeenCalledWith("VC_generation_failure_email_added_to_queue", MetricUnits.Count, 1);
+		});
 	});
 
 });

@@ -26,6 +26,7 @@ export interface ReturnSQSEvent {
 	extensions?: {
 		post_office_visit_details?: PostOfficeVisitDetails[];
 		post_office_details?: PostOfficeInfo[];
+		error_description?: string;
 	};
 }
 
