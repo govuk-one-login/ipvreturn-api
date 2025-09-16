@@ -269,7 +269,7 @@ describe("Infra", () => {
 		expect(normalize(r.Expression)).toBe("IF(m1>0,m2/m1,0)");
 		expect(normalize(x.Expression)).toBe("IF(m1>=5,IF(r>=0.999,1,0),0)");
 		expect(x.ReturnData).toBe(true);
-		});
+	});
 
 	//TO Be enabled once API g/w is added
 	// it("should define an output with the API Gateway ID", () => {
