@@ -101,6 +101,15 @@ export class SendEmailService {
     			templateId = this.environmentVariables.getFallbackEmailTemplateId();
     			break;
     		}
+    		case Constants.VC_GENERATION_FAILURE_EMAIL: {
+    			// Send VC generation failure template email
+    			personalisation = {
+    				"first name": message.firstName,
+    				"last name": message.lastName,
+    			};
+    			templateId = this.environmentVariables.getVCGenerationFailureEmailTemplateId();
+    			break;
+    		}
     		default: {
     			this.logger.error(`Unrecognised emailType: ${emailType}, unable to send the email.`);
     			throw new AppError(HttpCodesEnum.SERVER_ERROR, `Unrecognised emailType: ${emailType}, unable to send the email.`);
@@ -128,7 +137,8 @@ export class SendEmailService {
 
 				const singleMetric = this.metrics.singleMetric();
 				singleMetric.addDimension("emailType", emailType);
-				singleMetric.addMetric("GovNotify_visit_email_sent", MetricUnits.Count, 1);
+				const metricName = emailType === Constants.VC_GENERATION_FAILURE_EMAIL ? "GovNotify_vc_generation_failure_email_sent" : "GovNotify_visit_email_sent";
+				singleMetric.addMetric(metricName, MetricUnits.Count, 1);
     			this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
 
     			return new EmailResponse(new Date().toISOString(), "", { emailResponseStatus: emailResponse.status, emailResponseId: emailResponse.data.id });

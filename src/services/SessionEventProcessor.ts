@@ -59,28 +59,35 @@ export class SessionEventProcessor {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 
-		let emailType = Constants.VIST_PO_EMAIL_DYNAMIC;
+		const isVCFailure = this.validationHelper.isVCGenerationFailure(sessionEvent.errorDescription ); 
+		if (isVCFailure && sessionEvent.readyToResumeOn) {
+			// Send VC generation failure email
+			await this.sendEmailMessageToGovNotify(sessionEventData, Constants.VC_GENERATION_FAILURE_EMAIL);	
+		} else {	
+			// send visit email
+			let emailType = Constants.VIST_PO_EMAIL_DYNAMIC;
 
-		// Validate if documentUploadedOn exists
-		if (!sessionEventData.documentUploadedOn || !(sessionEventData.documentUploadedOn > 0)) {
-			this.logger.info({ message: "documentUploadedOn is not yet populated, sending the static template email." });
-			// Send the static template email
-			emailType = Constants.VIST_PO_EMAIL_STATIC;
-			sessionEventData = new SessionEvent(sessionEventData);	
-		} 	
-		let data;
-		try {
-			// Validate for fields and confirm the emailType
-			data = await this.validationHelper.validateSessionEvent(sessionEventData, emailType, this.logger);
-			// ignored so as not log PII
-			/* eslint-disable @typescript-eslint/no-unused-vars */	
-		} catch (error)	{
-			sessionEventData = new SessionEvent(sessionEventData);
-			data = { sessionEvent: sessionEventData, emailType: Constants.VISIT_PO_EMAIL_FALLBACK };
-		}
-		
-		// Send the email notification message
-		await this.sendEmailMessageToGovNotify(data.sessionEvent, data.emailType);	
+			// Validate if documentUploadedOn exists
+			if (!sessionEventData.documentUploadedOn || !(sessionEventData.documentUploadedOn > 0)) {
+				this.logger.info({ message: "documentUploadedOn is not yet populated, sending the static template email." });
+				// Send the static template email
+				emailType = Constants.VIST_PO_EMAIL_STATIC;
+				sessionEventData = new SessionEvent(sessionEventData);	
+			} 	
+			let data;
+			try {
+				// Validate for fields and confirm the emailType
+				data = await this.validationHelper.validateSessionEvent(sessionEventData, emailType, this.logger);
+				// ignored so as not log PII
+				/* eslint-disable @typescript-eslint/no-unused-vars */	
+			} catch (error)	{
+				sessionEventData = new SessionEvent(sessionEventData);
+				data = { sessionEvent: sessionEventData, emailType: Constants.VISIT_PO_EMAIL_FALLBACK };
+			}
+			
+			// Send the email notification message
+			await this.sendEmailMessageToGovNotify(data.sessionEvent, data.emailType);	
+		}	
 
 		// Update the DB table with notified flag set to true
 		try {
@@ -88,7 +95,7 @@ export class SessionEventProcessor {
 			const expressionAttributeValues = {
 				":notified": true,
 			};
-			await this.iprService.saveEventData(data.sessionEvent.userId, updateExpression, expressionAttributeValues);
+			await this.iprService.saveEventData(sessionEventData.userId, updateExpression, expressionAttributeValues);
 			this.logger.info({ message: "Updated the session event record with notified flag" });
 			this.metrics.addMetric("SessionEventProcessor_successfully_processed_events", MetricUnits.Count, 1);
 		} catch (error: any) {
@@ -103,7 +110,11 @@ export class SessionEventProcessor {
 			this.logger.info({ message: `Trying to send  ${emailType} type message to GovNotify handler` });
 
 			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEvent, emailType, this.logger));
-			this.metrics.addMetric("visit_email_added_to_queue", MetricUnits.Count, 1);
+			this.metrics.addMetric(
+				emailType === Constants.VC_GENERATION_FAILURE_EMAIL ? "VC_generation_failure_email_added_to_queue" : "visit_email_added_to_queue",
+				MetricUnits.Count,
+				1
+			);	
 		} catch (error) {
 			this.logger.error("FAILED_TO_WRITE_GOV_NOTIFY", {
 				reason: `Processing Event session data, failed to post ${emailType} type message to GovNotify SQS Queue`,

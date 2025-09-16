@@ -144,3 +144,37 @@ export class FallbackEmail {
     messageType!: string;	
 
 }
+
+export class VCGenerationFailureEmail extends Email {
+
+	static parseRequest(data: any): VCGenerationFailureEmail {
+		try {
+			const obj = JSON.parse(data);
+			return new VCGenerationFailureEmail(obj);
+		} catch (error: any) {
+			console.log("Cannot parse VCGenerationFailureEmail data", VCGenerationFailureEmail.name, "parseBody", { data }, error);
+			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse VCGenerationFailureEmail data");
+		}
+	}
+
+	@IsString()
+	@IsNotEmpty()
+	userId!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	@IsEmail()
+	emailAddress!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	firstName!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	lastName!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	messageType!: string;
+}

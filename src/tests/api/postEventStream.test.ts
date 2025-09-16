@@ -5,6 +5,7 @@ import {
 	VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT,
 	VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT,
 	VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT,
+	VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT,
 } from "../data/sqs-events";
 import "dotenv/config";
 import { randomUUID } from "crypto";
@@ -260,4 +261,56 @@ describe("post event processor", () => {
 			await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, allTxmaEventBodies);
 		}
 	}, 35000); 
+
+	it("when IPV_F2F_CRI_VC_ERROR event are sent, a Dynamo record is recorded", async () => {
+		const userId = randomUUID();
+		console.log("userId: ", userId)
+		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
+		// Simulated delay between logging in and start F2F
+		await sleep(3000);
+		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
+		// Simulated delay between F2F and the PO
+		await sleep(3000);	
+		await postMockEvent(VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT, userId, false);
+
+		const response = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
+		expect(response?.notified).toBe(true);
+		expect(response?.nameParts).toEqual([
+			{
+				M: {
+					type: {
+						S: "GivenName",
+					},
+					value: {
+						S: "ANGELA",
+					},
+				},
+			},
+			{
+				M: {
+					type: {
+						S: "GivenName",
+					},
+					value: {
+						S: "ZOE",
+					},
+				},
+			},
+			{
+				M: {
+					type: {
+						S: "FamilyName",
+					},
+					value: {
+						S: "UK SPECIMEN",
+					},
+				},
+			},
+		]);
+		expect(response?.errorDescription).toBe("VC generation failed : Unable to create credential");
+		expect(response?.userEmail).toBe(constants.API_TEST_EMAIL_ADDRESS);
+		await sleep(5000);
+		const allTxmaEventBodies = await getTxmaEventsFromTestHarness(userId, 1);
+		await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, allTxmaEventBodies);
+	}, 30000); 			
 });

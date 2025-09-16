@@ -15,6 +15,7 @@ import {
 import { SessionReturnRecord } from "../models/SessionReturnRecord";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
 import { MessageCodes } from "../models/enums/MessageCodes";
+import { ValidationHelper } from "../utils/ValidationHelper";
 
 
 export class PostEventProcessor {
@@ -30,12 +31,15 @@ export class PostEventProcessor {
 
 	private readonly iprServiceAuth: IPRServiceAuth;
 
+	private readonly validationHelper: ValidationHelper;
+
 	constructor(logger: Logger, metrics: Metrics) {
 		this.logger = logger;
 		this.metrics = metrics;
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.POST_EVENT_SERVICE);
 		this.iprServiceSession = IPRServiceSession.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 		this.iprServiceAuth = IPRServiceAuth.getInstance(this.environmentVariables.authEventsTable(), this.logger, createDynamoDbClient());
+		this.validationHelper = new ValidationHelper();
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics): PostEventProcessor {
@@ -142,7 +146,11 @@ export class PostEventProcessor {
 						this.logger.error({ message: "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event" }, { messageCode: MessageCodes.SQS_OUT_OF_SYNC });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event");
 					}
-					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri";
+					if (!eventDetails.restricted?.nameParts) {
+						this.logger.error( { message: "Missing nameParts fields required for F2F_YOTI_START event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.F2F_YOTI_START} event`);
+					}
+					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, nameParts = :nameParts";
 					expressionAttributeValues = {
 						":userEmail": fetchedRecord.userEmail,
 						":ipvStartedOn": fetchedRecord.ipvStartedOn,
@@ -150,6 +158,7 @@ export class PostEventProcessor {
 						":redirectUri": fetchedRecord.redirectUri,
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
 						":expiresOn": returnRecord.expiresDate,
+						":nameParts": returnRecord.nameParts,
 					};
 					if (returnRecord.postOfficeInfo) {
 						updateExpression += ", postOfficeInfo = :postOfficeInfo";
@@ -174,9 +183,9 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_CONSUMED: {
-					if (!eventDetails.restricted || !eventDetails.restricted.nameParts) {
+					if (!eventDetails.restricted?.nameParts) {
 						this.logger.error( { message: "Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
-						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
+						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.IPV_F2F_CRI_VC_CONSUMED} event`);
 					}
 					updateExpression = "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts";
 					expressionAttributeValues = {
@@ -193,7 +202,7 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.F2F_DOCUMENT_UPLOADED: {
-					if (!eventDetails.extensions || !eventDetails.extensions.post_office_visit_details) {
+					if (!eventDetails.extensions?.post_office_visit_details) {
 						this.logger.error( { message: "Missing post_office_visit_details fields required for F2F_DOCUMENT_UPLOADED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.F2F_DOCUMENT_UPLOADED} event`);
 					}
@@ -205,12 +214,27 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_ERROR: {
-					if (process.env.PO_FAILURE_EMAIL_ENABLED === "true"){
-						// Logic for KIWI-1515 goes here
-						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, flag = true", txmaEvent: eventDetails });
-						return;
+					if (process.env.VC_GENERATION_FAILURE_EMAIL_ENABLED === "true"){
+						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, failure email enabled", txmaEvent: eventDetails });
+						
+						// Check if error_description indicates VC generation failure
+						const isVCFailure = this.validationHelper.isVCGenerationFailure(returnRecord.error_description);
+
+						if (isVCFailure) {
+							updateExpression = "SET errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn";
+							expressionAttributeValues = {
+								":errorDescription": returnRecord.error_description,
+								":readyToResumeOn": absoluteTimeNow(),
+							};
+						} else {
+							updateExpression = "SET errorDescription = :errorDescription";
+							expressionAttributeValues = {
+								":errorDescription": returnRecord.error_description,
+							};
+						}
+						break;
 					} else {
-						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, flag = false", txmaEvent: eventDetails });
+						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, failure email disabled, ending execution", txmaEvent: eventDetails });
 						return;
 					}
 				}
