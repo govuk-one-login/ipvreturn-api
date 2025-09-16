@@ -207,6 +207,51 @@ describe("Infra", () => {
 		});
 	});
 
+	it("PO Failure Emails warning alarm has the expected metric math", () => {
+		const alarms = template.findResources("AWS::CloudWatch::Alarm");
+		const entry = Object.entries(alarms).find(([logicalId]) => logicalId === "POFailureEmailsWarningAlarm");
+		expect(entry).toBeDefined();
+
+		const [, alarm] = entry!;
+		const props: any = alarm.Properties;
+
+		expect(props.TreatMissingData).toBe("notBreaching");
+		expect(props.ComparisonOperator).toBe("GreaterThanOrEqualToThreshold");
+		expect(props.Threshold).toBe(1);
+		expect(props.EvaluationPeriods).toBe(5);
+		expect(props.DatapointsToAlarm).toBe(5);
+
+		expect(props.ActionsEnabled).toBe(false);
+		expect(props.AlarmActions ?? []).toEqual([]);
+		expect(props.OKActions ?? []).toEqual([]);
+		expect(props.InsufficientDataActions ?? []).toEqual([]);
+
+		const metrics: any[] = props.Metrics;
+		expect(Array.isArray(metrics)).toBe(true);
+
+		const byId = (id: string) => metrics.find((m: any) => m.Id === id)!;
+
+		const m1 = byId("m1");
+		const m2 = byId("m2");
+		const r  = byId("r");
+		const x  = byId("x");
+
+		expect(m1.MetricStat.Metric.Namespace).toBe("IPR-CRI");
+		expect(m1.MetricStat.Metric.MetricName).toBe("EmailsSentTotal");
+		expect(m1.MetricStat.Period).toBe(3600);
+		expect(m1.MetricStat.Stat).toBe("Sum");
+
+		expect(m2.MetricStat.Metric.Namespace).toBe("IPR-CRI");
+		expect(m2.MetricStat.Metric.MetricName).toBe("EmailsPOFailure");
+		expect(m2.MetricStat.Period).toBe(3600);
+		expect(m2.MetricStat.Stat).toBe("Sum");
+
+		const normalize = (s: string) => String(s).replace(/\s+/g, "");
+		expect(normalize(r.Expression)).toBe("IF(m1>0,m2/m1,0)");
+		expect(normalize(x.Expression)).toBe("IF(m1>=5,IF(r>=0.999,1,0),0)");
+		expect(x.ReturnData).toBe(true);
+		});
+
 	//TO Be enabled once API g/w is added
 	// it("should define an output with the API Gateway ID", () => {
 	// 	template.hasOutput("F2FApiGatewayId", {
