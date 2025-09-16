@@ -146,7 +146,7 @@ export class PostEventProcessor {
 						this.logger.error({ message: "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event" }, { messageCode: MessageCodes.SQS_OUT_OF_SYNC });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event");
 					}
-					if (!eventDetails.restricted || !eventDetails.restricted.nameParts) {
+					if (!eventDetails.restricted?.nameParts) {
 						this.logger.error( { message: "Missing nameParts fields required for F2F_YOTI_START event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.F2F_YOTI_START} event`);
 					}
@@ -183,7 +183,7 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_CONSUMED: {
-					if (!eventDetails.restricted || !eventDetails.restricted.nameParts) {
+					if (!eventDetails.restricted?.nameParts) {
 						this.logger.error( { message: "Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.IPV_F2F_CRI_VC_CONSUMED} event`);
 					}
@@ -202,7 +202,7 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.F2F_DOCUMENT_UPLOADED: {
-					if (!eventDetails.extensions || !eventDetails.extensions.post_office_visit_details) {
+					if (!eventDetails.extensions?.post_office_visit_details) {
 						this.logger.error( { message: "Missing post_office_visit_details fields required for F2F_DOCUMENT_UPLOADED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.F2F_DOCUMENT_UPLOADED} event`);
 					}
