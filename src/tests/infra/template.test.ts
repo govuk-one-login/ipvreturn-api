@@ -221,10 +221,29 @@ describe("Infra", () => {
 		expect(props.EvaluationPeriods).toBe(5);
 		expect(props.DatapointsToAlarm).toBe(5);
 
-		expect(props.ActionsEnabled).toBe(false);
-		expect(props.AlarmActions ?? []).toEqual([]);
-		expect(props.OKActions ?? []).toEqual([]);
-		expect(props.InsufficientDataActions ?? []).toEqual([]);
+		const actionsEnabled = Boolean(props.ActionsEnabled);
+		const alarmActions = props.AlarmActions ?? [];
+		const okActions = props.OKActions ?? [];
+		const insuff = props.InsufficientDataActions ?? [];
+
+		const isCfnIntrinsic = (x: any) =>
+		x &&
+		typeof x === "object" &&
+		(Object.prototype.hasOwnProperty.call(x, "Fn::ImportValue") ||
+			Object.prototype.hasOwnProperty.call(x, "Fn::If") ||
+			Object.prototype.hasOwnProperty.call(x, "Fn::Sub") ||
+			Object.prototype.hasOwnProperty.call(x, "Ref"));
+
+		if (actionsEnabled) {
+		expect(alarmActions.length).toBeGreaterThan(0);
+		expect(okActions.length).toBeGreaterThan(0);
+		expect(alarmActions.every(isCfnIntrinsic)).toBe(true);
+		expect(okActions.every(isCfnIntrinsic)).toBe(true);
+		} else {
+		expect(alarmActions).toEqual([]);
+		expect(okActions).toEqual([]);
+		}
+		expect(insuff).toEqual([]);
 
 		const metrics: any[] = props.Metrics;
 		expect(Array.isArray(metrics)).toBe(true);
