@@ -164,6 +164,7 @@ describe("SendEmailProcessor", () => {
 			},
 			extensions: {
 				previous_govuk_signin_journey_id: "sdfssg",
+				emailType: Constants.F2F_RESULT_AVILABLE,
 			},
 		});
 	});
@@ -286,6 +287,7 @@ describe("SendEmailProcessor", () => {
 			},
 			extensions: {
 				previous_govuk_signin_journey_id: "sdfssg",
+				emailType: Constants.F2F_RESULT_AVILABLE,
 			},
 		});
 	});
@@ -327,11 +329,12 @@ describe("SendEmailProcessor", () => {
 			},
 			extensions: {
 				previous_govuk_signin_journey_id: "sdfssg",
+				emailType: Constants.F2F_RESULT_AVILABLE,
 			},
 		});
 	});
 
-	it("Returns success response when all required Email attributes exists to send po Failure messageType", async () => {
+	it("Returns success response when all required Email attributes exists to send VC failure messageType", async () => {
 		const expectedDateTime = new Date().toISOString();
 		const mockEmailResponse = new EmailResponse(expectedDateTime, "", 201);
 		mockSessionEvent.notified = true;
@@ -358,6 +361,7 @@ describe("SendEmailProcessor", () => {
 			},
 			extensions: {
 				previous_govuk_signin_journey_id: "sdfssg",
+				emailType: Constants.F2F_VC_GENERATION_FAILURE,
 			},
 		});
 	});
