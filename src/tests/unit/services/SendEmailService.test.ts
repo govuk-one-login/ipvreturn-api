@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/unbound-method */
+ 
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SQSEvent } from "aws-lambda";
 // @ts-expect-error Ignores import error needs addressed
 import { NotifyClient } from "notifications-node-client";
-import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_PO_FAILURE_EMAIL } from "../../data/sqs-events";
+import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_VC_GENERATION_FAILURE_EMAIL } from "../../data/sqs-events";
 import { SendEmailService } from "../../../services/SendEmailService";
 import { mock } from "jest-mock-extended";
 import { Email, DynamicEmail } from "../../../models/Email";
@@ -18,7 +18,7 @@ const logger = mock<Logger>();
 const metrics = mock<Metrics>();
 let sqsEvent: SQSEvent;
 let sqsEventNewEmail: SQSEvent;
-let sqsEventPOFailureEmail: SQSEvent;
+let sqsEventVCGenerationFailureEmail: SQSEvent;
 
 describe("SendEmailService", () => {
 	beforeAll(() => {
@@ -27,14 +27,14 @@ describe("SendEmailService", () => {
 		sendEmailServiceTest.govNotify = mockGovNotify;
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
-		sqsEventPOFailureEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_PO_FAILURE_EMAIL;
+		sqsEventVCGenerationFailureEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_VC_GENERATION_FAILURE_EMAIL;
 	});
 
 	beforeEach(() => {
 		jest.clearAllMocks();
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
-		sqsEventPOFailureEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_PO_FAILURE_EMAIL;
+		sqsEventVCGenerationFailureEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_VC_GENERATION_FAILURE_EMAIL;
 		metrics.singleMetric.mockReturnValue(metrics);
 	});
 
@@ -139,7 +139,7 @@ describe("SendEmailService", () => {
 		expect(metrics.addDimension).not.toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_STATIC);
 	});
 
-	// eslint-disable-next-line max-lines-per-function
+	 
 	it("Returns EmailResponse when newEmail is sent successfully", async () => {
 		mockGovNotify.sendEmail.mockResolvedValue({
 			"status": 201,
@@ -175,19 +175,19 @@ describe("SendEmailService", () => {
 	});
 
 	// eslint-disable-next-line max-lines-per-function
-	it("Returns EmailResponse when poFailureEmail is sent successfully", async () => {
+	it("Returns EmailResponse when vcGenerationFailureEmail is sent successfully", async () => {
 		mockGovNotify.sendEmail.mockResolvedValue({
 			"status": 201,
 			"data": {
-				"id": "poFailureEmail-test-id",
+				"id": "vcGenerationFailureEmail-test-id",
 				"status_code": 201,
 			},			
 		});
-		const eventBody = JSON.parse(sqsEventPOFailureEmail.Records[0].body);
-		const poFailureEmail = DynamicEmail.parseRequest(JSON.stringify(eventBody.Message));
-		const emailResponse = await sendEmailServiceTest.sendEmail(poFailureEmail, Constants.PO_FAILURE_EMAIL);
+		const eventBody = JSON.parse(sqsEventVCGenerationFailureEmail.Records[0].body);
+		const vcGenerationFailureEmail = DynamicEmail.parseRequest(JSON.stringify(eventBody.Message));
+		const emailResponse = await sendEmailServiceTest.sendEmail(vcGenerationFailureEmail, Constants.VC_GENERATION_FAILURE_EMAIL);
 
-		expect(mockGovNotify.sendEmail).toHaveBeenCalledWith("po-failure-template-id", "test.user@digital.cabinet-office.gov.uk", {
+		expect(mockGovNotify.sendEmail).toHaveBeenCalledWith("vc-generation-failure-template-id", "test.user@digital.cabinet-office.gov.uk", {
     		"personalisation": {
 				"first name": "Frederick",
 				"last name": "Flintstone",
@@ -198,9 +198,9 @@ describe("SendEmailService", () => {
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(1);
 		expect(emailResponse.emailFailureMessage).toBe("");
 		expect(emailResponse.metadata.emailResponseStatus).toBe(201);
-		expect(emailResponse.metadata.emailResponseId).toBe("poFailureEmail-test-id");
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "GovNotify_po_failure_email_sent", MetricUnits.Count, 1);
-		expect(metrics.addDimension).toHaveBeenNthCalledWith(1, "emailType", Constants.PO_FAILURE_EMAIL);
+		expect(emailResponse.metadata.emailResponseId).toBe("vcGenerationFailureEmail-test-id");
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "GovNotify_vc_generation_failure_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addDimension).toHaveBeenNthCalledWith(1, "emailType", Constants.VC_GENERATION_FAILURE_EMAIL);
 	});
 
 });

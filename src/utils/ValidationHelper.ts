@@ -95,4 +95,13 @@ export class ValidationHelper {
 		return "";
 	};
 
+	isVCGenerationFailure(errorDescription?: string): boolean {
+		if (!errorDescription) {
+			return false;
+		}
+		
+		// f2f returns error_description: `VC generation failed : ${errorMessage}`,
+		return errorDescription.toLowerCase().includes(Constants.VC_FAILURE_MESSAGE);
+	}
+
 }

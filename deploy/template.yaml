@@ -120,7 +120,7 @@ Mappings:
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
-      GOVUKNOTIFYPOFAILUREEMAILTEMPLATEID: "890b5fa2-6693-41f4-a7ce-e7cce19ca32d"
+      VCGENERATIONFAILUREEMAILTEMPLATEID: "890b5fa2-6693-41f4-a7ce-e7cce19ca32d"
       GOVUKNOTIFYAPI: "https://ipvr-gov-notify-stub-govnotifystub.return.dev.account.gov.uk/govnotify"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
@@ -131,12 +131,13 @@ Mappings:
       OIDCURL: "https://oidc.staging.account.gov.uk/"      
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
+      VCGENERATIONFAILUREEMAILENABLED: true
     build:
       ISSUER: "https://return.build.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
-      GOVUKNOTIFYPOFAILUREEMAILTEMPLATEID: "890b5fa2-6693-41f4-a7ce-e7cce19ca32d"
+      VCGENERATIONFAILUREEMAILTEMPLATEID: "890b5fa2-6693-41f4-a7ce-e7cce19ca32d"
       GOVUKNOTIFYAPI: "https://govnotifystub.return.build.account.gov.uk/govnotify"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
@@ -147,12 +148,13 @@ Mappings:
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
       TESTHARNESSURL: "https://testharness.return.build.account.gov.uk"
+      VCGENERATIONFAILUREEMAILENABLED: true
     staging:
       ISSUER: "https://return.staging.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
-      GOVUKNOTIFYPOFAILUREEMAILTEMPLATEID: "890b5fa2-6693-41f4-a7ce-e7cce19ca32d"
+      VCGENERATIONFAILUREEMAILTEMPLATEID: "890b5fa2-6693-41f4-a7ce-e7cce19ca32d"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
@@ -162,12 +164,13 @@ Mappings:
       DNSSUFFIX: "return.staging.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
+      VCGENERATIONFAILUREEMAILENABLED: true
     integration:
       ISSUER: "https://return.integration.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
-      GOVUKNOTIFYPOFAILUREEMAILTEMPLATEID: "890b5fa2-6693-41f4-a7ce-e7cce19ca32d"
+      VCGENERATIONFAILUREEMAILTEMPLATEID: "890b5fa2-6693-41f4-a7ce-e7cce19ca32d"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
@@ -177,12 +180,13 @@ Mappings:
       DNSSUFFIX: "return.integration.account.gov.uk"
       OIDCURL: "https://oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
+      VCGENERATIONFAILUREEMAILENABLED: false
     production:
       ISSUER: "https://return.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "206971e2-d576-4d12-b34f-b0de442d39ab"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "f62672d4-ff45-470e-8506-956482061f54"
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "b1f0f510-7501-4e49-b5d4-aced6e36ad90"
-      GOVUKNOTIFYPOFAILUREEMAILTEMPLATEID: ""
+      VCGENERATIONFAILUREEMAILTEMPLATEID: "ce5f28ff-7f0c-40b3-880e-2a66b28d0df7"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
@@ -192,6 +196,7 @@ Mappings:
       DNSSUFFIX: "return.account.gov.uk"
       OIDCURL: "https://oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
+      VCGENERATIONFAILUREEMAILENABLED: false
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
@@ -296,9 +301,7 @@ Globals:
       - !Ref CodeSigningConfigArn
       - !Ref AWS::NoValue
     Layers:
-      - !Sub
-        - '{{resolve:secretsmanager:${SecretArn}:SecretString:NODEJS_LAYER}}' #pragma: allowlist secret # or PYTHON_LAYER or JAVA_LAYER
-        - SecretArn: !FindInMap [ EnvironmentConfiguration, !Ref Environment, dynatraceSecretArn ]
+      - arn:aws:lambda:eu-west-2:216552277552:layer:Dynatrace_OneAgent_1_313_2_20250404-043044_with_collector_nodejs:1
     Timeout: 30 # seconds
     Tracing: Active
     MemorySize: 1024
@@ -819,6 +822,8 @@ Resources:
           AUTH_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
           REDRIVE_ENABLED: "true"
+          VC_GENERATION_FAILURE_EMAIL_ENABLED:
+            !FindInMap [EnvironmentVariables, !Ref Environment, VCGENERATIONFAILUREEMAILENABLED]
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
@@ -1025,8 +1030,8 @@ Resources:
           GOVUKNOTIFY_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYTEMPLATEID ]
           GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYDYNAMICEMAILTEMPLATEID ]
           GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYFALLBACKMAILTEMPLATEID ]
-          GOVUKNOTIFY_PO_FAILURE_EMAIL_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYPOFAILUREEMAILTEMPLATEID ]
-          GOVUKNOTIFY_API_KEY_SSM_PATH: !Sub "/${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY"
+          GOVUKNOTIFY_VC_GENERATION_FAILURE_EMAIL_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, VCGENERATIONFAILUREEMAILTEMPLATEID ]
+          GOVUKNOTIFY_API_KEY_SSM_PATH: !Sub "/${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY" 
           RETURN_JOURNEY_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNJOURNEYURL ]
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
           ISSUER: !FindInMap [EnvironmentVariables, !Ref Environment, ISSUER]

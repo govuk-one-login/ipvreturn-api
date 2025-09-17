@@ -47,13 +47,13 @@ export const VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL = {
 	],
 };
 
-export const VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_PO_FAILURE_EMAIL = {
+export const VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_VC_GENERATION_FAILURE_EMAIL = {
 	"Records": [
 		{
 			"messageId": "6e67a34a-94f1-493f-b9eb-3d421aa701a8",
 			// pragma: allowlist nextline secret
 			"receiptHandle": "AQEBDzpW+TMqnd6I8zcqmrq8g8BTsuDjI745ci0bJ46g0Ej",
-			"body": "{\"Message\":{\"userId\":\"user_id\",\"emailAddress\":\"test.user@digital.cabinet-office.gov.uk\",\"firstName\":\"Frederick\",\"lastName\":\"Flintstone\",\"messageType\":\"PO_FAILURE_EMAIL\"}}",
+			"body": "{\"Message\":{\"userId\":\"user_id\",\"emailAddress\":\"test.user@digital.cabinet-office.gov.uk\",\"firstName\":\"Frederick\",\"lastName\":\"Flintstone\",\"messageType\":\"VC_GENERATION_FAILURE_EMAIL\"}}",
 			"attributes": {
 				"ApproximateReceiveCount": "1",
 				"SentTimestamp": "1588867971441",
@@ -120,6 +120,22 @@ export const VALID_F2F_YOTI_START_TXMA_EVENT: ReturnSQSEvent = {
 	"user": {
 		"user_id": "01333e01-dde3-412f-a484-4444",
 		"email": constants.API_TEST_EMAIL_ADDRESS,
+	},
+	"restricted": {
+		"nameParts": [
+			{
+				"type": "GivenName",
+				"value": "ANGELA",
+			},
+			{
+				"type": "GivenName",
+				"value": "ZOE",
+			},
+			{
+				"type": "FamilyName",
+				"value": "UK SPECIMEN",
+			},
+		],
 	},
 };
 
@@ -334,7 +350,7 @@ export const VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT: ReturnSQSEvent
 	},
 };
 
-export const VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT: ReturnSQSEvent = {
+export const VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT: ReturnSQSEvent = {
 	"event_id": "588f4a66-f75a-4728-9f7b-8afd865c233g",
 	"client_id": "ekwU",
 	"event_name": "IPV_F2F_CRI_VC_ERROR",
@@ -344,26 +360,25 @@ export const VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT: ReturnSQSEve
 	"user": {
 		"user_id": "01333e01-dde3-412f-a484-4444",
 	},
+	"restricted":{
+		"nameParts": [
+			{
+				"type": "GivenName",
+				"value": "ANGELA",
+			},
+			{
+				"type": "GivenName",
+				"value": "ZOE",
+			},
+			{
+				"type": "FamilyName",
+				"value": "UK SPECIMEN",
+			},
+		],
+	},
 	"extensions": {
 		"error_description": "VC generation failed : Unable to create credential",
 	},
 };
 
-export const VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_CRI_VC_ERROR_WITH_VC_FAILURE_TXMA_EVENT);
-
-export const VALID_IPV_F2F_CRI_VC_ERROR_WITH_SESSION_EXPIRED_TXMA_EVENT: ReturnSQSEvent = {
-	"event_id": "588f4a66-f75a-4728-9f7b-8afd865c233h",
-	"client_id": "ekwU",
-	"event_name": "IPV_F2F_CRI_VC_ERROR",
-	"timestamp": 1681902001,
-	"event_timestamp_ms": 1681902001713,
-	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
-	"user": {
-		"user_id": "01333e01-dde3-412f-a484-4444",
-	},
-	"extensions": {
-		"error_description": "Session expired",
-	},
-};
-
-export const VALID_IPV_F2F_CRI_VC_ERROR_WITH_SESSION_EXPIRED_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_CRI_VC_ERROR_WITH_SESSION_EXPIRED_TXMA_EVENT);
+export const VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT);

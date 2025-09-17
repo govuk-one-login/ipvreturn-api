@@ -48,7 +48,7 @@ export class Constants {
 
     static readonly VISIT_PO_EMAIL_FALLBACK = "VISIT_PO_EMAIL_FALLBACK";
 
-    static readonly PO_FAILURE_EMAIL = "PO_FAILURE_EMAIL";
+    static readonly VC_GENERATION_FAILURE_EMAIL = "VC_GENERATION_FAILURE_EMAIL";
 
 	static readonly X_FORWARDED_FOR = "x-forwarded-for";
 
@@ -61,4 +61,6 @@ export class Constants {
     static readonly F2F_RESULT_AVILABLE= "f2fResultAvailable";
     
     static readonly F2F_VC_GENERATION_FAILURE= "f2fVcGenerationFailure";
+
+    static readonly VC_FAILURE_MESSAGE = "vc generation failed";
 }

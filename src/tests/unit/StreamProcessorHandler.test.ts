@@ -13,7 +13,7 @@ describe("StreamProcessorHandler", () => {
 	it("return success response for streamProcessor", async () => {
 		SessionEventProcessor.getInstance = jest.fn().mockReturnValue(mockedSessionEventProcessor);
 		await lambdaHandler(VALID_DYNAMODB_STREAM_EVENT, "IPR");
-		// eslint-disable-next-line @typescript-eslint/unbound-method
+		 
 		expect(mockedSessionEventProcessor.processRequest).toHaveBeenCalledTimes(1);
 	});
 

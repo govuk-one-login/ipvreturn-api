@@ -28,9 +28,9 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Set offline mirror path
         id: offline-mirror-path
