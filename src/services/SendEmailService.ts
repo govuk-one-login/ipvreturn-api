@@ -135,23 +135,9 @@ export class SendEmailService {
     			this.logger.info("govNotify URL: " + this.environmentVariables.govukNotifyApiUrl());
     			const emailResponse = await this.govNotify.sendEmail(templateId, message.emailAddress, options);
 
-          const singleMetric = this.metrics.singleMetric();
-          singleMetric.addDimension("emailType", emailType);
-          const metricName =
-              emailType === Constants.VC_GENERATION_FAILURE_EMAIL
-                  ? "GovNotify_vc_generation_failure_email_sent"
-                  : "GovNotify_visit_email_sent";
-          singleMetric.addMetric(metricName, MetricUnits.Count, 1);
+				this.recordEmailMetrics(emailType);
 
-          const totals = this.metrics.singleMetric();
-          totals.addMetric("EmailsSentTotal", MetricUnits.Count, 1);
-
-          if (emailType === Constants.VISIT_PO_EMAIL_FALLBACK) {
-              const fails = this.metrics.singleMetric();
-              fails.addMetric("EmailsPOFailure", MetricUnits.Count, 1);
-          }
-
-          this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
+    			this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
 
     			return new EmailResponse(new Date().toISOString(), "", { emailResponseStatus: emailResponse.status, emailResponseId: emailResponse.data.id });
     		} catch (err: any) {
@@ -182,6 +168,25 @@ export class SendEmailService {
     	// an error is thrown
     	this.logger.error(`sendEmail - cannot send Email even after ${this.environmentVariables.maxRetries()} retries.`);
     	throw new AppError(HttpCodesEnum.SERVER_ERROR, `Cannot send Email even after ${this.environmentVariables.maxRetries()} retries.`);
+	}
+
+	private recordEmailMetrics(emailType: string): void {
+		const singleMetric = this.metrics.singleMetric();
+		singleMetric.addDimension("emailType", emailType);
+
+		const metricName =
+			emailType === Constants.VC_GENERATION_FAILURE_EMAIL
+				? "GovNotify_vc_generation_failure_email_sent"
+				: "GovNotify_visit_email_sent";
+		singleMetric.addMetric(metricName, MetricUnits.Count, 1);
+
+		const totals = this.metrics.singleMetric();
+		totals.addMetric("EmailsSentTotal", MetricUnits.Count, 1);
+
+		if (emailType === Constants.VISIT_PO_EMAIL_FALLBACK) {
+			const fails = this.metrics.singleMetric();
+			fails.addMetric("EmailsPOFailure", MetricUnits.Count, 1);
+		}
 	}
 
 	getFullFormattedDate(date: any): string {
