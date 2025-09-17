@@ -60,7 +60,7 @@ export class Constants {
 
     static readonly VC_FAILURE_MESSAGE = "vc generation failed";
 
-    static readonly F2F_RESULT_AVILABLE= "f2fResultAvailable";
+    static readonly F2F_RESULT_AVAILABLE= "f2fResultAvailable";
 
     static readonly F2F_VC_GENERATION_FAILURE= "f2fVcGenerationFailure";
 }
