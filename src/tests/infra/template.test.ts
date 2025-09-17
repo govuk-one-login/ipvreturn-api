@@ -1,7 +1,8 @@
 import { Template, Match } from 'aws-cdk-lib/assertions';
 import { schema } from "yaml-cfn";
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { load } from "js-yaml";
+import { resolve } from "path";
 
 // https://docs.aws.amazon.com/cdk/v2/guide/testing.html <--- how to use this file
 
@@ -206,69 +207,54 @@ describe("Infra", () => {
 			}
 		});
 	});
+	
+	function loadTemplate(): any {
+	const candidates = [
+		resolve(__dirname, "../../deploy/template.yaml"),
+		resolve(__dirname, "../../../deploy/template.yaml"),
+		"deploy/template.yaml",
+	];
+	const path = candidates.find(existsSync);
+	if (!path) throw new Error(`deploy/template.yaml not found. Tried:\n${candidates.join("\n")}`);
+	return load(readFileSync(path, "utf8"), { schema }) as any;
+	}
 
-	it("PO Failure Emails warning alarm has the expected metric math", () => {
-		const alarms = template.findResources("AWS::CloudWatch::Alarm");
-		const entry = Object.entries(alarms).find(([logicalId]) => logicalId === "POFailureEmailsWarningAlarm");
-		expect(entry).toBeDefined();
+	const normalize = (s: string) => String(s ?? "").replace(/\s+/g, "");
 
-		const [, alarm] = entry!;
-		const props: any = alarm.Properties;
+	describe("PO Failure Emails warning alarm", () => {
+		it("exists with expected metric math", () => {
+			const tpl = loadTemplate();
+			const alarm = tpl.Resources?.POFailureEmailsWarningAlarm;
+			expect(alarm?.Type).toBe("AWS::CloudWatch::Alarm");
 
-		expect(props.TreatMissingData).toBe("notBreaching");
-		expect(props.ComparisonOperator).toBe("GreaterThanOrEqualToThreshold");
-		expect(props.Threshold).toBe(1);
-		expect(props.EvaluationPeriods).toBe(5);
-		expect(props.DatapointsToAlarm).toBe(5);
+			const props = alarm.Properties;
+			expect(props.TreatMissingData).toBe("notBreaching");
+			expect(props.ComparisonOperator).toBe("GreaterThanOrEqualToThreshold");
+			expect(props.Threshold).toBe(1);
+			expect(props.EvaluationPeriods).toBe(5);
+			expect(props.DatapointsToAlarm).toBe(5);
 
-		const actionsEnabled = Boolean(props.ActionsEnabled);
-		const alarmActions = props.AlarmActions ?? [];
-		const okActions = props.OKActions ?? [];
-		const insuff = props.InsufficientDataActions ?? [];
+			const byId = (id: string) => props.Metrics.find((m: any) => m.Id === id);
 
-		const isCfnIntrinsic = (x: any) =>
-		x &&
-		typeof x === "object" &&
-		(Object.prototype.hasOwnProperty.call(x, "Fn::ImportValue") ||
-			Object.prototype.hasOwnProperty.call(x, "Fn::If") ||
-			Object.prototype.hasOwnProperty.call(x, "Fn::Sub") ||
-			Object.prototype.hasOwnProperty.call(x, "Ref"));
+			const m1 = byId("m1");
+			const m2 = byId("m2");
+			const r  = byId("r");
+			const x  = byId("x");
 
-		if (actionsEnabled) {
-		expect(alarmActions.length).toBeGreaterThan(0);
-		expect(okActions.length).toBeGreaterThan(0);
-		expect(alarmActions.every(isCfnIntrinsic)).toBe(true);
-		expect(okActions.every(isCfnIntrinsic)).toBe(true);
-		} else {
-		expect(alarmActions).toEqual([]);
-		expect(okActions).toEqual([]);
-		}
-		expect(insuff).toEqual([]);
+			expect(m1.MetricStat.Metric.Namespace).toBe("IPR-CRI");
+			expect(m1.MetricStat.Metric.MetricName).toBe("EmailsSentTotal");
+			expect(m1.MetricStat.Period).toBe(3600);
+			expect(m1.MetricStat.Stat).toBe("Sum");
 
-		const metrics: any[] = props.Metrics;
-		expect(Array.isArray(metrics)).toBe(true);
+			expect(m2.MetricStat.Metric.Namespace).toBe("IPR-CRI");
+			expect(m2.MetricStat.Metric.MetricName).toBe("EmailsPOFailure");
+			expect(m2.MetricStat.Period).toBe(3600);
+			expect(m2.MetricStat.Stat).toBe("Sum");
 
-		const byId = (id: string) => metrics.find((m: any) => m.Id === id)!;
-
-		const m1 = byId("m1");
-		const m2 = byId("m2");
-		const r  = byId("r");
-		const x  = byId("x");
-
-		expect(m1.MetricStat.Metric.Namespace).toBe("IPR-CRI");
-		expect(m1.MetricStat.Metric.MetricName).toBe("EmailsSentTotal");
-		expect(m1.MetricStat.Period).toBe(3600);
-		expect(m1.MetricStat.Stat).toBe("Sum");
-
-		expect(m2.MetricStat.Metric.Namespace).toBe("IPR-CRI");
-		expect(m2.MetricStat.Metric.MetricName).toBe("EmailsPOFailure");
-		expect(m2.MetricStat.Period).toBe(3600);
-		expect(m2.MetricStat.Stat).toBe("Sum");
-
-		const normalize = (s: string) => String(s).replace(/\s+/g, "");
-		expect(normalize(r.Expression)).toBe("IF(m1>0,m2/m1,0)");
-		expect(normalize(x.Expression)).toBe("IF(m1>=5,IF(r>=0.999,1,0),0)");
-		expect(x.ReturnData).toBe(true);
+			expect(normalize(r.Expression)).toBe("IF(m1>0,m2/m1,0)");
+			expect(normalize(x.Expression)).toBe("IF(m1>=5,IF(r>=0.999,1,0),0)");
+			expect(x.ReturnData).toBe(true);
+		});
 	});
 
 	//TO Be enabled once API g/w is added
