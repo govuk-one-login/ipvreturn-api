@@ -224,7 +224,7 @@ describe("Infra", () => {
 	describe("PO Failure Emails warning alarm", () => {
 		it("exists with expected metric math", () => {
 			const tpl = loadTemplate();
-			const alarm = tpl.Resources?.POFailureEmailsWarningAlarm;
+			const alarm = tpl.Resources?.VCGenerationFailureEmailsWarningAlarm;
 			expect(alarm?.Type).toBe("AWS::CloudWatch::Alarm");
 
 			const props = alarm.Properties;
