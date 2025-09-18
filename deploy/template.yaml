@@ -2437,11 +2437,11 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
 
-  POFailureEmailsWarningAlarm:
+  VCGenerationFailureEmailsWarningAlarm:
     Type: AWS::CloudWatch::Alarm
     Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-POFailureEmails-100pct-5h"
+      AlarmName: !Sub "${AWS::StackName}-VCGenerationFailureEmailsWarningAlarm-100pct-5h"
       AlarmDescription: !Sub
         - "WARNING: For each of the last 5 hours, >=5 emails were sent and 100% were PO graceful failure emails. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
@@ -2465,7 +2465,7 @@ Resources:
           MetricStat:
             Metric:
               Namespace: IPR-CRI
-              MetricName: EmailsSentTotal
+              MetricName: EmailsSent-Total
               Dimensions:
                 - Name: Service
                   Value: IPR
@@ -2479,7 +2479,7 @@ Resources:
           MetricStat:
             Metric:
               Namespace: IPR-CRI
-              MetricName: EmailsPOFailure
+              MetricName: EmailsSent-VCFailure
               Dimensions:
                 - Name: Service
                   Value: IPR

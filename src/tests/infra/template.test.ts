@@ -242,12 +242,12 @@ describe("Infra", () => {
 			const x  = byId("x");
 
 			expect(m1.MetricStat.Metric.Namespace).toBe("IPR-CRI");
-			expect(m1.MetricStat.Metric.MetricName).toBe("EmailsSentTotal");
+			expect(m1.MetricStat.Metric.MetricName).toBe("EmailsSent-Total");
 			expect(m1.MetricStat.Period).toBe(3600);
 			expect(m1.MetricStat.Stat).toBe("Sum");
 
 			expect(m2.MetricStat.Metric.Namespace).toBe("IPR-CRI");
-			expect(m2.MetricStat.Metric.MetricName).toBe("EmailsPOFailure");
+			expect(m2.MetricStat.Metric.MetricName).toBe("EmailsSent-VCFailure");
 			expect(m2.MetricStat.Period).toBe(3600);
 			expect(m2.MetricStat.Stat).toBe("Sum");
 

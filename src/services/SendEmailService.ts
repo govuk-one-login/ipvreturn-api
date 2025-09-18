@@ -179,13 +179,18 @@ export class SendEmailService {
 				? "GovNotify_vc_generation_failure_email_sent"
 				: "GovNotify_visit_email_sent";
 		singleMetric.addMetric(metricName, MetricUnits.Count, 1);
+		const env = (globalThis as any)?.process?.env?.ENV ?? "unknown";
 
 		const totals = this.metrics.singleMetric();
-		totals.addMetric("EmailsSentTotal", MetricUnits.Count, 1);
+		totals.addDimension("Service", "IPR");
+		totals.addDimension("Env", env);
+		totals.addMetric("EmailsSent-Total", MetricUnits.Count, 1);
 
 		if (emailType === Constants.VISIT_PO_EMAIL_FALLBACK) {
-			const fails = this.metrics.singleMetric();
-			fails.addMetric("EmailsPOFailure", MetricUnits.Count, 1);
+		const fails = this.metrics.singleMetric();
+		fails.addDimension("Service", "IPR");
+		fails.addDimension("Env", env);
+		fails.addMetric("EmailsSent-VCFailure", MetricUnits.Count, 1);
 		}
 	}
 
