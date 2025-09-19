@@ -2818,7 +2818,7 @@ Resources:
                 "x": 12,
                 "type": "metric",
                 "properties": {
-                  "title": "PO Failure Emails (100% for 5h) - ${AWS::StackName}",
+                  "title": "VC Generation Failure Emails (100% for 5h) - ${AWS::StackName}",
                   "annotations": {
                     "alarms": ["${VCGenerationFailureEmailsWarningAlarm.Arn}"]
                   },

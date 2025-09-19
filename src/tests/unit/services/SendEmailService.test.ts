@@ -174,7 +174,7 @@ describe("SendEmailService", () => {
 		expect(metrics.addDimension).toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_DYNAMIC);
 	});
 
-	it("emits EmailsSentTotal and EmailsPOFailure when sending the VC generation failure email", async () => {
+	it("emits EmailsSent-Total and EmailsSent-VCFailure when sending the VC generation failure email", async () => {
 		mockGovNotify.sendEmail.mockResolvedValue({
 			status: 201,
 			data: { id: "vc-failure-id", status_code: 201 },
@@ -187,13 +187,24 @@ describe("SendEmailService", () => {
 			lastName: "Flintstone",
 		};
 
+		const OLD_ENV = process.env;
+		process.env = { ...OLD_ENV, ENV: "dev" };
+
 		await sendEmailServiceTest.sendEmail(msg as any, Constants.VC_GENERATION_FAILURE_EMAIL);
 
 		expect(metrics.addMetric).toHaveBeenCalledWith("GovNotify_vc_generation_failure_email_sent", MetricUnits.Count, 1);
 
-		expect(metrics.addMetric).toHaveBeenCalledWith("EmailsSentTotal", MetricUnits.Count, 1);
-		expect(metrics.addMetric).toHaveBeenCalledWith("EmailsPOFailure", MetricUnits.Count, 1);
+		expect(metrics.addDimension).toHaveBeenCalledWith("Service", "IPR");
+		expect(metrics.addDimension).toHaveBeenCalledWith("Env", "dev");
+		expect(metrics.addMetric).toHaveBeenCalledWith("EmailsSent-Total", MetricUnits.Count, 1);
+
+		expect(metrics.addDimension).toHaveBeenCalledWith("Service", "IPR");
+		expect(metrics.addDimension).toHaveBeenCalledWith("Env", "dev");
+		expect(metrics.addMetric).toHaveBeenCalledWith("EmailsSent-VCFailure", MetricUnits.Count, 1);
+
+		process.env = OLD_ENV;
 	});
+
 
 	// eslint-disable-next-line max-lines-per-function
 	it("Returns EmailResponse when vcGenerationFailureEmail is sent successfully", async () => {

@@ -221,7 +221,7 @@ describe("Infra", () => {
 
 	const normalize = (s: string) => String(s ?? "").replace(/\s+/g, "");
 
-	describe("PO Failure Emails warning alarm", () => {
+	describe("VC Generation Failure Emails warning alarm", () => {
 		it("exists with expected metric math", () => {
 			const tpl = loadTemplate();
 			const alarm = tpl.Resources?.VCGenerationFailureEmailsWarningAlarm;
