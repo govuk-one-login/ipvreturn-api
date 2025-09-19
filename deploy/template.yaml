@@ -2496,6 +2496,59 @@ Resources:
           ReturnData: true
           Expression: IF(m1>=5,IF(r>=0.999,1,0),0)
 
+  VCGenerationFailureEmailsTestAlarm:
+  Type: AWS::CloudWatch::Alarm
+  Condition: DeployAlarms
+  Properties:
+    AlarmName: !Sub "${AWS::StackName}-VCGenerationFailureEmailsTestAlarm-100pct-2h"
+    AlarmDescription: !Sub
+      - "TEST: For each of the last 2 hours, >=1 emails were sent and 100% were VC generation failure emails."
+      - {}
+    ActionsEnabled: true
+    OKActions:
+      - !ImportValue platform-alarm-topic-slack-warning-alert
+    AlarmActions:
+      - !ImportValue platform-alarm-topic-slack-warning-alert
+    InsufficientDataActions: []
+    TreatMissingData: notBreaching
+    ComparisonOperator: GreaterThanOrEqualToThreshold
+    Threshold: 1
+    EvaluationPeriods: 2
+    DatapointsToAlarm: 2
+    Metrics:
+      - Id: m1
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: IPR-CRI
+            MetricName: EmailsSent-Total
+            Dimensions:
+              - Name: Service
+                Value: IPR
+              - Name: Env
+                Value: !Ref Environment
+          Period: 3600
+          Stat: Sum
+      - Id: m2
+        ReturnData: false
+        MetricStat:
+          Metric:
+            Namespace: IPR-CRI
+            MetricName: EmailsSent-VCFailure
+            Dimensions:
+              - Name: Service
+                Value: IPR
+              - Name: Env
+                Value: !Ref Environment
+          Period: 3600
+          Stat: Sum
+      - Id: r
+        ReturnData: false
+        Expression: IF(m1>0,m2/m1,0)
+      - Id: x
+        ReturnData: true
+        Expression: IF(m1>=1,IF(r>=0.999,1,0),0)
+
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
     Condition: ApplyReservedConcurrency
