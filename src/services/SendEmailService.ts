@@ -179,7 +179,7 @@ export class SendEmailService {
 				? "GovNotify_vc_generation_failure_email_sent"
 				: "GovNotify_visit_email_sent";
 		singleMetric.addMetric(metricName, MetricUnits.Count, 1);
-		const env = process.env.ENV ?? "unknown";
+		const env = process.env.ENV as string;
 
 		const totals = this.metrics.singleMetric();
 		totals.addDimension("Service", "IPR");
