@@ -226,23 +226,26 @@ describe("Infra", () => {
 		expect(alarm?.Type).toBe("AWS::CloudWatch::Alarm");
 
 		const props = alarm.Properties;
-
 		expect(props.TreatMissingData).toBe("notBreaching");
 		expect(props.ComparisonOperator).toBe("GreaterThanOrEqualToThreshold");
 		expect(props.Threshold).toBe(5);
 		expect(props.EvaluationPeriods).toBe(1);
 		expect(props.DatapointsToAlarm).toBe(1);
 
-		expect(Array.isArray(props.Metrics)).toBe(true);
-		expect(props.Metrics.length).toBe(1);
+		const vcfails = props.Metrics.find((m: any) => m.Id === "vcfails");
+		expect(vcfails.ReturnData).toBe(true);
 
-		const m1 = props.Metrics.find((m: any) => m.Id === "m1");
-		expect(m1).toBeTruthy();
-		expect(m1.ReturnData).toBe(true);
-		expect(m1.MetricStat.Metric.Namespace).toBe("IPR-CRI");
-		expect(m1.MetricStat.Metric.MetricName).toBe("EmailsSent-VCFailure");
-		expect(m1.MetricStat.Period).toBe(3600);
-		expect(m1.MetricStat.Stat).toBe("Sum");
+		const ms = vcfails.MetricStat;
+		expect(ms.Period).toBe(3600);
+		expect(ms.Stat).toBe("Sum");
+		expect(ms.Metric.Namespace).toBe("IPR-CRI");
+		expect(ms.Metric.MetricName).toBe("GovNotify_vc_generation_failure_email_sent");
+		expect(ms.Metric.Dimensions).toEqual(
+		expect.arrayContaining([
+			{ Name: "Service", Value: "IPR" },
+			{ Name: "Env",     Value: expect.anything() }, // template uses !Ref Environment
+		])
+		);
 	});
 	});
 

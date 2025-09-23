@@ -2460,12 +2460,12 @@ Resources:
       DatapointsToAlarm: 1
 
       Metrics:
-        - Id: m1
+        - Id: vcfails
           ReturnData: true
           MetricStat:
             Metric:
               Namespace: IPR-CRI
-              MetricName: EmailsSent-VCFailure
+              MetricName: GovNotify_vc_generation_failure_email_sent
               Dimensions:
                 - Name: Service
                   Value: IPR
