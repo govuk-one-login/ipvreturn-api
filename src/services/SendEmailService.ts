@@ -88,7 +88,7 @@ export class SendEmailService {
     				"id_expiry_date": this.getFullFormattedDate(message.documentExpiryDate),
     				"branch_name_and_address": message.poAddress,
     				"date": message.poVisitDate,
-    				"time": message.poVisitTime.replace(/\s/g, ""),
+    				"time": message.poVisitTime.replaceAll(/\s/g, ""),
     			};
     			templateId = this.environmentVariables.getDynamicEmailTemplateId();
     			break;
