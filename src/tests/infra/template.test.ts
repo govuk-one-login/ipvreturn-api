@@ -219,8 +219,6 @@ describe("Infra", () => {
 	return load(readFileSync(path, "utf8"), { schema }) as any;
 	}
 
-	const normalize = (s: string) => String(s ?? "").replace(/\s+/g, "");
-
 	describe("VC Generation Failure Emails warning alarm", () => {
 	it("exists with expected single-metric config", () => {
 		const tpl = loadTemplate();
