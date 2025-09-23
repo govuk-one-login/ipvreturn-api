@@ -231,8 +231,8 @@ describe("Infra", () => {
 			expect(props.TreatMissingData).toBe("notBreaching");
 			expect(props.ComparisonOperator).toBe("GreaterThanOrEqualToThreshold");
 			expect(props.Threshold).toBe(1);
-			expect(props.EvaluationPeriods).toBe(5);
-			expect(props.DatapointsToAlarm).toBe(5);
+			expect(props.EvaluationPeriods).toBe(1);
+			expect(props.DatapointsToAlarm).toBe(1);
 
 			const byId = (id: string) => props.Metrics.find((m: any) => m.Id === id);
 
