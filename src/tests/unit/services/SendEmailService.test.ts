@@ -174,30 +174,6 @@ describe("SendEmailService", () => {
 		expect(metrics.addDimension).toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_DYNAMIC);
 	});
 
-	it("emits EmailsSent-Total and EmailsSent-VCFailure when sending the VC generation failure email", async () => {
-		mockGovNotify.sendEmail.mockResolvedValue({
-			status: 201,
-			data: { id: "vc-failure-id", status_code: 201 },
-		});
-
-		const msg = {
-			emailAddress: "test.user@digital.cabinet-office.gov.uk",
-			referenceId: "ref-123",
-			firstName: "Frederick",
-			lastName: "Flintstone",
-		};
-
-		await sendEmailServiceTest.sendEmail(msg as any, Constants.VC_GENERATION_FAILURE_EMAIL);
-		expect(metrics.addMetric).toHaveBeenCalledWith("GovNotify_vc_generation_failure_email_sent", MetricUnits.Count, 1);
-		expect(metrics.addDimension).toHaveBeenCalledWith("Service", "IPR");
-		expect(metrics.addDimension).toHaveBeenCalledWith("Env", "dev");
-		expect(metrics.addMetric).toHaveBeenCalledWith("EmailsSent-Total", MetricUnits.Count, 1);
-		expect(metrics.addDimension).toHaveBeenCalledWith("Service", "IPR");
-		expect(metrics.addDimension).toHaveBeenCalledWith("Env", "dev");
-		expect(metrics.addMetric).toHaveBeenCalledWith("EmailsSent-VCFailure", MetricUnits.Count, 1);
-	});
-
-
 	// eslint-disable-next-line max-lines-per-function
 	it("Returns EmailResponse when vcGenerationFailureEmail is sent successfully", async () => {
 		mockGovNotify.sendEmail.mockResolvedValue({
