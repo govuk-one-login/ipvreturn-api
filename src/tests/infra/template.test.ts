@@ -222,39 +222,30 @@ describe("Infra", () => {
 	const normalize = (s: string) => String(s ?? "").replace(/\s+/g, "");
 
 	describe("VC Generation Failure Emails warning alarm", () => {
-		it("exists with expected metric math", () => {
-			const tpl = loadTemplate();
-			const alarm = tpl.Resources?.VCGenerationFailureEmailsWarningAlarm;
-			expect(alarm?.Type).toBe("AWS::CloudWatch::Alarm");
+	it("exists with expected single-metric config", () => {
+		const tpl = loadTemplate();
+		const alarm = tpl.Resources?.VCGenerationFailureEmailsWarningAlarm;
+		expect(alarm?.Type).toBe("AWS::CloudWatch::Alarm");
 
-			const props = alarm.Properties;
-			expect(props.TreatMissingData).toBe("notBreaching");
-			expect(props.ComparisonOperator).toBe("GreaterThanOrEqualToThreshold");
-			expect(props.Threshold).toBe(1);
-			expect(props.EvaluationPeriods).toBe(1);
-			expect(props.DatapointsToAlarm).toBe(1);
+		const props = alarm.Properties;
 
-			const byId = (id: string) => props.Metrics.find((m: any) => m.Id === id);
+		expect(props.TreatMissingData).toBe("notBreaching");
+		expect(props.ComparisonOperator).toBe("GreaterThanOrEqualToThreshold");
+		expect(props.Threshold).toBe(5);
+		expect(props.EvaluationPeriods).toBe(1);
+		expect(props.DatapointsToAlarm).toBe(1);
 
-			const m1 = byId("m1");
-			const m2 = byId("m2");
-			const r  = byId("r");
-			const x  = byId("x");
+		expect(Array.isArray(props.Metrics)).toBe(true);
+		expect(props.Metrics.length).toBe(1);
 
-			expect(m1.MetricStat.Metric.Namespace).toBe("IPR-CRI");
-			expect(m1.MetricStat.Metric.MetricName).toBe("EmailsSent-Total");
-			expect(m1.MetricStat.Period).toBe(3600);
-			expect(m1.MetricStat.Stat).toBe("Sum");
-
-			expect(m2.MetricStat.Metric.Namespace).toBe("IPR-CRI");
-			expect(m2.MetricStat.Metric.MetricName).toBe("EmailsSent-VCFailure");
-			expect(m2.MetricStat.Period).toBe(3600);
-			expect(m2.MetricStat.Stat).toBe("Sum");
-
-			expect(normalize(r.Expression)).toBe("IF(m1>0,m2/m1,0)");
-			expect(normalize(x.Expression)).toBe("IF(m1>=5,IF(r>=0.999,1,0),0)");
-			expect(x.ReturnData).toBe(true);
-		});
+		const m1 = props.Metrics.find((m: any) => m.Id === "m1");
+		expect(m1).toBeTruthy();
+		expect(m1.ReturnData).toBe(true);
+		expect(m1.MetricStat.Metric.Namespace).toBe("IPR-CRI");
+		expect(m1.MetricStat.Metric.MetricName).toBe("EmailsSent-VCFailure");
+		expect(m1.MetricStat.Period).toBe(3600);
+		expect(m1.MetricStat.Stat).toBe("Sum");
+	});
 	});
 
 	//TO Be enabled once API g/w is added

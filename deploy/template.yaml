@@ -2441,9 +2441,9 @@ Resources:
     Type: AWS::CloudWatch::Alarm
     Condition: DeployAlarms
     Properties:
-      AlarmName: !Sub "${AWS::StackName}-VCGenerationFailureEmailsWarningAlarm-100pct-5h"
+      AlarmName: !Sub "${AWS::StackName}-VCGenerationFailureEmailsWarningAlarm-5in1h"
       AlarmDescription: !Sub
-        - "WARNING: For the last hour, >=5 emails were sent and 100% were VC generation failure emails. ${RunbookUrl}"
+        - "WARNING: In the last hour, >=5 VC generation failure emails were sent. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
 
       ActionsEnabled: true
@@ -2451,31 +2451,17 @@ Resources:
         - !ImportValue platform-alarm-topic-slack-warning-alert
       AlarmActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
-      InsufficientDataActions: [ ]
+      InsufficientDataActions: []
 
       TreatMissingData: notBreaching
       ComparisonOperator: GreaterThanOrEqualToThreshold
-      Threshold: 1
+      Threshold: 5
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
 
       Metrics:
         - Id: m1
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: IPR-CRI
-              MetricName: EmailsSent-Total
-              Dimensions:
-                - Name: Service
-                  Value: IPR
-                - Name: Env
-                  Value: !Ref Environment
-            Period: 3600
-            Stat: Sum
-
-        - Id: m2
-          ReturnData: false
+          ReturnData: true
           MetricStat:
             Metric:
               Namespace: IPR-CRI
@@ -2487,14 +2473,6 @@ Resources:
                   Value: !Ref Environment
             Period: 3600
             Stat: Sum
-
-        - Id: r
-          ReturnData: false
-          Expression: IF(m1>0,m2/m1,0)
-
-        - Id: x
-          ReturnData: true
-          Expression: IF(m1>=5,IF(r>=0.999,1,0),0)
 
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
