@@ -150,7 +150,7 @@ export class SendEmailService {
     				});
     			}
 
-    			const appError: any = this.govNotifyErrorMapper.map(err.response.data.status_code, err.response.data.errors[0].message);
+    			const appError: any = this.govNotifyErrorMapper.map(err.response.data.status_code, err.response.data.errors[0].message); // NOSONAR - not Array#map; this is our error mapper method
 
     			if (appError.obj!.shouldRetry && retryCount < this.environmentVariables.maxRetries()) {
     				this.logger.error(`sendEmail - Mapped error ${SendEmailService.name}`, { appError });
