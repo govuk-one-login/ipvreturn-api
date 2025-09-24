@@ -2465,7 +2465,6 @@ Resources:
         - Name: emailType
           Value: VC_GENERATION_FAILURE_EMAIL
 
-
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
     Condition: ApplyReservedConcurrency
