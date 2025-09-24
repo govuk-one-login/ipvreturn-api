@@ -2457,15 +2457,14 @@ Resources:
       Threshold: 5
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
-
-      # Single metric (no math)
+      
       Namespace: IPR-CRI
       MetricName: GovNotify_vc_generation_failure_email_sent
       Statistic: Sum
       Period: 3600
       Dimensions:
         - Name: Service
-          Value: GovNotifyHandler     # env-isolated; no Env dimension needed
+          Value: GovNotifyHandler
         - Name: emailType
           Value: VC_GENERATION_FAILURE_EMAIL
 
