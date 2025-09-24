@@ -135,11 +135,11 @@ export class SendEmailService {
     			this.logger.info("govNotify URL: " + this.environmentVariables.govukNotifyApiUrl());
     			const emailResponse = await this.govNotify.sendEmail(templateId, message.emailAddress, options);
 
-    			const singleMetric = this.metrics.singleMetric();
+				const singleMetric = this.metrics.singleMetric();
 				singleMetric.addDimension("emailType", emailType);
 				const metricName = emailType === Constants.VC_GENERATION_FAILURE_EMAIL ? "GovNotify_vc_generation_failure_email_sent" : "GovNotify_visit_email_sent";
 				singleMetric.addMetric(metricName, MetricUnits.Count, 1);
-				this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
+    			this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
 
     			return new EmailResponse(new Date().toISOString(), "", { emailResponseStatus: emailResponse.status, emailResponseId: emailResponse.data.id });
     		} catch (err: any) {
