@@ -227,20 +227,17 @@ describe("Infra", () => {
 
 			const props = alarm.Properties;
 
-			// Alarm thresholds & behavior
 			expect(props.TreatMissingData).toBe("notBreaching");
 			expect(props.ComparisonOperator).toBe("GreaterThanOrEqualToThreshold");
 			expect(props.Threshold).toBe(5);
 			expect(props.EvaluationPeriods).toBe(1);
 			expect(props.DatapointsToAlarm).toBe(1);
 
-			// Single metric (no Metrics array, no expressions)
 			expect(props.Namespace).toBe("IPR-CRI");
 			expect(props.MetricName).toBe("GovNotify_vc_generation_failure_email_sent");
 			expect(props.Statistic).toBe("Sum");
 			expect(props.Period).toBe(3600);
 
-			// Dimensions
 			expect(props.Dimensions).toEqual(
 			expect.arrayContaining([
 				{ Name: "Service",   Value: "GovNotifyHandler" },

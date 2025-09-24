@@ -202,7 +202,6 @@ describe("SendEmailService", () => {
 		);
 	});
 
-
 	// eslint-disable-next-line max-lines-per-function
 	it("Returns EmailResponse when vcGenerationFailureEmail is sent successfully", async () => {
 		mockGovNotify.sendEmail.mockResolvedValue({

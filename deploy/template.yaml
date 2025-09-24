@@ -329,7 +329,6 @@ Globals:
         AWS_STACK_NAME: !Sub ${AWS::StackName} # The AWS Stack Name, as passed into the template.
         POWERTOOLS_LOG_LEVEL: !If [IsNotProdLikeEnvironment, "DEBUG", "INFO"] # The LogLevel for the AWS PowerTools LogHelper
         POWERTOOLS_METRICS_NAMESPACE: IPR-CRI # The Metric Namespace for the AWS PowerTools MetricHelper
-        ENV: !Ref Environment
         ISSUER: !FindInMap [EnvironmentVariables, !Ref Environment, ISSUER]
     AutoPublishAlias: live
     DeploymentPreference:
