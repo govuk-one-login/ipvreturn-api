@@ -2,7 +2,7 @@ version = 0.1
 [dev]
 [dev.deploy]
 [dev.deploy.parameters]
-stack_name = "ipvreturn-api"
+stack_name = "ipvreturn-api-sk-devtest"
 s3_prefix = "ipvreturn-api"
 region = "eu-west-2"
 confirm_changeset = false

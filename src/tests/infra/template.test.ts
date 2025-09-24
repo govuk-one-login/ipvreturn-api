@@ -220,34 +220,36 @@ describe("Infra", () => {
 	}
 
 	describe("VC Generation Failure Emails warning alarm", () => {
-	it("exists with expected single-metric config", () => {
-		const tpl = loadTemplate();
-		const alarm = tpl.Resources?.VCGenerationFailureEmailsWarningAlarm;
-		expect(alarm?.Type).toBe("AWS::CloudWatch::Alarm");
+		it("exists with expected single-metric config", () => {
+			const tpl = loadTemplate();
+			const alarm = tpl.Resources?.VCGenerationFailureEmailsWarningAlarm;
+			expect(alarm?.Type).toBe("AWS::CloudWatch::Alarm");
 
-		const props = alarm.Properties;
-		expect(props.TreatMissingData).toBe("notBreaching");
-		expect(props.ComparisonOperator).toBe("GreaterThanOrEqualToThreshold");
-		expect(props.Threshold).toBe(5);
-		expect(props.EvaluationPeriods).toBe(1);
-		expect(props.DatapointsToAlarm).toBe(1);
+			const props = alarm.Properties;
 
-		const vcfails = props.Metrics.find((m: any) => m.Id === "vcfails");
-		expect(vcfails.ReturnData).toBe(true);
+			// Alarm thresholds & behavior
+			expect(props.TreatMissingData).toBe("notBreaching");
+			expect(props.ComparisonOperator).toBe("GreaterThanOrEqualToThreshold");
+			expect(props.Threshold).toBe(5);
+			expect(props.EvaluationPeriods).toBe(1);
+			expect(props.DatapointsToAlarm).toBe(1);
 
-		const ms = vcfails.MetricStat;
-		expect(ms.Period).toBe(3600);
-		expect(ms.Stat).toBe("Sum");
-		expect(ms.Metric.Namespace).toBe("IPR-CRI");
-		expect(ms.Metric.MetricName).toBe("GovNotify_vc_generation_failure_email_sent");
-		expect(ms.Metric.Dimensions).toEqual(
-		expect.arrayContaining([
-			{ Name: "Service", Value: "IPR" },
-			{ Name: "Env",     Value: expect.anything() }, // template uses !Ref Environment
-		])
-		);
+			// Single metric (no Metrics array, no expressions)
+			expect(props.Namespace).toBe("IPR-CRI");
+			expect(props.MetricName).toBe("GovNotify_vc_generation_failure_email_sent");
+			expect(props.Statistic).toBe("Sum");
+			expect(props.Period).toBe(3600);
+
+			// Dimensions
+			expect(props.Dimensions).toEqual(
+			expect.arrayContaining([
+				{ Name: "Service",   Value: "GovNotifyHandler" },
+				{ Name: "emailType", Value: "VC_GENERATION_FAILURE_EMAIL" },
+			])
+			);
+		});
 	});
-	});
+
 
 	//TO Be enabled once API g/w is added
 	// it("should define an output with the API Gateway ID", () => {

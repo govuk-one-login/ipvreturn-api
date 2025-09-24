@@ -2459,20 +2459,17 @@ Resources:
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
 
-      Metrics:
-        - Id: vcfails
-          ReturnData: true
-          MetricStat:
-            Metric:
-              Namespace: IPR-CRI
-              MetricName: GovNotify_vc_generation_failure_email_sent
-              Dimensions:
-                - Name: Service
-                  Value: IPR
-                - Name: Env
-                  Value: !Ref Environment
-            Period: 3600
-            Stat: Sum
+      # Single metric (no math)
+      Namespace: IPR-CRI
+      MetricName: GovNotify_vc_generation_failure_email_sent
+      Statistic: Sum
+      Period: 3600
+      Dimensions:
+        - Name: Service
+          Value: GovNotifyHandler     # env-isolated; no Env dimension needed
+        - Name: emailType
+          Value: VC_GENERATION_FAILURE_EMAIL
+
 
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
