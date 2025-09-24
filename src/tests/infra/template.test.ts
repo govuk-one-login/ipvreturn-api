@@ -235,7 +235,6 @@ describe("Infra", () => {
 		});
 	});
 
-
 	//TO Be enabled once API g/w is added
 	// it("should define an output with the API Gateway ID", () => {
 	// 	template.hasOutput("F2FApiGatewayId", {
