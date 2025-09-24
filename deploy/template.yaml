@@ -2792,7 +2792,7 @@ Resources:
                 "x": 12,
                 "type": "metric",
                 "properties": {
-                  "title": "VC Generation Failure Emails (100% for 5h) - ${AWS::StackName}",
+                  "title": "VC Generation Failure Emails (≥5 in the last hour) - ${AWS::StackName}",
                   "annotations": {
                     "alarms": ["${VCGenerationFailureEmailsWarningAlarm.Arn}"]
                   },
