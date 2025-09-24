@@ -207,42 +207,31 @@ describe("Infra", () => {
 			}
 		});
 	});
-	
-	function loadTemplate(): any {
-	const candidates = [
-		resolve(__dirname, "../../deploy/template.yaml"),
-		resolve(__dirname, "../../../deploy/template.yaml"),
-		"deploy/template.yaml",
-	];
-	const path = candidates.find(existsSync);
-	if (!path) throw new Error(`deploy/template.yaml not found. Tried:\n${candidates.join("\n")}`);
-	return load(readFileSync(path, "utf8"), { schema }) as any;
-	}
 
 	describe("VC Generation Failure Emails warning alarm", () => {
 		it("exists with expected single-metric config", () => {
-			const tpl = loadTemplate();
-			const alarm = tpl.Resources?.VCGenerationFailureEmailsWarningAlarm;
-			expect(alarm?.Type).toBe("AWS::CloudWatch::Alarm");
-
-			const props = alarm.Properties;
-
+			const alarms = template.findResources("AWS::CloudWatch::Alarm");
+			const entry = Object.entries(alarms).find(
+				([logicalId]) => logicalId === "VCGenerationFailureEmailsWarningAlarm",
+			);
+			expect(entry).toBeDefined();
+			const [, alarm] = entry!;
+			expect(alarm.Type).toBe("AWS::CloudWatch::Alarm");
+			const props: any = alarm.Properties;
 			expect(props.TreatMissingData).toBe("notBreaching");
 			expect(props.ComparisonOperator).toBe("GreaterThanOrEqualToThreshold");
 			expect(props.Threshold).toBe(5);
 			expect(props.EvaluationPeriods).toBe(1);
 			expect(props.DatapointsToAlarm).toBe(1);
-
 			expect(props.Namespace).toBe("IPR-CRI");
 			expect(props.MetricName).toBe("GovNotify_vc_generation_failure_email_sent");
 			expect(props.Statistic).toBe("Sum");
 			expect(props.Period).toBe(3600);
-
 			expect(props.Dimensions).toEqual(
-			expect.arrayContaining([
+				expect.arrayContaining([
 				{ Name: "Service",   Value: "GovNotifyHandler" },
 				{ Name: "emailType", Value: "VC_GENERATION_FAILURE_EMAIL" },
-			])
+				]),
 			);
 		});
 	});

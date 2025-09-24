@@ -2444,20 +2444,17 @@ Resources:
       AlarmDescription: !Sub
         - "WARNING: In the last hour, >=5 VC generation failure emails were sent. ${RunbookUrl}"
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
-
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
       AlarmActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
       InsufficientDataActions: []
-
       TreatMissingData: notBreaching
       ComparisonOperator: GreaterThanOrEqualToThreshold
       Threshold: 5
       EvaluationPeriods: 1
       DatapointsToAlarm: 1
-      
       Namespace: IPR-CRI
       MetricName: GovNotify_vc_generation_failure_email_sent
       Statistic: Sum
