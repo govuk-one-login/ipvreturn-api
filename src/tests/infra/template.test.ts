@@ -1,8 +1,7 @@
 import { Template, Match } from 'aws-cdk-lib/assertions';
 import { schema } from "yaml-cfn";
-import { readFileSync, existsSync } from "fs";
+import { readFileSync } from "fs";
 import { load } from "js-yaml";
-import { resolve } from "path";
 
 // https://docs.aws.amazon.com/cdk/v2/guide/testing.html <--- how to use this file
 
