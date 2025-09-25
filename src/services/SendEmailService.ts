@@ -88,7 +88,7 @@ export class SendEmailService {
     				"id_expiry_date": this.getFullFormattedDate(message.documentExpiryDate),
     				"branch_name_and_address": message.poAddress,
     				"date": message.poVisitDate,
-    				"time": message.poVisitTime.replace(/\s/g, ""),
+    				"time": message.poVisitTime.replaceAll(/\s/g, ""),
     			};
     			templateId = this.environmentVariables.getDynamicEmailTemplateId();
     			break;
@@ -152,7 +152,7 @@ export class SendEmailService {
     				});
     			}
 
-    			const appError: any = this.govNotifyErrorMapper.map(err.response.data.status_code, err.response.data.errors[0].message);
+    			const appError: any = this.govNotifyErrorMapper.map(err.response.data.status_code, err.response.data.errors[0].message); // NOSONAR - not Array#map; this is our error mapper method
 
     			if (appError.obj!.shouldRetry && retryCount < this.environmentVariables.maxRetries()) {
     				this.logger.error(`sendEmail - Mapped error ${SendEmailService.name}`, { appError });

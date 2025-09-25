@@ -2436,6 +2436,35 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
 
+  VCGenerationFailureEmailsWarningAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: DeployAlarms
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-VCGenerationFailureEmailsWarningAlarm-5in1h"
+      AlarmDescription: !Sub
+        - "WARNING: In the last hour, >=5 VC generation failure emails were sent. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
+      TreatMissingData: notBreaching
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 5
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Namespace: IPR-CRI
+      MetricName: GovNotify_vc_generation_failure_email_sent
+      Statistic: Sum
+      Period: 3600
+      Dimensions:
+        - Name: Service
+          Value: GovNotifyHandler
+        - Name: emailType
+          Value: VC_GENERATION_FAILURE_EMAIL
+
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
     Condition: ApplyReservedConcurrency
@@ -2747,6 +2776,21 @@ Resources:
                   "annotations": {
                     "alarms": ["${GovNotifyDLQMessagesVisibleAlarm.Arn}"]
                      },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 84,
+                "x": 12,
+                "type": "metric",
+                "properties": {
+                  "title": "VC Generation Failure Emails (≥5 in the last hour) - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${VCGenerationFailureEmailsWarningAlarm.Arn}"]
+                  },
                   "view": "timeSeries",
                   "stacked": false
                 }
