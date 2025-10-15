@@ -884,6 +884,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - PostEventHandler.ts
+        UseNpmCi: true
 
   PostEventFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -1092,6 +1093,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - GovNotifyHandler.ts
+        UseNpmCi: true
 
   GovNotifyFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -1280,6 +1282,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - StreamProcessorHandler.ts
+        UseNpmCi: true
 
   SessionEventsTableStream:
     Type: AWS::Lambda::EventSourceMapping
@@ -1477,6 +1480,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - SessionHandler.ts
+        UseNpmCi: true
 
   SessionFunctionLogGroup:
     Type: AWS::Logs::LogGroup
