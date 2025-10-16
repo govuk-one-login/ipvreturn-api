@@ -218,6 +218,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - MockGovNotifyHandler.ts
+        UseNpmCi: true
 
   MockGovNotifyFunctionLogGroup:
     Type: AWS::Logs::LogGroup
