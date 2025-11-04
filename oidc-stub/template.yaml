@@ -54,6 +54,7 @@ Conditions:
       - Fn::Equals:
           - !Ref PermissionsBoundary
           - "none"
+  IsDev: !Equals [!Ref Environment, "dev"]
 
 Globals:
   Api:
@@ -151,6 +152,8 @@ Resources:
         Service: backend
         Name: MockOidcRestApi
         Source: oidc
+        FMSRegionalPolicy: !If [ IsDev, "false", "none" ]
+        CustomPolicy: !If [ IsDev, "true", "none" ]
 
   MockOidcRestApiUsagePlan:
     DependsOn:
