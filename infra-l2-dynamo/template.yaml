@@ -46,6 +46,12 @@ Conditions:
           - !Ref PermissionsBoundary
           - "none"
 
+  EnableBackup:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref Environment
+          - "dev"
+
 Globals:
   Function:
     CodeSigningConfigArn: !If
@@ -82,6 +88,11 @@ Resources:
         SSEType: KMS
       StreamSpecification:
         StreamViewType: NEW_IMAGE
+      Tags: !If
+        - EnableBackup
+        - - Key: BackupFrequency
+            Value: Daily
+        - []
 
   AuthEventsTable:
     Type: "AWS::DynamoDB::Table"
@@ -105,6 +116,11 @@ Resources:
         KMSMasterKeyId: !Ref AuthEventsTableKey
         SSEEnabled: true
         SSEType: KMS
+      Tags: !If
+        - EnableBackup
+        - - Key: BackupFrequency
+            Value: Daily
+        - []
 
   SessionEventsTableKey:
     Type: AWS::KMS::Key
