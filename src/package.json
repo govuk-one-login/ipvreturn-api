@@ -34,7 +34,7 @@
     "lint": "eslint -c eslint.config.mjs --ext *.ts .",
     "test:e2e": "./node_modules/.bin/jest --testMatch '**/e2e/?(*.)test.ts' --passWithNoTests",
     "test:infra": "./node_modules/.bin/jest --testMatch '**/infra/?(*.)test.ts' ",
-    "api": "./node_modules/.bin/jest --testPathPattern=tests/api/",
+    "api": "node --experimental-vm-modules ./node_modules/.bin/jest --testPathPattern=tests/api/",
     "test:api": "npm run compile && npm run api"
   },
   "devDependencies": {
