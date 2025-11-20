@@ -151,6 +151,8 @@ Resources:
         Service: backend
         Name: MockOidcRestApi
         Source: oidc
+        FMSRegionalPolicy: false
+        CustomPolicy: true
 
   MockOidcRestApiUsagePlan:
     DependsOn:
