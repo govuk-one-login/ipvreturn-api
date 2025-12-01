@@ -62,11 +62,6 @@ jobs:
           --template-file .aws-sam/build/template.yaml \
           --capabilities CAPABILITY_NAMED_IAM \
           --parameter-overrides Environment=dev
-      
-      - name: Construct API URL
-        id: api_url
-        run: |
-          echo "api_url=https://api-pre-merge-${{ needs.setup.outputs.sha_short }}-review-o-dev.account.gov.uk" >> $GITHUB_OUTPUT 
 
       - name: Steps for deployments
         run: |
