@@ -32,8 +32,6 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    outputs:
-        api_url: ${{ steps.api_url.outputs.api_url }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v5
