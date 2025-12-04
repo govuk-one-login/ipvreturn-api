@@ -3,9 +3,10 @@ import {
   ListObjectsV2Command,
   ListObjectVersionsCommand,
   DeleteObjectsCommand,
-} from "@aws-sdk/client-s3";import { NodeHttpHandler } from "@smithy/node-http-handler";
-import { HttpCodesEnum } from "../utils/HttpCodesEnum";
-import { AppError } from "../utils/AppError";
+} from "@aws-sdk/client-s3";
+import { NodeHttpHandler } from "@smithy/node-http-handler"
+import { HttpCodesEnum } from "../../../src/utils/HttpCodesEnum";
+import { AppError } from "../../../src/utils/AppError"
 
 export class DeleteBucketProcessor {
 

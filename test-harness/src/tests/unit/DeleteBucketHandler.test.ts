@@ -2,8 +2,8 @@ import { mock } from "jest-mock-extended";
 import { lambdaHandler } from "../../DeleteBucketHandler";
 import { DeleteBucketProcessor } from "../../services/DeleteBucketProcessor";
 import { VALID_DELETE_REQUEST } from "../data/delete-bucket-events";
-import { Response } from "../../utils/Response";
-import { HttpCodesEnum } from "../../utils/HttpCodesEnum";
+import { Response } from "../../../../src/utils/Response"
+import { HttpCodesEnum } from "../../../../src/utils/HttpCodesEnum";
 
 const mockDeleteBucketProcessor = mock<DeleteBucketProcessor>();
 

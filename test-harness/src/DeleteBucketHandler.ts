@@ -1,7 +1,7 @@
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
-import { HttpCodesEnum } from "./utils/HttpCodesEnum";
+import { HttpCodesEnum } from "../../src/utils/HttpCodesEnum";
 import { DeleteBucketProcessor } from "./services/DeleteBucketProcessor";
-import { Response } from "./utils/Response";
+import { Response } from "../../src/utils/Response";
 
 export class DeleteBucketHandler implements LambdaInterface {
   async handler(event: any): Promise<any> {

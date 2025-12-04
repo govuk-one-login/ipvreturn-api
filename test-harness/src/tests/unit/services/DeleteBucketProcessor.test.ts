@@ -1,6 +1,6 @@
 import { DeleteBucketProcessor } from "../../../services/DeleteBucketProcessor";
 import { VALID_DELETE_REQUEST, VALID_CREATE_REQUEST, VALID_UPDATE_REQUEST } from "../../data/delete-bucket-events";
-import { HttpCodesEnum } from "../../../utils/HttpCodesEnum";
+import { HttpCodesEnum } from "../../../../../src/utils/HttpCodesEnum";
 import { DeleteObjectsCommand, ListObjectVersionsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
 const mockSend = jest.fn();

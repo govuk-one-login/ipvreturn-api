@@ -206,7 +206,7 @@ Resources:
     Properties:
       FunctionName: !Sub "IPVR-DeleteTestHarnessBucket-${AWS::StackName}"
       Handler: DeleteBucketHandler.lambdaHandler
-      CodeUri: ../src/
+      CodeUri: ./src/
       Policies:
       - Statement:
           - Effect: Allow
