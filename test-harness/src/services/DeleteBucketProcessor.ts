@@ -5,8 +5,8 @@ import {
   DeleteObjectsCommand,
 } from "@aws-sdk/client-s3";
 import { NodeHttpHandler } from "@smithy/node-http-handler"
-import { HttpCodesEnum } from "../../../src/utils/HttpCodesEnum";
-import { AppError } from "../../../src/utils/AppError"
+import { HttpCodesEnum } from "../utils/HttpCodesEnum";
+import { AppError } from "../utils/AppError"
 
 export class DeleteBucketProcessor {
 
