@@ -114,7 +114,7 @@ jobs:
 
       - name: SAM Build
         run: |
-          echo 'ignore-scripts?'
+          echo 'ignore-scripts? '
           npm config get ignore-scripts
           sam build -t template.yaml
   
