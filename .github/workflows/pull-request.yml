@@ -114,12 +114,8 @@ jobs:
 
       - name: SAM Build
         run: |
-          echo 'cd ../src'
           cd ../src
-          pwd
-          echo 'ignore-scripts?'
-          npm config get ignore-scripts
-          echo 'cd ../deploy'
+          npm install @esbuild/linux-x64@0.25.9
           cd ../deploy
           sam build -t template.yaml
 
