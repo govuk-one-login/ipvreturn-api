@@ -114,16 +114,22 @@ jobs:
 
       - name: SAM Build
         run: |
+          echo 'pwd'
           pwd
+          echo 'cd ../src'
           cd ../src
+          echo 'pwd'
           pwd
           echo 'ignore-scripts?'
           npm config get ignore-scripts
+          echo 'cd ../deploy'
           cd ../deploy
+          echo 'pwd'
           pwd
           echo 'ignore-scripts?'
           npm config get ignore-scripts
           sam build -t template.yaml
+
   
   # This is a temporary trigger for the pre-merge check, set up for testing purposes. A decision will be made later regarding the actual pre-merge trigger.
   # pre-merge-checks:
