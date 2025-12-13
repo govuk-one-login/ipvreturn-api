@@ -6,6 +6,7 @@ import {
 	VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT,
 	VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT,
 	VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT,
+	VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT,
 } from "../data/sqs-events";
 import "dotenv/config";
 import { randomUUID } from "crypto";
@@ -50,7 +51,7 @@ describe("post event processor", () => {
 		console.log("userId: ", userId)
 		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);
 		// Simulated delay between logging in and start F2F
-		await sleep(3000);
+		await sleep(2000);
 		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
 		
 		const response = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
@@ -70,13 +71,13 @@ describe("post event processor", () => {
 		console.log("userId: ", userId)
 		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
 		// Simulated delay between logging in and start F2F
-		await sleep(3000);
+		await sleep(2000);
 		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
 		// Simulated delay between F2F and the PO
-		await sleep(3000);
+		await sleep(2000);
 		await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
 		// Simulated system delay (Investigate where these happen close together)
-		await sleep(1000);
+		await sleep(2000);
 		await postMockEvent(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT, userId, false);
 
 		const response = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
@@ -145,17 +146,17 @@ describe("post event processor", () => {
 		console.log("userId: ", userId)
 		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
 		// Simulated delay between logging in and start F2F
-		await sleep(3000);
+		await sleep(2000);
 		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
 		// Simulated delay between F2F and the PO
-		await sleep(3000);
+		await sleep(2000);
 		await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
 		// Simulated system delay (Investigate where these happen close together)
-		await sleep(1000);
+		await sleep(2000);
 		await postMockEvent(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT, userId, false);
 		
 		// Simulate user wait and allow email to send
-		await sleep(10000);
+		await sleep(5000);
 		await postMockEvent(VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT, userId, false);
 
 		const response = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
@@ -201,14 +202,14 @@ describe("post event processor", () => {
 
 			await postMockEvent(authEvent, userId, true);
 			// Simulated delay between logging in and start F2F
-			await sleep(3000);
+			await sleep(2000);
 			await postMockEvent(yotiStartEvent, userId, false);
 
 			// Simulated delay between F2F and the PO
-			await sleep(3000);
+			await sleep(2000);
 			await postMockEvent(documentUploadedEvent, userId, false);
 			// Simulated system delay (Investigate where these happen close together)
-			await sleep(1000);
+			await sleep(2000);
 			await postMockEvent(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT, userId, false);
 
 			const response = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
@@ -228,17 +229,17 @@ describe("post event processor", () => {
 			authEvent.client_id="HPAUPxK87FyljocDdQxijxdti08";
 
 			// Simulated delay between first and second journey
-			await sleep(3000);
+			await sleep(2000);
 
 			await postMockEvent(authEvent, userId, true);
 			// Simulated delay between logging in and start F2F
-			await sleep(3000);
+			await sleep(2000);
 			await postMockEvent(yotiStartEvent, userId, false);
 			// Simulated delay between F2F and the PO
-			await sleep(3000);
+			await sleep(2000);
 			await postMockEvent(documentUploadedEvent, userId, false);
 			// Simulated system delay (Investigate where these happen close together)
-			await sleep(1000);
+			await sleep(2000);
 			await postMockEvent(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT, userId, false);
 
 			const secondResponse = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
@@ -267,10 +268,10 @@ describe("post event processor", () => {
 		console.log("userId: ", userId)
 		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
 		// Simulated delay between logging in and start F2F
-		await sleep(3000);
+		await sleep(2000);
 		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
 		// Simulated delay between F2F and the PO
-		await sleep(3000);	
+		await sleep(2000);	
 		await postMockEvent(VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT, userId, false);
 
 		const response = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
@@ -312,5 +313,85 @@ describe("post event processor", () => {
 		await sleep(5000);
 		const allTxmaEventBodies = await getTxmaEventsFromTestHarness(userId, 1);
 		await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, allTxmaEventBodies);
-	}, 30000); 			
+	}, 30000);
+
+	describe("All IPVR user data cleared when AUTH_DELETE_ACCOUNT consumed at any point in the IPVR journey", () => {
+
+		it("when 2 events are sent", async () => {
+			console.log("when 2 events are sent")
+			const userId = randomUUID();
+			console.log("userId: ", userId)
+
+			await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
+			// Simulated delay between logging in and start F2F
+			await sleep(2000);
+
+			await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
+			await sleep(2000);
+
+			// Verify session exists - IPVR behaving as expected
+			const response = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
+			expect(response?.clientName).toBe("ekwU");
+
+			await postMockEvent(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT, userId, false);
+			// Verify previously retrieved session no longer exists
+			await expect (getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!)).rejects.toThrow(`Session not found for userId: ${userId}`);
+		}, 30000);
+
+		it("when 3 events are sent", async () => {
+			console.log("when 3 events are sent")
+			const userId = randomUUID();
+			console.log("userId: ", userId)
+
+			await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
+			// Simulated delay between logging in and start F2F
+			await sleep(2000);
+
+			await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
+			// Simulated delay between F2F and the PO
+			await sleep(2000);
+
+			await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
+			// Simulated delay between F2F and the PO
+			await sleep(2000);
+
+			// Verify session exists - IPVR behaving as expected
+			const response = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
+			expect(response?.clientName).toBe("ekwU");
+
+			await postMockEvent(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT, userId, false);
+			// Verify previously retrieved session no longer exists
+			await expect (getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!)).rejects.toThrow(`Session not found for userId: ${userId}`);
+		}, 30000);
+
+		it("when 4 events are sent", async () => {
+			console.log("when 4 events are sent")
+			const userId = randomUUID();
+			console.log("userId: ", userId)
+
+			await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
+			// Simulated delay between logging in and start F2F
+			await sleep(2000);
+			await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
+			// Simulated delay between F2F and the PO
+			await sleep(2000);
+
+			await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
+			// Simulated delay between F2F and the PO
+			await sleep(2000);
+
+			await postMockEvent(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT, userId, false);
+			await sleep(2000);
+
+			// Verify session exists - IPVR behaving as expected
+			const response = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
+			expect(response?.clientName).toBe("ekwU");
+
+			await postMockEvent(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT, userId, false);
+			// Verify previously retrieved session no longer exists
+			await expect (getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!)).rejects.toThrow(`Session not found for userId: ${userId}`);
+		}, 30000);
+
+	});
+	
 });
