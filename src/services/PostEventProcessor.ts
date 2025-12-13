@@ -238,7 +238,6 @@ export class PostEventProcessor {
 						return;
 					}
 				}
-				case Constants.AUTH_DELETE_ACCOUNT:
 				case Constants.IPV_F2F_USER_CANCEL_END: {
 					updateExpression = "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
 					expressionAttributeValues = {
@@ -249,6 +248,17 @@ export class PostEventProcessor {
 						":redirectUri": returnRecord.redirectUri,
 					};
 					break;
+				}
+				case Constants.AUTH_DELETE_ACCOUNT: {
+					await this.iprServiceSession.deleteUserSession(userId);
+					await this.iprServiceAuth.deleteUserSession(userId);
+					const singleMetric = this.metrics.singleMetric();
+					singleMetric.addDimension("eventType", eventName);
+					singleMetric.addMetric("PostEventProcessor_event_processed_successfully", MetricUnits.Count, 1);
+					return {
+						statusCode: HttpCodesEnum.NO_CONTENT,
+						eventBody: "NO_CONTENT",
+					};
 				}
 				default:
 					this.logger.error({ message: "Unexpected event received in SQS queue:", eventName });

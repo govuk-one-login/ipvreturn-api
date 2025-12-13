@@ -1,7 +1,7 @@
  
 import { Logger } from "@aws-lambda-powertools/logger";
 import { AppError } from "../utils/AppError";
-import { DynamoDBDocument, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocument, GetCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { Constants } from "../utils/Constants";
 import { EnvironmentVariables } from "./EnvironmentVariables";
@@ -81,6 +81,26 @@ export class IPRServiceAuth {
 		} catch (e: any) {
 			this.logger.error({ message: "Failed to update auth event record in dynamo", e });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating auth event record");
+		}
+	}
+
+	async deleteUserSession(userId: string): Promise<string | void> {
+
+		this.logger.info({ message: "Deleting user data from dynamodb", tableName: this.tableName });
+		const deleteSessionInfoCommand = new DeleteCommand({
+			TableName: this.tableName,
+			Key: {
+				userId,
+			}
+		});
+
+		this.logger.info("Deleting auth event record" );
+
+		try {
+			await this.dynamo.send(deleteSessionInfoCommand);
+		} catch (e: any) {
+			this.logger.error({ message: "Failed to delete auth event record in dynamo", e });
+			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error deleting auth event record");
 		}
 	}
 }

@@ -821,19 +821,11 @@ Resources:
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
-        - DynamoDBWritePolicy:
+        - DynamoDBCrudPolicy:
             TableName:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-name"
-        - DynamoDBReadPolicy:
-            TableName:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-session-events-table-name"
-        - DynamoDBWritePolicy:
-            TableName:
-              Fn::ImportValue:
-                !Sub "${L2DynamoStackName}-auth-events-table-name"
-        - DynamoDBReadPolicy:
+        - DynamoDBCrudPolicy:
             TableName:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-auth-events-table-name"
