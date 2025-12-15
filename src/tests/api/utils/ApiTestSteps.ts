@@ -82,12 +82,11 @@ export async function getSessionByUserId(userId: string, tableName: string): Pro
 
 	let session;
 	let response;
-
 	
 	response = await HARNESS_API_INSTANCE.get<{ Item: OriginalSessionItem }>(`getRecordByUserId/${tableName}/${userId}`, {});
 	const originalSession = response.data.Item;
 
-	if (!originalSession) { // Add a check if the item itself is null/undefined from the API
+	if (!originalSession) {
 		throw new Error(`Session not found for userId: ${userId}`);
 	}
 	

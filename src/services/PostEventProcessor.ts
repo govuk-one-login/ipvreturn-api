@@ -48,7 +48,6 @@ export class PostEventProcessor {
 		}
 		return PostEventProcessor.instance;
 	}
-
 	 
 	async processRequest(eventBody: any): Promise<any> {
 		try {
@@ -108,7 +107,7 @@ export class PostEventProcessor {
 				//Reset TTL to 11days for F2F journey
 				expiresOn = absoluteTimeNow() + this.environmentVariables.sessionReturnRecordTtlSecs();
 			}
-
+			
 			let returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {

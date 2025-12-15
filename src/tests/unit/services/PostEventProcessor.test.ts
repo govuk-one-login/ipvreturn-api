@@ -52,7 +52,9 @@ describe("PostEventProcessor", () => {
 		// @ts-expect-error private access manipulation used for testing
 		postEventProcessorMockSessionService.iprServiceAuth = iprServiceAuth;
 		mockIprServiceSession.saveEventData.mockResolvedValue();
-		mockIprServiceAuth.saveEventData.mockResolvedValueOnce();
+		mockIprServiceSession.deleteUserSession.mockResolvedValue();
+		mockIprServiceAuth.saveEventData.mockResolvedValue();
+		mockIprServiceAuth.deleteUserSession.mockResolvedValue();
 		mockIprServiceSession.obfuscateJSONValues.mockResolvedValue({ "event_name":"IPR_RESULT_NOTIFICATION_EMAILED", "user":{ "user_id":"***" }, "timestamp":"***" });
 	});
 
@@ -335,9 +337,10 @@ describe("PostEventProcessor", () => {
 		});
 	
 		it("Calls saveEventData with appropriate payload for AUTH_DELETE_ACCOUNT_EVENT event", async () => {
-			await postEventProcessorMockSessionService.processRequest(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING);
+			await postEventProcessorMockServices.processRequest(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING);
 			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-3333", "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri", { ":accountDeletedOn": 1681902001, ":clientName": "", ":nameParts": [], ":redirectUri": "", ":userEmail": "" });
+			expect(mockIprServiceSession.deleteUserSession).toHaveBeenCalled()
+			expect(mockIprServiceAuth.deleteUserSession).toHaveBeenCalled()
 		});
 
 		it("Calls saveEventData with appropriate payload for IPV_F2F_USER_CANCEL_END event", async () => {
