@@ -202,6 +202,18 @@ describe("IPR Service", () => {
 		});
 	});
 
+
+	describe("deleteUserSession", () => {
+		it("Should throw error if deleteUserSession fails", async () => {
+			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
+			return expect(iprServiceSession.deleteUserSession(userId)).rejects.toThrow(
+				expect.objectContaining({
+					statusCode: HttpCodesEnum.SERVER_ERROR,
+				}),
+			);
+		});
+	});
+
 	describe("sendToTXMA", () => {
 		it("Should send event to TxMA without encodedHeader if encodedHeader param is missing", async () => {
 			const messageBody = JSON.stringify(txmaEventPayload);

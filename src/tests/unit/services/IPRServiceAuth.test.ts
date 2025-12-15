@@ -57,6 +57,17 @@ describe("IPR Service", () => {
 		});
 	});
 
+	describe("deleteUserSession", () => {
+		it("Should throw error if deleteUserSession fails", async () => {
+			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
+			return expect(iprServiceAuth.deleteUserSession(userId)).rejects.toThrow(
+				expect.objectContaining({
+					statusCode: HttpCodesEnum.SERVER_ERROR,
+				}),
+			);
+		});
+	});
+
 	describe("getAuthEventBySub", () => {
 		it("Should throw error if session has expired", async () => {
 			mockDynamoDbClient.send = jest.fn().mockResolvedValue({
