@@ -358,7 +358,7 @@ components:
             - "F2F_YOTI_START"
             - "AUTH_IPV_AUTHORISATION_REQUESTED"
             - "F2F_DOCUMENT_UPLOADED"
-            - "IPV_F2F_USER_CANCEL_END"
+            - "IPV_F2F_RESTART"
             - "IPV_F2F_CRI_VC_ERROR"
             - "AUTH_DELETE_ACCOUNT"
           description: name of the event

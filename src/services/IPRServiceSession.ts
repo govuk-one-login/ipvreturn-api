@@ -1,7 +1,7 @@
  
 import { Logger } from "@aws-lambda-powertools/logger";
 import { AppError } from "../utils/AppError";
-import { DynamoDBDocument, GetCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocument, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { Constants } from "../utils/Constants";
 import { sqsClient } from "../utils/SqsClient";
@@ -30,7 +30,7 @@ export class IPRServiceSession {
 		[Constants.F2F_YOTI_START, "journeyWentAsyncOn"],
 		[Constants.IPV_F2F_CRI_VC_CONSUMED, "readyToResumeOn"],
 		[Constants.AUTH_DELETE_ACCOUNT, "accountDeletedOn"],
-		[Constants.IPV_F2F_USER_CANCEL_END, "accountDeletedOn"],
+		[Constants.IPV_F2F_RESTART, "accountDeletedOn"],
 		[Constants.IPV_F2F_CRI_VC_ERROR, "readyToResumeOn"],
 	]);
 
@@ -84,8 +84,8 @@ export class IPRServiceSession {
 		try {
 			const session = await this.dynamo.send(getSessionCommand);
 			const eventAttribute = this.eventAttributeMap.get(eventType);
-			// If Event type is AUTH_DELETE_ACCOUNT or IPV_F2F_USER_CANCEL_END and no record was found, or flagged for deletion then do not process the event.
-			if ((eventType === Constants.AUTH_DELETE_ACCOUNT || eventType === Constants.IPV_F2F_USER_CANCEL_END) && (!session.Item || session?.Item?.accountDeletedOn)) {
+			// If Event type is AUTH_DELETE_ACCOUNT or IPV_F2F_RESTART and no record was found, or flagged for deletion then do not process the event.
+			if ((eventType === Constants.AUTH_DELETE_ACCOUNT || eventType === Constants.IPV_F2F_RESTART) && (!session.Item || session?.Item?.accountDeletedOn)) {
 				this.logger.info({ message: `Received ${eventType} event and no session with that userId was found OR session was found but accountDeletedOn was already set` });
 				return true;
 			} else if (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!])) {
@@ -93,7 +93,7 @@ export class IPRServiceSession {
 				this.logger.info({ message: `Session record with that userId was found with either accountDeletedOn set or with ${eventAttribute} already set` });
 				return true;
 			} else {
-				// Process all events except AUTH_DELETE_ACCOUNT or IPV_F2F_USER_CANCEL_END when no record exists.
+				// Process all events except AUTH_DELETE_ACCOUNT or IPV_F2F_RESTART when no record exists.
 				return false;
 			}
 		} catch (e: any) {
@@ -121,26 +121,6 @@ export class IPRServiceSession {
 		} catch (e: any) {
 			this.logger.error({ message: "Failed to update session record in dynamo", e });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
-		}
-	}
-
-	async deleteUserSession(userId: string): Promise<string | void> {
-
-		this.logger.info({ message: "Deleting user data from dynamodb", tableName: this.tableName });
-		const deleteSessionInfoCommand = new DeleteCommand({
-			TableName: this.tableName,
-			Key: {
-				userId,
-			}
-		});
-
-		this.logger.info("Deleting session record" );
-
-		try {
-			await this.dynamo.send(deleteSessionInfoCommand);
-		} catch (e: any) {
-			this.logger.error({ message: "Failed to delete session record in dynamo", e });
-			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error deleting session record");
 		}
 	}
 

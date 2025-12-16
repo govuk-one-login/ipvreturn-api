@@ -61,6 +61,8 @@ export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, em
 
 	try {
 		const response = await HARNESS_API_INSTANCE.post("/send-mock-txma-message", event);
+		await sleep(2000);
+
 		return response;
 	} catch (error: any) {
 		console.error({ message: "postMockEvent - failed sending message to mock TxMA queue", error });

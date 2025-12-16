@@ -227,8 +227,8 @@ export const VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT: ReturnSQSEvent = {
 
 export const VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING = JSON.stringify(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT);
 
-export const VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT: ReturnSQSEvent = {
-	"event_name": "IPV_F2F_USER_CANCEL_END",
+export const VALID_IPV_F2F_RESTART_TXMA_EVENT: ReturnSQSEvent = {
+	"event_name": "IPV_F2F_RESTART",
 	"event_id": "588f4a66-f75a-4728-9f7b-8afd865c233f",
 	"client_id": "ekwU",
 	"user": {
@@ -239,15 +239,15 @@ export const VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT: ReturnSQSEvent = {
 	"timestamp_formatted": "2023-04-19T11:00:01.000Z",
 };
 
-export const VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT);
+export const VALID_IPV_F2F_RESTART_TXMA_EVENT_STRING = JSON.stringify(VALID_IPV_F2F_RESTART_TXMA_EVENT);
 
-export const VALID_IPV_F2F_USER_CANCEL_END_SQS_EVENT = {
+export const VALID_IPV_F2F_RESTART_SQS_EVENT = {
 	"Records": [
 		{
 			"messageId": "6e67a34a-94f1-493f-b9eb-3d421aa701a8",
 			// pragma: allowlist nextline secret
 			"receiptHandle": "AQEBDzpW+TMqnd6I8zcqmrq8g8BTsuDjI745ci0bJ46g0Ej",
-			"body": VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING,
+			"body": VALID_IPV_F2F_RESTART_TXMA_EVENT_STRING,
 			"attributes": {
 				"ApproximateReceiveCount": "1",
 				"SentTimestamp": "1588867971441",

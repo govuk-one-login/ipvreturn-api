@@ -1,11 +1,8 @@
 import { SQSEvent, SQSRecord } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
-import { AppError } from "./utils/AppError";
-import { HttpCodesEnum } from "./models/enums/HttpCodesEnum";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
 import { PostEventProcessor } from "./services/PostEventProcessor";
-import { Constants } from "./utils/Constants";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE;
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL;
@@ -53,11 +50,9 @@ class PostEventHandler implements LambdaInterface {
 				const singleMetric = metrics.singleMetric();
 				singleMetric.addDimension("reason", error.message);
 				singleMetric.addMetric("PostEventProcessor_error_events", MetricUnits.Count, 1);
-				if (body.event_name === Constants.IPV_F2F_USER_CANCEL_END && error.message === "Error updating session record") {
-					throw new AppError(HttpCodesEnum.SERVER_ERROR, "SQS Event could not be processed");
-				} else {
-					return { batchItemFailures:[] };
-				}
+				return { 
+					batchItemFailures:[] 
+				};
 			}
 
 		} else {

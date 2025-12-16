@@ -815,17 +815,25 @@ Resources:
           SESSION_RETURN_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, SESSIONRETURNRECORDTTLINSECS ]
           AUTH_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
-          REDRIVE_ENABLED: "true"
+          REDRIVE_ENABLED: "false"
           VC_GENERATION_FAILURE_EMAIL_ENABLED:
             !FindInMap [EnvironmentVariables, !Ref Environment, VCGENERATIONFAILUREEMAILENABLED]
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
-        - DynamoDBCrudPolicy:
+        - DynamoDBWritePolicy:
             TableName:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-session-events-table-name"
-        - DynamoDBCrudPolicy:
+        - DynamoDBReadPolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-session-events-table-name"
+        - DynamoDBWritePolicy:
+            TableName:
+              Fn::ImportValue:
+                !Sub "${L2DynamoStackName}-auth-events-table-name"
+        - DynamoDBReadPolicy:
             TableName:
               Fn::ImportValue:
                 !Sub "${L2DynamoStackName}-auth-events-table-name"
