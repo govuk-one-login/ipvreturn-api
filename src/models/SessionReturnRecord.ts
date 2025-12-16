@@ -81,14 +81,23 @@ export class SessionReturnRecord {
 				this.error_description = data.extensions?.error_description;
 				break;
 			}
-			case Constants.AUTH_DELETE_ACCOUNT:
-			case Constants.IPV_F2F_USER_CANCEL_END: {
+			case Constants.AUTH_DELETE_ACCOUNT: {
 				this.accountDeletedOn = data.timestamp;
 				this.clientSessionId = "";
 				this.clientName = "";
 				this.redirectUri = "";
 				this.userEmail = "";
 				this.nameParts = [];
+				break;
+			}
+			case Constants.IPV_F2F_RESTART: {
+				this.userEmail = "";
+				this.nameParts = [];
+				this.postOfficeVisitDetails = [];
+				this.postOfficeInfo = [];
+				this.documentType = "";
+				this.documentExpiryDate = "";
+				this.notified = false;
 				break;
 			}
 			default: {
@@ -130,4 +139,6 @@ export class SessionReturnRecord {
 	documentExpiryDate?: string;
 
 	error_description?: string;
+
+	notified?: boolean;
 }
