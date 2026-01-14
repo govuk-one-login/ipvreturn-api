@@ -24,7 +24,7 @@ export class Constants {
 
     static readonly AUTH_DELETE_ACCOUNT = "AUTH_DELETE_ACCOUNT";
 
-    static readonly IPV_F2F_USER_CANCEL_END = "IPV_F2F_USER_CANCEL_END";
+    static readonly IPV_F2F_RESTART = "IPV_F2F_RESTART";
 
     static readonly POSTEVENT_LOGGER_SVC_NAME = "PostEventHandler";
 

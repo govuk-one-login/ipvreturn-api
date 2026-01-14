@@ -61,6 +61,8 @@ export async function postMockEvent(inputEvent: ReturnSQSEvent, user: string, em
 
 	try {
 		const response = await HARNESS_API_INSTANCE.post("/send-mock-txma-message", event);
+		await sleep(2000);
+
 		return response;
 	} catch (error: any) {
 		console.error({ message: "postMockEvent - failed sending message to mock TxMA queue", error });
@@ -82,14 +84,20 @@ export async function getSessionByUserId(userId: string, tableName: string): Pro
 
 	let session;
 	let response;
+	
+	response = await HARNESS_API_INSTANCE.get<{ Item: OriginalSessionItem }>(`getRecordByUserId/${tableName}/${userId}`, {});
+	const originalSession = response.data.Item;
 
+	if (!originalSession) {
+		throw new Error(`Session not found for userId: ${userId}`);
+	}
+	
 	try {
-		response = await HARNESS_API_INSTANCE.get<{ Item: OriginalSessionItem }>(`getRecordByUserId/${tableName}/${userId}`, {});
-		const originalSession = response.data.Item;
 		session = Object.fromEntries(
 			Object.entries(originalSession).map(([key, value]) => [key, value.N ?? value.S ?? value.L ?? value.BOOL]),
 		) as unknown as ExtSessionEvent;
 	} catch (e: any) {
+		
 		console.error({ message: "getSessionByUserId - failed getting session from Dynamo", e });
 	}
 
