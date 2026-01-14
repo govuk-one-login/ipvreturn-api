@@ -18,7 +18,7 @@ jobs:
       sha_short: ${{ steps.vars.outputs.sha_short }}
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Get output variables
         id: vars
@@ -37,7 +37,7 @@ jobs:
       test_harness_url: ${{ steps.test_harness_url.outputs.test_harness_url }}
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup SAM CLI
         uses: aws-actions/setup-sam@v2
@@ -106,7 +106,9 @@ jobs:
       VC_GENERATION_FAILURE_EMAIL_ENABLED: true
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
+        with:
+          submodules: true
 
       - name: Assume temporary AWS role
         uses: aws-actions/configure-aws-credentials@v4
