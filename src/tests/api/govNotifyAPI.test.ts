@@ -1,6 +1,8 @@
 import govNotifyRequestData from "../data/govNotifyStubPayload.json";
 import { postGovNotifyRequest } from "./utils/ApiTestSteps";
 
+//QualityGateIntegrationTest 
+//QualityGateRegressionTest
 describe("GovNotify Endpoint /v2/notifications/email", () => {
 	const responseCodes = [
 		[400],

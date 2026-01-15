@@ -16,8 +16,10 @@ import { sleep } from "../../utils/Sleep";
 import { ReturnSQSEvent } from "../../models/ReturnSQSEvent";
 import { absoluteTimeNow } from "../../utils/DateTimeUtils";
 
+//QualityGateIntegrationTest 
+//QualityGateRegressionTest
+//QualityGateStackTest
 describe("post event processor", () => {
-
 	const postOfficeDetails = {
 				"M": {
 					"address": {
