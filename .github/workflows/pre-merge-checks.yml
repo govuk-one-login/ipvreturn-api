@@ -18,7 +18,7 @@ jobs:
       sha_short: ${{ steps.vars.outputs.sha_short }}
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Get output variables
         id: vars
@@ -37,7 +37,7 @@ jobs:
       test_harness_url: ${{ steps.test_harness_url.outputs.test_harness_url }}
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup SAM CLI
         uses: aws-actions/setup-sam@v2
@@ -100,10 +100,13 @@ jobs:
       id-token: write
       contents: read
     env:
-      PRE_MERGE_TEST_HARNESS_URL: ${{ needs.deploy.outputs.test_harness_url }}
+      DEV_IPR_TEST_HARNESS_URL: ${{ needs.deploy.outputs.test_harness_url }}
+      API_TEST_SESSION_EVENTS_TABLE: ${{ secrets.DEV_API_TEST_SESSION_EVENTS_TABLE }}
+      GOV_NOTIFY_API: ${{ secrets.DEV_IPR_GOV_NOTIFY_API }}
+      VC_GENERATION_FAILURE_EMAIL_ENABLED: true
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: true
 
@@ -113,10 +116,18 @@ jobs:
           role-to-assume: ${{ secrets.DEV_RETURN_PRE_MERGE_ROLE_ARN }}
           aws-region: eu-west-2
 
-      - name: Placeholder for tests
-        run: |
-          echo "Test execution will be added"
-          echo "Test Harness URL: $PRE_MERGE_TEST_HARNESS_URL"
+      - name: Setup nodeJS v22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      
+      - name: Install dependencies
+        working-directory: ./src
+        run: npm ci
+
+      - name: Run API tests
+        working-directory: ./src
+        run: npm run test:api
 
   cleanup:
     runs-on: ubuntu-latest

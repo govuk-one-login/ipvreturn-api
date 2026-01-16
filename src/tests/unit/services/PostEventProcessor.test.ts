@@ -12,8 +12,7 @@ import { absoluteTimeNow } from "../../../utils/DateTimeUtils";
 import { AppError } from "../../../utils/AppError";
 import { Constants } from "../../../utils/Constants";
 import {
-	VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING,
-	VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING,
+	VALID_IPV_F2F_RESTART_TXMA_EVENT_STRING,
 	VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT_STRING,
 	VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT,
 	VALID_F2F_YOTI_START_TXMA_EVENT_STRING, VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT,
@@ -52,7 +51,7 @@ describe("PostEventProcessor", () => {
 		// @ts-expect-error private access manipulation used for testing
 		postEventProcessorMockSessionService.iprServiceAuth = iprServiceAuth;
 		mockIprServiceSession.saveEventData.mockResolvedValue();
-		mockIprServiceAuth.saveEventData.mockResolvedValueOnce();
+		mockIprServiceAuth.saveEventData.mockResolvedValue();
 		mockIprServiceSession.obfuscateJSONValues.mockResolvedValue({ "event_name":"IPR_RESULT_NOTIFICATION_EMAILED", "user":{ "user_id":"***" }, "timestamp":"***" });
 	});
 
@@ -333,17 +332,11 @@ describe("PostEventProcessor", () => {
 			 
 			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
 		});
-	
-		it("Calls saveEventData with appropriate payload for AUTH_DELETE_ACCOUNT_EVENT event", async () => {
-			await postEventProcessorMockSessionService.processRequest(VALID_AUTH_DELETE_ACCOUNT_TXMA_EVENT_STRING);
-			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-3333", "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri", { ":accountDeletedOn": 1681902001, ":clientName": "", ":nameParts": [], ":redirectUri": "", ":userEmail": "" });
-		});
 
-		it("Calls saveEventData with appropriate payload for IPV_F2F_USER_CANCEL_END event", async () => {
-			await postEventProcessorMockSessionService.processRequest(VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING);
+		it("Calls saveEventData with appropriate payload for IPV_F2F_RESTART event", async () => {
+			await postEventProcessorMockSessionService.processRequest(VALID_IPV_F2F_RESTART_TXMA_EVENT_STRING);
 			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("7561b2c4-7466-4d58-ad02-d52c1b900bf9", "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri", { ":accountDeletedOn": 1681902001, ":clientName": "", ":nameParts": [], ":redirectUri": "", ":userEmail": "" });
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("7561b2c4-7466-4d58-ad02-d52c1b900bf9", "SET nameParts = :nameParts, journeyWentAsyncOn = :journeyWentAsyncOn, ipvStartedOn = :ipvStartedOn, documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails, postOfficeInfo = :postOfficeInfo, readyToResumeOn = :readyToResumeOn, documentType = :documentType, notified = :notified, documentExpiryDate = :documentExpiryDate", {":documentExpiryDate": "",":documentType": "",":documentUploadedOn": {  "NULL": true,},":ipvStartedOn": {  "NULL": true,},":journeyWentAsyncOn": {  "NULL": true,},":nameParts": [],":notified": false,":postOfficeInfo": [],":postOfficeVisitDetails": [],":readyToResumeOn": {  "NULL": true}});
 		});
 	});
 
@@ -566,12 +559,12 @@ describe("PostEventProcessor", () => {
 		});
 	});
 
-	describe("IPV_F2F_USER_CANCEL_END", () => {
-		it("throws AppError when IPRServiceSession throws AppError for IPV_F2F_USER_CANCEL_END event", async () => {
+	describe("IPV_F2F_RESTART", () => {
+		it("throws AppError when IPRServiceSession throws AppError for IPV_F2F_RESTART event", async () => {
 			mockIprServiceSession.saveEventData.mockImplementation(() => {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
 			});
-			await expect(postEventProcessorMockServices.processRequest(VALID_IPV_F2F_USER_CANCEL_END_TXMA_EVENT_STRING)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record"));
+			await expect(postEventProcessorMockServices.processRequest(VALID_IPV_F2F_RESTART_TXMA_EVENT_STRING)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record"));
 		});
 	});
 
