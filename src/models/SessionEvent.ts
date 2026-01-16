@@ -112,6 +112,8 @@ export class ExtSessionEvent extends SessionEvent {
 
 	accountDeletedOn?: number;
 
+    expiresOn?: number;
+
 	@IsString()
 	@IsNotEmpty()
 	documentType!: string;

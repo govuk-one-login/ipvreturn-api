@@ -48,7 +48,6 @@ export class PostEventProcessor {
 		}
 		return PostEventProcessor.instance;
 	}
-
 	 
 	async processRequest(eventBody: any): Promise<any> {
 		try {
@@ -108,7 +107,7 @@ export class PostEventProcessor {
 				//Reset TTL to 11days for F2F journey
 				expiresOn = absoluteTimeNow() + this.environmentVariables.sessionReturnRecordTtlSecs();
 			}
-
+			
 			let returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {
@@ -238,8 +237,23 @@ export class PostEventProcessor {
 						return;
 					}
 				}
-				case Constants.AUTH_DELETE_ACCOUNT:
-				case Constants.IPV_F2F_USER_CANCEL_END: {
+				case Constants.IPV_F2F_RESTART: {
+					updateExpression = "SET nameParts = :nameParts, journeyWentAsyncOn = :journeyWentAsyncOn, ipvStartedOn = :ipvStartedOn, documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails, postOfficeInfo = :postOfficeInfo, readyToResumeOn = :readyToResumeOn, documentType = :documentType, notified = :notified, documentExpiryDate = :documentExpiryDate";
+					expressionAttributeValues = {
+						":nameParts":returnRecord.nameParts,
+						":postOfficeVisitDetails": returnRecord.postOfficeVisitDetails,
+						":postOfficeInfo": returnRecord.postOfficeInfo,
+						":documentType": returnRecord.documentType,
+						":notified": returnRecord.notified,
+						":documentExpiryDate": returnRecord.documentExpiryDate,
+						":readyToResumeOn": { NULL: true},
+						":documentUploadedOn": { NULL: true},
+						":ipvStartedOn": { NULL: true},
+						":journeyWentAsyncOn": { NULL: true}
+					};
+					break;
+				}
+				case Constants.AUTH_DELETE_ACCOUNT: {
 					updateExpression = "SET accountDeletedOn = :accountDeletedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
 					expressionAttributeValues = {
 						":accountDeletedOn": returnRecord.accountDeletedOn,
