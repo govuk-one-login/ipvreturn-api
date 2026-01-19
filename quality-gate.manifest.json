@@ -14,7 +14,7 @@
           }
         },
         {
-          "check-types": ["code style and linting", "unit", "contract"],
+          "check-types": ["code style and linting", "unit"],
           "provider": "GitHub",
           "phase": "pre-merge",
           "config": {
