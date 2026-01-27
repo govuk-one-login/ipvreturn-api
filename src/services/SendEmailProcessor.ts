@@ -1,4 +1,4 @@
-import { Email, DynamicEmail, FallbackEmail } from "../models/Email";
+import { Email, DynamicEmail, FallbackEmail, VCGenerationFailureEmail } from "../models/Email";
 import { EmailResponse } from "../models/EmailResponse";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
@@ -37,7 +37,7 @@ export class SendEmailProcessor {
 		this.logger = logger;
 		this.validationHelper = new ValidationHelper();
 		this.metrics = metrics;
-		this.govNotifyService = SendEmailService.getInstance(this.logger, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
+		this.govNotifyService = SendEmailService.getInstance(this.logger, this.metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
 		this.sessionEventsTable = sessionEventsTable;
 		this.iprService = IPRServiceSession.getInstance(this.sessionEventsTable, this.logger, createDynamoDbClient());
 
@@ -52,10 +52,12 @@ export class SendEmailProcessor {
 		return SendEmailProcessor.instance;
 	}
 
-	async processRequest(message: Email | DynamicEmail | FallbackEmail): Promise<EmailResponse> {
+	async processRequest(message: Email | DynamicEmail | FallbackEmail | VCGenerationFailureEmail): Promise<EmailResponse> {
 		// Validate Email model
 		try {
 			await this.validationHelper.validateModel(message, this.logger);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error) {
 			this.logger.error("Failed to Validate Email model data", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Failed to Validate Email model data.");
@@ -73,7 +75,8 @@ export class SendEmailProcessor {
 				govuk_signin_journey_id: session.clientSessionId,
 			});
 			this.logger.info("Session retrieved from session store");
-
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error) {
 			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:" }, { messageCode: MessageCodes.ERROR_RETRIEVING_SESSION });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
@@ -103,11 +106,13 @@ export class SendEmailProcessor {
 		}
 		
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
+		const txmaEmailType = message instanceof VCGenerationFailureEmail ? Constants.F2F_VC_GENERATION_FAILURE : Constants.F2F_RESULT_AVAILABLE;
 		await this.iprService.sendToTXMA({
 			event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
 			...buildCoreEventFields({ email: message.emailAddress, user_id: message.userId }, this.issuer),
 			extensions: {
 				previous_govuk_signin_journey_id: session.clientSessionId,
+				emailType: txmaEmailType,
 			},
 		});
 

@@ -1,0 +1,78 @@
+{
+  "$defs": {
+    "IprResultNotificationEmailedExtensions": {
+      "additionalProperties": false,
+      "description": "",
+      "properties": {
+        "previous_govuk_signin_journey_id": {
+          "description": "Previous journey id in case of session recovery\n",
+          "type": "string"
+        },
+         "emailType": {
+          "description": "Type of email sent to the user\n",
+          "type": "string"
+        }       
+      },
+      "required": [
+        "emailType"
+      ],
+      "title": "IprResultNotificationEmailedExtensions",
+      "type": "object"
+    },
+    "IprResultNotificationEmailedUser": {
+      "additionalProperties": false,
+      "description": "",
+      "properties": {
+        "email": {
+          "description": "A user's email address.\n",
+          "type": "string"
+        },
+        "user_id": {
+          "description": "This is the CommonSubjectID (i.e. the internal version of the pairwiseid) of the user in the relevant part of the system.\n",
+          "type": "string"
+        }
+      },
+      "title": "IprResultNotificationEmailedUser",
+      "type": "object"
+    }
+  },
+  "$id": "https://event-catalogue.internal.account.gov.uk/IPR_RESULT_NOTIFICATION_EMAILED",
+  "additionalProperties": false,
+  "description": "An email has been sent to the user informing them that a result of their in-person checks is available",
+  "properties": {
+    "client_id": {
+      "description": "Links the transaction to the client (Relying Party) that initiated the journey.\n",
+      "type": "string"
+    },
+    "component_id": {
+      "description": "The component part of the DI system that has generated the event.\n",
+      "type": "string"
+    },
+    "event_name": {
+      "description": "A short name, in UPPER_SNAKE format, for the event that has taken place in the system\n",
+      "type": "string"
+    },
+    "event_timestamp_ms": {
+      "description": "Records the time and date of when the event occurred. This should be a UTC timestamp and be recorded to the nearest millisecond.\n",
+      "type": "integer"
+    },
+    "extensions": {
+      "$ref": "#/$defs/IprResultNotificationEmailedExtensions"
+    },
+    "timestamp": {
+      "description": "Records the time and date of when the event occurred. This should be a UTC timestamp and be recorded to the nearest second.\n",
+      "type": "integer"
+    },
+    "user": {
+      "$ref": "#/$defs/IprResultNotificationEmailedUser"
+    }
+  },
+  "required": [
+    "timestamp",
+    "event_name",
+    "component_id",
+    "event_timestamp_ms"
+  ],
+  "title": "IPR_RESULT_NOTIFICATION_EMAILED",
+  "type": "object"
+}

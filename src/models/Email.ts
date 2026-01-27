@@ -22,6 +22,8 @@ export class Email {
 		try {
 			const obj = JSON.parse(data);
 			return new Email(obj);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error: any) {
 			console.log("Cannot parse Email data", Email.name, "parseBody", { data });
 			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse Email data");
@@ -73,6 +75,8 @@ export class DynamicEmail extends Email {
 		try {
 			const obj = JSON.parse(data);
 			return new DynamicEmail(obj);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error: any) {
 			console.log("Cannot parse NewEmail data", Email.name, "parseBody", { data });
 			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse NewEmail data");
@@ -114,6 +118,8 @@ export class FallbackEmail {
 		try {
 			const obj = JSON.parse(data);
 			return new FallbackEmail(obj);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error: any) {
 			console.log("Cannot parse Email data", FallbackEmail.name, "parseBody", { data });
 			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse Email data");
@@ -137,4 +143,38 @@ export class FallbackEmail {
     @IsNotEmpty()
     messageType!: string;	
 
+}
+
+export class VCGenerationFailureEmail extends Email {
+
+	static parseRequest(data: any): VCGenerationFailureEmail {
+		try {
+			const obj = JSON.parse(data);
+			return new VCGenerationFailureEmail(obj);
+		} catch (error: any) {
+			console.log("Cannot parse VCGenerationFailureEmail data", VCGenerationFailureEmail.name, "parseBody", { data }, error);
+			throw new AppError( HttpCodesEnum.BAD_REQUEST, "Cannot parse VCGenerationFailureEmail data");
+		}
+	}
+
+	@IsString()
+	@IsNotEmpty()
+	userId!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	@IsEmail()
+	emailAddress!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	firstName!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	lastName!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	messageType!: string;
 }

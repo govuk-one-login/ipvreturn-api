@@ -32,38 +32,31 @@ jobs:
         working-directory: gov-notify-stub/src/
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: true
 
-      - name: Checks if commiting secrets to repo
-        uses: pre-commit/action@v3.0.1
+      - name: Setup nodeJS v22
+        uses: actions/setup-node@v5
         with:
-          extra_args: "detect-secrets --all-files"
-
-      - name: Setup nodeJS v18
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
+          node-version: 22
 
       - name: Set offline mirror path
         id: offline-mirror-path
         run: echo "mirror-dir=${GITHUB_WORKSPACE}/npm-packages-offline-cache" >> $GITHUB_OUTPUT
 
       - name: Cache npm offline-mirror
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.offline-mirror-path.outputs.mirror-dir }}
           key: offline-mirror-oauth
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-#      - name: Run lint
-#        run: npm run lint
-#
-#      - name: Run Tests
-#        run: npm run test
+      - name: Compile code
+        run: npm run compile
+
   sam-validate:
     name: SAM Validate
     runs-on: ubuntu-latest
@@ -73,7 +66,7 @@ jobs:
         working-directory: gov-notify-stub
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: true
 
@@ -89,22 +82,16 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Cache SAM builds
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
-            ./di-ipv-cri-f2f-api/.aws-sam/cache
-            ./di-ipv-cri-f2f-api/.aws-sam/deps
-            ./di-ipv-cri-f2f-api/.aws-sam/build.toml
+            ./di-ipv-cri-ipr-api/.aws-sam/cache
+            ./di-ipv-cri-ipr-api/.aws-sam/deps
+            ./di-ipv-cri-ipr-api/.aws-sam/build.toml
           key: sam-oauth
 
       - name: SAM Validate
         run: sam validate --region ${{ env.AWS_REGION }} -t template.yaml
-
-#      - name: Install Nodejs Npm Esbuild Builder
-#        run: npm -g install esbuild
-#
-#      - name: Install Dependencies
-#        run: npm install
 
       - name: SAM Build
         run: sam build -t template.yaml

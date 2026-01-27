@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 import { Logger } from "@aws-lambda-powertools/logger";
 import { AppError } from "../utils/AppError";
 import { DynamoDBDocument, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
@@ -30,6 +30,8 @@ export class IPRServiceSession {
 		[Constants.F2F_YOTI_START, "journeyWentAsyncOn"],
 		[Constants.IPV_F2F_CRI_VC_CONSUMED, "readyToResumeOn"],
 		[Constants.AUTH_DELETE_ACCOUNT, "accountDeletedOn"],
+		[Constants.IPV_F2F_RESTART, "accountDeletedOn"],
+		[Constants.IPV_F2F_CRI_VC_ERROR, "readyToResumeOn"],
 	]);
 
 	constructor(tableName: any, logger: Logger, dynamoDbClient: DynamoDBDocument) {
@@ -82,16 +84,16 @@ export class IPRServiceSession {
 		try {
 			const session = await this.dynamo.send(getSessionCommand);
 			const eventAttribute = this.eventAttributeMap.get(eventType);
-			// If Event type is AUTH_DELETE_ACCOUNT and no record was found, or flagged for deletion then do not process the event.
-			if (eventType === Constants.AUTH_DELETE_ACCOUNT && (!session.Item || (session.Item && session.Item.accountDeletedOn))) {
-				this.logger.info({ message: "Received AUTH_DELETE_ACCOUNT event and no session with that userId was found OR session was found but accountDeletedOn was already set" });
+			// If Event type is AUTH_DELETE_ACCOUNT or IPV_F2F_RESTART and no record was found, or flagged for deletion then do not process the event.
+			if ((eventType === Constants.AUTH_DELETE_ACCOUNT || eventType === Constants.IPV_F2F_RESTART) && (!session.Item || session?.Item?.accountDeletedOn)) {
+				this.logger.info({ message: `Received ${eventType} event and no session with that userId was found OR session was found but accountDeletedOn was already set` });
 				return true;
 			} else if (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!])) {
 				// Do not process the event if the record is flagged for deletion or the event mapped attribute exists.
 				this.logger.info({ message: `Session record with that userId was found with either accountDeletedOn set or with ${eventAttribute} already set` });
 				return true;
 			} else {
-				// Process all events except AUTH_DELETE_ACCOUNT when no record exists.
+				// Process all events except AUTH_DELETE_ACCOUNT or IPV_F2F_RESTART when no record exists.
 				return false;
 			}
 		} catch (e: any) {

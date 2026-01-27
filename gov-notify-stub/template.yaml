@@ -64,7 +64,7 @@ Globals:
     BinaryMediaTypes:
       - '*/*'
   Function:
-    Runtime: nodejs18.x
+    Runtime: nodejs20.x
     VpcConfig:
       SecurityGroupIds:
         - !GetAtt LambdaEgressSecurityGroup.GroupId
@@ -145,10 +145,12 @@ Resources:
         Service: backend
         Name: MockGovNotifyRestApi
         Source: govnotify
+        FMSRegionalPolicy: false
+        CustomPolicy: true
 
   MockGovNotifyRestApiUsagePlan:
     DependsOn:
-      - "MockGovNotifyRestApi"
+      - "MockGovNotifyRestApiStage"
     Type: AWS::ApiGateway::UsagePlan
     Properties:
       ApiStages:
@@ -218,6 +220,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - MockGovNotifyHandler.ts
+        UseNpmCi: true
 
   MockGovNotifyFunctionLogGroup:
     Type: AWS::Logs::LogGroup

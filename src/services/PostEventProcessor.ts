@@ -1,5 +1,5 @@
 import { Logger } from "@aws-lambda-powertools/logger";
-import { Metrics } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
 
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
@@ -15,6 +15,7 @@ import {
 import { SessionReturnRecord } from "../models/SessionReturnRecord";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
 import { MessageCodes } from "../models/enums/MessageCodes";
+import { ValidationHelper } from "../utils/ValidationHelper";
 
 
 export class PostEventProcessor {
@@ -30,12 +31,15 @@ export class PostEventProcessor {
 
 	private readonly iprServiceAuth: IPRServiceAuth;
 
+	private readonly validationHelper: ValidationHelper;
+
 	constructor(logger: Logger, metrics: Metrics) {
 		this.logger = logger;
 		this.metrics = metrics;
 		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.POST_EVENT_SERVICE);
 		this.iprServiceSession = IPRServiceSession.getInstance(this.environmentVariables.sessionEventsTable(), this.logger, createDynamoDbClient());
 		this.iprServiceAuth = IPRServiceAuth.getInstance(this.environmentVariables.authEventsTable(), this.logger, createDynamoDbClient());
+		this.validationHelper = new ValidationHelper();
 	}
 
 	static getInstance(logger: Logger, metrics: Metrics): PostEventProcessor {
@@ -44,12 +48,15 @@ export class PostEventProcessor {
 		}
 		return PostEventProcessor.instance;
 	}
-
-	// eslint-disable-next-line max-lines-per-function, complexity
+	 
 	async processRequest(eventBody: any): Promise<any> {
 		try {
 			const eventDetails: ReturnSQSEvent = JSON.parse(eventBody);
 			const eventName = eventDetails.event_name;
+
+			const singleMetric = this.metrics.singleMetric();
+			singleMetric.addDimension("eventType", eventName);
+			singleMetric.addMetric("PostEventProcessor_event", MetricUnits.Count, 1);
 
 			const obfuscatedObject = await this.iprServiceSession.obfuscateJSONValues(eventDetails, Constants.TXMA_FIELDS_TO_SHOW);
 			this.logger.info({ message: "Obfuscated TxMA Event", txmaEvent: obfuscatedObject });
@@ -78,11 +85,17 @@ export class PostEventProcessor {
 				this.logger.error({ message: "Missing or invalid value for userDetails.user_id in event payload" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing info in sqs event");
 			}
+
 			const userId = userDetails.user_id;
 			//Do not process the event if the event is already processed or flagged for deletion
 			const isFlaggedForDeletionOrEventAlreadyProcessed = await this.iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, eventName);
-			if (isFlaggedForDeletionOrEventAlreadyProcessed) {
+			const isRedrive = process.env.REDRIVE_ENABLED === "true"
+			if (!isRedrive && isFlaggedForDeletionOrEventAlreadyProcessed) {
 				this.logger.info( { message: "Record flagged for deletion or event already processed, skipping update" });
+				
+				const singleMetric = this.metrics.singleMetric();
+				singleMetric.addDimension("reason", "isFlaggedForDeletionOrEventAlreadyProcessed");
+				singleMetric.addMetric("PostEventProcessor_unprocessed_events", MetricUnits.Count, 1);
 				return "Record flagged for deletion or event already processed, skipping update";
 			}
 			let updateExpression, expressionAttributeValues: { [key: string]: any }, expiresOn;
@@ -94,14 +107,28 @@ export class PostEventProcessor {
 				//Reset TTL to 11days for F2F journey
 				expiresOn = absoluteTimeNow() + this.environmentVariables.sessionReturnRecordTtlSecs();
 			}
-
-			const returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
+			
+			let returnRecord = new SessionReturnRecord(eventDetails, expiresOn );
 			switch (eventName) {
 				case Constants.AUTH_IPV_AUTHORISATION_REQUESTED: {
-					if (!this.checkIfValidString([userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl])) {
-						this.logger.warn({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id, eventDetails.clientLandingPageUrl fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+					if (!this.checkIfValidString([userDetails.email, eventDetails.client_id])) {
+						this.logger.warn({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+						
+						const singleMetric = this.metrics.singleMetric();
+						singleMetric.addDimension("reason", "missing_mandatory_details");
+						singleMetric.addMetric("PostEventProcessor_unprocessed_events", MetricUnits.Count, 1);
 						return `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`;
 					}
+					if (isRedrive && eventDetails?.clientLandingPageUrl === "invalidUndefinedRedirect") {
+						return "";
+					}
+					if(!this.checkIfValidString([eventDetails.clientLandingPageUrl])) {
+						//test for redrive specific error conditions
+						this.logger.info(`Landing page not set setting it based on client or to a deafult value`);
+						const clientLandingPageUrl = this.getLandingPageFromClientId(eventDetails.client_id);
+						returnRecord.redirectUri = clientLandingPageUrl;
+					}
+
 					updateExpression = "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn";
 					expressionAttributeValues = {
 						":userEmail": returnRecord.userEmail,
@@ -118,7 +145,11 @@ export class PostEventProcessor {
 						this.logger.error({ message: "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event" }, { messageCode: MessageCodes.SQS_OUT_OF_SYNC });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event");
 					}
-					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri";
+					if (!eventDetails.restricted?.nameParts) {
+						this.logger.error( { message: "Missing nameParts fields required for F2F_YOTI_START event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.F2F_YOTI_START} event`);
+					}
+					updateExpression = "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, nameParts = :nameParts";
 					expressionAttributeValues = {
 						":userEmail": fetchedRecord.userEmail,
 						":ipvStartedOn": fetchedRecord.ipvStartedOn,
@@ -126,6 +157,7 @@ export class PostEventProcessor {
 						":redirectUri": fetchedRecord.redirectUri,
 						":journeyWentAsyncOn": returnRecord.journeyWentAsyncOn,
 						":expiresOn": returnRecord.expiresDate,
+						":nameParts": returnRecord.nameParts,
 					};
 					if (returnRecord.postOfficeInfo) {
 						updateExpression += ", postOfficeInfo = :postOfficeInfo";
@@ -150,9 +182,9 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_CONSUMED: {
-					if (!eventDetails.restricted || !eventDetails.restricted.nameParts) {
+					if (!eventDetails.restricted?.nameParts) {
 						this.logger.error( { message: "Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
-						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event`);
+						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.IPV_F2F_CRI_VC_CONSUMED} event`);
 					}
 					updateExpression = "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts";
 					expressionAttributeValues = {
@@ -169,7 +201,7 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.F2F_DOCUMENT_UPLOADED: {
-					if (!eventDetails.extensions || !eventDetails.extensions.post_office_visit_details) {
+					if (!eventDetails.extensions?.post_office_visit_details) {
 						this.logger.error( { message: "Missing post_office_visit_details fields required for F2F_DOCUMENT_UPLOADED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 						throw new AppError(HttpCodesEnum.SERVER_ERROR, `Missing info in sqs ${Constants.F2F_DOCUMENT_UPLOADED} event`);
 					}
@@ -177,6 +209,47 @@ export class PostEventProcessor {
 					expressionAttributeValues = {
 						":documentUploadedOn": returnRecord.documentUploadedOn,
 						":postOfficeVisitDetails": returnRecord.postOfficeVisitDetails,
+					};
+					break;
+				}
+				case Constants.IPV_F2F_CRI_VC_ERROR: {
+					if (process.env.VC_GENERATION_FAILURE_EMAIL_ENABLED === "true"){
+						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, failure email enabled", txmaEvent: eventDetails });
+						
+						// Check if error_description indicates VC generation failure
+						const isVCFailure = this.validationHelper.isVCGenerationFailure(returnRecord.error_description);
+
+						if (isVCFailure) {
+							updateExpression = "SET errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn";
+							expressionAttributeValues = {
+								":errorDescription": returnRecord.error_description,
+								":readyToResumeOn": absoluteTimeNow(),
+							};
+						} else {
+							updateExpression = "SET errorDescription = :errorDescription";
+							expressionAttributeValues = {
+								":errorDescription": returnRecord.error_description,
+							};
+						}
+						break;
+					} else {
+						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, failure email disabled, ending execution", txmaEvent: eventDetails });
+						return;
+					}
+				}
+				case Constants.IPV_F2F_RESTART: {
+					updateExpression = "SET nameParts = :nameParts, journeyWentAsyncOn = :journeyWentAsyncOn, ipvStartedOn = :ipvStartedOn, documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails, postOfficeInfo = :postOfficeInfo, readyToResumeOn = :readyToResumeOn, documentType = :documentType, notified = :notified, documentExpiryDate = :documentExpiryDate";
+					expressionAttributeValues = {
+						":nameParts":returnRecord.nameParts,
+						":postOfficeVisitDetails": returnRecord.postOfficeVisitDetails,
+						":postOfficeInfo": returnRecord.postOfficeInfo,
+						":documentType": returnRecord.documentType,
+						":notified": returnRecord.notified,
+						":documentExpiryDate": returnRecord.documentExpiryDate,
+						":readyToResumeOn": { NULL: true},
+						":documentUploadedOn": { NULL: true},
+						":ipvStartedOn": { NULL: true},
+						":journeyWentAsyncOn": { NULL: true}
 					};
 					break;
 				}
@@ -203,12 +276,18 @@ export class PostEventProcessor {
 
 			if (eventName === Constants.AUTH_IPV_AUTHORISATION_REQUESTED) {
 				const saveEventData = await this.iprServiceAuth.saveEventData(userId, updateExpression, expressionAttributeValues);
+				const singleMetric = this.metrics.singleMetric();
+				singleMetric.addDimension("eventType", eventName);
+				singleMetric.addMetric("PostEventProcessor_event_processed_successfully", MetricUnits.Count, 1);
 				return {
 					statusCode: HttpCodesEnum.CREATED,
 					eventBody: saveEventData ? saveEventData : "OK",
 				};
 			} else {
 				const saveEventData = await this.iprServiceSession.saveEventData(userId, updateExpression, expressionAttributeValues);
+				const singleMetric = this.metrics.singleMetric();
+				singleMetric.addDimension("eventType", eventName);
+				singleMetric.addMetric("PostEventProcessor_event_processed_successfully", MetricUnits.Count, 1);
 				return {
 					statusCode: HttpCodesEnum.CREATED,
 					eventBody: saveEventData ? saveEventData : "OK",
@@ -216,8 +295,56 @@ export class PostEventProcessor {
 			}
 
 		} catch (error: any) {
-			this.logger.error({ message: "Cannot parse event data", error });
-			throw new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse event data");
+			if (error.message === "Error updating session record") {
+				this.logger.error({ message: "Failed to update session record in dynamo", error });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
+			} else {
+				this.logger.error({ message: "Cannot parse event data", error });
+				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data");
+			}
+		}
+	}
+
+	getLandingPageFromClientId(clientId: string): string {
+		const clientIdToPageMap = new Map<string, string> ([
+			// pragma: allowlist nextline secret
+			["HPAUPxK87FyljocDdQxijxdti08", "https://www.gov.uk/driver-vehicles-account"],
+			// pragma: allowlist nextline secret
+			["Hp9xO0Wda9EcI_2IO8OGeYJyrT0", ""],
+			// pragma: allowlist nextline secret
+			["RqFZ83csmS4Mi4Y7s7ohD9-ekwU", ""],
+			// pragma: allowlist nextline secret
+			["zFeCxrwpLCUHFm-C4_CztwWtLfQ", ""],
+			// pragma: allowlist nextline secret
+			["VsAkrtMBzAosSveAv4xsuUDyiSs", ""],
+			// pragma: allowlist nextline secret
+			["kvGpTatgWm3YqXHbG41eOdDf91k", ""],
+			// pragma: allowlist nextline secret
+			["Gk-D7WMvytB44Nze7oEC5KcThQZ4yl7sAA", ""],
+			// pragma: allowlist nextline secret
+			["XwwVDyl5oJKtK0DVsuw3sICWkPU", ""],
+			// pragma: allowlist nextline secret
+			["iJNgycwBNEWGQvkuiLxOdVmVzG9", "https://www.gov.uk/browse/driving/disability-health-condition"],
+			// pragma: allowlist nextline secret
+			["LUIZbIuJ_xVZxwhkNAApcO4O_6o", ""],
+			// pragma: allowlist nextline secret
+			["IJ_TuVEgIqAWT2mCe9b5uocMyNs", ""],
+			// pragma: allowlist nextline secret
+			["sXr5F6w5QytPPJN-Dtsgbl6hegQ", ""],
+			// pragma: allowlist nextline secret
+			["L8SSq5Iz8DstkBgno0Hx5aujelE", ""],
+			// pragma: allowlist nextline secret
+			["CKM7lHoxwJdjPzgUAxp-Rdbi_04", ""],
+			// pragma: allowlist nextline secret
+			["sdlgbEirK30fvgbrf0C78XY60qN", ""],
+			// pragma: allowlist nextline secret
+			["SdpFRM0HdX38FfdbgRX8qzTl8sm", ""]
+   	 	]);
+		const page = clientIdToPageMap.get(clientId);
+		if (page && page !== "") {
+			return page;
+		} else {
+			return "https://home.account.gov.uk/your-services"
 		}
 	}
 

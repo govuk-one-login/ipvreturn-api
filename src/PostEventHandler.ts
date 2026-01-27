@@ -1,6 +1,6 @@
-import { SQSBatchResponse, SQSEvent, SQSRecord } from "aws-lambda";
+import { SQSEvent, SQSRecord } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
-import { Metrics } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
 import { PostEventProcessor } from "./services/PostEventProcessor";
 
@@ -18,7 +18,7 @@ const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceNa
 class PostEventHandler implements LambdaInterface {
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
-	async handler(event: SQSEvent, context: any): Promise<SQSBatchResponse> {
+	async handler(event: SQSEvent, context: any): Promise<any> {
 
 		// clear PersistentLogAttributes set by any previous invocation, and add lambda context for this invocation
 		logger.setPersistentLogAttributes({});
@@ -30,6 +30,8 @@ class PostEventHandler implements LambdaInterface {
 
 			try {
 				body = JSON.parse(record.body);
+				// ignored so as not log PII
+				/* eslint-disable @typescript-eslint/no-unused-vars */
 			} catch (error) {
 				logger.error({ message:"Received invalid JSON in the SQS event record.body" });
 				return { batchItemFailures:[] };
@@ -45,7 +47,12 @@ class PostEventHandler implements LambdaInterface {
 
 			} catch (error: any) {
 				logger.error({ message: "SQS Event could not be processed", error });
-				return { batchItemFailures:[] };
+				const singleMetric = metrics.singleMetric();
+				singleMetric.addDimension("reason", error.message);
+				singleMetric.addMetric("PostEventProcessor_error_events", MetricUnits.Count, 1);
+				return { 
+					batchItemFailures:[] 
+				};
 			}
 
 		} else {

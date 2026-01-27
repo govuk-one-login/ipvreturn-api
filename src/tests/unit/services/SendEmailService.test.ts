@@ -1,35 +1,41 @@
+ 
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SQSEvent } from "aws-lambda";
-// @ts-ignore
+// @ts-expect-error Ignores import error needs addressed
 import { NotifyClient } from "notifications-node-client";
-import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL } from "../../data/sqs-events";
+import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_VC_GENERATION_FAILURE_EMAIL } from "../../data/sqs-events";
 import { SendEmailService } from "../../../services/SendEmailService";
 import { mock } from "jest-mock-extended";
-import { EmailResponse } from "../../../models/EmailResponse";
 import { Email, DynamicEmail } from "../../../models/Email";
 import { Constants } from "../../../utils/Constants";
+import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
 
 const mockGovNotify = mock<NotifyClient>();
 let sendEmailServiceTest: SendEmailService;
 // pragma: allowlist nextline secret
 const GOVUKNOTIFY_API_KEY = "sdhohofsdf";
 const logger = mock<Logger>();
+const metrics = mock<Metrics>();
 let sqsEvent: SQSEvent;
 let sqsEventNewEmail: SQSEvent;
+let sqsEventVCGenerationFailureEmail: SQSEvent;
 
 describe("SendEmailService", () => {
 	beforeAll(() => {
-		sendEmailServiceTest = SendEmailService.getInstance(logger, GOVUKNOTIFY_API_KEY, "serviceId");
-		// @ts-ignore
+		sendEmailServiceTest = SendEmailService.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY, "serviceId");
+		// @ts-expect-error private access manipulation used for testing
 		sendEmailServiceTest.govNotify = mockGovNotify;
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
+		sqsEventVCGenerationFailureEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_VC_GENERATION_FAILURE_EMAIL;
 	});
 
 	beforeEach(() => {
 		jest.clearAllMocks();
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
+		sqsEventVCGenerationFailureEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_VC_GENERATION_FAILURE_EMAIL;
+		metrics.singleMetric.mockReturnValue(metrics);
 	});
 
 	it("Returns EmailResponse when oldEmail is sent successfully", async () => {
@@ -57,6 +63,9 @@ describe("SendEmailService", () => {
 		expect(emailResponse.emailFailureMessage).toBe("");		
 		expect(emailResponse.metadata.emailResponseStatus).toBe(201);
 		expect(emailResponse.metadata.emailResponseId).toBe("oldEmail-test-id");
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addDimension).toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_STATIC);
+
 	});
 
 	it("SendEmailService fails and doesnt retry when GovNotify throws an error", async () => {
@@ -78,6 +87,8 @@ describe("SendEmailService", () => {
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
 		await expect(sendEmailServiceTest.sendEmail(email, Constants.VIST_PO_EMAIL_STATIC)).rejects.toThrow();
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addDimension).not.toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_STATIC);
 	});
 
 	it("SendEmailService retries when GovNotify throws a 500 error", async () => {
@@ -100,6 +111,8 @@ describe("SendEmailService", () => {
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
 		await expect(sendEmailServiceTest.sendEmail(email, Constants.VIST_PO_EMAIL_STATIC)).rejects.toThrow();
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(4);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addDimension).not.toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_STATIC);
 	});
 
 	it("SendEmailService retries when GovNotify throws a 429 error", async () => {
@@ -122,8 +135,11 @@ describe("SendEmailService", () => {
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
 		await expect(sendEmailServiceTest.sendEmail(email, Constants.VIST_PO_EMAIL_STATIC)).rejects.toThrow();
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(4);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addDimension).not.toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_STATIC);
 	});
 
+	 
 	it("Returns EmailResponse when newEmail is sent successfully", async () => {
 		mockGovNotify.sendEmail.mockResolvedValue({
 			"status": 201,
@@ -154,6 +170,61 @@ describe("SendEmailService", () => {
 		expect(emailResponse.emailFailureMessage).toBe("");
 		expect(emailResponse.metadata.emailResponseStatus).toBe(201);
 		expect(emailResponse.metadata.emailResponseId).toBe("newEmail-test-id");
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addDimension).toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_DYNAMIC);
+	});
+
+	it("emits the GovNotify VC-generation-failure metric when sending the VC generation failure email", async () => {
+		mockGovNotify.sendEmail.mockResolvedValue({
+			status: 201,
+			data: { id: "vc-failure-id", status_code: 201 },
+		});
+		const msg = {
+			emailAddress: "test.user@digital.cabinet-office.gov.uk",
+			referenceId: "ref-123",
+			firstName: "Frederick",
+			lastName: "Flintstone",
+		};
+		await sendEmailServiceTest.sendEmail(msg as any, Constants.VC_GENERATION_FAILURE_EMAIL);
+		expect(metrics.addMetric).toHaveBeenCalledWith(
+			"GovNotify_vc_generation_failure_email_sent",
+			MetricUnits.Count,
+			1
+		);
+		expect(metrics.addDimension).toHaveBeenNthCalledWith(
+			1,
+			"emailType",
+			Constants.VC_GENERATION_FAILURE_EMAIL
+		);
+	});
+
+	// eslint-disable-next-line max-lines-per-function
+	it("Returns EmailResponse when vcGenerationFailureEmail is sent successfully", async () => {
+		mockGovNotify.sendEmail.mockResolvedValue({
+			"status": 201,
+			"data": {
+				"id": "vcGenerationFailureEmail-test-id",
+				"status_code": 201,
+			},			
+		});
+		const eventBody = JSON.parse(sqsEventVCGenerationFailureEmail.Records[0].body);
+		const vcGenerationFailureEmail = DynamicEmail.parseRequest(JSON.stringify(eventBody.Message));
+		const emailResponse = await sendEmailServiceTest.sendEmail(vcGenerationFailureEmail, Constants.VC_GENERATION_FAILURE_EMAIL);
+
+		expect(mockGovNotify.sendEmail).toHaveBeenCalledWith("vc-generation-failure-template-id", "test.user@digital.cabinet-office.gov.uk", {
+    		"personalisation": {
+				"first name": "Frederick",
+				"last name": "Flintstone",
+			},
+    		reference: expect.anything(),
+    	});
+
+		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(1);
+		expect(emailResponse.emailFailureMessage).toBe("");
+		expect(emailResponse.metadata.emailResponseStatus).toBe(201);
+		expect(emailResponse.metadata.emailResponseId).toBe("vcGenerationFailureEmail-test-id");
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "GovNotify_vc_generation_failure_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addDimension).toHaveBeenNthCalledWith(1, "emailType", Constants.VC_GENERATION_FAILURE_EMAIL);
 	});
 
 });

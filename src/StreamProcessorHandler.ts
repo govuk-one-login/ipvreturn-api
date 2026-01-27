@@ -1,12 +1,12 @@
 import { DynamoDBRecord, DynamoDBStreamEvent } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
-import { Metrics } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
 import { LambdaInterface } from "@aws-lambda-powertools/commons";
 import { Constants } from "./utils/Constants";
 import { SessionEventProcessor } from "./services/SessionEventProcessor";
 import { DynamoDBBatchResponse } from "aws-lambda/trigger/dynamodb-stream";
 
-const { unmarshall } = require("@aws-sdk/util-dynamodb");
+import { unmarshall } from "@aws-sdk/util-dynamodb";
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : Constants.IPVRETURN_METRICS_NAMESPACE;
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : Constants.DEBUG;
 const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME ? process.env.POWERTOOLS_SERVICE_NAME : Constants.STREAM_PROCESSOR_LOGGER_SVC_NAME;
@@ -33,6 +33,7 @@ class StreamProcessorHandler implements LambdaInterface {
 			logger.info("Starting to process stream record");
 			try {
 				if (record.eventName === "MODIFY") {
+					// @ts-expect-error allow undefined to be passed
 					const sessionEvent = unmarshall(record.dynamodb?.NewImage);
 					await SessionEventProcessor.getInstance(logger, metrics).processRequest(sessionEvent);
 					return { batchItemFailures:[] };
@@ -40,7 +41,12 @@ class StreamProcessorHandler implements LambdaInterface {
 					logger.warn("Record eventName doesnt match MODIFY state");
 					return { batchItemFailures:[] };
 				}
-			} catch (error) {
+			} catch (error: any) {
+				// Reorganise to only run on specific events
+				const singleMetric = metrics.singleMetric();
+				singleMetric.addDimension("reason", error.message);
+				singleMetric.addMetric("StreamEventProcessor_unprocessed_events", MetricUnits.Count, 1);
+				
 				logger.info({ message: "An error has occurred when processing the session record ", error });
 				return { batchItemFailures:[] };
 			}

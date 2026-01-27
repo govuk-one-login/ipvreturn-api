@@ -20,9 +20,13 @@ export class Constants {
 
     static readonly IPV_F2F_CRI_VC_CONSUMED = "IPV_F2F_CRI_VC_CONSUMED";
 
+    static readonly IPV_F2F_CRI_VC_ERROR = "IPV_F2F_CRI_VC_ERROR";
+
     static readonly F2F_DOCUMENT_UPLOADED = "F2F_DOCUMENT_UPLOADED";
 
     static readonly AUTH_DELETE_ACCOUNT = "AUTH_DELETE_ACCOUNT";
+
+    static readonly IPV_F2F_RESTART = "IPV_F2F_RESTART";
 
     static readonly POSTEVENT_LOGGER_SVC_NAME = "PostEventHandler";
 
@@ -46,6 +50,8 @@ export class Constants {
 
     static readonly VISIT_PO_EMAIL_FALLBACK = "VISIT_PO_EMAIL_FALLBACK";
 
+    static readonly VC_GENERATION_FAILURE_EMAIL = "VC_GENERATION_FAILURE_EMAIL";
+
 	static readonly X_FORWARDED_FOR = "x-forwarded-for";
 
 	static readonly ENCODED_AUDIT_HEADER = "txma-audit-encoded";
@@ -53,4 +59,10 @@ export class Constants {
     static readonly SQS_OUT_OF_SYNC = "SQS_OUT_OF_SYNC";
     
 	static readonly TXMA_FIELDS_TO_SHOW = ["event_name", "documentType", "docExpiryDate", "govuk_signin_journey_id", "event_id", "timestamp", "configVersion"];
+
+    static readonly VC_FAILURE_MESSAGE = "vc generation failed";
+
+    static readonly F2F_RESULT_AVAILABLE= "f2fResultAvailable";
+
+    static readonly F2F_VC_GENERATION_FAILURE= "f2fVcGenerationFailure";
 }

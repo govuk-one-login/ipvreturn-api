@@ -1,4 +1,4 @@
-import { Metrics } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
 import { mock } from "jest-mock-extended";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Response } from "../../../utils/Response";
@@ -21,7 +21,6 @@ import { MessageCodes } from "../../../models/enums/MessageCodes";
 import * as TxmaEventUtils from "../../../utils/TxmaEvent";
 
 /* eslint @typescript-eslint/unbound-method: 0 */
-/* eslint jest/unbound-method: error */
 let sessionProcessorTest: SessionProcessor;
 const mockIprService = mock<IPRServiceSession>();
 let mockSessionEvent: SessionEvent;
@@ -48,7 +47,7 @@ const failingKmsJwtSigningAdapterFactory = () => new MockFailingKmsSigningJwtAda
 const failingKmsJwtDecodeAdapterFactory = () => new MockFailingKmsJwtAdapter();
 
 const logger = mock<Logger>();
-const metrics = new Metrics({ namespace: "CIC" });
+const metrics = mock<Metrics>();
 jest.mock("axios");
 const mockStsClient = jest.mocked(stsClient);
 const validRequest = VALID_SESSION;
@@ -99,11 +98,11 @@ describe("SessionProcessor", () => {
 		mockSessionEvent = getMockSessionEventItem();
 		sessionProcessorTest = new SessionProcessor(logger, metrics, CLIENT_ID);
 
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		sessionProcessorTest.kmsJwtAdapter = passingKmsJwtAdapterFactory();
 		mockSessionEvent = getMockSessionEventItem();
 		const oidcConfig = { data:{ issuer: "issuer", jwks_uri: "jwks_url" } };
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		axios.get.mockResolvedValueOnce(oidcConfig);
 		const credential = {
 			AccessKeyId: "AccessKeyId",
@@ -130,10 +129,11 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.MISSING_CONFIGURATION,
 			}),
 		);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
 	});
 
 	it("Return 500 ServerError when an error occurred while retrieving id_token from OIDC endpoint", async () => {
-		// @ts-ignore
+		// @ts-expect-error writing resolved promise
 		axios.post.mockRejectedValueOnce(new Error("error"));
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
@@ -146,12 +146,13 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.UNEXPECTED_ERROR_FETCHING_OIDC_TOKEN,
 			}),
 		);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
 	});
 
 	it("Return 500 ServerError when failed to decode the id_token jwt", async () => {
-		// @ts-ignore
+		// @ts-expect-error writing resolved promise
 		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		sessionProcessorTest.kmsJwtAdapter = failingKmsJwtDecodeAdapterFactory();
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
@@ -164,10 +165,11 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.FAILED_DECODING_JWT,
 			}),
 		);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
 	});
 
 	it("Return 500 ServerError when failed to sign the client_assertion_jwt", async () => {
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		sessionProcessorTest.kmsJwtAdapter = failingKmsJwtSigningAdapterFactory();
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
@@ -180,12 +182,13 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.ERROR_SIGNING_JWT,
 			}),
 		);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
 	});
 
 	it("Return 401 when verification of id_token fails", async () => {
-		// @ts-ignore
+		// @ts-expect-error writing resolved promise
 		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		sessionProcessorTest.kmsJwtAdapter = failingKmsJwtAdapterFactory();
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
@@ -198,6 +201,7 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.FAILED_VERIFYING_JWT,
 			}),
 		);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
 	});
 
 	it.each([
@@ -207,10 +211,10 @@ describe("SessionProcessor", () => {
 		"exp",
 		"iat",
 	])("Return 401 when verification of jwt claims fails", async (claim) => {
-		// @ts-ignore
+		// @ts-expect-error writing resolved promise
 		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
 		wrongPayload[claim] = "";
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		sessionProcessorTest.kmsJwtAdapter = new MockKmsJwtAdapter(true, wrongPayload);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
@@ -223,12 +227,13 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.FAILED_VALIDATING_JWT,
 			}),
 		);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
 	});
 
 	it("Return 401 Unauthorized error when session event not found for a given userId", async () => {
-		// @ts-ignore
+		// @ts-expect-error writing resolved promise
 		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-ignore
+		// @ts-expect-error writing resolved promise
 		mockIprService.getSessionBySub.mockReturnValue(null);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
@@ -242,12 +247,13 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.SESSION_NOT_FOUND,
 			}),
 		);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
 	});
 
 	it("Return successful response with 200 OK when session event data was retrieved and returns redirect_uri", async () => {
-		// @ts-ignore
+		// @ts-expect-error writing resolved promise
 		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-ignore
+		// @ts-expect-error writing resolved promise
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
@@ -258,6 +264,7 @@ describe("SessionProcessor", () => {
 			redirect_uri: mockSessionEvent.redirectUri,
 		}));
 		expect(out.statusCode).toBe(HttpCodesEnum.OK);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
 	});
 
 	describe("should send correct TXMA event", () => {
@@ -267,11 +274,11 @@ describe("SessionProcessor", () => {
 		});
 
 		it("ip_address is X_FORWARDED_FOR if header is present", async () => {
-			// @ts-ignore
+			// @ts-expect-error writing resolved promise
 			axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-			// @ts-ignore
+			// @ts-expect-error writing resolved promise
 			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-			// @ts-ignore
+			// @ts-expect-error private access manipulation used for testing
 			jest.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
 			const validSession = JSON.parse(JSON.stringify(VALID_SESSION));
 			await sessionProcessorTest.processRequest(validSession);
@@ -287,14 +294,15 @@ describe("SessionProcessor", () => {
 				},
 				"ABCDEFG",
 			);
+			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
 		});
 
 		it("ip_address is source IP if no X_FORWARDED_FOR header is present", async () => {
-			// @ts-ignore
+			// @ts-expect-error writing resolved promise
 			axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-			// @ts-ignore
+			// @ts-expect-error writing resolved promise
 			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-			// @ts-ignore
+			// @ts-expect-error private access manipulation used for testing
 			jest.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
 			const missingXForwardedFor = { ...VALID_SESSION, headers: { "txma-audit-encoded": "ABCDEFG" }, requestContext: { identity: { sourceIp: "2.2.2" } } };
 			const missingXForwardedForSession = JSON.parse(JSON.stringify(missingXForwardedFor));
@@ -312,14 +320,15 @@ describe("SessionProcessor", () => {
 				},
 				"ABCDEFG",
 			);
+			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
 		});
 
 		it("when no headers are included defaults are used", async () => {
-			// @ts-ignore
+			// @ts-expect-error writing resolved promise
 			axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-			// @ts-ignore
+			// @ts-expect-error writing resolved promise
 			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
-			// @ts-ignore
+			// @ts-expect-error private access manipulation used for testing
 			jest.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
 			const sessionWithOutHeaders = JSON.parse(JSON.stringify(VALID_SESSION));
 			delete sessionWithOutHeaders.headers;
@@ -335,6 +344,7 @@ describe("SessionProcessor", () => {
 				},
 				undefined,
 			);
+			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
 		});
 	});
 
@@ -343,11 +353,11 @@ describe("SessionProcessor", () => {
 		"ipvStartedOn",
 		"readyToResumeOn",
 	])("Throws 200 OK status with pending status when session event record is missing necessary Event timestamps fields", async (attribute) => {
-		// @ts-ignore
+		// @ts-expect-error writing resolved promise
 		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-ignore
+		// @ts-expect-error private access manipulation used for testing
 		delete mockSessionEvent[attribute];
-		// @ts-ignore
+		// @ts-expect-error writing resolved promise
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
@@ -357,14 +367,15 @@ describe("SessionProcessor", () => {
 			message: `${attribute} is not yet populated, unable to process the DB record.`,
 		}));
 		expect(out.statusCode).toBe(HttpCodesEnum.OK);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_entered_IPR_in_incorrect_state", MetricUnits.Count, 1);
 	});
 
 	it("Throws 401 Unauthorized error when User is not yet notified", async () => {
-		// @ts-ignore
+		// @ts-expect-error writing resolved promise
 		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-ignore
 		mockSessionEvent.notified = false;
-		// @ts-ignore
+		// @ts-expect-error writing resolved promise
 		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
@@ -378,5 +389,6 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.USER_NOT_NOTIFIED,
 			}),
 		);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
 	});
 });

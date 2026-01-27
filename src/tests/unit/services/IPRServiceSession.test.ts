@@ -1,6 +1,6 @@
-/* eslint-disable max-lines */
-/* eslint-disable max-lines-per-function */
-/* eslint-disable @typescript-eslint/unbound-method */
+ 
+ 
+ 
 import { mock } from "jest-mock-extended";
 import { SendMessageCommand } from "@aws-sdk/client-sqs";
 import { IPRServiceSession } from "../../../services/IPRServiceSession";
@@ -171,6 +171,24 @@ describe("IPR Service", () => {
 			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_DELETE_ACCOUNT);
 			expect(result).toBe(true);
 		});
+
+		it("Should not process the IPV_F2F_RESTART event if value is set for accountDeletedOn", async () => {
+			const recordFlaggedForAlreadyProcessed = {
+				Item: {
+					accountDeletedOn: 1681902001,
+					userId: "SESSID",
+				},
+			};
+			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
+			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.IPV_F2F_RESTART);
+			expect(result).toBe(true);
+		});
+	
+		it("Should not process the IPV_F2F_RESTART session record is not found", async () => {
+			mockDynamoDbClient.send = jest.fn().mockResolvedValue({});
+			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.IPV_F2F_RESTART);
+			expect(result).toBe(true);
+		});
 	});
 
 	describe("saveEventData", () => {
@@ -243,6 +261,26 @@ describe("IPR Service", () => {
 			await iprServiceSession.sendToTXMA(payload);
 			const messageBody = JSON.stringify(payload);
 	
+			expect(SendMessageCommand).toHaveBeenCalledWith({
+				MessageBody: messageBody,
+				QueueUrl: process.env.TXMA_QUEUE_URL,
+			});
+			expect(sqsClient.send).toHaveBeenCalled();
+			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+		});
+
+
+		it("Should send event to TxMA with the correct details for a payload with extensions present", async () => {  
+			const extensions = {
+				previous_govuk_signin_journey_id: "test_previous_govuk_signin_journey_id",
+				emailType: "testEmailType"
+			};
+
+			const payload = { ...txmaEventPayload, ...extensions };
+
+			await iprServiceSession.sendToTXMA(payload);
+			const messageBody = JSON.stringify(payload);
+
 			expect(SendMessageCommand).toHaveBeenCalledWith({
 				MessageBody: messageBody,
 				QueueUrl: process.env.TXMA_QUEUE_URL,

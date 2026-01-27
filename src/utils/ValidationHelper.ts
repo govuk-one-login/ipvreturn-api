@@ -44,7 +44,9 @@ export class ValidationHelper {
 	async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent | FallbackEmail; emailType: string }> {
 		//Validate all necessary fields are populated required to send the email before processing the data.
 		try {
-			await this.validateModel(sessionEvent, logger);				
+			await this.validateModel(sessionEvent, logger);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */				
 		} catch (error) {
 			if (emailType === Constants.VIST_PO_EMAIL_DYNAMIC) {
 				logger.info("Unable to process the DB record as the necessary fields to send the dynamic template email are not populated, trying to send the static template email.", { messageCode: MessageCodes.MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT });
@@ -86,5 +88,14 @@ export class ValidationHelper {
 
 		return "";
 	};
+
+	isVCGenerationFailure(errorDescription?: string): boolean {
+		if (!errorDescription) {
+			return false;
+		}
+		
+		// f2f returns error_description: `VC generation failed : ${errorMessage}`,
+		return errorDescription.toLowerCase().includes(Constants.VC_FAILURE_MESSAGE);
+	}
 
 }

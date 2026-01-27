@@ -64,7 +64,7 @@ Conditions:
 
 Globals:
   Function:
-    Runtime: nodejs18.x
+    Runtime: nodejs20.x
     VpcConfig:
       SecurityGroupIds:
         - !GetAtt LambdaEgressSecurityGroup.GroupId
@@ -159,6 +159,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - DequeueHandler.ts
+        UseNpmCi: True
 
     Metadata: # Manage esbuild properties
       BuildMethod: esbuild
@@ -168,6 +169,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - DequeueHandler.ts
+        UseNpmCi: True
 
   EventTestBucket:
     Type: "AWS::S3::Bucket"
@@ -190,6 +192,58 @@ Resources:
           - Id: DeleteAfter24Hours
             Status: Enabled
             ExpirationInDays: 1
+
+  EmptyEventTestBucket:
+    Type: Custom::EmptyBucket
+    Properties:
+      ServiceToken: !GetAtt DeleteTestHarnessBucketFunction.Arn
+      BucketName: !Ref EventTestBucket
+    DependsOn: EventTestBucket
+
+  DeleteTestHarnessBucketFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: DeleteTestHarnessBucketFunctionLogGroup
+    Properties:
+      FunctionName: !Sub "IPVR-DeleteTestHarnessBucket-${AWS::StackName}"
+      Handler: DeleteBucketHandler.lambdaHandler
+      CodeUri: ./src/
+      Policies:
+      - Statement:
+          - Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:ListBucketVersions
+              - s3:DeleteObject
+              - s3:DeleteObjectVersion
+            Resource: '*'
+
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: false
+        EntryPoints:
+          - DeleteBucketHandler.ts
+        UseNpmCi: true
+
+  DeleteTestHarnessBucketFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/IPVR-DeleteTestHarnessBucket-${AWS::StackName}"
+      RetentionInDays:
+        !FindInMap [
+          EnvironmentConfiguration,
+          !Ref Environment,
+          logretentionindays,
+        ]
+
+  DeleteTestHarnessBucketFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DeleteTestHarnessBucketFunction
+      Principal: apigateway.amazonaws.com
 
   AccessTestHarnessBucketRole:
     Type: "AWS::IAM::Role"
@@ -313,6 +367,13 @@ Resources:
       EndpointConfiguration:
         Type: REGIONAL
       DefinitionBody:
+        openapi: '3.0.2'
+        paths:
+          /myMethod:
+            post:
+              produces:
+                - "application/json"
+              responses: { }
         Fn::Transform:
           Name: AWS::Include
           Parameters:
@@ -334,6 +395,8 @@ Resources:
         Service: TestHarness
         Name: TestHarnessRestApi
         Source: alphagov/di-devplatform-demo-sam-app/sam-app/template.yaml
+        FMSRegionalPolicy: false
+        CustomPolicy: true
 
   TestHarnessAPIGatewayAccessLogGroup:
     Type: AWS::Logs::LogGroup

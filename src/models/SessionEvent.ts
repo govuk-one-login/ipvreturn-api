@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEmail, IsBoolean, IsNumber, IsArray } from "class-validator";
+import { IsString, IsNotEmpty, IsEmail, IsBoolean, IsNumber, IsArray, IsOptional } from "class-validator";
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "./enums/HttpCodesEnum";
 
@@ -17,12 +17,15 @@ export class SessionEvent {
 		this.journeyWentAsyncOn = data.journeyWentAsyncOn!;
 		this.readyToResumeOn = data.readyToResumeOn!;
 		this.notified = data.notified === undefined ? false : data.notified;
+		this.errorDescription = data.errorDescription;
 	}
 
 	static parseRequest(data: string): SessionEvent {
 		try {
 			const obj = JSON.parse(data);
 			return new SessionEvent(obj);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error: any) {
 			console.log("Cannot parse SessionEvent data", SessionEvent.name, "parseBody", { data });
 			throw new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse SessionEvent data");
@@ -71,6 +74,9 @@ export class SessionEvent {
 	@IsBoolean()
 	notified!: boolean;
 
+	@IsOptional()
+	@IsString()
+	errorDescription?: string;
 }
 
 /**
@@ -91,6 +97,8 @@ export class ExtSessionEvent extends SessionEvent {
 		try {
 			const obj = JSON.parse(data);
 			return new ExtSessionEvent(obj);
+			// ignored so as not log PII
+			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error: any) {
 			console.log("Cannot parse ExtSessionEvent data", SessionEvent.name, "parseBody", { data });
 			throw new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse ExtSessionEvent data");
@@ -102,6 +110,10 @@ export class ExtSessionEvent extends SessionEvent {
 	@IsNotEmpty()
 	documentUploadedOn!: number;
 
+	accountDeletedOn?: number;
+
+    expiresOn?: number;
+
 	@IsString()
 	@IsNotEmpty()
 	documentType!: string;
@@ -109,6 +121,7 @@ export class ExtSessionEvent extends SessionEvent {
 	@IsString()
 	@IsNotEmpty()
 	documentExpiryDate!: string;
+	
 
 	@IsArray()
 	@IsNotEmpty()

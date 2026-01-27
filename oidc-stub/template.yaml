@@ -60,7 +60,7 @@ Globals:
     BinaryMediaTypes:
       - '*/*'
   Function:
-    Runtime: nodejs18.x
+    Runtime: nodejs20.x
     VpcConfig:
       SecurityGroupIds:
         - !GetAtt LambdaEgressSecurityGroup.GroupId
@@ -151,6 +151,8 @@ Resources:
         Service: backend
         Name: MockOidcRestApi
         Source: oidc
+        FMSRegionalPolicy: false
+        CustomPolicy: true
 
   MockOidcRestApiUsagePlan:
     DependsOn:
@@ -234,6 +236,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - MockOidcTokenHandler.ts
+        UseNpmCi: True
 
   MockOidcTokenFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -286,6 +289,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - MockOidcOpenIdConfigHandler.ts
+        UseNpmCi: True
 
   MockOidcOpenIdConfigFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -337,6 +341,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - MockOidcAuthorizeHandler.ts
+        UseNpmCi: True
 
   MockOidcAuthorizeFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -389,6 +394,7 @@ Resources:
         Sourcemap: true
         EntryPoints:
           - JsonWebKeys.ts
+        UseNpmCi: True
 
   JwksFunctionPermission:
     Type: AWS::Lambda::Permission

@@ -4,6 +4,7 @@ import * as AWS from "@aws-sdk/client-kms";
 import { jwtUtils } from "./JwtUtils";
 import { importJWK, JWTPayload, jwtVerify } from "jose";
 import axios from "axios";
+import { MessageType, SigningAlgorithmSpec } from "@aws-sdk/client-kms";
 
 export class KmsJwtAdapter {
 	readonly kid: string;
@@ -37,8 +38,8 @@ export class KmsJwtAdapter {
 		const params = {
 			Message: Buffer.from(`${tokenComponents.header}.${tokenComponents.payload}`),
 			KeyId: kid,
-			SigningAlgorithm: this.ALG,
-			MessageType: "RAW",
+			SigningAlgorithm: SigningAlgorithmSpec.RSASSA_PKCS1_V1_5_SHA_256,
+			MessageType: MessageType.RAW,
 		};
 
 		const res = await this.kms.sign(params);

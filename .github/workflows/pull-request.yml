@@ -38,39 +38,34 @@ jobs:
         working-directory: ./src/
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: true
 
-      - name: Checks if commiting secrets to repo
-        uses: pre-commit/action@v3.0.1
+      - name: Setup nodeJS v22
+        uses: actions/setup-node@v5
         with:
-          extra_args: "detect-secrets --all-files"
-
-      - name: Setup nodeJS v18
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
+          node-version: 22
 
       - name: Set offline mirror path
         id: offline-mirror-path
         run: echo "mirror-dir=${GITHUB_WORKSPACE}/npm-packages-offline-cache" >> $GITHUB_OUTPUT
 
       - name: Cache npm offline-mirror
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.offline-mirror-path.outputs.mirror-dir }}
           key: offline-mirror-oauth
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run lint
         run: npm run lint
 
       - name: Archive lint results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: lint-report
           path: src/reports/eslint/reportFile.html
@@ -90,7 +85,7 @@ jobs:
         working-directory: ./deploy/
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: true
 
@@ -106,12 +101,12 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Cache SAM builds
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
-            ./di-ipvreturn-api/.aws-sam/cache
-            ./di-ipvreturn-api/.aws-sam/deps
-            ./di-ipvreturn-api/.aws-sam/build.toml
+            ./di-ipv-cri-ipr-api/.aws-sam/cache
+            ./di-ipv-cri-ipr-api/.aws-sam/deps
+            ./di-ipv-cri-ipr-api/.aws-sam/build.toml
           key: sam-oauth
 
       - name: SAM Validate
@@ -119,3 +114,8 @@ jobs:
 
       - name: SAM Build
         run: sam build -t template.yaml
+
+  
+  pre-merge-checks:
+    uses: ./.github/workflows/pre-merge-checks.yml
+    secrets: inherit

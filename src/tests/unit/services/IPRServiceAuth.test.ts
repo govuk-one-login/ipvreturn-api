@@ -1,14 +1,10 @@
-/* eslint-disable max-lines-per-function */
-/* eslint-disable @typescript-eslint/unbound-method */
+ 
+ 
 import { mock } from "jest-mock-extended";
-import { SendMessageCommand } from "@aws-sdk/client-sqs";
 import { IPRServiceAuth } from "../../../services/IPRServiceAuth";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
-import { sqsClient } from "../../../utils/SqsClient";
-import { TxmaEvent } from "../../../utils/TxmaEvent";
 import { AppError } from "../../../utils/AppError";
-import { Constants } from "../../../utils/Constants";
 import { absoluteTimeNow } from "../../../utils/DateTimeUtils";
 import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
 import { MessageCodes } from "../../../models/enums/MessageCodes";
@@ -29,18 +25,6 @@ const authRequestedExpressionAttributeValues = {
 	":redirectUri": "UNKNOWN",
 	":expiresOn": 604800 * 1000,
 };
-function getTXMAEventPayload(): TxmaEvent {
-	const txmaEventPayload: TxmaEvent = {
-		event_name: "IPR_RESULT_NOTIFICATION_EMAILED",
-		user: {
-			user_id: "sessionCliendId",
-		},
-		timestamp: 123,
-		event_timestamp_ms: 123000,
-		component_id: "test-component-id",
-	};
-	return txmaEventPayload;
-}
 
 jest.mock("../../../utils/SqsClient", () => ({
 	sqsClient: {
@@ -52,11 +36,9 @@ jest.mock("@aws-sdk/client-sqs", () => ({
 }));
 
 describe("IPR Service", () => {
-	let txmaEventPayload: TxmaEvent;
 
 	beforeAll(() => {
 		jest.clearAllMocks();
-		txmaEventPayload = getTXMAEventPayload();
 	});
 
 	beforeEach(() => {

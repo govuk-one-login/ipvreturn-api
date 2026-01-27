@@ -42,10 +42,6 @@ Parameters:
     Description: "Set to the string value `true` to deploy alarms in a DEV environment"
     Type: String
     Default: false
-  SupportManualURL:
-    Description: "Link to the IPV Return Journey support manual"
-    Type: String
-    Default: 'https://govukverify.atlassian.net/wiki/spaces/FTFCRI/pages/3626565651/IPR+BE+Metrics+Alerts'
   LambdaConcurrency:
     Description: "Reserved concurrency for Lambdas running in non-DEV environments"
     Type: Number
@@ -62,6 +58,12 @@ Parameters:
     Description: "Mock OIDC DNS"
     Type: String
     Default: "ipr-oidc-stub-oidcstub.return.dev.account.gov.uk"
+  LambdaDeploymentPreference:
+    Description: >
+      Canary strategy to be used with your Lambda applications please refer to documentation for configurations -
+      https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/automating-updates-to-serverless-apps.html
+    Type: String
+    Default: "AllAtOnce"
 
 Mappings:
   EnvironmentConfiguration: # This is where you store per-environment settings.
@@ -108,79 +110,93 @@ Mappings:
       TxMASQS: arn:aws:sqs:eu-west-2:451773080033:self-production-EC-SQS-Output-Queue-return
       TxMAKey: arn:aws:kms:eu-west-2:451773080033:key/35e96311-91fd-425e-bb53-b90bc8c3549c
 
+  StaticVariables:
+    urls:
+      IPRSupportManual: "https://govukverify.atlassian.net/wiki/spaces/Kiwi/pages/4371940793/6.5+IPR+Support+Documentation"
+
   EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
     dev:
       ISSUER: "https://return.dev.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
+      VCGENERATIONFAILUREEMAILTEMPLATEID: "890b5fa2-6693-41f4-a7ce-e7cce19ca32d"
       GOVUKNOTIFYAPI: "https://ipvr-gov-notify-stub-govnotifystub.return.dev.account.gov.uk/govnotify"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.dev.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
-      SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
+      SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.dev.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"      
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
+      VCGENERATIONFAILUREEMAILENABLED: true
     build:
       ISSUER: "https://return.build.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
+      VCGENERATIONFAILUREEMAILTEMPLATEID: "890b5fa2-6693-41f4-a7ce-e7cce19ca32d"
       GOVUKNOTIFYAPI: "https://govnotifystub.return.build.account.gov.uk/govnotify"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.build.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
-      SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
+      SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.build.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
       TESTHARNESSURL: "https://testharness.return.build.account.gov.uk"
+      VCGENERATIONFAILUREEMAILENABLED: true
     staging:
       ISSUER: "https://return.staging.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
+      VCGENERATIONFAILUREEMAILTEMPLATEID: "890b5fa2-6693-41f4-a7ce-e7cce19ca32d"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.staging.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
-      SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
+      SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.staging.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
+      VCGENERATIONFAILUREEMAILENABLED: true
     integration:
       ISSUER: "https://return.integration.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "fc1a7e2f-5186-4cb8-a8e0-81110b4e9e85"
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "504a35f3-56f9-42f8-965c-cad58ff9b816"
+      VCGENERATIONFAILUREEMAILTEMPLATEID: "890b5fa2-6693-41f4-a7ce-e7cce19ca32d"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.integration.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
-      SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
+      SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.integration.account.gov.uk"
       OIDCURL: "https://oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
+      VCGENERATIONFAILUREEMAILENABLED: false
     production:
       ISSUER: "https://return.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "206971e2-d576-4d12-b34f-b0de442d39ab"
       GOVUKNOTIFYDYNAMICEMAILTEMPLATEID: "f62672d4-ff45-470e-8506-956482061f54"
       GOVUKNOTIFYFALLBACKMAILTEMPLATEID: "b1f0f510-7501-4e49-b5d4-aced6e36ad90"
+      VCGENERATIONFAILUREEMAILTEMPLATEID: "ce5f28ff-7f0c-40b3-880e-2a66b28d0df7"
       GOVUKNOTIFYAPI: "https://api.notifications.service.gov.uk"
       MESSAGERETENTIONPERIODDAYS: 345600 # Default: 4 days
       TXMAMESSAGERETENTIONPERIODDAYS: 604800 # Default: 7 days
       RETURNJOURNEYURL: "https://return.account.gov.uk/resume"
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
-      SESSIONRETURNRECORDTTLINSECS: 1382400 # Default 16 days
+      SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.account.gov.uk"
       OIDCURL: "https://oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
+      VCGENERATIONFAILUREEMAILENABLED: false
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
@@ -260,10 +276,14 @@ Conditions:
                   - "ipvreturn-api"
   IsLocalTestStack: !Not
     - !Condition NotLocalTestStack
+  UseCanaryDeploy:
+    Fn::Or:
+      - Fn::Equals: [ !Ref Environment, "dev" ]
+      - Fn::Equals: [ !Ref Environment, "build" ]
 
 Globals:
   Function:
-    Runtime: nodejs18.x
+    Runtime: nodejs20.x
     VpcConfig:
       SecurityGroupIds:
         - !GetAtt LambdaEgressSecurityGroup.GroupId
@@ -281,9 +301,7 @@ Globals:
       - !Ref CodeSigningConfigArn
       - !Ref AWS::NoValue
     Layers:
-      - !Sub
-        - '{{resolve:secretsmanager:${SecretArn}:SecretString:NODEJS_LAYER}}' #pragma: allowlist secret # or PYTHON_LAYER or JAVA_LAYER
-        - SecretArn: !FindInMap [ EnvironmentConfiguration, !Ref Environment, dynatraceSecretArn ]
+      - arn:aws:lambda:eu-west-2:216552277552:layer:Dynatrace_OneAgent_1_313_2_20250404-043044_with_collector_nodejs:1
     Timeout: 30 # seconds
     Tracing: Active
     MemorySize: 1024
@@ -313,6 +331,16 @@ Globals:
         POWERTOOLS_METRICS_NAMESPACE: IPR-CRI # The Metric Namespace for the AWS PowerTools MetricHelper
         ISSUER: !FindInMap [EnvironmentVariables, !Ref Environment, ISSUER]
     AutoPublishAlias: live
+    DeploymentPreference:
+      Enabled: true
+      Type: !Ref LambdaDeploymentPreference
+      Role: !GetAtt LambdaDeployRole.Arn
+      Alarms:
+        Fn::If:
+          - DeployAlarms
+          - - !Ref 5XXErrorAlarm
+            - !Ref 5XXErrorCriticalAlarm
+          - - !Ref "AWS::NoValue"
 
 Resources:
   # Log metric filter and alarm for S3 bucket policy changes
@@ -332,7 +360,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-S3Bucket-changes"
-      AlarmDescription: !Sub "A CloudWatch Alarm that triggers when changes are made to S3 Bucket ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - A CloudWatch Alarm that triggers when changes are made to S3 Bucket ${RunbookUrl}
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -367,7 +397,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-IGW-changes"
-      AlarmDescription: !Sub "Triggers CloudWatch Alarm when changes are made to an Internet Gateway in a VPC ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Triggers CloudWatch Alarm when changes are made to an Internet Gateway in a VPC ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       MetricName: IGatewayActivityEvent
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
@@ -397,7 +429,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-vpc-route-changes"
-      AlarmDescription: !Sub "A CloudWatch Alarm that triggers when changes are made to a VPC's Route Table ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "A CloudWatch Alarm that triggers when changes are made to a VPC's Route Table ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       MetricName: VpcRouteTableEvent
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
@@ -427,7 +461,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-vpc-changes"
-      AlarmDescription: !Sub "A CloudWatch Alarm that triggers when changes are made to a VPC ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "A CloudWatch Alarm that triggers when changes are made to a VPC ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       MetricName: VpcEventChanges
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
@@ -458,7 +494,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-organisations-changes"
-      AlarmDescription: !Sub "A CloudWatch Alarm that triggers when changes are made to AWS Organisations ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "A CloudWatch Alarm that triggers when changes are made to AWS Organisations ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       MetricName: OrganisationsEventChange
       Namespace: !Sub "${AWS::StackName}/LogMessages"
       Statistic: Sum
@@ -576,11 +614,32 @@ Resources:
         - !Ref PermissionsBoundary
         - !Ref AWS::NoValue  
 
+  LambdaDeployRole:
+    Type: AWS::IAM::Role
+    # checkov:skip=CKV_AWS_111: "Ensure IAM policies does not allow write access without constraints
+    # The network interface permissions can only be applied at the '*' resource level
+    Properties:
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codedeploy.eu-west-2.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForLambda"
+
   ### Start of API Gateway definition.
   IPVRRestApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: !Ref Environment
+      AlwaysDeploy: true
       OpenApiVersion: 3.0.1
       AccessLogSetting:
         Format: >-
@@ -621,11 +680,13 @@ Resources:
       TracingEnabled: true
       Tags:
         Product: GOV.UK Sign In
-        System: F2F
+        System: IPV Return
         Environment: !Ref Environment
         Service: backend
-        Name: CICRestApi
+        Name: IPVRRestApi
         Source: alphagov/di-devplatform-demo-sam-app/sam-app/template.yaml
+        FMSRegionalPolicy: false
+        CustomPolicy: true
 
   IPVRAPIGatewayAccessLogGroup:
     Type: AWS::Logs::LogGroup
@@ -667,7 +728,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-IPVRAPIGateway-FatalErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fatal Error occurs. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger an alarm when Fatal Error occurs. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -686,12 +749,6 @@ Resources:
       TreatMissingData: notBreaching
 
   ### End of API Gateway definition.
-
-  WAFv2ACLAssociation:
-    Type: AWS::WAFv2::WebACLAssociation
-    Properties:
-      ResourceArn: !Sub "arn:aws:apigateway:${AWS::Region}::/restapis/${IPVRRestApi}/stages/${IPVRRestApi.Stage}"
-      WebACLArn: !Sub "{{resolve:ssm:/${Environment}/Platform/Security/Block/WafArn}}"
 
   ### API Gateway Custom Domain definition
 
@@ -758,6 +815,9 @@ Resources:
           SESSION_RETURN_RECORD_TTL_SECS: !FindInMap [ EnvironmentVariables, !Ref Environment, SESSIONRETURNRECORDTTLINSECS ]
           AUTH_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
+          REDRIVE_ENABLED: "false"
+          VC_GENERATION_FAILURE_EMAIL_ENABLED:
+            !FindInMap [EnvironmentVariables, !Ref Environment, VCGENERATIONFAILUREEMAILENABLED]
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
@@ -814,6 +874,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - PostEventHandler.ts
+        UseNpmCi: true
 
   PostEventFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -871,7 +932,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-PostEventFunction-FatalErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fatal Error occurs. ${SupportManualURL}"
+      AlarmDescription: !Sub
+        - "Trigger an alarm when Fatal Error occurs. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -899,7 +962,9 @@ Resources:
       OKActions:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger the alarm if over 80% of reserved concurrency is used. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-PostEventFunction-concurrency"
       MetricName: ConcurrentExecutions
       Namespace: AWS/Lambda
@@ -924,7 +989,9 @@ Resources:
       OKActions:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger if the ${PostEventFunction} lambda throttles. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger if the ${PostEventFunction} lambda throttles. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-PostEventFunction-throttles"
       MetricName: Throttles
       Namespace: AWS/Lambda
@@ -958,7 +1025,8 @@ Resources:
           GOVUKNOTIFY_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYTEMPLATEID ]
           GOVUKNOTIFY_DYNAMIC_EMAIL_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYDYNAMICEMAILTEMPLATEID ]
           GOVUKNOTIFY_FALLBACK_EMAIL_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYFALLBACKMAILTEMPLATEID ]
-          GOVUKNOTIFY_API_KEY_SSM_PATH: !Sub "/${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY"
+          GOVUKNOTIFY_VC_GENERATION_FAILURE_EMAIL_TEMPLATE_ID: !FindInMap [ EnvironmentVariables, !Ref Environment, VCGENERATIONFAILUREEMAILTEMPLATEID ]
+          GOVUKNOTIFY_API_KEY_SSM_PATH: !Sub "/${Environment}/ipvreturn-gov-notify/GOVUKNOTIFY_API_KEY" 
           RETURN_JOURNEY_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNJOURNEYURL ]
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
           ISSUER: !FindInMap [EnvironmentVariables, !Ref Environment, ISSUER]
@@ -1015,6 +1083,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - GovNotifyHandler.ts
+        UseNpmCi: true
 
   GovNotifyFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -1061,7 +1130,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-GovNotifyFunctionn-FatalErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fatal Error occurs. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger an alarm when Fatal Error occurs. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -1089,7 +1160,9 @@ Resources:
       OKActions:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger the alarm if over 80% of reserved concurrency is used. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-GovNotifyFunction-concurrency"
       MetricName: ConcurrentExecutions
       Namespace: AWS/Lambda
@@ -1114,7 +1187,9 @@ Resources:
       OKActions:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger if the ${GovNotifyFunction} lambda throttles. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger if the ${GovNotifyFunction} lambda throttles. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-GovNotifyFunction-throttles"
       MetricName: Throttles
       Namespace: AWS/Lambda
@@ -1197,6 +1272,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - StreamProcessorHandler.ts
+        UseNpmCi: true
 
   SessionEventsTableStream:
     Type: AWS::Lambda::EventSourceMapping
@@ -1255,7 +1331,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunctionn-FatalErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fatal Error occurs. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger an alarm when Fatal Error occurs. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -1283,7 +1361,9 @@ Resources:
       OKActions:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger the alarm if over 80% of reserved concurrency is used. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-concurrency"
       MetricName: ConcurrentExecutions
       Namespace: AWS/Lambda
@@ -1308,7 +1388,9 @@ Resources:
       OKActions:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger if the ${StreamProcessorFunction} lambda throttles. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger if the ${StreamProcessorFunction} lambda throttles. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-throttles"
       MetricName: Throttles
       Namespace: AWS/Lambda
@@ -1388,6 +1470,7 @@ Resources:
         Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
         EntryPoints:
           - SessionHandler.ts
+        UseNpmCi: true
 
   SessionFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -1435,7 +1518,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-SessionFunctionn-FatalErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fatal Error occurs. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger an alarm when Fatal Error occurs. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -1463,7 +1548,9 @@ Resources:
       OKActions:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger the alarm if over 80% of reserved concurrency is used. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger the alarm if over 80% of reserved concurrency is used. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-SessionFunction-concurrency"
       MetricName: ConcurrentExecutions
       Namespace: AWS/Lambda
@@ -1488,7 +1575,9 @@ Resources:
       OKActions:
         - !ImportValue platform-alarm-topic-critical-alert
       InsufficientDataActions: []
-      AlarmDescription: !Sub "Trigger if the ${SessionFunction} lambda throttles. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger if the ${SessionFunction} lambda throttles. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       AlarmName: !Sub "${AWS::StackName}-SessionFunction-throttles"
       MetricName: Throttles
       Namespace: AWS/Lambda
@@ -1760,7 +1849,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-5XXErrorAlarm"
-      AlarmDescription: !Sub "There has been a small proportion of 5XX errors on the backend api-gateway. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "There has been a small proportion of 5XX errors on the backend api-gateway. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -1810,7 +1901,9 @@ Resources:
     Condition: IsNotDevelopment
     Properties:
       AlarmName: !Sub "${AWS::StackName}-5XXErrorCriticalAlarm"
-      AlarmDescription: !Sub "There has been a significant proportion of 5XX errors on the backend api-gateway. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "There has been a significant proportion of 5XX errors on the backend api-gateway. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-pagerduty-alert-topic
@@ -1862,7 +1955,9 @@ Resources:
     Condition: DeployAlarms
     Properties:
       AlarmName: !Sub "${AWS::StackName}-Session5XXApiGwErrorAlarm"
-      AlarmDescription: !Sub "There has been a small proportion of 5XX errors on the Session endpoint. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "There has been a small proportion of 5XX errors on the Session endpoint. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -1924,7 +2019,9 @@ Resources:
     Condition: IsNotDevelopment
     Properties:
       AlarmName: !Sub "${AWS::StackName}-Session5XXApiGwErrorCriticalAlarm"
-      AlarmDescription: !Sub "There has been a significant proportion of 5XX errors on the Session endpoint. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "There has been a significant proportion of 5XX errors on the Session endpoint. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-pagerduty-alert-topic
@@ -1988,10 +2085,12 @@ Resources:
     Condition: DeployAlarms
     Properties:
       AlarmName: !Sub "${AWS::StackName}-Session4XXApiGwErrorAlarm"
-      AlarmDescription:
-        Fn::Sub: >-
-          >=50% of invocations to the Session endpoint have generated a 4XX error in
-          4 or more out of the last 10 minutes. ${SupportManualURL}
+      AlarmDescription: 
+        Fn::Sub: 
+          - >-
+            >=50% of invocations to the Session endpoint have generated a 4XX error in
+            4 or more out of the last 10 minutes. ${RunbookUrl}
+          - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -2053,7 +2152,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-apiGWLatencyAlarm"
-      AlarmDescription: !Sub "There has been increased latency on backend api-gateway. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "There has been increased latency on backend api-gateway. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: false  # disabled until we're ready for alarm actions to fire
       AlarmActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -2099,7 +2200,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-TXMASQSOldMessagesAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when the age of the oldest TXMA message is 5 or more minutes. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger an alarm when the age of the oldest TXMA message is 5 or more minutes. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -2124,7 +2227,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-TXMADLQMessagesVisibleAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when message gets added to TXMA DLQ. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger an alarm when message gets added to TXMA DLQ. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -2149,7 +2254,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-GovNotifySQSOldMessagesAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when the age of the oldest TXMA message is 5 or more minutes. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger an alarm when the age of the oldest TXMA message is 5 or more minutes. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -2174,7 +2281,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-GovNotifyDLQMessagesVisibleAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when message gets added to GovNotify DLQ. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger an alarm when message gets added to GovNotify DLQ. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -2268,7 +2377,9 @@ Resources:
     Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-StreamProcessorFunction-FallbackEmailErrorAlarm"
-      AlarmDescription: !Sub "Trigger an alarm when Fallback email is triggered due to missing mandatory fields. ${SupportManualURL}"
+      AlarmDescription: !Sub 
+        - "Trigger an alarm when Fallback email is triggered due to missing mandatory fields. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
         - !ImportValue platform-alarm-topic-slack-warning-alert
@@ -2322,6 +2433,35 @@ Resources:
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
+
+  VCGenerationFailureEmailsWarningAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: DeployAlarms
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-VCGenerationFailureEmailsWarningAlarm-5in1h"
+      AlarmDescription: !Sub
+        - "WARNING: In the last hour, >=5 VC generation failure emails were sent. ${RunbookUrl}"
+        - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
+      ActionsEnabled: true
+      OKActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      AlarmActions:
+        - !ImportValue platform-alarm-topic-slack-warning-alert
+      InsufficientDataActions: []
+      TreatMissingData: notBreaching
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 5
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Namespace: IPR-CRI
+      MetricName: GovNotify_vc_generation_failure_email_sent
+      Statistic: Sum
+      Period: 3600
+      Dimensions:
+        - Name: Service
+          Value: GovNotifyHandler
+        - Name: emailType
+          Value: VC_GENERATION_FAILURE_EMAIL
 
   ConcurrencyAlarmDashboard:
     Type: AWS::CloudWatch::Dashboard
@@ -2634,6 +2774,21 @@ Resources:
                   "annotations": {
                     "alarms": ["${GovNotifyDLQMessagesVisibleAlarm.Arn}"]
                      },
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 84,
+                "x": 12,
+                "type": "metric",
+                "properties": {
+                  "title": "VC Generation Failure Emails (≥5 in the last hour) - ${AWS::StackName}",
+                  "annotations": {
+                    "alarms": ["${VCGenerationFailureEmailsWarningAlarm.Arn}"]
+                  },
                   "view": "timeSeries",
                   "stacked": false
                 }

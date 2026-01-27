@@ -22,6 +22,8 @@ bin-release/
 results/
 cf-output.txt
 
+.idea
+settings.json
 .DS_Store
 
-.idea/
+oidc-provider/

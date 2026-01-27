@@ -231,99 +231,7 @@ const CODE_STYLING_RULES = {
   // "computed-property-spacing": ["error", "always"],
   'comma-spacing': 'error',
   'semi-spacing': 'error',
-  'rest-spread-spacing': 'error',
-  '@typescript-eslint/tslint/config': [
-    'error',
-    {
-      rules: {
-        ban: [
-          true,
-          {
-            name: [
-              'it',
-              'skip'
-            ]
-          },
-          {
-            name: [
-              'it',
-              'only'
-            ]
-          },
-          {
-            name: [
-              'it',
-              'async',
-              'skip'
-            ]
-          },
-          {
-            name: [
-              'it',
-              'async',
-              'only'
-            ]
-          },
-          {
-            name: [
-              'describe',
-              'skip'
-            ]
-          },
-          {
-            name: [
-              'describe',
-              'only'
-            ]
-          },
-          {
-            name: 'parseInt',
-            message: 'tsstyle#type-coercion'
-          },
-          {
-            name: 'parseFloat',
-            message: 'tsstyle#type-coercion'
-          },
-          {
-            name: 'Array',
-            message: 'tsstyle#array-constructor'
-          },
-          {
-            name: [
-              '*',
-              'innerText'
-            ],
-            message: 'Use .textContent instead. tsstyle#browser-oddities'
-          }
-        ],
-        'prefer-method-signature': true,
-        typedef: [
-          true,
-          'call-signature',
-          'property-declaration'
-        ]
-      }
-    }
-  ]
-}
-
-const JEST_RULES = {
-  // @see https://github.com/jest-community/eslint-plugin-jest/blob/v25.3.0/docs/rules/no-hooks.md
-  // Enable use of hooks (beforeEach/afterEach) - state is useful in most testsuites
-  'jest/no-hooks': 'off',
-
-  // @see https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/require-top-level-describe.md
-  'jest/require-top-level-describe': 'error',
-
-  'jest/prefer-expect-resolves': 'error',
-
-  'jest/no-alias-methods': 'error',
-
-  'jest/consistent-test-it': [
-    'error', {
-      fn: 'it'
-    }
-  ]
+  'rest-spread-spacing': 'error'
 }
 
 const OVERRIDE_DEFAULTS_RULES = {
@@ -362,8 +270,7 @@ module.exports = {
   env: {
     browser: true,
     es6: true,
-    node: true,
-    jest: true
+    node: true
   },
   extends: [
     'eslint:recommended',
@@ -372,8 +279,6 @@ module.exports = {
     'plugin:import/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'plugin:security/recommended',
-    'plugin:jest/recommended',
-    'plugin:jest/style'
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -385,15 +290,12 @@ module.exports = {
     'eslint-plugin-jsdoc',
     'eslint-plugin-prefer-arrow',
     '@typescript-eslint',
-    '@typescript-eslint/tslint',
-    'jest',
     'security'
   ],
   ignorePatterns: ['**/*.js', '/dist', '**/*.d.ts', '/**/*.config.ts', '/**/*.setup.ts', '/__tests__'],
   rules: {
     ...CODE_COMPLEXITY_RULES,
     ...CODE_STYLING_RULES,
-    ...JEST_RULES,
     ...OVERRIDE_DEFAULTS_RULES
   }
 }

@@ -1,11 +1,13 @@
 import { NamePart, PostOfficeVisitDetails, PostOfficeInfo, DocumentDetails } from "./SessionReturnRecord";
 
-export type EventType = "AUTH_IPV_AUTHORISATION_REQUESTED" | "F2F_YOTI_START" | "IPV_F2F_CRI_VC_CONSUMED" | "AUTH_DELETE_ACCOUNT" | "F2F_DOCUMENT_UPLOADED";
+export type EventType = "AUTH_IPV_AUTHORISATION_REQUESTED" | "F2F_YOTI_START" | "IPV_F2F_CRI_VC_CONSUMED" | "AUTH_DELETE_ACCOUNT" | "F2F_DOCUMENT_UPLOADED" | "IPV_F2F_RESTART" | "IPV_F2F_CRI_VC_ERROR";
 
 
 export interface ReturnSQSEvent {
 	event_id: string;
 	client_id: string;
+	component_id?: string;
+	redirect_uri?: string;
 	clientLandingPageUrl?: string;
 	event_name: EventType;
 	timestamp: number;
@@ -24,6 +26,7 @@ export interface ReturnSQSEvent {
 	extensions?: {
 		post_office_visit_details?: PostOfficeVisitDetails[];
 		post_office_details?: PostOfficeInfo[];
+		error_description?: string;
 	};
 }
 

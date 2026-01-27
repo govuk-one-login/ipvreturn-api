@@ -1,13 +1,9 @@
-/* eslint-disable no-console */
+ 
 import { Logger } from "@aws-lambda-powertools/logger";
 import { AppError } from "../utils/AppError";
 import { DynamoDBDocument, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { Constants } from "../utils/Constants";
-import { sqsClient } from "../utils/SqsClient";
-import { SendMessageCommand } from "@aws-sdk/client-sqs";
-import { GovNotifyEvent } from "../utils/GovNotifyEvent";
-import { TxmaEvent } from "../utils/TxmaEvent";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { AuthEvent } from "../models/AuthEvent";
