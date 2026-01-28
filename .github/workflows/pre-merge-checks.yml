@@ -99,9 +99,9 @@ jobs:
       contents: read
     env:
       DEV_IPR_TEST_HARNESS_URL: ${{ needs.deploy.outputs.test_harness_url }}
-      API_TEST_SESSION_EVENTS_TABLE: ${{ secrets.DEV_API_TEST_SESSION_EVENTS_TABLE }}
-      GOV_NOTIFY_API: ${{ secrets.DEV_IPR_GOV_NOTIFY_API }}
-      VC_GENERATION_FAILURE_EMAIL_ENABLED: true
+      # API_TEST_SESSION_EVENTS_TABLE: ${{ secrets.DEV_API_TEST_SESSION_EVENTS_TABLE }}
+      # GOV_NOTIFY_API: ${{ secrets.DEV_IPR_GOV_NOTIFY_API }}
+      # VC_GENERATION_FAILURE_EMAIL_ENABLED: true
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6
