@@ -119,3 +119,8 @@ jobs:
   pre-merge-checks:
     uses: ./.github/workflows/pre-merge-checks.yml
     secrets: inherit
+
+  # This is a temporary trigger for the pre-merge check, set up for testing purposes. A decision will be made later regarding the actual pre-merge trigger.
+  post-merge-oidc-stub-to-dev:
+    uses: ./.github/workflows/post-merge-oidc-stub-to-dev.yml
+    secrets: inherit
