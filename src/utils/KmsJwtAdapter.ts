@@ -9,7 +9,7 @@ import { MessageType, SigningAlgorithmSpec } from "@aws-sdk/client-kms";
 export class KmsJwtAdapter {
 	readonly kid: string;
 
-	private kms = new AWS.KMS({
+	readonly kms = new AWS.KMS({
 		region: process.env.REGION,
 	});
 
@@ -47,9 +47,13 @@ export class KmsJwtAdapter {
 			throw new Error("Failed to sign Jwt");
 		}
 
+		console.log(res);
+
 		tokenComponents.signature = Buffer.from(res.Signature).toString("base64").replace(/\+/g, "-")
 			.replace(/\//g, "_")
 			.replace(/=/g, "");
+
+		console.log(tokenComponents);
 		return `${tokenComponents.header}.${tokenComponents.payload}.${tokenComponents.signature}`;
 	}
 
