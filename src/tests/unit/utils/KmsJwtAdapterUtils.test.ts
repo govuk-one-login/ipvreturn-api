@@ -6,12 +6,11 @@ import { jwtUtils } from "../../../utils/JwtUtils";
 
 jest.mock('axios');
 
-// jest.mock("buffer", () => ({
-// 	Buffer: jest.fn().mockImplementation(() => ({
-// 		from: jest.fn().mockImplementation(() => "JOSE-formatted signature"),
-// 		// joseToDer: jest.fn().mockImplementation(() => "DER-formatted signature"),
-// 	})),
-// }));
+jest.mock("buffer", () => ({
+	Buffer: {
+		from: jest.fn(() => "assertion-value"),
+	},
+}));
 
 jest.mock("../../../utils/JwtUtils", () => ({
 	jwtUtils: {
