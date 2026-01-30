@@ -37,6 +37,11 @@ jobs:
         with:
           use-installer: true
 
+      - name: Debug role ARN
+        run: echo "Role ARN length ${#BUILD_ROLE_ARN}"
+        env:
+          BUILD_ROLE_ARN: ${{ secrets.BUILD_OIDC_STUB_GH_ACTIONS_ROLE_ARN }}
+
       - name: Assume temporary AWS role
         uses: aws-actions/configure-aws-credentials@v5
         with:
