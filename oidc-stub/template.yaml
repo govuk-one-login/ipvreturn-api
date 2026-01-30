@@ -49,10 +49,9 @@ Mappings:
       OIDCURL: "https://ipr-oidc-stub-oidcstub.return.build.account.gov.uk/"  
 
 Conditions:
-  CreateDevOrBuildResources: !Equals
+  CreateDevResources: !Equals
     - !Ref Environment
     - dev
-    - build
   UseCodeSigning:
     Fn::Not:
       - Fn::Equals:
@@ -447,8 +446,7 @@ Resources:
   MockOidcApiGatewayCustomDomain:
     Type: AWS::ApiGatewayV2::DomainName
     Properties:
-      DomainName: !If
-        - CreateDevResources
+      DomainName:
         - !Sub
           - "${AWS::StackName}-${OIDCSTUBDNS}"
           - OIDCSTUBDNS:
