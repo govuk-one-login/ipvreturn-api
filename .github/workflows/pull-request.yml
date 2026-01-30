@@ -124,3 +124,7 @@ jobs:
   post-merge-oidc-stub-to-dev:
     uses: ./.github/workflows/post-merge-oidc-stub-to-dev.yml
     secrets: inherit
+
+  post-merge-oidc-stub-to-build:
+    uses: ./.github/workflows/post-merge-oidc-stub-to-build.yml
+    secrets: inherit
