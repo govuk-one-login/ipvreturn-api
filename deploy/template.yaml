@@ -132,6 +132,7 @@ Mappings:
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
       VCGENERATIONFAILUREEMAILENABLED: true
+      F2FRESETENABLED: true
     build:
       ISSUER: "https://return.build.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
@@ -149,6 +150,7 @@ Mappings:
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
       TESTHARNESSURL: "https://testharness.return.build.account.gov.uk"
       VCGENERATIONFAILUREEMAILENABLED: true
+      F2FRESETENABLED: true
     staging:
       ISSUER: "https://return.staging.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
@@ -165,6 +167,7 @@ Mappings:
       OIDCURL: "https://oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
       VCGENERATIONFAILUREEMAILENABLED: true
+      F2FRESETENABLED: true
     integration:
       ISSUER: "https://return.integration.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "3baf3b59-2396-44c8-b7a4-b5a981fad5e8"
@@ -181,6 +184,7 @@ Mappings:
       OIDCURL: "https://oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
       VCGENERATIONFAILUREEMAILENABLED: false
+      F2FRESETENABLED: false
     production:
       ISSUER: "https://return.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "206971e2-d576-4d12-b34f-b0de442d39ab"
@@ -197,6 +201,7 @@ Mappings:
       OIDCURL: "https://oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
       VCGENERATIONFAILUREEMAILENABLED: false
+      F2FRESETENABLED: false
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
@@ -818,6 +823,8 @@ Resources:
           REDRIVE_ENABLED: "false"
           VC_GENERATION_FAILURE_EMAIL_ENABLED:
             !FindInMap [EnvironmentVariables, !Ref Environment, VCGENERATIONFAILUREEMAILENABLED]
+          F2F_RESET_ENABLED:
+            !FindInMap [EnvironmentVariables, !Ref Environment, F2FRESETENABLED]
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess

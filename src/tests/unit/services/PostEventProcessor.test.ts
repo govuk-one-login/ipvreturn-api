@@ -333,11 +333,6 @@ describe("PostEventProcessor", () => {
 			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
 		});
 
-		it("Calls saveEventData with appropriate payload for IPV_F2F_RESTART event", async () => {
-			await postEventProcessorMockSessionService.processRequest(VALID_IPV_F2F_RESTART_TXMA_EVENT_STRING);
-			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("7561b2c4-7466-4d58-ad02-d52c1b900bf9", "SET nameParts = :nameParts, journeyWentAsyncOn = :journeyWentAsyncOn, ipvStartedOn = :ipvStartedOn, documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails, postOfficeInfo = :postOfficeInfo, readyToResumeOn = :readyToResumeOn, documentType = :documentType, notified = :notified, documentExpiryDate = :documentExpiryDate", {":documentExpiryDate": "",":documentType": "",":documentUploadedOn": {  "NULL": true,},":ipvStartedOn": {  "NULL": true,},":journeyWentAsyncOn": {  "NULL": true,},":nameParts": [],":notified": false,":postOfficeInfo": [],":postOfficeVisitDetails": [],":readyToResumeOn": {  "NULL": true}});
-		});
 	});
 
 	describe("With govuk_signin_journey_id", () => {
@@ -561,10 +556,27 @@ describe("PostEventProcessor", () => {
 
 	describe("IPV_F2F_RESTART", () => {
 		it("throws AppError when IPRServiceSession throws AppError for IPV_F2F_RESTART event", async () => {
+			process.env.F2F_RESET_ENABLED = "true";
 			mockIprServiceSession.saveEventData.mockImplementation(() => {
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
 			});
 			await expect(postEventProcessorMockServices.processRequest(VALID_IPV_F2F_RESTART_TXMA_EVENT_STRING)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record"));
+			process.env.F2F_RESET_ENABLED = "false";
+		});
+
+		it("Calls saveEventData with appropriate payload for IPV_F2F_RESTART event", async () => {
+			process.env.F2F_RESET_ENABLED = "true";
+			await postEventProcessorMockSessionService.processRequest(VALID_IPV_F2F_RESTART_TXMA_EVENT_STRING);
+			 
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("7561b2c4-7466-4d58-ad02-d52c1b900bf9", "SET nameParts = :nameParts, journeyWentAsyncOn = :journeyWentAsyncOn, ipvStartedOn = :ipvStartedOn, documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails, postOfficeInfo = :postOfficeInfo, readyToResumeOn = :readyToResumeOn, documentType = :documentType, notified = :notified, documentExpiryDate = :documentExpiryDate", {":documentExpiryDate": "",":documentType": "",":documentUploadedOn": {  "NULL": true,},":ipvStartedOn": {  "NULL": true,},":journeyWentAsyncOn": {  "NULL": true,},":nameParts": [],":notified": false,":postOfficeInfo": [],":postOfficeVisitDetails": [],":readyToResumeOn": {  "NULL": true}});
+			process.env.F2F_RESET_ENABLED = "false";
+		});
+
+		it("F2F_RESET_ENABLED toggle off. It does not call saveEventData with appropriate payload for IPV_F2F_RESTART event", async () => {
+			process.env.F2F_RESET_ENABLED = "false";
+			await postEventProcessorMockSessionService.processRequest(VALID_IPV_F2F_RESTART_TXMA_EVENT_STRING);
+			 
+			expect(mockIprServiceSession.saveEventData).not.toHaveBeenCalled();
 		});
 	});
 
