@@ -17,6 +17,7 @@ Parameters:
     Type: "String"
     AllowedValues:
       - "dev"
+      - "build"
 
     ConstraintDescription: Ensure environment variable is set to one of dev, build.
   PermissionsBoundary:
@@ -33,17 +34,25 @@ Mappings:
     dev:
       logretentionindays: 3
       apiTracingEnabled: true
+    build:
+      logretentionindays: 3
+      apiTracingEnabled: true
 
   EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
     dev:
       OIDCSTUBDNS: "oidcstub.return.dev.account.gov.uk"
       JWKSURI: "https://ipvreturn-api.return.dev.account.gov.uk"
       OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"  
+    build:
+      OIDCSTUBDNS: "oidcstub.return.build.account.gov.uk"
+      JWKSURI: "https://ipvreturn-api.return.build.account.gov.uk"
+      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.build.account.gov.uk/"  
 
 Conditions:
-  CreateDevResources: !Equals
+  CreateDevOrBuildResources: !Equals
     - !Ref Environment
     - dev
+    - build
   UseCodeSigning:
     Fn::Not:
       - Fn::Equals:
