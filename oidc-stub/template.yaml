@@ -90,7 +90,7 @@ Globals:
         POWERTOOLS_METRICS_NAMESPACE: IPR-CRI # The Metric Namespace for the AWS PowerTools MetricHelper
     AutoPublishAlias: live
 
-# Resources:
+Resources:
 #   LambdaEgressSecurityGroup:
 #     Type: "AWS::EC2::SecurityGroup"
 #     Properties:
