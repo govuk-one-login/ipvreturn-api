@@ -119,13 +119,3 @@ jobs:
   pre-merge-checks:
     uses: ./.github/workflows/pre-merge-checks.yml
     secrets: inherit
-
-  # This is a temporary trigger for the oidc stub deployment to dev workflow
-  post-merge-oidc-stub-to-dev:
-    uses: ./.github/workflows/post-merge-oidc-stub-to-dev.yml
-    secrets: inherit
-
-  # This is a temporary trigger for the oidc stub deployment to build workflow
-  post-merge-oidc-stub-to-build:
-    uses: ./.github/workflows/post-merge-oidc-stub-to-build.yml
-    secrets: inherit
