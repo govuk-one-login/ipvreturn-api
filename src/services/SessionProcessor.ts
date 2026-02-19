@@ -232,7 +232,7 @@ export class SessionProcessor {
 			const { data } = await axios.post(
 				oidcTokenUrl,
 				urlEncodedBody,
-				{ headers:{ "Content-Type" : "text/plain" } },
+				{ headers:{ "Content-Type" : "application/x-www-form-urlencoded" } },
 			);
 			return data.id_token;
 		} catch (error) {

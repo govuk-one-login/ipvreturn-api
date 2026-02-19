@@ -46,3 +46,4 @@ const configuration: Configuration = {
 };
 
 export default configuration;
+

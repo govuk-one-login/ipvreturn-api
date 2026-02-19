@@ -16,15 +16,18 @@
     "@aws-sdk/credential-providers": "3.1036.0",
     "@aws-sdk/lib-dynamodb": "3.1036.0",
     "@aws-sdk/util-dynamodb": "3.996.2",
+    "@aws-sdk/client-s3": "3.1036.0",
     "@smithy/node-http-handler": "4.0.4",
     "aws-xray-sdk-core": "3.10.3",
     "axios": "1.15.0",
+    "axios-cookiejar-support": "4.0.3",
     "class-validator": "0.14.1",
     "ecdsa-sig-formatter": "1.0.11",
     "esbuild": "0.25.2",
     "jose": "5.10.0",
     "node-jose": "2.2.0",
-    "notifications-node-client": "7.0.6"
+    "notifications-node-client": "7.0.6",
+    "tough-cookie": "6.0.1"
   },
   "scripts": {
     "unit": "./node_modules/.bin/jest --testPathPatterns=tests/unit --no-cache  --coverage",
@@ -57,7 +60,9 @@
     "ts-jest": "29.4.6",
     "ts-node": "10.9.2",
     "typescript": "4.9.5",
-    "yaml-cfn": "0.3.2"
+    "yaml-cfn": "0.3.2",
+    "aws-sdk-client-mock": "4.1.0",
+    "aws-sdk-client-mock-jest": "4.1.0"
   },
   "engines": {
     "node": "22.*"

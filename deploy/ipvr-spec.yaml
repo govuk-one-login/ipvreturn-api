@@ -86,7 +86,7 @@ paths:
       operationId: getWellKnownJwksJson
       summary: Retrieve the signing public keys for JWTs issued by oidc.
       description: >-
-        Return the current valid public keys used to sign JWTs issued by the service as a JSON Web Key Set
+        Returns the current valid public keys used to sign JWTs issued by the service as a JSON Web Key Set
       tags:
         - Backend - IPV Return specific
       responses:
@@ -149,13 +149,12 @@ paths:
             X-Frame-Options:
               schema:
                 type: "string"
-      x-amazon-apigateway-request-validator: "both"
       x-amazon-apigateway-integration:
         httpMethod: "GET"
         credentials:
-          Fn::GetAtt: [ "TempJWKSBucketRole", "Arn" ]
+          Fn::GetAtt: [ "JWKSBucketRole", "Arn" ]
         uri:
-          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:s3:path/govuk-one-login-ipvr-published-keys-${Environment}-manual/.well-known/jwks.json"
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:s3:path/govuk-one-login-ipvreturn-published-keys-${Environment}/jwks.json"
         responses:
           default:
             statusCode: "200"
