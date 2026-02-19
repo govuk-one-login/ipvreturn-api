@@ -124,8 +124,8 @@ Resources:
           ToPort: 443
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
-  ### Start of API Gateway definition.
 
+  ### Start of API Gateway definition.
   MockOidcRestApi:
     Type: AWS::Serverless::Api
     Properties:

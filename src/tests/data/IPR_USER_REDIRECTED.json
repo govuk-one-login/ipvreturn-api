@@ -43,6 +43,10 @@
         "user_id": {
           "description": "This is the CommonSubjectID (i.e. the internal version of the pairwiseid) of the user in the relevant part of the system.\n",
           "type": "string"
+        },
+        "ip_address": {
+          "description": "Ip address for the redirected user",
+          "type": "string"
         }
       },
       "title": "IprUserRedirectedUser",
