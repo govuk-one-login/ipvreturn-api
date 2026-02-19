@@ -184,7 +184,7 @@ Mappings:
       OIDCURL: "https://oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
       VCGENERATIONFAILUREEMAILENABLED: false
-      F2FRESETENABLED: false
+      F2FRESETENABLED: true
     production:
       ISSUER: "https://return.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "206971e2-d576-4d12-b34f-b0de442d39ab"
@@ -201,7 +201,7 @@ Mappings:
       OIDCURL: "https://oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
       VCGENERATIONFAILUREEMAILENABLED: false
-      F2FRESETENABLED: false
+      F2FRESETENABLED: true
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
