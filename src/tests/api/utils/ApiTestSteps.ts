@@ -28,6 +28,8 @@ interface TestHarnessReponse {
 const GOV_NOTIFY_INSTANCE = axios.create({ baseURL: constants.GOV_NOTIFY_API });
 
 const HARNESS_API_INSTANCE: AxiosInstance = axios.create({ baseURL: constants.DEV_IPR_TEST_HARNESS_URL });
+const IPR_API_INSTANCE: AxiosInstance = axios.create({ baseURL: constants.DEV_IPR_API_URL });
+
 
 const customCredentialsProvider = {
 	getCredentials: fromNodeProviderChain({
@@ -121,6 +123,17 @@ export async function postGovNotifyRequest(mockDelimitator: any, userData: any):
 		const n = strToSearch.lastIndexOf(strToFind);
 		if (n < 0) return strToSearch;
 		return strToSearch.substring(0, n) + strToInsert + strToSearch.substring(n);
+	}
+}
+
+export async function getApiRequest(path: string): Promise<any> {
+	try {
+		// update email to contain mock delimitator before the @ - this determines the behaviour of the GovNotify mock
+		const postRequest = await IPR_API_INSTANCE.get(path);
+		return postRequest;
+	} catch (error: any) {
+		console.log(`Error response from ${path} endpoint: ${error}`);
+		return error.response;
 	}
 }
 

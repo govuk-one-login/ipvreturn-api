@@ -11,10 +11,11 @@ import {
 import "dotenv/config";
 import { randomUUID } from "crypto";
 import { constants } from "./utils/ApiConstants";
-import { postMockEvent, getSessionByUserId, getTxmaEventsFromTestHarness, validateTxMAEventData } from "./utils/ApiTestSteps";
+import { postMockEvent, getSessionByUserId, getTxmaEventsFromTestHarness, validateTxMAEventData, getApiRequest } from "./utils/ApiTestSteps";
 import { sleep } from "../../utils/Sleep";
 import { ReturnSQSEvent } from "../../models/ReturnSQSEvent";
 import { absoluteTimeNow } from "../../utils/DateTimeUtils";
+import { manualOidcLoginTest } from "./utils/OidcLoginSteps";
 
 //QualityGateIntegrationTest 
 //QualityGateRegressionTest
@@ -478,4 +479,80 @@ describe("post event processor", () => {
 
 	});
 	
+	it("when all 4 events are sent, a Dynamo record with the details of all 4 events is recorded and the user can be redirected from the session endpoint back to the RP", async () => {
+		console.log("when all 4 events are sent, a Dynamo record with the details of all 4 events is recorded and the user can be redirected from the session endpoint back to the RP")
+		const userId = randomUUID();
+		console.log("userId: ", userId)
+		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
+		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
+		await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
+		await postMockEvent(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT, userId, false);
+
+		const response = await getSessionByUserId(userId, constants.API_TEST_SESSION_EVENTS_TABLE!);
+
+		expect(response?.notified).toBe(true);
+		expect(response?.nameParts).toEqual([
+			{
+				M: {
+					type: {
+						S: "GivenName",
+					},
+					value: {
+						S: "ANGELA",
+					},
+				},
+			},
+			{
+				M: {
+					type: {
+						S: "GivenName",
+					},
+					value: {
+						S: "ZOE",
+					},
+				},
+			},
+			{
+				M: {
+					type: {
+						S: "FamilyName",
+					},
+					value: {
+						S: "UK SPECIMEN",
+					},
+				},
+			},
+		]);
+		expect(response?.clientName).toBe("ekwU");
+		expect(response?.redirectUri).toBe("REDIRECT_URL");
+		expect(response?.userEmail).toBe(constants.API_TEST_EMAIL_ADDRESS);
+		expect(response?.documentType).toBe("PASSPORT");
+		expect(response?.documentExpiryDate).toBe("2030-01-01");
+		expect(response?.postOfficeInfo).toEqual([
+			postOfficeDetails
+		]);
+		expect(response?.postOfficeVisitDetails).toEqual([
+			{
+				"M": {
+					"post_office_date_of_visit": {
+						"S": "7 September 2023",
+					},
+					"post_office_time_of_visit": {
+						"S": "4:43 pm",
+					},
+				},
+			},
+		]);
+		const allTxmaEventBodies = await getTxmaEventsFromTestHarness(userId, 1);
+		await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, allTxmaEventBodies);
+
+		console.log("Following the successful completion of a F2F journey make a request to session");
+
+		const authCode = await manualOidcLoginTest(userId)
+
+		await getApiRequest("/session?code=" + authCode);
+
+		const allTxmaEventBodiesPostRedirect = await getTxmaEventsFromTestHarness(userId, 2);
+		await validateTxMAEventData({ eventName: "IPR_USER_REDIRECTED", schemaName: "IPR_USER_REDIRECTED_SCHEMA" }, allTxmaEventBodiesPostRedirect);
+	}, 60000);
 });
