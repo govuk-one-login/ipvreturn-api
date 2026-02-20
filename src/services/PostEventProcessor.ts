@@ -214,7 +214,7 @@ export class PostEventProcessor {
 				}
 				case Constants.IPV_F2F_CRI_VC_ERROR: {
 					if (process.env.VC_GENERATION_FAILURE_EMAIL_ENABLED === "true"){
-						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, failure email enabled", txmaEvent: eventDetails });
+						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, failure email enabled"});
 						
 						// Check if error_description indicates VC generation failure
 						const isVCFailure = this.validationHelper.isVCGenerationFailure(returnRecord.error_description);
@@ -233,7 +233,7 @@ export class PostEventProcessor {
 						}
 						break;
 					} else {
-						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, failure email disabled, ending execution", txmaEvent: eventDetails });
+						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, failure email disabled, ending execution"});
 						return;
 					}
 				}
@@ -254,7 +254,7 @@ export class PostEventProcessor {
 						};
 						break;
 					} else {
-						this.logger.info({ message: "Received IPV_F2F_RESTART event, F2F reset disabled, ending execution", txmaEvent: eventDetails });
+						this.logger.info({ message: "Received IPV_F2F_RESTART event, F2F reset disabled, ending execution"});
 						return;
 					}
 				}
