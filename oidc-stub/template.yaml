@@ -70,8 +70,8 @@ Globals:
   Function:
     Runtime: nodejs20.x
     VpcConfig:
-      # SecurityGroupIds:
-      #   - !GetAtt LambdaEgressSecurityGroup.GroupId
+      SecurityGroupIds:
+        - !GetAtt LambdaEgressSecurityGroup.GroupId
       SubnetIds:
         - Fn::ImportValue:
             "Fn::Sub": "${VpcStackName}-ProtectedSubnetIdA"
@@ -99,29 +99,29 @@ Globals:
     AutoPublishAlias: live
 
 Resources:
-  # LambdaEgressSecurityGroup:
-  #   Type: "AWS::EC2::SecurityGroup"
-  #   Properties:
-  #     GroupDescription: >-
-  #       Permits outbound on port 443 from within the VPC to the internet.
-  #     SecurityGroupEgress:
-  #       - CidrIp: 0.0.0.0/0
-  #         Description: Allow to the wider internet on port 443
-  #         FromPort: 443
-  #         IpProtocol: tcp
-  #         ToPort: 443
-  #     VpcId:
-  #       Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
+  LambdaEgressSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: >-
+        Permits outbound on port 443 from within the VPC to the internet.
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow to the wider internet on port 443
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+      VpcId:
+        Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
   
   ## OIDC Provider as IAM entity- Local deployment
-  OIDCProvider:
-    Type: AWS::IAM::OIDCProvider
-    Properties:
-      ClientIdList:
-        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-      ThumbprintList:
-        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+  # OIDCProvider:
+  #   Type: AWS::IAM::OIDCProvider
+  #   Properties:
+  #     ClientIdList:
+  #       - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
+  #     ThumbprintList:
+  #       - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
+  #     Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
   ### Start of API Gateway definition.
 
@@ -245,7 +245,8 @@ Resources:
   MockOidcApiGatewayCustomDomain:
     Type: AWS::ApiGatewayV2::DomainName
     Properties:
-      DomainName:
+      DomainName: !If
+        - CreateDevResources
         - !Sub
           - "${AWS::StackName}-${OIDCSTUBDNS}"
           - OIDCSTUBDNS:
