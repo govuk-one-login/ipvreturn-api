@@ -16,6 +16,10 @@ const configuration: any = {
     },
   ],
 
+  pkce: {
+    required: () => false,
+  },
+
   routes: {
     authorization: "/authorize",
     token: "/token",

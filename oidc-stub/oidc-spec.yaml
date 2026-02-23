@@ -160,7 +160,7 @@ paths:
           Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:OidcProvider-Stub-${AWS::StackName}:live/invocations
         responses:
           default:
-            statusCode: "200"
+            statusCode: "302"
         passthroughBehavior: "when_no_match"
         contentHandling: "CONVERT_TO_TEXT"
         type: "aws_proxy"

@@ -239,8 +239,9 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref MockOidcProviderFunction
       Principal: apigateway.amazonaws.com
+      FunctionName: !Ref MockOidcProviderFunction.Alias
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${MockOidcRestApi}/*/*/*
 
   MockOidcApiGatewayCustomDomain:
     Type: AWS::ApiGatewayV2::DomainName
