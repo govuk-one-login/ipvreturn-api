@@ -78,7 +78,7 @@ jobs:
       - name: Assume temporary AWS role
         uses: aws-actions/configure-aws-credentials@v5
         with:
-          role-to-assume: ${{ secrets.GH_OIDC_STUB_VALIDATE_ROLE_ARN }}
+          role-to-assume: ${{ secrets.DEV_OIDC_STUB_GH_ACTIONS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Cache SAM builds
