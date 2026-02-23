@@ -1,9 +1,11 @@
-import Provider, { type Configuration } from "oidc-provider";
+// @ts-ignore 
+import Provider from "oidc-provider";
+// @ts-ignore
 import serverless from "serverless-http";
 
 const issuer = (process.env.OIDC_URL || "http://localhost:3000").replace(/\/$/, "");
 
-const configuration: Configuration = {
+const configuration: any = {
   clients: [
     {
       client_id: process.env.OIDC_CLIENT_ID,
@@ -25,10 +27,10 @@ const configuration: Configuration = {
   },
 
   interactions: {
-    url: async (_ctx, interaction) => `/interaction/${interaction.uid}`,
+    url: async (_ctx: any, interaction: any) => `/interaction/${interaction.uid}`,
   },
 
-  findAccount: async (_ctx, id) => ({
+  findAccount: async (_ctx: any, id: any) => ({
     accountId: id,
     async claims() {
       return { sub: id };
@@ -40,7 +42,7 @@ const configuration: Configuration = {
 
 const provider = new Provider(issuer, configuration);
 
-provider.app.use(async (ctx, next) => {
+provider.app.use(async (ctx: any, next: any) => {
   if (ctx.method === "GET" && ctx.path.startsWith("/interaction/")) {
     await provider.interactionDetails(ctx.req, ctx.res);
 
