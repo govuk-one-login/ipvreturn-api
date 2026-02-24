@@ -49,6 +49,11 @@ export class DeleteBucketProcessor {
 				return { statusCode: 200, body: `${event.RequestType} success` };
 			}
 		} catch(error: any) {
+			if (error.code === 'NoSuchBucket' || error.name === 'NoSuchBucket' || error.$metadata?.httpStatusCode === 404) {
+				console.log("Bucket already deleted, signaling SUCCESS.");
+				await this.sendResponse(event, "SUCCESS", { message: "Bucket deleted"} );
+				return { statusCode: HttpCodesEnum.OK, body: "Bucket deleted" }
+    		}
 			await this.sendResponse(event, "FAILED", { message: `Bucket deletion failed with error: ${error}`})
 			return { statusCode: HttpCodesEnum.SERVER_ERROR, body: `Bucket deletion failed with error: ${error}` }	
 		}

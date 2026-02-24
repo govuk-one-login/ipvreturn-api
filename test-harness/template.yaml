@@ -198,15 +198,18 @@ Resources:
     Properties:
       ServiceToken: !GetAtt DeleteTestHarnessBucketFunction.Arn
       BucketName: !Ref EventTestBucket
-    DependsOn: EventTestBucket
+    DependsOn: 
+      - DeleteTestHarnessBucketFunction
+      - EventTestBucket
 
   DeleteTestHarnessBucketFunction:
     Type: AWS::Serverless::Function
-    DependsOn: DeleteTestHarnessBucketFunctionLogGroup
     Properties:
       FunctionName: !Sub "IPVR-DeleteTestHarnessBucket-${AWS::StackName}"
       Handler: DeleteBucketHandler.lambdaHandler
       CodeUri: ./src/
+      Timeout: 300
+      MemorySize: 512
       Policies:
       - Statement:
           - Effect: Allow
@@ -229,6 +232,8 @@ Resources:
 
   DeleteTestHarnessBucketFunctionLogGroup:
     Type: AWS::Logs::LogGroup
+    DependsOn: 
+      - DeleteTestHarnessBucketFunction
     Properties:
       LogGroupName: !Sub "/aws/lambda/IPVR-DeleteTestHarnessBucket-${AWS::StackName}"
       RetentionInDays:
