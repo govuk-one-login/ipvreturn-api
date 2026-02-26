@@ -568,7 +568,7 @@ describe("PostEventProcessor", () => {
 			process.env.F2F_RESET_ENABLED = "true";
 			await postEventProcessorMockSessionService.processRequest(VALID_IPV_F2F_RESTART_TXMA_EVENT_STRING);
 			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("7561b2c4-7466-4d58-ad02-d52c1b900bf9", "SET nameParts = :nameParts, journeyWentAsyncOn = :journeyWentAsyncOn, ipvStartedOn = :ipvStartedOn, documentUploadedOn = :documentUploadedOn, postOfficeVisitDetails = :postOfficeVisitDetails, postOfficeInfo = :postOfficeInfo, readyToResumeOn = :readyToResumeOn, documentType = :documentType, notified = :notified, documentExpiryDate = :documentExpiryDate", {":documentExpiryDate": "",":documentType": "",":documentUploadedOn": {  "NULL": true,},":ipvStartedOn": {  "NULL": true,},":journeyWentAsyncOn": {  "NULL": true,},":nameParts": [],":notified": false,":postOfficeInfo": [],":postOfficeVisitDetails": [],":readyToResumeOn": {  "NULL": true}});
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("7561b2c4-7466-4d58-ad02-d52c1b900bf9", "REMOVE nameParts, journeyWentAsyncOn, ipvStartedOn, documentUploadedOn, postOfficeVisitDetails , postOfficeInfo, readyToResumeOn, documentType, notified, documentExpiryDate", {});
 			process.env.F2F_RESET_ENABLED = "false";
 		});
 
