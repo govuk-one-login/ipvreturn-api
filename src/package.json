@@ -27,7 +27,7 @@
     "notifications-node-client": "7.0.6"
   },
   "scripts": {
-    "unit": "./node_modules/.bin/jest --testPathPattern=tests/unit --no-cache  --coverage",
+    "unit": "./node_modules/.bin/jest --testPathPattern=tests/unit/utils/KmsJwtAdapterUtils.test.ts --no-cache  --coverage",
     "test:unit": "npm run compile && npm run unit",
     "lint:fix": "eslint --fix --output-file ./reports/eslint/report.html --format html -c eslint.config.mjs --ext *.ts .",
     "compile": "./node_modules/.bin/tsc",

@@ -8,6 +8,8 @@ export class Constants {
 
     static readonly ERROR = "ERROR";
 
+    static readonly TOKEN_EXPIRY_SECONDS = 3600;
+
     static readonly ENV_VAR_UNDEFINED = "ENV Variables are undefined";
 
     static readonly EMAIL_LOGGER_SVC_NAME = "SendEmailHandler";
