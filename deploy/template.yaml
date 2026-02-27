@@ -642,6 +642,7 @@ Resources:
   ### Start of API Gateway definition.
   IPVRRestApi:
     Type: AWS::Serverless::Api
+    DependsOn: SessionFunction
     Properties:
       StageName: !Ref Environment
       AlwaysDeploy: true
@@ -1213,7 +1214,6 @@ Resources:
 
   StreamProcessorFunction:
     Type: AWS::Serverless::Function
-    DependsOn: StreamProcessorFunctionLogGroup
     Properties:
       FunctionName: !Sub "Ipvreturn-StreamProcessor-${AWS::StackName}"
       Handler: StreamProcessorHandler.lambdaHandler
@@ -1286,6 +1286,7 @@ Resources:
     Properties:
       # The maximum number of DB items to send to Lambda
       BatchSize: 1
+      MaximumRecordAgeInSeconds: 60
       Enabled: True
       EventSourceArn:
         Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-stream-arn"
@@ -1415,7 +1416,6 @@ Resources:
   ## Session
   SessionFunction:
     Type: AWS::Serverless::Function
-    DependsOn: SessionFunctionLogGroup
     Properties:
       FunctionName: !Sub "Session-${AWS::StackName}"
       Handler: SessionHandler.lambdaHandler
@@ -1481,6 +1481,7 @@ Resources:
 
   SessionFunctionLogGroup:
     Type: AWS::Logs::LogGroup
+    DependsOn: SessionFunction 
     Properties:
       LogGroupName: !Sub "/aws/lambda/Session-${AWS::StackName}"
       RetentionInDays:
@@ -1492,7 +1493,7 @@ Resources:
 
   SessionFunctionLogsSubscriptionFilterCSLS:
     Type: AWS::Logs::SubscriptionFilter
-    # Condition: IsProdLikeEnvironment
+    Condition: IsProdLikeEnvironment
     Properties:
       DestinationArn:
         !FindInMap [PlatformConfiguration, !Ref Environment, CSLSEGRESS]
@@ -1501,6 +1502,7 @@ Resources:
 
   SessionFunctionPermission:
     Type: AWS::Lambda::Permission
+    DependsOn: SessionFunction
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SessionFunction
