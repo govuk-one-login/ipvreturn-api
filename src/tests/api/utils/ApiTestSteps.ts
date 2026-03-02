@@ -138,7 +138,7 @@ const getTxMAS3FileNames = async (prefix: string): Promise<any> => {
 		contents.sort((a: any, b: any) => {
             const dateA = new Date(a.LastModified);
             const dateB = new Date(b.LastModified);
-            return dateA.getTime() - dateB.getTime(); // Descending order
+            return dateA.getTime() - dateB.getTime();
         });
 	}
 	return contents;
