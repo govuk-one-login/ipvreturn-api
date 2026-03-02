@@ -114,7 +114,7 @@ export class IPRServiceSession {
 		});
 
 		if (Object.keys(expressionAttributeValues).length > 0) {
-        updateSessionInfoCommand.input.ExpressionAttributeValues = expressionAttributeValues;
+        	updateSessionInfoCommand.input.ExpressionAttributeValues = expressionAttributeValues;
 		}
 
 		this.logger.info("Updating session record" );
