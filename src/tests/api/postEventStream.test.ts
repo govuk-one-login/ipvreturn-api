@@ -133,10 +133,10 @@ describe("post event processor", () => {
 		await sleep(5000);
 		const allTxmaEventBodies = await getTxmaEventsFromTestHarness(userId, 1);
 		await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, allTxmaEventBodies);
-	}, 30000); // timeout set to 20s to avoid infinite loop
+	}, 30000); // timeout set to 30s to avoid infinite loop
 
-	it("PII is removed and record is marked for deletion when IPV_F2F_RESTART event is sent", async () => {
-		console.log("PII is removed and record is marked for deletion when IPV_F2F_RESTART event is sent")
+	it("PII is removed when IPV_F2F_RESTART event is sent", async () => {
+		console.log("PII is removed when IPV_F2F_RESTART event is sent")
 		const userId = randomUUID();
 		console.log("userId: ", userId)
 		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
@@ -152,16 +152,45 @@ describe("post event processor", () => {
 		expect(response?.redirectUri).toBe("REDIRECT_URL");
 		expect(response?.userEmail).toBe("user@digital.cabinet-office.gov.uk");
 		expect(Number(response?.expiresOn)).toBeGreaterThan(absoluteTimeNow())
-		expect(response?.documentType).toBe("");
-		expect(response?.documentExpiryDate).toBe("");
-		expect(response?.postOfficeInfo).toEqual([]);
-		expect(response?.postOfficeVisitDetails).toEqual([]);
-		expect(response?.notified).toBe(false);
-		expect(response?.nameParts).toEqual([]);
+		expect(response?.documentType).toBeUndefined();
+		expect(response?.documentExpiryDate).toBeUndefined();
+		expect(response?.postOfficeInfo).toBeUndefined();
+		expect(response?.postOfficeVisitDetails).toBeUndefined();
+		expect(response?.notified).toBeUndefined();
+		expect(response?.nameParts).toBeUndefined();
 		await sleep(5000);
 		const allTxmaEventBodies = await getTxmaEventsFromTestHarness(userId, 1);
 		await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, allTxmaEventBodies);
-	}, 30000); // timeout set to 20s to avoid infinite loop
+	}, 30000); // timeout set to 30s to avoid infinite loop
+
+	it("when a user fails a F2F journey, they are able to try a 2nd time and receive a results email", async () => {
+		console.log("when a user fails a F2F journey, they are able to try a 2nd time and receive a results email")
+		const userId = randomUUID();
+		console.log("userId: ", userId)
+
+		// 1st F2F journey which ends in failure
+		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
+		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
+		await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
+		await postMockEvent(VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT, userId, false);
+		await postMockEvent(VALID_IPV_F2F_RESTART_TXMA_EVENT, userId, false);
+
+		await sleep(10000);
+
+		const txmaEvents1stJourney = await getTxmaEventsFromTestHarness(userId, 1);
+		await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, txmaEvents1stJourney);
+
+		// 2nd F2F journey that is successful
+		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
+		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
+		await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
+		await postMockEvent(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT, userId, false);
+
+		await sleep(10000);
+
+		const txmaEvents2ndJourney = await getTxmaEventsFromTestHarness(userId, 2);
+		await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, txmaEvents2ndJourney);
+	}, 60000);
 
 	it("when AUTH_IPV_AUTHORISATION_REQUESTED, F2F_YOTI_START, F2F_DOCUMENT_UPLOADED, IPV_F2F_CRI_VC_CONSUMED events are sent, a Dynamo record with the details of both events is recorded. Then if these events are played again the details are updated", async () => {
 		if (process.env.REDRIVE_ENABLED === "true") {
