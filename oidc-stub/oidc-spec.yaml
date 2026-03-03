@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
   title:
-     Fn::Sub: "${AWS::StackName} - Oidc Stub Service"
+    Fn::Sub: "${AWS::StackName} - Oidc Stub Service"
   version: 1.0.0
 
 tags:
@@ -9,187 +9,21 @@ tags:
     description: Endpoints accessible by the public domain
 
 paths:
-  /token:
-    post:
-      tags:
-        - Backend token Endpoint for OIDC
-      summary: Mock OIDC's token endpoint
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: "#/components/schemas/OidcTokenRequest"
-      responses:
-        201:
-          description: Token generated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OidcTokenResponseBody"
-        400:
-          $ref: "#/components/responses/400"
-        403:
-          $ref: "#/components/responses/403"
-        429:
-          $ref: "#/components/responses/429"
-        500:
-          $ref: "#/components/responses/500"
-      x-amazon-apigateway-request-validator: "both"
-      x-amazon-apigateway-integration:
-        httpMethod: "POST"
-        uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:OidcProvider-Stub-${AWS::StackName}:live/invocations
-        responses:
-          default:
-            statusCode: "201"
-        passthroughBehavior: "when_no_match"
-        contentHandling: "CONVERT_TO_TEXT"
-        type: "aws_proxy"
-
-  /.well-known/openid-configuration:
-    get:
-      tags:
-        - Backend Connect configuration Endpoint for OIDC
-      summary: Retrieve OpenID Connect configuration     
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  issuer:
-                    type: string
-                    example: https://api.example.com
-                  authorization_endpoint:
-                    type: string
-                    example: https://api.example.com/authorize
-                  token_endpoint:
-                    type: string
-                    example: https://api.example.com/token
-                  userinfo_endpoint:
-                    type: string
-                    example: https://api.example.com/userinfo
-                  jwks_uri:
-                    type: string
-                    example: https://api.example.com/jwks
-        400:
-          $ref: "#/components/responses/400"
-        403:
-          $ref: "#/components/responses/403"
-        429:
-          $ref: "#/components/responses/429"
-        500:
-          $ref: "#/components/responses/500"
-      x-amazon-apigateway-integration:
-        httpMethod: "POST"
-        uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:OidcProvider-Stub-${AWS::StackName}:live/invocations
-        responses:
-          default:
-            statusCode: "200"
-        passthroughBehavior: "when_no_match"
-        contentHandling: "CONVERT_TO_TEXT"
-        type: "aws_proxy"
-
-  /.well-known/jwks.json:
-    get:
-      tags:
-        - Backend configuration Endpoint for OIDC jwks keys
-      summary: Retrieve OIDC jwks keys    
-      responses:
-        200:
-          description: >-
-            OK - key ring returned
-          headers:
-            Cache-Control:
-              schema:
-                type: "string"
-            Content-Type:
-              schema:
-                type: "string"
-            Strict-Transport-Security:
-              schema:
-                type: "string"
-            X-Content-Type-Options:
-              schema:
-                type: "string"
-            X-Frame-Options:
-              schema:
-                type: "string"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/JWKSFile"
-        400:
-          $ref: "#/components/responses/400"
-        403:
-          $ref: "#/components/responses/403"
-        429:
-          $ref: "#/components/responses/429"
-        500:
-          $ref: "#/components/responses/500"
-      x-amazon-apigateway-integration:
-        httpMethod: "POST"
-        uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:OidcProvider-Stub-${AWS::StackName}:live/invocations
-        responses:
-          default:
-            statusCode: "200"
-        passthroughBehavior: "when_no_match"
-        contentHandling: "CONVERT_TO_TEXT"
-        type: "aws_proxy"
-
-  /authorize:
-    get:
-      operationId: authorize
-      summary: returns an authorization code to the user logged in
-      description: >-
-        returns an authorization code to the user logged in
-      tags:
-        - Backend authorize Endpoint for OIDC
+  /{proxy+}:
+    x-amazon-apigateway-any-method:
       parameters:
-        - $ref: "#/components/parameters/AuthCode"
-        - $ref: "#/components/parameters/RedirectUri"
-      x-amazon-apigateway-request-validator: "both"
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
       x-amazon-apigateway-integration:
-        httpMethod: "POST"
+        httpMethod: POST
         uri:
           Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:OidcProvider-Stub-${AWS::StackName}:live/invocations
-        responses:
-          default:
-            statusCode: "302"
-        passthroughBehavior: "when_no_match"
-        contentHandling: "CONVERT_TO_TEXT"
-        type: "aws_proxy"
-      responses:
-        302:
-          description: >-
-            Created - Authentication code is valid 
-            is returned.
-          headers:
-            Location:
-              schema:
-                type: "string"
-            Cache-Control:
-              schema:
-                type: "string"
-            Content-Type:
-              schema:
-                type: "string"
-            Strict-Transport-Security:
-              schema:
-                type: "string"
-            X-Content-Type-Options:
-              schema:
-                type: "string"
-            X-Frame-Options:
-              schema:
-                type: "string"
-        400:
-          $ref: "#/components/responses/400"
+        passthroughBehavior: when_no_match
+        contentHandling: CONVERT_TO_TEXT
+        type: aws_proxy
 
 components:
   ## ---------------------
@@ -357,7 +191,7 @@ components:
             required:
               - kty
 
-   ## ---------------------
+  ## ---------------------
   ## Response Definitions
   ## ---------------------
   responses:
@@ -412,7 +246,7 @@ components:
           examples:
             TEMPORARILY_UNAVAILABLE:
               $ref: "#/components/examples/TemporarilyUnavailableError"
-  
+
   parameters:
     AuthCode:
       name: state
@@ -424,7 +258,7 @@ components:
     RedirectUri:
       name: redirect_uri
       in: query
-      description: The clients Redirect uri 
+      description: The clients Redirect uri
       required: true
       schema:
         type: string

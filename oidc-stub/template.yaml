@@ -18,7 +18,6 @@ Parameters:
     AllowedValues:
       - "dev"
       - "build"
-
     ConstraintDescription: Ensure environment variable is set to one of dev, build.
   PermissionsBoundary:
     Description: "The ARN of the permissions boundary to apply when creating IAM roles"
@@ -28,6 +27,11 @@ Parameters:
     Type: String
     Default: "vpc-cri"
     Description: The name of the VPC stack deployed.
+  RedirectUri:
+    Type: String
+    Default: "https://return.dev.account.gov.uk/callback"
+    Description: >
+      The redirect URI to use in the stub
 
 Mappings:
   EnvironmentConfiguration: # This is where you store per-environment settings.
@@ -113,16 +117,6 @@ Resources:
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
   
-  ## OIDC Provider as IAM entity- Local deployment
-  # OIDCProvider:
-  #   Type: AWS::IAM::OIDCProvider
-  #   Properties:
-  #     ClientIdList:
-  #       - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-  #     ThumbprintList:
-  #       - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-  #     Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
-
   ### Start of API Gateway definition.
 
   MockOidcRestApi:
@@ -215,7 +209,7 @@ Resources:
           POWERTOOLS_SERVICE_NAME: MockOidcProviderHandler
           OIDC_CLIENT_ID: !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
           OIDC_URL: !FindInMap [EnvironmentVariables, !Ref Environment, OIDCURL]
-          REDIRECT_URI: !Sub "https://return.${Environment}.account.gov.uk/callback"
+          REDIRECT_URI: !Ref RedirectUri
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
