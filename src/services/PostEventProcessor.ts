@@ -239,7 +239,7 @@ export class PostEventProcessor {
 				}
 				case Constants.IPV_F2F_RESTART: {
 					if (process.env.F2F_RESET_ENABLED === "true"){
-						updateExpression = "REMOVE nameParts, journeyWentAsyncOn, ipvStartedOn, documentUploadedOn, postOfficeVisitDetails , postOfficeInfo, readyToResumeOn, documentType, notified, documentExpiryDate";
+						updateExpression = "REMOVE nameParts, journeyWentAsyncOn, ipvStartedOn, documentUploadedOn, postOfficeVisitDetails , postOfficeInfo, readyToResumeOn, documentType, notified, documentExpiryDate, errorDescription";
 						expressionAttributeValues = {};
 						break;
 					} else {
