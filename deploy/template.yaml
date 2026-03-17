@@ -183,7 +183,7 @@ Mappings:
       DNSSUFFIX: "return.integration.account.gov.uk"
       OIDCURL: "https://oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
-      VCGENERATIONFAILUREEMAILENABLED: false
+      VCGENERATIONFAILUREEMAILENABLED: true
       F2FRESETENABLED: true
     production:
       ISSUER: "https://return.account.gov.uk"
@@ -200,7 +200,7 @@ Mappings:
       DNSSUFFIX: "return.account.gov.uk"
       OIDCURL: "https://oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
-      VCGENERATIONFAILUREEMAILENABLED: false
+      VCGENERATIONFAILUREEMAILENABLED: true
       F2FRESETENABLED: true
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
