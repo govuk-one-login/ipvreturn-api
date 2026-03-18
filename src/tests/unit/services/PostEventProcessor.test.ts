@@ -568,7 +568,7 @@ describe("PostEventProcessor", () => {
 			process.env.F2F_RESET_ENABLED = "true";
 			await postEventProcessorMockSessionService.processRequest(VALID_IPV_F2F_RESTART_TXMA_EVENT_STRING);
 			 
-			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("7561b2c4-7466-4d58-ad02-d52c1b900bf9", "REMOVE nameParts, journeyWentAsyncOn, ipvStartedOn, documentUploadedOn, postOfficeVisitDetails , postOfficeInfo, readyToResumeOn, documentType, notified, documentExpiryDate", {});
+			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("7561b2c4-7466-4d58-ad02-d52c1b900bf9", "REMOVE nameParts, journeyWentAsyncOn, ipvStartedOn, documentUploadedOn, postOfficeVisitDetails , postOfficeInfo, readyToResumeOn, documentType, notified, documentExpiryDate, errorDescription", {});
 			process.env.F2F_RESET_ENABLED = "false";
 		});
 
