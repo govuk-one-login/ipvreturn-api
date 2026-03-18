@@ -57,7 +57,7 @@ Parameters:
   OIDCDNS:
     Description: "Mock OIDC DNS"
     Type: String
-    Default: "ipr-oidc-stub-oidcstub.return.dev.account.gov.uk"
+    Default: "jb-ipr-oidc-stub-oidcstub.return.dev.account.gov.uk"
   LambdaDeploymentPreference:
     Description: >
       Canary strategy to be used with your Lambda applications please refer to documentation for configurations -
@@ -128,7 +128,7 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.dev.account.gov.uk"
-      OIDCURL: "https://oidc.staging.account.gov.uk/"      
+      OIDCURL: "https://jb-ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
       VCGENERATIONFAILUREEMAILENABLED: true
@@ -533,18 +533,16 @@ Resources:
   ### OIDC Provider as IAM entity
   OIDCProvider:
     Type: AWS::IAM::OIDCProvider
-    Condition: NotLocalTestStack
     Properties:
       ClientIdList:
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-      ThumbprintList:
-        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
+      ThumbprintList: 
+        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}" # Needs set based on the OICURL
       Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
   ### AssumeRoleWithWebIdentityRole
   AssumeRoleWithWebIdentityRole:
     Type: "AWS::IAM::Role"
-    Condition: NotLocalTestStack
     Properties:
       AssumeRolePolicyDocument:
         Statement:
@@ -586,38 +584,6 @@ Resources:
         - UsePermissionsBoundary
         - !Ref PermissionsBoundary
         - !Ref AWS::NoValue
-
-  ### AssumeRoleWithWebIdentityRole-dev testing
-  DevAssumeRoleWithWebIdentityRole:
-    Type: "AWS::IAM::Role"
-    Condition: IsLocalTestStack
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action: "sts:AssumeRoleWithWebIdentity"
-            Effect: Allow
-            Principal:              
-              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/${OIDCDNS}/"
-        Version: 2012-10-17
-      Policies:
-        - PolicyName: GetSessionEventPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "dynamodb:GetItem"
-                Resource:
-                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
-              - Effect: Allow
-                Action:
-                  - "kms:Decrypt"
-                Resource:
-                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
-      PermissionsBoundary: !If
-        - UsePermissionsBoundary
-        - !Ref PermissionsBoundary
-        - !Ref AWS::NoValue  
 
   LambdaDeployRole:
     Type: AWS::IAM::Role
@@ -757,28 +723,10 @@ Resources:
 
   ### API Gateway Custom Domain definition
 
-  IPVRApiCustomDomain:
-    Type: AWS::ApiGateway::DomainName
-    Condition: NotLocalTestStack
-    Properties:
-      DomainName: !Sub
-        - "api.${DNSSUFFIX}"
-        - DNSSUFFIX:
-            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
-      RegionalCertificateArn: !Sub "{{resolve:ssm:/${Environment}/Platform/ACM/PrimaryZoneWildcardCertificateARN}}"
-      SecurityPolicy: TLS_1_2
-  
   IPVRApiCertificateRecord:
     Type: AWS::Route53::RecordSet
-    Condition: NotLocalTestStack
     Properties:
-      Name: !Sub
-        - "api.${DNSSUFFIX}"
-        - DNSSUFFIX:
-            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+      Name: !Ref IPVRApiCustomDomain
       Type: A
       HostedZoneId: !Sub "{{resolve:ssm:/${Environment}/Platform/Route53/PrimaryZoneID}}"
       AliasTarget:
@@ -787,15 +735,30 @@ Resources:
 
   IPVRApiMapping:
     Type: AWS::ApiGateway::BasePathMapping
-    Condition: NotLocalTestStack
     DependsOn: IPVRApiCustomDomain
     Properties:
-      DomainName: !Sub
-        - "api.${DNSSUFFIX}"
-        - DNSSUFFIX:
-            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+      DomainName: !Ref IPVRApiCustomDomain
       RestApiId: !Ref IPVRRestApi
       Stage: !Sub "${IPVRRestApi.Stage}"
+
+  IPVRApiCustomDomain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: !If
+        - IsLocalTestStack
+        - !Sub
+          - "api-${AWS::StackName}.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+        - !Sub
+          - "api.${DNSSUFFIX}"
+          - DNSSUFFIX:
+             !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      RegionalCertificateArn: !Sub "{{resolve:ssm:/${Environment}/Platform/ACM/PrimaryZoneWildcardCertificateARN}}"
+      SecurityPolicy: TLS_1_2
 
   ### End of API Gateway Custom Domain definition
 
@@ -1434,11 +1397,7 @@ Resources:
           CLIENT_ID_SSM_PATH: !Sub "/${Environment}/ipvreturn/CLIENT_ID"
           OIDC_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
           RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
-          ASSUMEROLE_WITH_WEB_IDENTITY_ARN:
-            Fn::If:
-              - NotLocalTestStack
-              - !GetAtt AssumeRoleWithWebIdentityRole.Arn
-              - !GetAtt DevAssumeRoleWithWebIdentityRole.Arn
+          ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
       Policies:
         - AWSLambdaBasicExecutionRole

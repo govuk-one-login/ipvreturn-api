@@ -18,7 +18,6 @@ Parameters:
     AllowedValues:
       - "dev"
       - "build"
-
     ConstraintDescription: Ensure environment variable is set to one of dev, build.
   PermissionsBoundary:
     Description: "The ARN of the permissions boundary to apply when creating IAM roles"
@@ -68,7 +67,7 @@ Globals:
     BinaryMediaTypes:
       - '*/*'
   Function:
-    Runtime: nodejs20.x
+    Runtime: nodejs22.x
     VpcConfig:
       SecurityGroupIds:
         - !GetAtt LambdaEgressSecurityGroup.GroupId
@@ -92,10 +91,9 @@ Globals:
       - arm64
     Environment:
       Variables:
-        # These should always be alphabetically organised.
-        AWS_STACK_NAME: !Sub ${AWS::StackName} # The AWS Stack Name, as passed into the template.
-        POWERTOOLS_LOG_LEVEL: INFO # The LogLevel for the AWS PowerTools LogHelper
-        POWERTOOLS_METRICS_NAMESPACE: IPR-CRI # The Metric Namespace for the AWS PowerTools MetricHelper
+        AWS_STACK_NAME: !Sub ${AWS::StackName}
+        POWERTOOLS_LOG_LEVEL: "DEBUG"
+        POWERTOOLS_METRICS_NAMESPACE: "IPR-CRI"
     AutoPublishAlias: live
 
 Resources:
@@ -112,16 +110,6 @@ Resources:
           ToPort: 443
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
-  
-  ## OIDC Provider as IAM entity- Local deployment
-  # OIDCProvider:
-  #   Type: AWS::IAM::OIDCProvider
-  #   Properties:
-  #     ClientIdList:
-  #       - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-  #     ThumbprintList:
-  #       - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-  #     Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
   ### Start of API Gateway definition.
 
@@ -162,20 +150,21 @@ Resources:
         FMSRegionalPolicy: false
         CustomPolicy: true
 
-  # MockOidcRestApiUsagePlan:
-  #   DependsOn:
-  #     - "MockOidcRestApi"
-  #   Type: AWS::ApiGateway::UsagePlan
-  #   Properties:
-  #     ApiStages:
-  #       - ApiId: !Ref MockOidcRestApi
-  #         Stage: !Ref Environment
-  #     Quota:
-  #       Limit: 250000
-  #       Period: DAY
-  #     Throttle:
-  #       BurstLimit: 3000 # requests the API can handle concurrently
-  #       RateLimit: 50 # allowed requests per second
+
+  MockOidcRestApiUsagePlan:
+     DependsOn:
+       - "MockOidcRestApiStage"
+     Type: AWS::ApiGateway::UsagePlan
+     Properties:
+       ApiStages:
+         - ApiId: !Ref MockOidcRestApi
+           Stage: !Ref Environment
+       Quota:
+         Limit: 250000
+         Period: DAY
+       Throttle:
+         BurstLimit: 3000 # requests the API can handle concurrently
+         RateLimit: 50 # allowed requests per second
 
   MockOidcAPIGatewayAccessLogGroup:
     Type: AWS::Logs::LogGroup
@@ -186,7 +175,6 @@ Resources:
           !Ref Environment,
           logretentionindays,
         ]
-
       Tags:
         - Key: Product
           Value: GOV.UK Sign In
@@ -199,7 +187,6 @@ Resources:
         - Key: Name
           Value: APIGatewayAccessLogGroup
 
-
   ### End of API Gateway definition.
 
   ### OIDC Provider Function
@@ -209,24 +196,28 @@ Resources:
     Properties:
       FunctionName: !Sub "OidcProvider-Stub-${AWS::StackName}"
       Handler: MockOidcProviderHandler.handler
-      CodeUri: ./src/
+      CodeUri: ./src
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: MockOidcProviderHandler
           OIDC_CLIENT_ID: !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-          OIDC_URL: !FindInMap [EnvironmentVariables, !Ref Environment, OIDCURL]
           REDIRECT_URI: !Sub "https://return.${Environment}.account.gov.uk/callback"
+          ISSUER: !Ref MockOidcApiGatewayCustomDomain
+          DEBUG: oidc-provider:*
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
     Metadata:
-      BuildMethod: esbuild
+      BuildMethod: makefile
       BuildProperties:
         Minify: true
         Target: "es2020"
-        Sourcemap: false
+        format: cjs
+        Sourcemap: true
         EntryPoints:
           - MockOidcProviderHandler.ts
+        Loader:
+          - .ejs=copy
         UseNpmCi: True
 
   MockOidcProviderFunctionLogGroup:
