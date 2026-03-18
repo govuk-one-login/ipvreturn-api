@@ -13,23 +13,18 @@
     "esbuild": "0.25.2"
   },
   "scripts": {
-    "lint:fix": "eslint --fix --output-file ./reports/eslint/report.html --format html -c .eslintrc.js --ext .ts .",
+    "lint:fix": "eslint --fix --output-file ./reports/eslint/report.html --format html -c eslint.config.mjs --ext .ts .",
     "compile": "./node_modules/.bin/tsc",
-    "lint": "eslint --output-file ./reports/eslint/reportFile.html --format html -c .eslintrc.js --ext .ts"
+    "lint": "eslint -c eslint.config.mjs --ext *.ts ."
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.148",
     "@types/js-yaml": "4.0.9",
     "@types/node": "20.14.8",
     "@types/node-jose": "1.1.10",
-    "@typescript-eslint/eslint-plugin": "5.62.0",
-    "eslint": "8.57.1",
-    "eslint-config-airbnb-typescript": "17.1.0",
-    "eslint-config-prettier": "8.10.0",
-    "eslint-plugin-jsdoc": "50.6.3",
-    "eslint-plugin-prefer-arrow": "1.2.3",
-    "eslint-plugin-prettier": "4.2.1",
-    "eslint-plugin-security": "1.6.0",
+    "@typescript-eslint/eslint-plugin": "8.56.1",
+    "@typescript-eslint/parser": "8.56.1",
+    "eslint": "10.0.2",
     "prettier": "2.8.4",
     "ts-node": "10.9.2",
     "typescript": "4.9.5",

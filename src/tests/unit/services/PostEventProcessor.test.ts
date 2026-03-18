@@ -427,7 +427,7 @@ describe("PostEventProcessor", () => {
 		it("Calls saveEventData with appropriate payload for F2F_YOTI_START event", async () => {
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			await postEventProcessorMockSessionService.processRequest(JSON.stringify(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT));
-			// eslint-disable-next-line @typescript-eslint/unbound-method
+			 
 			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, nameParts = :nameParts, postOfficeInfo = :postOfficeInfo, documentType = :documentType, clientSessionId = :clientSessionId", { 
 				":journeyWentAsyncOn": 1681902001, 
 				":clientName": "test",
@@ -472,7 +472,7 @@ describe("PostEventProcessor", () => {
 			const yotiStartEvent = VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT;
 			delete yotiStartEvent.extensions;
 			await postEventProcessorMockSessionService.processRequest(JSON.stringify(yotiStartEvent));
-			// eslint-disable-next-line @typescript-eslint/unbound-method
+			 
 			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET journeyWentAsyncOn = :journeyWentAsyncOn, expiresOn = :expiresOn, ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName, redirectUri = :redirectUri, nameParts = :nameParts, documentType = :documentType, clientSessionId = :clientSessionId", { 
 				":journeyWentAsyncOn": 1681902001, 
 				":clientName": "test",
@@ -583,7 +583,7 @@ describe("PostEventProcessor", () => {
 	describe("IPV_F2F_CRI_VC_ERROR event", () => {
 		it("Sets readyToResumeOn when error_description indicates VC generation failure", async () => {
 			await postEventProcessorMockServices.processRequest(VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT_STRING);
-			// eslint-disable-next-line @typescript-eslint/unbound-method
+			 
 			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith(
 				"01333e01-dde3-412f-a484-4444", 
 				"SET errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn", 
@@ -598,7 +598,7 @@ describe("PostEventProcessor", () => {
 			const sessionExpiredEvent = JSON.parse(VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT_STRING);
 			sessionExpiredEvent.extensions.error_description = "Session expired";
 			await postEventProcessorMockServices.processRequest(JSON.stringify(sessionExpiredEvent));
-			// eslint-disable-next-line @typescript-eslint/unbound-method
+			 
 			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith(
 				"01333e01-dde3-412f-a484-4444", 
 				"SET errorDescription = :errorDescription", 
