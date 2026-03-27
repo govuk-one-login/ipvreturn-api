@@ -1853,7 +1853,7 @@ Resources:
 
   5XXErrorAlarm:
     Type: AWS::CloudWatch::Alarm
-    # Condition: "DeployAlarms"
+    Condition: "DeployAlarms"
     Properties:
       AlarmName: !Sub "${AWS::StackName}-5XXErrorAlarm"
       AlarmDescription: !Sub 
