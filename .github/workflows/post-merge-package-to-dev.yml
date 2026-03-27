@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - IPS-2208-ipvreturn-api
     paths-ignore:
       - 'infra-l2-dynamo/**'
       - 'infra-l2-kms/**'
