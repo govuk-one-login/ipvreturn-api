@@ -131,7 +131,17 @@ const getTxMAS3FileNames = async (prefix: string): Promise<any> => {
 		},
 	});
 	const listObjectsParsedResponse = xmlParser.parse(listObjectsResponse.data);
-	return listObjectsParsedResponse?.ListBucketResult?.Contents;
+	let contents = listObjectsParsedResponse?.ListBucketResult?.Contents;
+
+	//If multiple files, sort so newest is first
+	if (Array.isArray(contents)) {
+		contents.sort((a: any, b: any) => {
+            const dateA = new Date(a.LastModified);
+            const dateB = new Date(b.LastModified);
+            return dateA.getTime() - dateB.getTime();
+        });
+	}
+	return contents;
 };
 
 const getAllTxMAS3FileContents = async (fileNames: any[]): Promise<AllTxmaEvents> => {
