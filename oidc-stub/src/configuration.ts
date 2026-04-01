@@ -10,11 +10,7 @@ const configuration: Configuration = {
       response_types: ["code"],
       grant_types: ["authorization_code"],
       token_endpoint_auth_method: "private_key_jwt",
-      jwks: {
-        keys: [
-          //JWK value can be set for testing should be using jwks endpoint
-        ]
-      }    
+      jwks_uri: process.env.JWKS_URI || "https://localhost:8080/.well-known/jwks.json"
     },
   ],
   interactions: {

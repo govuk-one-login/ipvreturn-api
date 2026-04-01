@@ -54,10 +54,14 @@ Parameters:
     Description: "Set to true to apply reserved concurrency when deploying in DEV environments"
     Type: String
     Default: "false"
-  OIDCDNS:
-    Description: "Mock OIDC DNS"
+  OIDCUrl:
+    Description: "Mock OIDC url"
     Type: String
-    Default: "jb-ipr-oidc-stub-oidcstub.return.dev.account.gov.uk"
+    Default: "none"
+  OIDCThumbprint:
+    Description: "Mock OIDC thumprint"
+    Type: String
+    Default: "none"
   LambdaDeploymentPreference:
     Description: >
       Canary strategy to be used with your Lambda applications please refer to documentation for configurations -
@@ -128,8 +132,8 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.dev.account.gov.uk"
-      OIDCURL: "https://jb-ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"
-      RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
+      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"
+      RETURNREDIRECTURL: "https://ipvreturn-front.return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
       VCGENERATIONFAILUREEMAILENABLED: true
       F2FRESETENABLED: true
@@ -146,7 +150,7 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.build.account.gov.uk"
-      OIDCURL: "https://oidc.staging.account.gov.uk/"
+      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.build.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
       TESTHARNESSURL: "https://testharness.return.build.account.gov.uk"
       VCGENERATIONFAILUREEMAILENABLED: true
@@ -253,15 +257,6 @@ Conditions:
       - Fn::Equals:
           - !Ref SecretPrefix
           - "none"
-  CreateProdResources: !Equals [ !Ref Environment, production]
-  CreateNonProdResources: !Not [!Condition CreateProdResources]
-  IsMockedEnvironment: !Or
-    - Fn::Equals:
-        - !Ref Environment
-        - dev
-    - Fn::Equals:
-        - !Ref Environment
-        - build
   DeployAlarms: !Or
     - Condition: IsNotDevelopment
     - !Equals [!Ref DeployAlarmsInDev, true]
@@ -269,22 +264,16 @@ Conditions:
     - Condition: IsNotDevelopment
     - !Equals [!Ref ApplyReservedConcurrencyInDev, true]
   PerformanceTestEnv: !Equals [ !Ref Environment, build]
-  NotLocalTestStack:
-    Fn::Not:
-      - Fn::And:
-          - Fn::Equals:
-              - !Ref Environment
-              - dev
-          - Fn::Not:
-              - Fn::Equals:
-                  - !Sub "${AWS::StackName}"
-                  - "ipvreturn-api"
-  IsLocalTestStack: !Not
-    - !Condition NotLocalTestStack
+  IsLocalTestStack: !And
+      - !Equals [!Ref Environment, "dev"]
+      - !Not [!Equals [!Ref "AWS::StackName", "ipvreturn-api"]]
   UseCanaryDeploy:
     Fn::Or:
       - Fn::Equals: [ !Ref Environment, "dev" ]
       - Fn::Equals: [ !Ref Environment, "build" ]
+  UsingLocalOIDCStub: !And
+      - !Not [!Equals [!Ref OIDCUrl, "none"]]
+      - !Not [!Equals [!Ref OIDCThumbprint, "none"]]
 
 Globals:
   Function:
@@ -537,8 +526,11 @@ Resources:
       ClientIdList:
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
       ThumbprintList: 
-        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}" # Needs set based on the OICURL
-      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+        !If 
+          - UsingLocalOIDCStub
+          - - !Ref OIDCThumbprint # The extra dash here makes it a list
+          - - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
+      Url: !If [ UsingLocalOIDCStub, !Ref OIDCUrl, !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ] ]
 
   ### AssumeRoleWithWebIdentityRole
   AssumeRoleWithWebIdentityRole:
@@ -821,7 +813,7 @@ Resources:
               Action:
                 - "kms:Decrypt"
               Resource: !If
-                - IsMockedEnvironment
+                - IsNotProdLikeEnvironment
                 - !GetAtt MockTxMAKMSEncryptionKey.Arn
                 - !FindInMap [PlatformConfiguration, !Ref Environment, TxMAKey]
             - Sid: TxMASQSConsumeEventPolicy
@@ -832,7 +824,7 @@ Resources:
                 - "sqs:ChangeMessageVisibility"
                 - "sqs:ReceiveMessage"
               Resource: !If
-                - IsMockedEnvironment
+                - IsNotProdLikeEnvironment
                 - !GetAtt MockTxMASQSQueue.Arn
                 - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
 
@@ -878,7 +870,7 @@ Resources:
       BatchSize: 1
       Enabled: true
       EventSourceArn: !If
-        - IsMockedEnvironment
+        - IsNotProdLikeEnvironment
         - !GetAtt MockTxMASQSQueue.Arn
         - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
       FunctionName: !Ref PostEventFunction
@@ -1395,7 +1387,7 @@ Resources:
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
           CLIENT_ID_SSM_PATH: !Sub "/${Environment}/ipvreturn/CLIENT_ID"
-          OIDC_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+          OIDC_URL: !If [ UsingLocalOIDCStub, !Ref OIDCUrl, !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ] ]
           RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
           ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
@@ -1632,7 +1624,7 @@ Resources:
 
   MockTxMASQSQueue:
     Type: AWS::SQS::Queue
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Properties:
       MessageRetentionPeriod:
         !FindInMap [
@@ -1651,7 +1643,7 @@ Resources:
 
   MockTxMASQSQueuePolicy:
     Type: AWS::SQS::QueuePolicy
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Properties:
       Queues:
         - !Ref MockTxMASQSQueue
@@ -1668,14 +1660,14 @@ Resources:
 
   MockTxMASQSQueueDeadLetterQueue:
     Type: AWS::SQS::Queue
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Properties:
       MessageRetentionPeriod: 259200 # three days
       KmsMasterKeyId: !Sub TxMAKMSEncryptionKey
 
   MockTxMAKMSEncryptionKey:
     Type: AWS::KMS::Key
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Properties:
       Description: A KMS Key for encrypting the SQS Queue for Mock TxMA
       Enabled: true
@@ -1710,7 +1702,7 @@ Resources:
 
   MockTxMAKeyAlias:
     Type: AWS::KMS::Alias
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Properties:
       AliasName: !If
         - CreateDevResources
@@ -1809,6 +1801,92 @@ Resources:
         - !Sub "alias/TxMAKMSEncryptionKey-${AWS::StackName}"
         - alias/TxMAKMSEncryptionKey
       TargetKeyId: !Ref TxMAKMSEncryptionKey
+
+  ##### TO BE REPLACED WITH KEY ROTATION
+  TempJsonWebKeysBucket:
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub govuk-one-login-ipvr-published-keys-${Environment}-manual
+      VersioningConfiguration:
+        Status: "Enabled"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+  
+  TempJsonWebKeysBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TempJsonWebKeysBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "1. Delegate IAM Access"
+            Action:
+              - "s3:*"
+            Effect: Allow
+            Resource:
+              - !GetAtt TempJsonWebKeysBucket.Arn
+              - !Sub ${TempJsonWebKeysBucket.Arn}/*
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
+          - Sid: "2. Allow Read permissions"
+            Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+                - lambda.amazonaws.com
+            Action:
+              - s3:ListBucket
+              - s3:GetBucketLocation
+              - s3:GetObject
+            Resource:
+              - !GetAtt TempJsonWebKeysBucket.Arn
+              - !Sub ${TempJsonWebKeysBucket.Arn}/*
+    DependsOn: TempJsonWebKeysBucket
+
+  TempJWKSBucketRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: "sts:AssumeRole"
+            Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+        Version: 2012-10-17
+      Policies:
+        - PolicyName: AccessJWKSjson
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                Resource:
+                  - !GetAtt TempJsonWebKeysBucket.Arn
+                  - !Sub "arn:aws:s3:::${TempJsonWebKeysBucket}/*"
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                Resource:
+                  - !Sub "arn:aws:s3:::govuk-one-login-ipvr-published-keys-${Environment}-manual/.well-known/jwks.json"
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
+      Tags:
+        - Key: key_consumer_type
+          Value: manage
+
+##############
 
   5XXErrorAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -2764,23 +2842,23 @@ Resources:
 
 Outputs:
   MockTxMASQSQueue:
+    Condition: IsNotProdLikeEnvironment
     Description: "SQS TXMA Consumer Queue"
     Value: !Ref MockTxMASQSQueue
-    Condition: IsMockedEnvironment
   MockTxMASQSQueueArn:
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Description: "Arn of SQS TXMA Consumer Queue"
     Value: !GetAtt MockTxMASQSQueue.Arn
     Export:
       Name: !Sub ${AWS::StackName}-MockTxMASQSQueue-arn
   MockTxMASQSQueueName:
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Description: "Name SQS TXMA Consumer Queue"
     Value: !GetAtt MockTxMASQSQueue.QueueName
     Export:
       Name: !Sub ${AWS::StackName}-MockTxMASQSQueue-name
   MockTxMAKMSEncryptionKey:
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Description: "Arn of the MockTxMAKMSEncryptionKey"
     Value: !GetAtt MockTxMAKMSEncryptionKey.Arn
     Export:

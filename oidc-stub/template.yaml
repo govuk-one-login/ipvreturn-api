@@ -27,7 +27,10 @@ Parameters:
     Type: String
     Default: "vpc-cri"
     Description: The name of the VPC stack deployed.
-
+  JwksUri:
+    Type: String
+    Default: "none"
+    Description: The primary stack jwks uri.
 Mappings:
   EnvironmentConfiguration: # This is where you store per-environment settings.
     dev:
@@ -40,12 +43,14 @@ Mappings:
   EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
     dev:
       OIDCSTUBDNS: "oidcstub.return.dev.account.gov.uk"
-      JWKSURI: "https://ipvreturn-api.return.dev.account.gov.uk"
-      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"  
+      JWKSURI: "https://ipvreturn-api.return.dev.account.gov.uk/.well-known/interim-jwks.json"
+      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"
+      REDIRECTURI: "https://ipvreturn-front.return.dev.account.gov.uk/callback" 
     build:
       OIDCSTUBDNS: "oidcstub.return.build.account.gov.uk"
-      JWKSURI: "https://ipvreturn-api.return.build.account.gov.uk"
-      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.build.account.gov.uk/"  
+      JWKSURI: "https://ipvreturn-api.return.build.account.gov.uk/.well-known/interim-jwks.json"
+      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.build.account.gov.uk/" 
+      REDIRECTURI: "https://return.build.account.gov.uk/callback" 
 
 Conditions:
   CreateDevResources: !Equals
@@ -61,7 +66,11 @@ Conditions:
       - Fn::Equals:
           - !Ref PermissionsBoundary
           - "none"
-
+  JwksSet:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref JwksUri
+          - "none"
 Globals:
   Api:
     BinaryMediaTypes:
@@ -201,8 +210,12 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: MockOidcProviderHandler
           OIDC_CLIENT_ID: !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-          REDIRECT_URI: !Sub "https://return.${Environment}.account.gov.uk/callback"
+          REDIRECT_URI: !FindInMap [ EnvironmentVariables, !Ref Environment, REDIRECTURI ]
           ISSUER: !Ref MockOidcApiGatewayCustomDomain
+          JWKS_URI: !If
+            - JwksSet
+            - !Ref JwksUri
+            - !FindInMap [ EnvironmentVariables, !Ref Environment, JWKSURI ]
           DEBUG: oidc-provider:*
       Policies:
         - AWSLambdaBasicExecutionRole
