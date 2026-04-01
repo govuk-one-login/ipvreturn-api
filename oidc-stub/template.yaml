@@ -43,12 +43,12 @@ Mappings:
   EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
     dev:
       OIDCSTUBDNS: "oidcstub.return.dev.account.gov.uk"
-      JWKSURI: "https://ipvreturn-api.return.dev.account.gov.uk/.well-known/interim-jwks.json"
+      JWKSURI: "https://api.return.dev.account.gov.uk/.well-known/interim-jwks.json"
       OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"
       REDIRECTURI: "https://ipvreturn-front.return.dev.account.gov.uk/callback" 
     build:
       OIDCSTUBDNS: "oidcstub.return.build.account.gov.uk"
-      JWKSURI: "https://ipvreturn-api.return.build.account.gov.uk/.well-known/interim-jwks.json"
+      JWKSURI: "https://api.return.build.account.gov.uk/.well-known/interim-jwks.json"
       OIDCURL: "https://ipr-oidc-stub-oidcstub.return.build.account.gov.uk/" 
       REDIRECTURI: "https://return.build.account.gov.uk/callback" 
 

@@ -62,6 +62,10 @@ Parameters:
     Description: "Mock OIDC thumprint"
     Type: String
     Default: "none"
+  OIDCProviderRequired:
+    Description: "Mock OIDC thumprint"
+    Type: String
+    Default: "true"
   LambdaDeploymentPreference:
     Description: >
       Canary strategy to be used with your Lambda applications please refer to documentation for configurations -
@@ -132,7 +136,7 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.dev.account.gov.uk"
-      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"
+      OIDCURL: "ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"
       RETURNREDIRECTURL: "https://ipvreturn-front.return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
       VCGENERATIONFAILUREEMAILENABLED: true
@@ -150,7 +154,7 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.build.account.gov.uk"
-      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.build.account.gov.uk/"
+      OIDCURL: "ipr-oidc-stub-oidcstub.return.build.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
       TESTHARNESSURL: "https://testharness.return.build.account.gov.uk"
       VCGENERATIONFAILUREEMAILENABLED: true
@@ -168,7 +172,7 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.staging.account.gov.uk"
-      OIDCURL: "https://oidc.staging.account.gov.uk/"
+      OIDCURL: "oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
       VCGENERATIONFAILUREEMAILENABLED: true
       F2FRESETENABLED: true
@@ -185,7 +189,7 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.integration.account.gov.uk"
-      OIDCURL: "https://oidc.integration.account.gov.uk/"
+      OIDCURL: "oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
       VCGENERATIONFAILUREEMAILENABLED: false
       F2FRESETENABLED: false
@@ -202,7 +206,7 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.account.gov.uk"
-      OIDCURL: "https://oidc.account.gov.uk/"
+      OIDCURL: "oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
       VCGENERATIONFAILUREEMAILENABLED: false
       F2FRESETENABLED: false
@@ -274,6 +278,7 @@ Conditions:
   UsingLocalOIDCStub: !And
       - !Not [!Equals [!Ref OIDCUrl, "none"]]
       - !Not [!Equals [!Ref OIDCThumbprint, "none"]]
+  OIDCProviderRequired: !Equals [!Ref OIDCProviderRequired, "true"]
 
 Globals:
   Function:
@@ -521,6 +526,7 @@ Resources:
 
   ### OIDC Provider as IAM entity
   OIDCProvider:
+    Condition: OIDCProviderRequired
     Type: AWS::IAM::OIDCProvider
     Properties:
       ClientIdList:
@@ -530,7 +536,12 @@ Resources:
           - UsingLocalOIDCStub
           - - !Ref OIDCThumbprint # The extra dash here makes it a list
           - - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-      Url: !If [ UsingLocalOIDCStub, !Ref OIDCUrl, !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ] ]
+      Url: !Sub 
+        - "https://${ResolvedUrl}"
+        - ResolvedUrl: !If 
+            - UsingLocalOIDCStub
+            - !Ref OIDCUrl
+            - !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
   ### AssumeRoleWithWebIdentityRole
   AssumeRoleWithWebIdentityRole:
@@ -541,7 +552,12 @@ Resources:
           - Action: "sts:AssumeRoleWithWebIdentity"
             Effect: Allow
             Principal:
-              Federated: !GetAtt OIDCProvider.Arn
+              Federated: !Sub 
+                - "arn:aws:iam::${AWS::AccountId}:oidc-provider/${Url}"
+                - Url: !If 
+                    - UsingLocalOIDCStub
+                    - !Ref OIDCUrl
+                    - !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
         Version: 2012-10-17
       Policies:
         - PolicyName: GetSessionEventPolicy
@@ -1387,7 +1403,12 @@ Resources:
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
           CLIENT_ID_SSM_PATH: !Sub "/${Environment}/ipvreturn/CLIENT_ID"
-          OIDC_URL: !If [ UsingLocalOIDCStub, !Ref OIDCUrl, !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ] ]
+          OIDC_URL: !Sub 
+                - "https://${ResolvedUrl}"
+                - ResolvedUrl: !If 
+                    - UsingLocalOIDCStub
+                    - !Ref OIDCUrl
+                    - !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
           RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
           ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
