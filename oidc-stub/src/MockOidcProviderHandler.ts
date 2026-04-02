@@ -1,66 +1,42 @@
-// @ts-ignore 
-import Provider from "oidc-provider";
-// @ts-ignore
-import serverless from "serverless-http";
+import express from 'express';
+import { Provider } from 'oidc-provider';
+import serverlessExpress from '@codegenie/serverless-express';
+import configuration from './configuration';
+import routes from './routes';
+import * as path from 'node:path';
+import ejs from 'ejs';
 
-const issuer = (process.env.OIDC_URL || "http://localhost:3000").replace(/\/$/, "");
 
-const configuration: any = {
-  clients: [
-    {
-      client_id: process.env.OIDC_CLIENT_ID,
-      redirect_uris: [process.env.REDIRECT_URI],
-      response_types: ["code"],
-      grant_types: ["authorization_code"],
-      token_endpoint_auth_method: "none",
-    },
-  ],
+const app = express();
 
-  pkce: {
-    required: () => false,
-  },
+// Basic middleware
+app.set('views', path.join(__dirname, 'views'));
 
-  routes: {
-    authorization: "/authorize",
-    token: "/token",
-    jwks: "/.well-known/jwks.json",
-  },
+app.engine('ejs', ejs.renderFile);
+app.set('view engine', 'ejs');
 
-  features: {
-    devInteractions: { enabled: false },
-  },
+app.enable('trust proxy');
 
-  interactions: {
-    url: async (_ctx: any, interaction: any) => `/interaction/${interaction.uid}`,
-  },
+// We initialize these outside the handler to benefit from Lambda container reuse
+let serverlessHandle: any;
 
-  findAccount: async (_ctx: any, id: any) => ({
-    accountId: id,
-    async claims() {
-      return { sub: id };
-    },
-  }),
+const setup = async () => {
+  const issuer = "https://" + process.env.ISSUER + "/" || 'https://localhost:8080/';
+  const provider = new Provider(issuer, configuration);
 
-  proxy: true,
+  provider.proxy = true;
+
+  routes(app, provider);
+
+  app.use(provider.callback());
+
+  return serverlessExpress({ app });
 };
 
-const provider = new Provider(issuer, configuration);
-
-provider.app.use(async (ctx: any, next: any) => {
-  if (ctx.method === "GET" && ctx.path.startsWith("/interaction/")) {
-    await provider.interactionDetails(ctx.req, ctx.res);
-
-    await provider.interactionFinished(
-      ctx.req,
-      ctx.res,
-      { login: { accountId: "stub-user" }, consent: {} },
-      { mergeWithLastSubmission: false },
-    );
-
-    return;
+const handler = async (event: any, context: any) => {
+  if (!serverlessHandle) {
+    serverlessHandle = await setup();
   }
-
-  await next();
-});
-
-export const handler = serverless(provider.app);
+  return serverlessHandle(event, context);
+};
+module.exports = { handler };

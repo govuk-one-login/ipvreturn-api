@@ -32,7 +32,10 @@ Parameters:
     Default: "https://return.dev.account.gov.uk/callback"
     Description: >
       The redirect URI to use in the stub
-
+  JwksUri:
+    Type: String
+    Default: "none"
+    Description: The primary stack jwks uri.
 Mappings:
   EnvironmentConfiguration: # This is where you store per-environment settings.
     dev:
@@ -45,12 +48,14 @@ Mappings:
   EnvironmentVariables: # This is all the environment specific environment variables that don't belong in globals.
     dev:
       OIDCSTUBDNS: "oidcstub.return.dev.account.gov.uk"
-      JWKSURI: "https://ipvreturn-api.return.dev.account.gov.uk"
-      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"  
+      JWKSURI: "https://api.return.dev.account.gov.uk/.well-known/interim-jwks.json"
+      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"
+      REDIRECTURI: "https://ipvreturn-front.return.dev.account.gov.uk/callback" 
     build:
       OIDCSTUBDNS: "oidcstub.return.build.account.gov.uk"
-      JWKSURI: "https://ipvreturn-api.return.build.account.gov.uk"
-      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.build.account.gov.uk/"  
+      JWKSURI: "https://api.return.build.account.gov.uk/.well-known/interim-jwks.json"
+      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.build.account.gov.uk/" 
+      REDIRECTURI: "https://return.build.account.gov.uk/callback" 
 
 Conditions:
   CreateDevResources: !Equals
@@ -66,13 +71,17 @@ Conditions:
       - Fn::Equals:
           - !Ref PermissionsBoundary
           - "none"
-
+  JwksSet:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref JwksUri
+          - "none"
 Globals:
   Api:
     BinaryMediaTypes:
       - '*/*'
   Function:
-    Runtime: nodejs20.x
+    Runtime: nodejs22.x
     VpcConfig:
       SecurityGroupIds:
         - !GetAtt LambdaEgressSecurityGroup.GroupId
@@ -96,10 +105,9 @@ Globals:
       - arm64
     Environment:
       Variables:
-        # These should always be alphabetically organised.
-        AWS_STACK_NAME: !Sub ${AWS::StackName} # The AWS Stack Name, as passed into the template.
-        POWERTOOLS_LOG_LEVEL: INFO # The LogLevel for the AWS PowerTools LogHelper
-        POWERTOOLS_METRICS_NAMESPACE: IPR-CRI # The Metric Namespace for the AWS PowerTools MetricHelper
+        AWS_STACK_NAME: !Sub ${AWS::StackName}
+        POWERTOOLS_LOG_LEVEL: "DEBUG"
+        POWERTOOLS_METRICS_NAMESPACE: "IPR-CRI"
     AutoPublishAlias: live
 
 Resources:
@@ -116,7 +124,6 @@ Resources:
           ToPort: 443
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
-  
   ### Start of API Gateway definition.
 
   MockOidcRestApi:
@@ -156,20 +163,21 @@ Resources:
         FMSRegionalPolicy: false
         CustomPolicy: true
 
-  # MockOidcRestApiUsagePlan:
-  #   DependsOn:
-  #     - "MockOidcRestApi"
-  #   Type: AWS::ApiGateway::UsagePlan
-  #   Properties:
-  #     ApiStages:
-  #       - ApiId: !Ref MockOidcRestApi
-  #         Stage: !Ref Environment
-  #     Quota:
-  #       Limit: 250000
-  #       Period: DAY
-  #     Throttle:
-  #       BurstLimit: 3000 # requests the API can handle concurrently
-  #       RateLimit: 50 # allowed requests per second
+
+  MockOidcRestApiUsagePlan:
+     DependsOn:
+       - "MockOidcRestApiStage"
+     Type: AWS::ApiGateway::UsagePlan
+     Properties:
+       ApiStages:
+         - ApiId: !Ref MockOidcRestApi
+           Stage: !Ref Environment
+       Quota:
+         Limit: 250000
+         Period: DAY
+       Throttle:
+         BurstLimit: 3000 # requests the API can handle concurrently
+         RateLimit: 50 # allowed requests per second
 
   MockOidcAPIGatewayAccessLogGroup:
     Type: AWS::Logs::LogGroup
@@ -180,7 +188,6 @@ Resources:
           !Ref Environment,
           logretentionindays,
         ]
-
       Tags:
         - Key: Product
           Value: GOV.UK Sign In
@@ -192,7 +199,6 @@ Resources:
           Value: backend
         - Key: Name
           Value: APIGatewayAccessLogGroup
-
 
   ### End of API Gateway definition.
 
@@ -208,19 +214,27 @@ Resources:
         Variables:
           POWERTOOLS_SERVICE_NAME: MockOidcProviderHandler
           OIDC_CLIENT_ID: !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-          OIDC_URL: !FindInMap [EnvironmentVariables, !Ref Environment, OIDCURL]
-          REDIRECT_URI: !Ref RedirectUri
+          REDIRECT_URI: !FindInMap [ EnvironmentVariables, !Ref Environment, REDIRECTURI ]
+          ISSUER: !Ref MockOidcApiGatewayCustomDomain
+          JWKS_URI: !If
+            - JwksSet
+            - !Ref JwksUri
+            - !FindInMap [ EnvironmentVariables, !Ref Environment, JWKSURI ]
+          DEBUG: oidc-provider:*
       Policies:
         - AWSLambdaBasicExecutionRole
         - AWSXrayWriteOnlyAccess
     Metadata:
-      BuildMethod: esbuild
+      BuildMethod: makefile
       BuildProperties:
         Minify: true
         Target: "es2020"
-        Sourcemap: false
+        format: cjs
+        Sourcemap: true
         EntryPoints:
           - MockOidcProviderHandler.ts
+        Loader:
+          - .ejs=copy
         UseNpmCi: True
 
   MockOidcProviderFunctionLogGroup:
