@@ -213,29 +213,24 @@ export class PostEventProcessor {
 					break;
 				}
 				case Constants.IPV_F2F_CRI_VC_ERROR: {
-					if (process.env.VC_GENERATION_FAILURE_EMAIL_ENABLED === "true"){
-						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, failure email enabled"});
-						
-						// Check if error_description indicates VC generation failure
-						const isVCFailure = this.validationHelper.isVCGenerationFailure(returnRecord.error_description);
+					this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, failure email enabled"});
+					
+					// Check if error_description indicates VC generation failure
+					const isVCFailure = this.validationHelper.isVCGenerationFailure(returnRecord.error_description);
 
-						if (isVCFailure) {
-							updateExpression = "SET errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn";
-							expressionAttributeValues = {
-								":errorDescription": returnRecord.error_description,
-								":readyToResumeOn": absoluteTimeNow(),
-							};
-						} else {
-							updateExpression = "SET errorDescription = :errorDescription";
-							expressionAttributeValues = {
-								":errorDescription": returnRecord.error_description,
-							};
-						}
-						break;
+					if (isVCFailure) {
+						updateExpression = "SET errorDescription = :errorDescription, readyToResumeOn = :readyToResumeOn";
+						expressionAttributeValues = {
+							":errorDescription": returnRecord.error_description,
+							":readyToResumeOn": absoluteTimeNow(),
+						};
 					} else {
-						this.logger.info({ message: "Received IPV_F2F_CRI_VC_ERROR event, failure email disabled, ending execution"});
-						return;
+						updateExpression = "SET errorDescription = :errorDescription";
+						expressionAttributeValues = {
+							":errorDescription": returnRecord.error_description,
+						};
 					}
+					break;
 				}
 				case Constants.IPV_F2F_RESTART: {
 					if (process.env.F2F_RESET_ENABLED === "true"){
