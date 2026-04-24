@@ -3,5 +3,9 @@ export const constants = {
 	API_TEST_SESSION_EVENTS_TABLE: process.env.API_TEST_SESSION_EVENTS_TABLE,
 	DEV_IPR_TEST_HARNESS_URL: process.env.DEV_IPR_TEST_HARNESS_URL,
 	GOV_NOTIFY_API: process.env.GOV_NOTIFY_API,
+	DEV_IPR_API_URL: process.env.DEV_IPR_API_URL,
+	OIDC_IPR_API_URL: process.env.OIDC_IPR_API_URL,
+	CLIENT_ID: process.env.CLIENT_ID,
+	REDIRECT_URI: process.env.REDIRECT_URI,
 	API_TEST_EMAIL_ADDRESS: "user@digital.cabinet-office.gov.uk",
 };
