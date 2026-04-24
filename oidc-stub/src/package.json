@@ -11,7 +11,7 @@
     "esbuild": "0.25.2",
     "express": "5.2.1",
     "oidc-provider": "9.6.1",
-    "lodash": "4.17.23"
+    "lodash": "4.18.1"
   },
   "scripts": {
     "compile": "./node_modules/.bin/tsc"
