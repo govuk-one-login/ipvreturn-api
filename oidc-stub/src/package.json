@@ -6,38 +6,25 @@
   "author": "GDS",
   "license": "MIT",
   "dependencies": {
-    "@aws-lambda-powertools/logger": "1.5.1",
-    "@aws-lambda-powertools/metrics": "1.5.1",
-    "@aws-sdk/client-kms": "3.1001.0",
-    "@smithy/node-http-handler": "4.0.4",
-    "aws-xray-sdk-core": "3.10.3",
-    "axios": "1.15.0",
-    "class-validator": "0.14.1",
-    "ecdsa-sig-formatter": "1.0.11",
+    "@codegenie/serverless-express": "4.17.1",
+    "ejs": "4.0.1",
     "esbuild": "0.25.2",
-    "node-jose": "2.2.0",
-    "oidc-provider": "9.7.0",
-    "serverless-http": "4.0.0"
+    "express": "5.2.1",
+    "oidc-provider": "9.6.1",
+    "lodash": "4.17.23"
   },
   "scripts": {
     "compile": "./node_modules/.bin/tsc"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.148",
-    "@types/js-yaml": "4.0.5",
+    "@types/ejs": "3.1.5",
+    "@types/lodash": "4.17.24",
     "@types/node": "20.14.8",
-    "@types/node-jose": "1.1.10",
-    "@typescript-eslint/eslint-plugin": "8.56.1",
-    "eslint": "10.0.2",
-    "prettier": "3.6.2",
-    "ts-node": "10.9.2",
-    "typescript": "4.9.5",
-    "yaml-cfn": "0.3.2"
+    "@types/oidc-provider": "9.5.0",
+    "typescript": "4.9.5"
   },
   "engines": {
     "node": "22.*"
-  },
-  "overrides": {
-    "form-data": ">=4.0.4"
   }
 }

@@ -129,7 +129,7 @@ Mappings:
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.dev.account.gov.uk"
       OIDCURL: "https://oidc.staging.account.gov.uk/"      
-      RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
+      RETURNREDIRECTURL: "https://ipvreturn-front.return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
       F2FRESETENABLED: true
     build:
@@ -581,6 +581,88 @@ Resources:
         - UsePermissionsBoundary
         - !Ref PermissionsBoundary
         - !Ref AWS::NoValue
+
+  ##### TO BE REPLACED WITH KEY ROTATION
+  TempJsonWebKeysBucket:
+    Condition: NotLocalTestStack
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub govuk-one-login-ipvr-published-keys-${Environment}-manual
+      VersioningConfiguration:
+        Status: "Enabled"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+
+  TempJsonWebKeysBucketPolicy:
+    Condition: NotLocalTestStack
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TempJsonWebKeysBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "1. Delegate IAM Access"
+            Action:
+              - "s3:*"
+            Effect: Allow
+            Resource:
+              - !GetAtt TempJsonWebKeysBucket.Arn
+              - !Sub ${TempJsonWebKeysBucket.Arn}/*
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
+          - Sid: "2. Allow Read permissions"
+            Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+                - lambda.amazonaws.com
+            Action:
+              - s3:ListBucket
+              - s3:GetBucketLocation
+              - s3:GetObject
+            Resource:
+              - !GetAtt TempJsonWebKeysBucket.Arn
+              - !Sub ${TempJsonWebKeysBucket.Arn}/*
+    DependsOn: TempJsonWebKeysBucket
+
+  TempJWKSBucketRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: "sts:AssumeRole"
+            Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+        Version: 2012-10-17
+      Policies:
+        - PolicyName: AccessJWKSjson
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                Resource:
+                  - !Sub "arn:aws:s3:::govuk-one-login-ipvr-published-keys-${Environment}-manual/.well-known/jwks.json"
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
+      Tags:
+        - Key: key_consumer_type
+          Value: manage
+
+##############
 
   ### AssumeRoleWithWebIdentityRole-dev testing
   DevAssumeRoleWithWebIdentityRole:
@@ -2880,4 +2962,3 @@ Outputs:
     Description: "Gov Notify Stub"
     Value: !FindInMap [EnvironmentVariables, !Ref Environment, GOVUKNOTIFYAPI]
   
-
