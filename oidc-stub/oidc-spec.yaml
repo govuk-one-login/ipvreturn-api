@@ -25,4 +25,8 @@ paths:
         required: true
         schema:
           type: string
+      x-amazon-apigateway-integration:
+        httpMethod: "POST"
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:OidcProvider-Stub-${AWS::StackName}:live/invocations
         type: "aws_proxy"     
