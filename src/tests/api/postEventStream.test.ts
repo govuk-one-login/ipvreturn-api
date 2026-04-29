@@ -158,40 +158,76 @@ describe("post event processor", () => {
 		expect(response?.postOfficeVisitDetails).toBeUndefined();
 		expect(response?.notified).toBeUndefined();
 		expect(response?.nameParts).toBeUndefined();
+		expect(response?.errorDescription).toBeUndefined();
 		await sleep(5000);
 		const allTxmaEventBodies = await getTxmaEventsFromTestHarness(userId, 1);
 		await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, allTxmaEventBodies);
 	}, 30000); // timeout set to 30s to avoid infinite loop
 
-	it("when a user fails a F2F journey, they are able to try a 2nd time and receive a results email", async () => {
-		console.log("when a user fails a F2F journey, they are able to try a 2nd time and receive a results email")
-		const userId = randomUUID();
-		console.log("userId: ", userId)
+	describe("F2F restart journey", () => {
+		it("when a user fails a F2F journey, they are able to try a 2nd time and receive a results email", async () => {
+			console.log("when a user fails a F2F journey, they are able to try a 2nd time and receive a results email")
+			const userId = randomUUID();
+			console.log("userId: ", userId)
 
-		// 1st F2F journey which ends in failure
-		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
-		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
-		await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
-		await postMockEvent(VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT, userId, false);
-		await postMockEvent(VALID_IPV_F2F_RESTART_TXMA_EVENT, userId, false);
+			// 1st F2F journey which ends in failure
+			await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
+			await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
+			await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
+			await postMockEvent(VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT, userId, false);
+			await postMockEvent(VALID_IPV_F2F_RESTART_TXMA_EVENT, userId, false);
 
-		await sleep(5000);
-		// 1st IPR_RESULT_NOTIFICATION_EMAILED due to failure email
-		const txmaEvent1stJourney = await getTxmaEventsFromTestHarness(userId, 1);
-		await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, txmaEvent1stJourney);
+			await sleep(5000);
+			// 1st IPR_RESULT_NOTIFICATION_EMAILED due to failure email
+			const txmaEvent1stJourney = await getTxmaEventsFromTestHarness(userId, 1);
+			await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, txmaEvent1stJourney);
+			expect(txmaEvent1stJourney.IPR_RESULT_NOTIFICATION_EMAILED.extensions.emailType).toBe("f2fVcGenerationFailure");
 
-		// 2nd F2F journey that is successful
-		await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
-		await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
-		await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
-		await postMockEvent(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT, userId, false);
+			// 2nd F2F journey that is successful
+			await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
+			await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
+			await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
+			await postMockEvent(VALID_IPV_F2F_CRI_VC_CONSUMED_WITH_DOC_EXPIRYDATE_TXMA_EVENT, userId, false);
 
-		await sleep(5000);
-		//At this point IPR has emitted 2x IPR_RESULT_NOTIFICATION_EMAILED for the same user, one for each journey
-		//This function returns the later event, so the one associated with the 2nd journey
-		const txmaEvent2ndJourney = await getTxmaEventsFromTestHarness(userId, 2);
-		await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, txmaEvent2ndJourney);
-	}, 45000);
+			await sleep(5000);
+			//At this point IPR has emitted 2x IPR_RESULT_NOTIFICATION_EMAILED for the same user, one for each journey
+			//This function returns the later event, so the one associated with the 2nd journey
+			const txmaEvent2ndJourney = await getTxmaEventsFromTestHarness(userId, 2);
+			await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, txmaEvent2ndJourney);
+			expect(txmaEvent2ndJourney.IPR_RESULT_NOTIFICATION_EMAILED.extensions.emailType).toBe("f2fResultAvailable");
+		}, 45000);
+
+		it("when a user fails a F2F journey, they receive a failure email, and they try a 2nd time, they receive a another failure email", async () => {
+			console.log("when a user fails a F2F journey, they receive a failure email, and they try a 2nd time, they receive a another failure email")
+			const userId = randomUUID();
+			console.log("userId: ", userId)
+
+			// 1st F2F journey which ends in failure
+			await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
+			await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
+			await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
+			await postMockEvent(VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT, userId, false);
+			await postMockEvent(VALID_IPV_F2F_RESTART_TXMA_EVENT, userId, false);
+
+			await sleep(5000);
+			const txmaEvent1stJourney = await getTxmaEventsFromTestHarness(userId, 1);
+			await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, txmaEvent1stJourney);
+			expect(txmaEvent1stJourney.IPR_RESULT_NOTIFICATION_EMAILED.extensions.emailType).toBe("f2fVcGenerationFailure");
+
+			// 2nd F2F journey which ends in failure
+			await postMockEvent(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_TXMA_EVENT, userId, true);		
+			await postMockEvent(VALID_F2F_YOTI_START_WITH_PO_DOC_DETAILS_TXMA_EVENT, userId, false);
+			await postMockEvent(VALID_F2F_DOCUMENT_UPLOADED_TXMA_EVENT, userId, false);
+			await postMockEvent(VALID_IPV_F2F_CRI_VC_ERROR_TXMA_EVENT, userId, false);
+
+			await sleep(5000);
+			//At this point IPR has emitted 2x IPR_RESULT_NOTIFICATION_EMAILED for the same user, one for each journey
+			//This function returns the later event, so the one associated with the 2nd journey
+			const txmaEvent2ndJourney = await getTxmaEventsFromTestHarness(userId, 2);
+			await validateTxMAEventData({ eventName: "IPR_RESULT_NOTIFICATION_EMAILED", schemaName: "IPR_RESULT_NOTIFICATION_EMAILED_SCHEMA" }, txmaEvent2ndJourney);
+			expect(txmaEvent2ndJourney.IPR_RESULT_NOTIFICATION_EMAILED.extensions.emailType).toBe("f2fVcGenerationFailure");
+		}, 45000);
+	});
 
 	it("when AUTH_IPV_AUTHORISATION_REQUESTED, F2F_YOTI_START, F2F_DOCUMENT_UPLOADED, IPV_F2F_CRI_VC_CONSUMED events are sent, a Dynamo record with the details of both events is recorded. Then if these events are played again the details are updated", async () => {
 		if (process.env.REDRIVE_ENABLED === "true") {
