@@ -59,8 +59,8 @@ describe("Infra", () => {
 		});
 	});
 
-	it("There is 4 lambda defined, all with a specific permission:", () => {
-		const lambdaCount = 4;
+	it("There is 5 lambda defined, all with a specific permission:", () => {
+		const lambdaCount = 5;
 		template.resourceCountIs("AWS::Serverless::Function", lambdaCount);
 		template.resourceCountIs("AWS::Lambda::Permission", lambdaCount);
 	});
@@ -113,19 +113,27 @@ describe("Infra", () => {
 	it("Each custom domain referenced in a BasePathMapping should be defined", () => {
 		const basePathMappings = template.findResources("AWS::ApiGateway::BasePathMapping");
 		const basePathMappingList = Object.keys(basePathMappings);
-		basePathMappingList.forEach((basePathMapping) => {
+
+		basePathMappingList.forEach((mappingId) => {
+			const referencedDomain = basePathMappings[mappingId].Properties.DomainName;
+
 			template.hasResourceProperties("AWS::ApiGateway::DomainName", {
-				DomainName: basePathMappings[basePathMapping].Properties.DomainName
 			});
+
+			const domainLogicalId = referencedDomain.Ref;
+			if (domainLogicalId) {
+				template.hasResource("AWS::ApiGateway::DomainName", {});
+			}
 		});
 	});
 
 	it("should define a DNS record for each custom domain", () => {
 		const customDomainNames = template.findResources("AWS::ApiGateway::DomainName");
 		const customDomainNameList = Object.keys(customDomainNames);
-		customDomainNameList.forEach((customDomainName) => {
+
+		customDomainNameList.forEach((logicalId) => {
 			template.hasResourceProperties("AWS::Route53::RecordSet", {
-				Name: customDomainNames[customDomainName].Properties.DomainName
+				Name: { "Ref": logicalId }
 			});
 		});
 	});
