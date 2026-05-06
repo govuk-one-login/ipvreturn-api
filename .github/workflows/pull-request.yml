@@ -26,7 +26,6 @@ permissions:
 
 env: # Only adding the variables in that are required for
   AWS_REGION: eu-west-2
-  DEV_IPR_GOV_NOTIFY_STUB_URL: ${{ secrets.DEV_IPR_GOV_NOTIFY_STUB_URL }}
 
 jobs:
   run-code-check:
