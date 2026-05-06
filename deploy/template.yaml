@@ -2967,4 +2967,21 @@ Outputs:
     Condition: IsNotProdLikeEnvironment
     Description: "Gov Notify Stub"
     Value: !FindInMap [EnvironmentVariables, !Ref Environment, GOVUKNOTIFYAPI]
-  
+  oidcStubApiURL:
+    Condition: IsNotProdLikeEnvironment
+    Description: "OIDC Stub"
+    Value: !Sub 
+        - "https://${ResolvedUrl}"
+        - ResolvedUrl: !If 
+            - UsingLocalOIDCStub
+            - !Ref OIDCUrl
+            - !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+  IpvApiURL:
+    Condition: IsNotProdLikeEnvironment
+    Description: "IPR Api"
+    Value: !Ref IPVRApiCustomDomain
+  IpvRedirectUrl:
+    Condition: IsNotProdLikeEnvironment
+    Description: "IPR redirect url"
+    Value: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
+    
