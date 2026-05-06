@@ -1863,6 +1863,10 @@ Resources:
         - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
         - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
         - "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
       Policies:
         - PolicyName: PublishKeyFunctionAccessPolicy
           PolicyDocument:
