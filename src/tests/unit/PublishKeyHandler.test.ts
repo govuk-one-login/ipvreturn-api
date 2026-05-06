@@ -22,13 +22,12 @@ const publicKeyDer = publicKey.export({ type: 'spki', format: 'der' });
 const jwk = crypto.createPublicKey({ key: publicKeyDer, format: 'der', type: 'spki' })
                   .export({ format: 'jwk' });
 const keyID = "1234-56789-KeyId";
-const mockedHashedKid = "2f572216be9732645402b591d4bebbc2fc6f10749d73fc22aaec1fa2f11fbc08"; //pragma: allowlist secret
 const bucketName = "test_bucket_name";
 const validJwk: Jwk = {
     ...jwk,
     use: "sig",
     alg: "RS256",
-    kid: mockedHashedKid,
+    kid: "1234-56789-KeyId",
     kty: "RSA",
 };
 const validContext = { functionName: "test", functionVersion: "1" } as Context;
