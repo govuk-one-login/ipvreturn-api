@@ -67,7 +67,7 @@ jobs:
       - name: Construct API URL
         id: api_url
         run: |
-          echo "api_url=https://api-pre-merge-${{ needs.setup.outputs.sha_short }}.return.dev.account.gov.uk//" >> $GITHUB_OUTPUT
+          echo "api_url=https://api-pre-merge-${{ needs.setup.outputs.sha_short }}.return.dev.account.gov.uk/" >> $GITHUB_OUTPUT
 
       - name: SAM Build test harness stack
         working-directory: ./test-harness
