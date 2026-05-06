@@ -49,12 +49,12 @@ Mappings:
     dev:
       OIDCSTUBDNS: "oidcstub.return.dev.account.gov.uk"
       JWKSURI: "https://api.return.dev.account.gov.uk/.well-known/interim-jwks.json"
-      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.dev.account.gov.uk/"
+      OIDCURL: "https://ipvreturn-oidc-stub-oidcstub.return.dev.account.gov.uk/"
       REDIRECTURI: "https://ipvreturn-front.return.dev.account.gov.uk/callback" 
     build:
       OIDCSTUBDNS: "oidcstub.return.build.account.gov.uk"
       JWKSURI: "https://api.return.build.account.gov.uk/.well-known/interim-jwks.json"
-      OIDCURL: "https://ipr-oidc-stub-oidcstub.return.build.account.gov.uk/" 
+      OIDCURL: "https://oidcstub.return.build.account.gov.uk/" 
       REDIRECTURI: "https://return.build.account.gov.uk/callback" 
 
 Conditions:
@@ -124,8 +124,8 @@ Resources:
           ToPort: 443
       VpcId:
         Fn::ImportValue: !Sub "${VpcStackName}-VpcId"
-  ### Start of API Gateway definition.
 
+  ### Start of API Gateway definition.
   MockOidcRestApi:
     Type: AWS::Serverless::Api
     Properties:
