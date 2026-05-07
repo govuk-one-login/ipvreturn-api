@@ -12,6 +12,10 @@ declare error_code
 export API_TEST_SESSION_EVENTS_TABLE=$(remove_quotes $CFN_SessionEventsTable)
 export GOV_NOTIFY_API=$(remove_quotes $CFN_GovNotifyAPIURL)
 export DEV_IPR_TEST_HARNESS_URL=$(remove_quotes $CFN_IpvReturnTestHarnessURL)
+export DEV_IPR_API_URL=$(remove_quotes $CFN_IpvApiURL)
+export REDIRECT_URI=$(remove_quotes $CFN_IpvRedirectUrl)
+export OIDC_IPR_API_URL=$(remove_quotes $CFN_oidcStubApiURL)
+export CLIENT_ID=$(aws ssm get-parameter --name "/$TEST_ENVIRONMENT/ipvreturn/CLIENT_ID" | jq -r ".Parameter.Value")
 
 # disabling error_check to allow report generation for successful + failed tests
 set +e
