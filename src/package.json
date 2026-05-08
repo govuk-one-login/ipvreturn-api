@@ -19,7 +19,7 @@
     "@aws-sdk/client-s3": "3.1036.0",
     "@smithy/node-http-handler": "4.0.4",
     "aws-xray-sdk-core": "3.10.3",
-    "axios": "1.15.0",
+    "axios": "1.16.0",
     "axios-cookiejar-support": "4.0.3",
     "class-validator": "0.14.1",
     "ecdsa-sig-formatter": "1.0.11",
