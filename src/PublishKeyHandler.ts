@@ -107,7 +107,7 @@ export class PublishKeyHandler implements LambdaInterface {
             ...publicKey,
             use: "sig",
             alg: "RS256", 
-            kid: crypto.createHash("sha256").update(this.signingKeyId).digest().toString("hex"),
+            kid: this.signingKeyId,
         } as Jwk;
     }
 
