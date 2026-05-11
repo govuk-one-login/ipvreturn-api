@@ -16,7 +16,7 @@ import { IPRServiceSession } from "./IPRServiceSession";
 import { EnvironmentVariables } from "./EnvironmentVariables";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { ValidationHelper } from "../utils/ValidationHelper";
-import { Jwt, JwtPayload } from "../utils/IVeriCredential";
+import { Jwt, JwtPayload, JwtHeader } from "../utils/IVeriCredential";
 import { Constants } from "../utils/Constants";
 import { SessionEventStatusEnum } from "../models/enums/SessionEventStatusEnum";
 import { stsClient } from "../utils/StsClient";
@@ -88,11 +88,14 @@ export class SessionProcessor {
 				this.logger.error("FAILED_DECODING_JWT", { messageCode: MessageCodes.FAILED_DECODING_JWT, error });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Invalid request: Rejected jwt");
 			}
+			const jwtIdTokenHeader: JwtHeader = parsedIdTokenJwt.header;
+			const jwtIdTokenKid: string = jwtIdTokenHeader.kid!;
+			this.logger.info("ORCH TOKEN KID", jwtIdTokenKid);
 			const jwtIdTokenPayload: JwtPayload = parsedIdTokenJwt.payload;
 
 			// idToken Validation
 			try {
-				const payload = await this.kmsJwtAdapter.verifyWithJwks(idToken, jwksEndpoint);
+				const payload = await this.kmsJwtAdapter.verifyWithJwks(idToken, jwksEndpoint, jwtIdTokenKid);
 				if (!payload) {
 					this.logger.error("JWT verification failed", { messageCode: MessageCodes.FAILED_VERIFYING_JWT });
 					return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT verification failed");
