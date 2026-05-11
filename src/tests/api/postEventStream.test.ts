@@ -11,11 +11,17 @@ import {
 import "dotenv/config";
 import { randomUUID } from "crypto";
 import { constants } from "./utils/ApiConstants";
-import { postMockEvent, getSessionByUserId, getTxmaEventsFromTestHarness, validateTxMAEventData, getApiRequest } from "./utils/ApiTestSteps";
+import { 
+	postMockEvent, 
+	getSessionByUserId, 
+	getTxmaEventsFromTestHarness, 
+	validateTxMAEventData, 
+	// getApiRequest 
+} from "./utils/ApiTestSteps";
 import { sleep } from "../../utils/Sleep";
 import { ReturnSQSEvent } from "../../models/ReturnSQSEvent";
 import { absoluteTimeNow } from "../../utils/DateTimeUtils";
-import { manualOidcLoginTest } from "./utils/OidcLoginSteps";
+// import { manualOidcLoginTest } from "./utils/OidcLoginSteps";
 
 //QualityGateIntegrationTest 
 //QualityGateRegressionTest
