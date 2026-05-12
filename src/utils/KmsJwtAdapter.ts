@@ -64,9 +64,9 @@ export class KmsJwtAdapter {
 		return result;
 	}
 
-	async verifyWithJwks(urlEncodedJwt: string, publicKeyEndpoint: string): Promise<JWTPayload | null> {
+	async verifyWithJwks(urlEncodedJwt: string, publicKeyEndpoint: string, kid: string): Promise<JWTPayload | null> {
 		const oidcProviderJwks = (await axios.get(publicKeyEndpoint)).data;
-		const signingKey = oidcProviderJwks.keys.find((key: Jwk) => key.kty === "RSA");
+		const signingKey = oidcProviderJwks.keys.find((key: Jwk) => key.kid === kid);
 		const publicKey = await importJWK(signingKey, "RS256");
 
 		try {

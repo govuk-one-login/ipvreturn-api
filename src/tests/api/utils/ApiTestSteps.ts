@@ -28,6 +28,8 @@ interface TestHarnessReponse {
 const GOV_NOTIFY_INSTANCE = axios.create({ baseURL: constants.GOV_NOTIFY_API });
 
 const HARNESS_API_INSTANCE: AxiosInstance = axios.create({ baseURL: constants.DEV_IPR_TEST_HARNESS_URL });
+const IPR_API_INSTANCE: AxiosInstance = axios.create({ baseURL: constants.DEV_IPR_API_URL });
+
 
 const customCredentialsProvider = {
 	getCredentials: fromNodeProviderChain({
@@ -124,6 +126,17 @@ export async function postGovNotifyRequest(mockDelimitator: any, userData: any):
 	}
 }
 
+export async function getApiRequest(path: string): Promise<any> {
+	try {
+		// update email to contain mock delimitator before the @ - this determines the behaviour of the GovNotify mock
+		const postRequest = await IPR_API_INSTANCE.get(path);
+		return postRequest;
+	} catch (error: any) {
+		console.log(`Error response from ${path} endpoint: ${error}`);
+		return error.response;
+	}
+}
+
 const getTxMAS3FileNames = async (prefix: string): Promise<any> => {
 	const listObjectsResponse = await HARNESS_API_INSTANCE.get("/bucket/", {
 		params: {
@@ -131,7 +144,17 @@ const getTxMAS3FileNames = async (prefix: string): Promise<any> => {
 		},
 	});
 	const listObjectsParsedResponse = xmlParser.parse(listObjectsResponse.data);
-	return listObjectsParsedResponse?.ListBucketResult?.Contents;
+	let contents = listObjectsParsedResponse?.ListBucketResult?.Contents;
+
+	//If multiple files, sort so newest is first
+	if (Array.isArray(contents)) {
+		contents.sort((a: any, b: any) => {
+            const dateA = new Date(a.LastModified);
+            const dateB = new Date(b.LastModified);
+            return dateA.getTime() - dateB.getTime();
+        });
+	}
+	return contents;
 };
 
 const getAllTxMAS3FileContents = async (fileNames: any[]): Promise<AllTxmaEvents> => {

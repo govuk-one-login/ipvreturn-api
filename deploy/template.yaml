@@ -54,10 +54,18 @@ Parameters:
     Description: "Set to true to apply reserved concurrency when deploying in DEV environments"
     Type: String
     Default: "false"
-  OIDCDNS:
-    Description: "Mock OIDC DNS"
+  OIDCUrl:
+    Description: "Mock OIDC url"
     Type: String
-    Default: "ipr-oidc-stub-oidcstub.return.dev.account.gov.uk"
+    Default: "none"
+  OIDCThumbprint:
+    Description: "Mock OIDC thumprint"
+    Type: String
+    Default: "none"
+  OIDCProviderRequired:
+    Description: "Mock OIDC thumprint"
+    Type: String
+    Default: "true"
   LambdaDeploymentPreference:
     Description: >
       Canary strategy to be used with your Lambda applications please refer to documentation for configurations -
@@ -128,10 +136,9 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.dev.account.gov.uk"
-      OIDCURL: "https://oidc.staging.account.gov.uk/"      
-      RETURNREDIRECTURL: "https://return.dev.account.gov.uk/callback"
+      OIDCURL: "ipvreturn-oidc-stub-oidcstub.return.dev.account.gov.uk/"
+      RETURNREDIRECTURL: "https://ipvreturn-front.return.dev.account.gov.uk/callback"
       TESTHARNESSURL: "https://ipvreturn-test-harness-testharness.return.dev.account.gov.uk"
-      VCGENERATIONFAILUREEMAILENABLED: true
       F2FRESETENABLED: true
     build:
       ISSUER: "https://return.build.account.gov.uk"
@@ -146,10 +153,9 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.build.account.gov.uk"
-      OIDCURL: "https://oidc.staging.account.gov.uk/"
+      OIDCURL: "oidcstub.return.build.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.build.account.gov.uk/callback"
       TESTHARNESSURL: "https://testharness.return.build.account.gov.uk"
-      VCGENERATIONFAILUREEMAILENABLED: true
       F2FRESETENABLED: true
     staging:
       ISSUER: "https://return.staging.account.gov.uk"
@@ -164,9 +170,8 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.staging.account.gov.uk"
-      OIDCURL: "https://oidc.staging.account.gov.uk/"
+      OIDCURL: "oidc.staging.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.staging.account.gov.uk/callback"
-      VCGENERATIONFAILUREEMAILENABLED: true
       F2FRESETENABLED: true
     integration:
       ISSUER: "https://return.integration.account.gov.uk"
@@ -181,10 +186,9 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.integration.account.gov.uk"
-      OIDCURL: "https://oidc.integration.account.gov.uk/"
+      OIDCURL: "oidc.integration.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.integration.account.gov.uk/callback"
-      VCGENERATIONFAILUREEMAILENABLED: false
-      F2FRESETENABLED: false
+      F2FRESETENABLED: true
     production:
       ISSUER: "https://return.account.gov.uk"
       GOVUKNOTIFYTEMPLATEID: "206971e2-d576-4d12-b34f-b0de442d39ab"
@@ -198,10 +202,9 @@ Mappings:
       AUTHEVENTTTLINSECS: 21600 # Default 6hrs
       SESSIONRETURNRECORDTTLINSECS: 1814400 # Default: 21 days
       DNSSUFFIX: "return.account.gov.uk"
-      OIDCURL: "https://oidc.account.gov.uk/"
+      OIDCURL: "oidc.account.gov.uk/"
       RETURNREDIRECTURL: "https://return.account.gov.uk/callback"
-      VCGENERATIONFAILUREEMAILENABLED: false
-      F2FRESETENABLED: false
+      F2FRESETENABLED: true
   TxMAAccounts:
     # EVENTS is used to egress to TxMA.
     dev:
@@ -253,15 +256,6 @@ Conditions:
       - Fn::Equals:
           - !Ref SecretPrefix
           - "none"
-  CreateProdResources: !Equals [ !Ref Environment, production]
-  CreateNonProdResources: !Not [!Condition CreateProdResources]
-  IsMockedEnvironment: !Or
-    - Fn::Equals:
-        - !Ref Environment
-        - dev
-    - Fn::Equals:
-        - !Ref Environment
-        - build
   DeployAlarms: !Or
     - Condition: IsNotDevelopment
     - !Equals [!Ref DeployAlarmsInDev, true]
@@ -269,22 +263,17 @@ Conditions:
     - Condition: IsNotDevelopment
     - !Equals [!Ref ApplyReservedConcurrencyInDev, true]
   PerformanceTestEnv: !Equals [ !Ref Environment, build]
-  NotLocalTestStack:
-    Fn::Not:
-      - Fn::And:
-          - Fn::Equals:
-              - !Ref Environment
-              - dev
-          - Fn::Not:
-              - Fn::Equals:
-                  - !Sub "${AWS::StackName}"
-                  - "ipvreturn-api"
-  IsLocalTestStack: !Not
-    - !Condition NotLocalTestStack
+  IsLocalTestStack: !And
+      - !Equals [!Ref Environment, "dev"]
+      - !Not [!Equals [!Ref "AWS::StackName", "ipvreturn-api"]]
   UseCanaryDeploy:
     Fn::Or:
       - Fn::Equals: [ !Ref Environment, "dev" ]
       - Fn::Equals: [ !Ref Environment, "build" ]
+  UsingLocalOIDCStub: !And
+      - !Not [!Equals [!Ref OIDCUrl, "none"]]
+      - !Not [!Equals [!Ref OIDCThumbprint, "none"]]
+  OIDCProviderRequired: !Equals [!Ref OIDCProviderRequired, "true"]
 
 Globals:
   Function:
@@ -370,9 +359,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       MetricName: S3BucketActivityEventChanges
       Namespace: AWS/S3
@@ -413,9 +402,9 @@ Resources:
       Threshold: '1'
       ComparisonOperator: GreaterThanOrEqualToThreshold
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       TreatMissingData: notBreaching
 
   # Log metric filter and alarm for route table changes
@@ -445,9 +434,9 @@ Resources:
       Threshold: '1'
       ComparisonOperator: GreaterThanOrEqualToThreshold
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       TreatMissingData: notBreaching
 
   # Log metric filter and alarm when changes are made to VPC.
@@ -478,9 +467,9 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       TreatMissingData: notBreaching
 
   # Log metric and alarm when changes are made to AWS Organisations.
@@ -511,9 +500,9 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       TreatMissingData: notBreaching
       
   LambdaEgressSecurityGroup:
@@ -532,26 +521,38 @@ Resources:
 
   ### OIDC Provider as IAM entity
   OIDCProvider:
+    Condition: OIDCProviderRequired
     Type: AWS::IAM::OIDCProvider
-    Condition: NotLocalTestStack
     Properties:
       ClientIdList:
         - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/CLIENT_ID}}"
-      ThumbprintList:
-        - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
-      Url: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+      ThumbprintList: 
+        !If 
+          - UsingLocalOIDCStub
+          - - !Ref OIDCThumbprint # The extra dash here makes it a list
+          - - !Sub "{{resolve:ssm:/${Environment}/ipvreturn/OIDC_THUMBPRINT}}"
+      Url: !Sub 
+        - "https://${ResolvedUrl}"
+        - ResolvedUrl: !If 
+            - UsingLocalOIDCStub
+            - !Ref OIDCUrl
+            - !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
 
   ### AssumeRoleWithWebIdentityRole
   AssumeRoleWithWebIdentityRole:
     Type: "AWS::IAM::Role"
-    Condition: NotLocalTestStack
     Properties:
       AssumeRolePolicyDocument:
         Statement:
           - Action: "sts:AssumeRoleWithWebIdentity"
             Effect: Allow
             Principal:
-              Federated: !GetAtt OIDCProvider.Arn
+              Federated: !Sub 
+                - "arn:aws:iam::${AWS::AccountId}:oidc-provider/${Url}"
+                - Url: !If 
+                    - UsingLocalOIDCStub
+                    - !Ref OIDCUrl
+                    - !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
         Version: 2012-10-17
       Policies:
         - PolicyName: GetSessionEventPolicy
@@ -586,38 +587,6 @@ Resources:
         - UsePermissionsBoundary
         - !Ref PermissionsBoundary
         - !Ref AWS::NoValue
-
-  ### AssumeRoleWithWebIdentityRole-dev testing
-  DevAssumeRoleWithWebIdentityRole:
-    Type: "AWS::IAM::Role"
-    Condition: IsLocalTestStack
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action: "sts:AssumeRoleWithWebIdentity"
-            Effect: Allow
-            Principal:              
-              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/${OIDCDNS}/"
-        Version: 2012-10-17
-      Policies:
-        - PolicyName: GetSessionEventPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "dynamodb:GetItem"
-                Resource:
-                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-arn"
-              - Effect: Allow
-                Action:
-                  - "kms:Decrypt"
-                Resource:
-                  Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-key-arn"
-      PermissionsBoundary: !If
-        - UsePermissionsBoundary
-        - !Ref PermissionsBoundary
-        - !Ref AWS::NoValue  
 
   LambdaDeployRole:
     Type: AWS::IAM::Role
@@ -738,9 +707,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       MetricName: IPVRAPIGateway-Fatalerror
       Namespace: !Sub "${AWS::StackName}/LogMessages"
@@ -757,28 +726,10 @@ Resources:
 
   ### API Gateway Custom Domain definition
 
-  IPVRApiCustomDomain:
-    Type: AWS::ApiGateway::DomainName
-    Condition: NotLocalTestStack
-    Properties:
-      DomainName: !Sub
-        - "api.${DNSSUFFIX}"
-        - DNSSUFFIX:
-            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
-      RegionalCertificateArn: !Sub "{{resolve:ssm:/${Environment}/Platform/ACM/PrimaryZoneWildcardCertificateARN}}"
-      SecurityPolicy: TLS_1_2
-  
   IPVRApiCertificateRecord:
     Type: AWS::Route53::RecordSet
-    Condition: NotLocalTestStack
     Properties:
-      Name: !Sub
-        - "api.${DNSSUFFIX}"
-        - DNSSUFFIX:
-            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+      Name: !Ref IPVRApiCustomDomain
       Type: A
       HostedZoneId: !Sub "{{resolve:ssm:/${Environment}/Platform/Route53/PrimaryZoneID}}"
       AliasTarget:
@@ -787,15 +738,30 @@ Resources:
 
   IPVRApiMapping:
     Type: AWS::ApiGateway::BasePathMapping
-    Condition: NotLocalTestStack
     DependsOn: IPVRApiCustomDomain
     Properties:
-      DomainName: !Sub
-        - "api.${DNSSUFFIX}"
-        - DNSSUFFIX:
-            !FindInMap [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+      DomainName: !Ref IPVRApiCustomDomain
       RestApiId: !Ref IPVRRestApi
       Stage: !Sub "${IPVRRestApi.Stage}"
+
+  IPVRApiCustomDomain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      DomainName: !If
+        - IsLocalTestStack
+        - !Sub
+          - "api-${AWS::StackName}.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              Fn::FindInMap: [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+        - !Sub
+          - "api.${DNSSUFFIX}"
+          - DNSSUFFIX:
+              Fn::FindInMap: [ EnvironmentVariables, !Ref Environment, DNSSUFFIX ]
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      RegionalCertificateArn: !Sub "{{resolve:ssm:/${Environment}/Platform/ACM/PrimaryZoneWildcardCertificateARN}}"
+      SecurityPolicy: TLS_1_2
 
   ### End of API Gateway Custom Domain definition
 
@@ -821,8 +787,6 @@ Resources:
           AUTH_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-auth-events-table-name"
           REDRIVE_ENABLED: "false"
-          VC_GENERATION_FAILURE_EMAIL_ENABLED:
-            !FindInMap [EnvironmentVariables, !Ref Environment, VCGENERATIONFAILUREEMAILENABLED]
           F2F_RESET_ENABLED:
             !FindInMap [EnvironmentVariables, !Ref Environment, F2FRESETENABLED]
       Policies:
@@ -858,7 +822,7 @@ Resources:
               Action:
                 - "kms:Decrypt"
               Resource: !If
-                - IsMockedEnvironment
+                - IsNotProdLikeEnvironment
                 - !GetAtt MockTxMAKMSEncryptionKey.Arn
                 - !FindInMap [PlatformConfiguration, !Ref Environment, TxMAKey]
             - Sid: TxMASQSConsumeEventPolicy
@@ -869,7 +833,7 @@ Resources:
                 - "sqs:ChangeMessageVisibility"
                 - "sqs:ReceiveMessage"
               Resource: !If
-                - IsMockedEnvironment
+                - IsNotProdLikeEnvironment
                 - !GetAtt MockTxMASQSQueue.Arn
                 - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
 
@@ -915,7 +879,7 @@ Resources:
       BatchSize: 1
       Enabled: true
       EventSourceArn: !If
-        - IsMockedEnvironment
+        - IsNotProdLikeEnvironment
         - !GetAtt MockTxMASQSQueue.Arn
         - !FindInMap [PlatformConfiguration, !Ref Environment, TxMASQS]
       FunctionName: !Ref PostEventFunction
@@ -944,9 +908,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       MetricName: PostEventFunction-Fatalerror
       Namespace: !Sub "${AWS::StackName}/LogMessages"
@@ -965,9 +929,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       InsufficientDataActions: []
       AlarmDescription: !Sub 
         - "Trigger the alarm if over 80% of reserved concurrency is used. ${RunbookUrl}"
@@ -992,9 +956,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       InsufficientDataActions: []
       AlarmDescription: !Sub 
         - "Trigger if the ${PostEventFunction} lambda throttles. ${RunbookUrl}"
@@ -1142,9 +1106,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       MetricName: GovNotifyFunction-Fatalerror
       Namespace: !Sub "${AWS::StackName}/LogMessages"
@@ -1163,9 +1127,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       InsufficientDataActions: []
       AlarmDescription: !Sub 
         - "Trigger the alarm if over 80% of reserved concurrency is used. ${RunbookUrl}"
@@ -1190,9 +1154,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       InsufficientDataActions: []
       AlarmDescription: !Sub 
         - "Trigger if the ${GovNotifyFunction} lambda throttles. ${RunbookUrl}"
@@ -1343,9 +1307,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       MetricName: StreamProcessorFunction-Fatalerror
       Namespace: !Sub "${AWS::StackName}/LogMessages"
@@ -1364,9 +1328,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       InsufficientDataActions: []
       AlarmDescription: !Sub 
         - "Trigger the alarm if over 80% of reserved concurrency is used. ${RunbookUrl}"
@@ -1391,9 +1355,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       InsufficientDataActions: []
       AlarmDescription: !Sub 
         - "Trigger if the ${StreamProcessorFunction} lambda throttles. ${RunbookUrl}"
@@ -1432,13 +1396,14 @@ Resources:
           SESSION_EVENTS_TABLE:
             Fn::ImportValue: !Sub "${L2DynamoStackName}-session-events-table-name"
           CLIENT_ID_SSM_PATH: !Sub "/${Environment}/ipvreturn/CLIENT_ID"
-          OIDC_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+          OIDC_URL: !Sub 
+                - "https://${ResolvedUrl}"
+                - ResolvedUrl: !If 
+                    - UsingLocalOIDCStub
+                    - !Ref OIDCUrl
+                    - !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
           RETURN_REDIRECT_URL: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
-          ASSUMEROLE_WITH_WEB_IDENTITY_ARN:
-            Fn::If:
-              - NotLocalTestStack
-              - !GetAtt AssumeRoleWithWebIdentityRole.Arn
-              - !GetAtt DevAssumeRoleWithWebIdentityRole.Arn
+          ASSUMEROLE_WITH_WEB_IDENTITY_ARN: !GetAtt AssumeRoleWithWebIdentityRole.Arn
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
       Policies:
         - AWSLambdaBasicExecutionRole
@@ -1530,9 +1495,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       MetricName: SessionFunction-Fatalerror
       Namespace: !Sub "${AWS::StackName}/LogMessages"
@@ -1551,9 +1516,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       InsufficientDataActions: []
       AlarmDescription: !Sub 
         - "Trigger the alarm if over 80% of reserved concurrency is used. ${RunbookUrl}"
@@ -1578,9 +1543,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       InsufficientDataActions: []
       AlarmDescription: !Sub 
         - "Trigger if the ${SessionFunction} lambda throttles. ${RunbookUrl}"
@@ -1673,7 +1638,7 @@ Resources:
 
   MockTxMASQSQueue:
     Type: AWS::SQS::Queue
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Properties:
       MessageRetentionPeriod:
         !FindInMap [
@@ -1692,7 +1657,7 @@ Resources:
 
   MockTxMASQSQueuePolicy:
     Type: AWS::SQS::QueuePolicy
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Properties:
       Queues:
         - !Ref MockTxMASQSQueue
@@ -1709,14 +1674,14 @@ Resources:
 
   MockTxMASQSQueueDeadLetterQueue:
     Type: AWS::SQS::Queue
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Properties:
       MessageRetentionPeriod: 259200 # three days
       KmsMasterKeyId: !Sub TxMAKMSEncryptionKey
 
   MockTxMAKMSEncryptionKey:
     Type: AWS::KMS::Key
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Properties:
       Description: A KMS Key for encrypting the SQS Queue for Mock TxMA
       Enabled: true
@@ -1751,7 +1716,7 @@ Resources:
 
   MockTxMAKeyAlias:
     Type: AWS::KMS::Alias
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Properties:
       AliasName: !If
         - CreateDevResources
@@ -1851,6 +1816,122 @@ Resources:
         - alias/TxMAKMSEncryptionKey
       TargetKeyId: !Ref TxMAKMSEncryptionKey
 
+  ##### TO BE REPLACED WITH KEY ROTATION
+  
+  PublishKeyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../src/
+      Handler: PublishKeyHandler.lambdaHandler
+      FunctionName: !Sub "Ipvreturn-publishKey-${AWS::StackName}"
+      Timeout: 30
+      Runtime: nodejs20.x
+      Environment:
+        Variables:
+          NODE_OPTIONS: --enable-source-maps
+          AWS_STACK_NAME: !Sub "${AWS::StackName}"
+          POWERTOOLS_LOG_LEVEL: INFO
+          POWERTOOLS_METRICS_NAMESPACE: !Sub "${AWS::StackName}"
+          POWERTOOLS_SERVICE_NAME: !Sub "${AWS::StackName}-publishKey"
+          JWKS_BUCKET_NAME: !ImportValue core-infrastructure-PublishedKeysS3BucketName
+          SIGNING_KEY_ID: 
+            Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key-id"
+      Role: !GetAtt PublishKeyLambdaFunctionRole.Arn
+      Tags:
+        key_consumer_type: "manage"
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: false # Enabling source maps will create the required NODE_OPTIONS environment variables on your lambda function during sam build
+        EntryPoints:
+          - PublishKeyHandler.ts
+
+  PublishKeyLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+        - "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
+      Policies:
+        - PolicyName: PublishKeyFunctionAccessPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "kms:DescribeKey"
+                  - "kms:GetPublicKey"
+                Resource:
+                  Fn::ImportValue: !Sub "${L2KMSStackName}-auth-signing-key"
+              - Effect: Allow
+                Action:
+                  - "s3:PutObject"
+                Resource:
+                  - !ImportValue core-infrastructure-PublishedKeysS3BucketArn
+                  - !Sub
+                    - '${ImportedBucketArn}/*'
+                    - ImportedBucketArn: !ImportValue core-infrastructure-PublishedKeysS3BucketArn
+      Tags:
+        - Key: "key_consumer_type"
+          Value: "manage"
+
+  PublishKeyFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/Ipvreturn-publishKey-${AWS::StackName}"
+      RetentionInDays: 30
+
+  PublishKeyFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref PublishKeyFunction
+      Principal: apigateway.amazonaws.com
+
+  JWKSBucketRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: "sts:AssumeRole"
+            Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+        Version: 2012-10-17
+      Policies:
+        - PolicyName: AccessJWKSjson
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                Resource:
+                  - !Sub "arn:aws:s3:::govuk-one-login-ipvreturn-published-keys-${Environment}/jwks.json"
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
+      Tags:
+        - Key: "key_consumer_type"
+          Value: "use"
+
+##############
+
   5XXErrorAlarm:
     Type: AWS::CloudWatch::Alarm
     Condition: "DeployAlarms"
@@ -1861,9 +1942,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       Dimensions: [ ]
       EvaluationPeriods: 5
@@ -1913,11 +1994,11 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-pagerduty-alert-topic
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-PagerDutySNSTopicArn
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-pagerduty-alert-topic
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-PagerDutySNSTopicArn
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       InsufficientDataActions: [ ]
       Dimensions: [ ]
       EvaluationPeriods: 5
@@ -1967,9 +2048,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       Dimensions: [ ]
       EvaluationPeriods: 5
@@ -2031,11 +2112,11 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-pagerduty-alert-topic
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-PagerDutySNSTopicArn
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-pagerduty-alert-topic
-        - !ImportValue platform-alarm-topic-critical-alert
+        - !ImportValue build-notifications-PagerDutySNSTopicArn
+        - !ImportValue build-notifications-CriticalAlertsTopicArn
       InsufficientDataActions: [ ]
       Dimensions: [ ]
       EvaluationPeriods: 5
@@ -2100,9 +2181,9 @@ Resources:
           - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       Dimensions: [ ]
       EvaluationPeriods: 10
@@ -2164,9 +2245,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: false  # disabled until we're ready for alarm actions to fire
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       Dimensions: [ ]
       EvaluationPeriods: 5
@@ -2212,9 +2293,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       MetricName: ApproximateAgeOfOldestMessage
       Namespace: AWS/SQS
@@ -2239,9 +2320,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       MetricName: ApproximateNumberOfMessagesVisible
       Namespace: AWS/SQS
@@ -2266,9 +2347,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       MetricName: ApproximateAgeOfOldestMessage
       Namespace: AWS/SQS
@@ -2293,9 +2374,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       MetricName: ApproximateNumberOfMessagesVisible
       Namespace: AWS/SQS
@@ -2316,9 +2397,9 @@ Resources:
     Properties:
       ActionsEnabled: true
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: []
       AlarmDescription: Trigger the alarm if any lambda in the account timesout 5 times within 5 minutes.
       AlarmName: !Sub "${AWS::StackName}-LambdaTimeoutAlarm"
@@ -2389,9 +2470,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       MetricName: StreamProcessorFunction-FallbackEmail-error
       Namespace: !Sub "${AWS::StackName}/LogMessages"
@@ -2426,9 +2507,9 @@ Resources:
       AlarmDescription: !Sub "Trigger an alarm when F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event"
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: [ ]
       MetricName: PostEventFunction-OutOfSyncSQSEvents-error
       Namespace: !Sub "${AWS::StackName}/LogMessages"
@@ -2805,23 +2886,23 @@ Resources:
 
 Outputs:
   MockTxMASQSQueue:
+    Condition: IsNotProdLikeEnvironment
     Description: "SQS TXMA Consumer Queue"
     Value: !Ref MockTxMASQSQueue
-    Condition: IsMockedEnvironment
   MockTxMASQSQueueArn:
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Description: "Arn of SQS TXMA Consumer Queue"
     Value: !GetAtt MockTxMASQSQueue.Arn
     Export:
       Name: !Sub ${AWS::StackName}-MockTxMASQSQueue-arn
   MockTxMASQSQueueName:
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Description: "Name SQS TXMA Consumer Queue"
     Value: !GetAtt MockTxMASQSQueue.QueueName
     Export:
       Name: !Sub ${AWS::StackName}-MockTxMASQSQueue-name
   MockTxMAKMSEncryptionKey:
-    Condition: IsMockedEnvironment
+    Condition: IsNotProdLikeEnvironment
     Description: "Arn of the MockTxMAKMSEncryptionKey"
     Value: !GetAtt MockTxMAKMSEncryptionKey.Arn
     Export:
@@ -2886,5 +2967,21 @@ Outputs:
     Condition: IsNotProdLikeEnvironment
     Description: "Gov Notify Stub"
     Value: !FindInMap [EnvironmentVariables, !Ref Environment, GOVUKNOTIFYAPI]
-  
-
+  oidcStubApiURL:
+    Condition: IsNotProdLikeEnvironment
+    Description: "OIDC Stub"
+    Value: !Sub 
+        - "https://${ResolvedUrl}"
+        - ResolvedUrl: !If 
+            - UsingLocalOIDCStub
+            - !Ref OIDCUrl
+            - !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+  IpvApiURL:
+    Condition: IsNotProdLikeEnvironment
+    Description: "IPR Api"
+    Value: !Ref IPVRApiCustomDomain
+  IpvRedirectUrl:
+    Condition: IsNotProdLikeEnvironment
+    Description: "IPR redirect url"
+    Value: !FindInMap [ EnvironmentVariables, !Ref Environment, RETURNREDIRECTURL ]
+    

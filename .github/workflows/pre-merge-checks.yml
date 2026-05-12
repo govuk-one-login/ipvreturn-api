@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup SAM CLI
-        uses: aws-actions/setup-sam@v2
+        uses: aws-actions/setup-sam@v3
         with:
           use-installer: true
 
@@ -62,12 +62,12 @@ jobs:
           --s3-bucket ${{secrets.DEV_RETURN_PRE_MERGE_ARTIFACT_SOURCE_BUCKET_NAME}} \
           --template-file .aws-sam/build/template.yaml \
           --capabilities CAPABILITY_NAMED_IAM \
-          --parameter-overrides Environment=dev
+          --parameter-overrides Environment=dev OIDCProviderRequired=false
       
       - name: Construct API URL
         id: api_url
         run: |
-          echo "api_url=https://api-pre-merge-${{ needs.setup.outputs.sha_short }}.return.dev.account.gov.uk//" >> $GITHUB_OUTPUT
+          echo "api_url=https://api-pre-merge-${{ needs.setup.outputs.sha_short }}.return.dev.account.gov.uk/" >> $GITHUB_OUTPUT
 
       - name: SAM Build test harness stack
         working-directory: ./test-harness
@@ -101,7 +101,10 @@ jobs:
       DEV_IPR_TEST_HARNESS_URL: ${{ needs.deploy.outputs.test_harness_url }}
       API_TEST_SESSION_EVENTS_TABLE: ${{ secrets.DEV_API_TEST_SESSION_EVENTS_TABLE }}
       GOV_NOTIFY_API: ${{ secrets.DEV_IPR_GOV_NOTIFY_API }}
-      VC_GENERATION_FAILURE_EMAIL_ENABLED: true
+      DEV_IPR_API_URL: ${{ needs.deploy.outputs.api_url }}
+      REDIRECT_URI: https://ipvreturn-front.return.dev.account.gov.uk/callback
+      OIDC_IPR_API_URL: https://ipvreturn-oidc-stub-oidcstub.return.dev.account.gov.uk
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v6

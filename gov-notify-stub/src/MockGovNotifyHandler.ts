@@ -25,7 +25,8 @@ const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceNa
 class MockGovNotifyHandler implements LambdaInterface {
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
-	async handler(event: APIGatewayProxyEvent, context: any): Promise<APIGatewayProxyResult | undefined> {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	async handler(event: APIGatewayProxyEvent, _context: any): Promise<APIGatewayProxyResult | undefined> {
 		 switch (event.resource) {
 			 case ResourcesEnum.GOV_NOTIFY_SEND_EMAIL:
 				 if (event.httpMethod === "POST") {
