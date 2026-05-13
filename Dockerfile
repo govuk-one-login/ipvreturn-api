@@ -3,6 +3,7 @@ FROM ubuntu:latest
 RUN apt update -y && apt upgrade -y
 RUN apt install -y curl unzip
 
+RUN apt-get install jq -y
 RUN apt-get install -y ca-certificates curl gnupg
 RUN mkdir -p /etc/apt/keyrings
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
