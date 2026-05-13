@@ -16,12 +16,12 @@ import {
 	getSessionByUserId, 
 	getTxmaEventsFromTestHarness, 
 	validateTxMAEventData, 
-	// getApiRequest 
+	getApiRequest 
 } from "./utils/ApiTestSteps";
 import { sleep } from "../../utils/Sleep";
 import { ReturnSQSEvent } from "../../models/ReturnSQSEvent";
 import { absoluteTimeNow } from "../../utils/DateTimeUtils";
-// import { manualOidcLoginTest } from "./utils/OidcLoginSteps";
+import { manualOidcLoginTest } from "./utils/OidcLoginSteps";
 
 //QualityGateIntegrationTest 
 //QualityGateRegressionTest
