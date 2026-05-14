@@ -2971,15 +2971,17 @@ Outputs:
     Condition: IsNotProdLikeEnvironment
     Description: "OIDC Stub"
     Value: !Sub 
-        - "https://${ResolvedUrl}"
-        - ResolvedUrl: !If 
-            - UsingLocalOIDCStub
-            - !Ref OIDCUrl
-            - !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
+      - "https://${ResolvedUrl}"
+      - ResolvedUrl: !If
+          - UsingLocalOIDCStub
+          - !Ref OIDCUrl
+          - !FindInMap [ EnvironmentVariables, !Ref Environment, OIDCURL ]
   IpvApiURL:
     Condition: IsNotProdLikeEnvironment
-    Description: "IPR Api"
-    Value: !Ref IPVRApiCustomDomain
+    Description: "IPR Backend URL"
+    Value: !Sub
+      - "https://${CustomDomainName}"
+      - CustomDomainName: !Ref IPVRApiCustomDomain
   IpvRedirectUrl:
     Condition: IsNotProdLikeEnvironment
     Description: "IPR redirect url"
