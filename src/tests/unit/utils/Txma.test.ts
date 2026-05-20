@@ -6,13 +6,13 @@ const mockIssuer = "test-issuer";
 
 describe("TxmaEvents", () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
-		jest.useFakeTimers();
-		jest.setSystemTime(new Date(1585695600000));
+		vi.clearAllMocks();
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date(1585695600000));
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	describe("buildCoreEventFields", () => {

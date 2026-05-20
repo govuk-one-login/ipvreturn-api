@@ -1,6 +1,6 @@
  
  
-import { mock } from "jest-mock-extended";
+import { mock } from "vitest-mock-extended";
 import { IPRServiceAuth } from "../../../services/IPRServiceAuth";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
@@ -14,7 +14,7 @@ const logger = mock<Logger>();
 let iprServiceAuth: IPRServiceAuth;
 const tableName = "MYTABLE";
 const userId = "SESSID";
-const mockDynamoDbClient = jest.mocked(createDynamoDbClient());
+const mockDynamoDbClient = vi.mocked(createDynamoDbClient());
 const authRequestedUpdateExpression =
 	"SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
 const authRequestedExpressionAttributeValues = {
@@ -26,29 +26,29 @@ const authRequestedExpressionAttributeValues = {
 	":expiresOn": 604800 * 1000,
 };
 
-jest.mock("../../../utils/SqsClient", () => ({
+vi.mock("../../../utils/SqsClient", () => ({
 	sqsClient: {
-		send: jest.fn(),
+		send: vi.fn(),
 	},
 }));
-jest.mock("@aws-sdk/client-sqs", () => ({
-	SendMessageCommand: jest.fn().mockImplementation(() => {}),
+vi.mock("@aws-sdk/client-sqs", () => ({
+	SendMessageCommand: vi.fn().mockImplementation(() => {}),
 }));
 
 describe("IPR Service", () => {
 
 	beforeAll(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	beforeEach(() => {
-		jest.resetAllMocks();
+		vi.resetAllMocks();
 		iprServiceAuth = new IPRServiceAuth(tableName, logger, mockDynamoDbClient);
 	});
 
 	describe("saveEventData", () => {
 		it("Should throw error if saveEventData fails", async () => {
-			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
+			mockDynamoDbClient.send = vi.fn().mockRejectedValue({});
 			return expect(iprServiceAuth.saveEventData(userId, authRequestedUpdateExpression, authRequestedExpressionAttributeValues)).rejects.toThrow(
 				expect.objectContaining({
 					statusCode: HttpCodesEnum.SERVER_ERROR,
@@ -59,7 +59,7 @@ describe("IPR Service", () => {
 
 	describe("getAuthEventBySub", () => {
 		it("Should throw error if session has expired", async () => {
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue({
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue({
 				Item: {
 					expiresOn: absoluteTimeNow() - 1000,
 				},
@@ -70,7 +70,7 @@ describe("IPR Service", () => {
 		});
 
 		it("Should throw error if dynamo get command fails", async () => {
-			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
+			mockDynamoDbClient.send = vi.fn().mockRejectedValue({});
 
 			await expect(iprServiceAuth.getAuthEventBySub(userId)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session"));
 			expect(logger.error).toHaveBeenCalledWith({ message: "getAuthEventBySub - failed executing get from dynamodb" });
@@ -82,7 +82,7 @@ describe("IPR Service", () => {
 				expiresOn: absoluteTimeNow() + 1000,
 				userEmail: "test@digital.cabinet-office.gov.uk",
 			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue({ Item });
 			const result = await iprServiceAuth.getAuthEventBySub(userId);
 			expect(result).toEqual(Item);
 		});

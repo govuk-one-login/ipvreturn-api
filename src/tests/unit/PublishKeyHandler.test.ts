@@ -1,5 +1,4 @@
 import { PublishKeyHandler } from "../../PublishKeyHandler";
-import { expect, jest } from "@jest/globals";
 import { mockClient } from "aws-sdk-client-mock";
 import "aws-sdk-client-mock-jest";
 import { GetPublicKeyCommand, GetPublicKeyCommandOutput, KMSClient } from "@aws-sdk/client-kms";
@@ -8,8 +7,8 @@ import { Jwk } from "../../types/Keys";
 import { Context } from "aws-lambda";
 import crypto from "node:crypto";
 
-jest.mock("@aws-lambda-powertools/logger", () => ({
-    Logger: jest.fn().mockImplementation(() => ({
+vi.mock("@aws-lambda-powertools/logger", () => ({
+    Logger: vi.fn().mockImplementation(() => ({
         info: (x: any) => console.log(x),
         debug: (x: any) => console.log(x),
     })),

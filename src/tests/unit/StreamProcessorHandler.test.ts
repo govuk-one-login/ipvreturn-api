@@ -1,4 +1,4 @@
-import { mock } from "jest-mock-extended";
+import { mock } from "vitest-mock-extended";
 import { lambdaHandler } from "../../StreamProcessorHandler";
 import { HttpCodesEnum } from "../../models/enums/HttpCodesEnum";
 import { SessionEventProcessor } from "../../services/SessionEventProcessor";
@@ -9,7 +9,7 @@ const mockedSessionEventProcessor = mock<SessionEventProcessor>();
 
 describe("StreamProcessorHandler", () => {
 	it("return success response for streamProcessor", async () => {
-		SessionEventProcessor.getInstance = jest.fn().mockReturnValue(mockedSessionEventProcessor);
+		SessionEventProcessor.getInstance = vi.fn().mockReturnValue(mockedSessionEventProcessor);
 		await lambdaHandler(VALID_DYNAMODB_STREAM_EVENT, "IPR");
 		 
 		expect(mockedSessionEventProcessor.processRequest).toHaveBeenCalledTimes(1);
@@ -22,7 +22,7 @@ describe("StreamProcessorHandler", () => {
 	});
 
 	it("errors when stream processor throws AppError", async () => {
-		SessionEventProcessor.getInstance = jest.fn().mockImplementation(() => {
+		SessionEventProcessor.getInstance = vi.fn().mockImplementation(() => {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "");
 		});
 		const response = await lambdaHandler(VALID_DYNAMODB_STREAM_EVENT, "IPR");

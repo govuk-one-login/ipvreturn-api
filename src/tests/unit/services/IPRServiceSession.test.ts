@@ -1,7 +1,7 @@
  
  
  
-import { mock } from "jest-mock-extended";
+import { mock } from "vitest-mock-extended";
 import { SendMessageCommand } from "@aws-sdk/client-sqs";
 import { IPRServiceSession } from "../../../services/IPRServiceSession";
 import { Logger } from "@aws-lambda-powertools/logger";
@@ -19,7 +19,7 @@ const logger = mock<Logger>();
 let iprServiceSession: IPRServiceSession;
 const tableName = "MYTABLE";
 const userId = "SESSID";
-const mockDynamoDbClient = jest.mocked(createDynamoDbClient());
+const mockDynamoDbClient = vi.mocked(createDynamoDbClient());
 const authRequestedUpdateExpression =
 	"SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, nameParts = :nameParts, clientName = :clientName,  redirectUri = :redirectUri";
 const authRequestedExpressionAttributeValues = {
@@ -43,25 +43,25 @@ function getTXMAEventPayload(): TxmaEvent {
 	return txmaEventPayload;
 }
 
-jest.mock("../../../utils/SqsClient", () => ({
+vi.mock("../../../utils/SqsClient", () => ({
 	sqsClient: {
-		send: jest.fn(),
+		send: vi.fn(),
 	},
 }));
-jest.mock("@aws-sdk/client-sqs", () => ({
-	SendMessageCommand: jest.fn().mockImplementation(() => {}),
+vi.mock("@aws-sdk/client-sqs", () => ({
+	SendMessageCommand: vi.fn().mockImplementation(() => {}),
 }));
 
 describe("IPR Service", () => {
 	let txmaEventPayload: TxmaEvent;
 
 	beforeAll(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		txmaEventPayload = getTXMAEventPayload();
 	});
 
 	beforeEach(() => {
-		jest.resetAllMocks();
+		vi.resetAllMocks();
 		iprServiceSession = new IPRServiceSession(tableName, logger, mockDynamoDbClient);
 	});
 
@@ -77,7 +77,7 @@ describe("IPR Service", () => {
 		});
 
 		it("Should return false for isFlaggedForDeletionOrEventAlreadyProcessed if record does not exist", async () => {
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue({});
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue({});
 			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
 			expect(result).toBe(false);
 		});
@@ -92,7 +92,7 @@ describe("IPR Service", () => {
 					redirectUri: "",
 				},
 			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordNotFlaggedForDeletetionAndNotProcessed);
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue(recordNotFlaggedForDeletetionAndNotProcessed);
 			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
 			expect(result).toBe(false);
 		});
@@ -109,7 +109,7 @@ describe("IPR Service", () => {
 					redirectUri: "",
 				},
 			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForDeletetion);
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue(recordFlaggedForDeletetion);
 			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
 			expect(result).toBe(true);
 		});
@@ -125,7 +125,7 @@ describe("IPR Service", () => {
 					redirectUri: "",
 				},
 			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
 			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_IPV_AUTHORISATION_REQUESTED);
 			expect(result).toBe(true);
 		});
@@ -137,7 +137,7 @@ describe("IPR Service", () => {
 					userId: "SESSID",
 				},
 			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
 			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.F2F_YOTI_START);
 			expect(result).toBe(true);
 		});
@@ -149,7 +149,7 @@ describe("IPR Service", () => {
 					userId: "SESSID",
 				},
 			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
 			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.IPV_F2F_CRI_VC_CONSUMED);
 			expect(result).toBe(true);
 		});
@@ -161,13 +161,13 @@ describe("IPR Service", () => {
 					userId: "SESSID",
 				},
 			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
 			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_DELETE_ACCOUNT);
 			expect(result).toBe(true);
 		});
 	
 		it("Should not process the AUTH_DELETE_ACCOUNT session record is not found", async () => {
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue({});
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue({});
 			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.AUTH_DELETE_ACCOUNT);
 			expect(result).toBe(true);
 		});
@@ -179,13 +179,13 @@ describe("IPR Service", () => {
 					userId: "SESSID",
 				},
 			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue(recordFlaggedForAlreadyProcessed);
 			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.IPV_F2F_RESTART);
 			expect(result).toBe(true);
 		});
 	
 		it("Should not process the IPV_F2F_RESTART session record is not found", async () => {
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue({});
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue({});
 			const result = await iprServiceSession.isFlaggedForDeletionOrEventAlreadyProcessed(userId, Constants.IPV_F2F_RESTART);
 			expect(result).toBe(true);
 		});
@@ -193,7 +193,7 @@ describe("IPR Service", () => {
 
 	describe("saveEventData", () => {
 		it("Should throw error if saveEventData fails", async () => {
-			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
+			mockDynamoDbClient.send = vi.fn().mockRejectedValue({});
 			return expect(iprServiceSession.saveEventData(userId, authRequestedUpdateExpression, authRequestedExpressionAttributeValues)).rejects.toThrow(
 				expect.objectContaining({
 					statusCode: HttpCodesEnum.SERVER_ERROR,
@@ -304,7 +304,7 @@ describe("IPR Service", () => {
 
 	describe("getSessionBySub", () => {
 		it("Should throw error if session has expired", async () => {
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue({
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue({
 				Item: {
 					expiresOn: absoluteTimeNow() - 1000,
 				},
@@ -315,7 +315,7 @@ describe("IPR Service", () => {
 		});
 
 		it("Should throw error if dynamo get command fails", async () => {
-			mockDynamoDbClient.send = jest.fn().mockRejectedValue({});
+			mockDynamoDbClient.send = vi.fn().mockRejectedValue({});
 
 			await expect(iprServiceSession.getSessionBySub(userId)).rejects.toThrow(new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session"));
 			expect(logger.error).toHaveBeenCalledWith({ message: "getSessionBySub - failed executing get from dynamodb" });
@@ -327,7 +327,7 @@ describe("IPR Service", () => {
 				expiresOn: absoluteTimeNow() + 1000,
 				userEmail: "test@digital.cabinet-office.gov.uk",
 			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue({ Item });
 			const result = await iprServiceSession.getSessionBySub(userId);
 			expect(result).toEqual(Item);
 		});
