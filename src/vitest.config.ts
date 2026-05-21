@@ -11,6 +11,7 @@ export default defineConfig({
       enabled: true,
       provider: "v8",
       reportsDirectory: "coverage",
+      reporter: ["lcov", "text"],
     },
     reporters: ["default"],
   },
