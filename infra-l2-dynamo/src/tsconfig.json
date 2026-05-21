@@ -11,7 +11,6 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["vitest/globals"]
   },
   "exclude": ["node_modules","**/*.test.ts"]
 }
