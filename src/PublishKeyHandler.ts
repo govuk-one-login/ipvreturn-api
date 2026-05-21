@@ -7,7 +7,12 @@ import { KMSClient, GetPublicKeyCommand, GetPublicKeyCommandOutput } from "@aws-
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import crypto from "node:crypto";
 
-export const logger = new Logger({ serviceName: "PublishKeyHandler" });
+const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : "DEBUG";
+
+export const logger = new Logger({
+    logLevel: POWERTOOLS_LOG_LEVEL,
+    serviceName: "PublishKeyHandler",
+});
 
 export class PublishKeyHandler implements LambdaInterface {
     signingKeyId: string;
