@@ -12,9 +12,10 @@
         "aws-cdk-lib": "2.253.1",
         "@types/js-yaml": "4.0.5",
         "@vitest/coverage-v8": "4.1.4",
-        "vitest": "4.1.4",
+        "js-yaml": "4.1.1",
         "ts-node": "10.9.2",
         "typescript": "4.9.5",
+        "vitest": "4.1.4",
         "yaml-cfn": "0.3.1"
     },
     "scripts": {
