@@ -54,14 +54,14 @@ const invalidGetPublicKeyCommandOutput: GetPublicKeyCommandOutput = {
     KeyUsage: "ENCRYPT_DECRYPT",
     PublicKey: new Uint8Array(publicKeyDer)
 };
-const validPutObjectCommandInput: PutObjectCommandInput = {
-    Bucket: bucketName,
-    Key: "jwks.json",
-    Body: JSON.stringify({
-        keys: [validJwk],
-    }),
-    ContentType: "application/json",
-};
+// const validPutObjectCommandInput: PutObjectCommandInput = {
+//     Bucket: bucketName,
+//     Key: "jwks.json",
+//     Body: JSON.stringify({
+//         keys: [validJwk],
+//     }),
+//     ContentType: "application/json",
+// };
 
 describe("Tests", () => {
     const s3Mock = mockClient(S3Client);
