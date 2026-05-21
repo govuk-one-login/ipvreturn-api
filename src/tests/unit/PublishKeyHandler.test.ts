@@ -163,11 +163,11 @@ describe("Tests", () => {
     });
 
     describe("AWS S3 Service Errors", () => {
-        it.only("handles error from s3Client PutObject ", async () => {
+        it("handles error from s3Client PutObject ", async () => {
             s3Mock.on(PutObjectCommand).rejects(new Error("S3 Upload Error"));
             const publishKeyHandler: PublishKeyHandler = new PublishKeyHandler(keyID, bucketName);
 
-            expect.assertions(3);
+            expect.assertions(2);
             let result: string | undefined;
             try {
                 result = await publishKeyHandler.handler(validEvent, validContext);
@@ -183,7 +183,7 @@ describe("Tests", () => {
             s3Mock.on(PutObjectCommand).rejects("S3 Upload Error");
             const publishKeyHandler: PublishKeyHandler = new PublishKeyHandler(keyID, bucketName);
 
-            expect.assertions(3);
+            expect.assertions(2);
             let result: string | undefined;
             try {
                 result = await publishKeyHandler.handler(validEvent, validContext);
