@@ -7,6 +7,22 @@ import { Jwk } from "../../types/Keys";
 import { Context } from "aws-lambda";
 import crypto from "node:crypto";
 
+const mockLogger = vi.hoisted(() => ({
+  setPersistentLogAttributes: vi.fn(),
+  addContext: vi.fn(),
+  appendKeys: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn(),
+  error: vi.fn(),
+  warn: vi.fn(),
+}));
+
+vi.mock("@aws-lambda-powertools/logger", () => ({
+  Logger: vi.fn().mockImplementation(function () {
+    return mockLogger;
+  }),
+}));
+
 const { publicKey } = crypto.generateKeyPairSync('rsa', {
     modulusLength: 2048,
 });
@@ -77,6 +93,7 @@ describe("Tests", () => {
             const publishKeyHandler: PublishKeyHandler = new PublishKeyHandler(keyID, bucketName);
             const result: string | undefined = await publishKeyHandler.handler(validEvent, validContext);
 
+            expect(mockLogger.info).toHaveBeenNthCalledWith(2, "Successfully uploaded a new object version of jwks.json to bucket")
             expect(result).toEqual("Success");
             expect(s3Mock).toHaveReceivedNthCommandWith(PutObjectCommand, 1, validPutObjectCommandInput as any);
         });

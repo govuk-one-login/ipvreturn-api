@@ -6,8 +6,9 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { KMSClient, GetPublicKeyCommand, GetPublicKeyCommandOutput } from "@aws-sdk/client-kms";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import crypto from "node:crypto";
+import { Constants } from "./utils/Constants";
 
-const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : "DEBUG";
+const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : Constants.DEBUG;
 
 export const logger = new Logger({
     logLevel: POWERTOOLS_LOG_LEVEL,
@@ -51,9 +52,10 @@ export class PublishKeyHandler implements LambdaInterface {
     // PLEASE NOTE: THIS LAMBDA WILL OVERWRITE EVERYTHING IN THE JWKS.JSON FILE. It does not append the current decryption key details.
     public async handler(event: Record<string, unknown>, context: Context): Promise<string | undefined> {
         try {
+            console.log("HELLO!!!")
             logger.info(`Initiating lambda ${context.functionName} version ${context.functionVersion}`);
             logger.debug(`Using key ${this.signingKeyId} and uploading to ${this.bucketName}`);
-
+            console.log("PAST LOGGER!!!")
             const jsonWebKeySet: Jwks = { keys: [] };
             const signingKey = await this.getKmsKey();
             logger.debug(`Obtained the Public Key: ${JSON.stringify(signingKey)}`);
