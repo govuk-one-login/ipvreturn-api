@@ -30,14 +30,14 @@
     "tough-cookie": "6.0.1"
   },
   "scripts": {
-    "unit": "./node_modules/.bin/vitest run tests/unit --no-cache  --reporter=default",
+    "unit": "./node_modules/.bin/vitest run tests/unit --no-cache",
     "test:unit": "npm run compile && npm run unit",
     "lint:fix": "eslint --fix --output-file ./reports/eslint/report.html --format html -c eslint.config.mjs --ext *.ts .",
     "compile": "./node_modules/.bin/tsc",
     "lint": "eslint -c eslint.config.mjs --ext *.ts .",
-    "test:e2e": "./node_modules/.bin/vitest run tests/api/e2e*.test.ts --reporter=default --reporter=junit --outputFile.junit=results/e2e-report.xml --passWithNoTests",
-    "test:infra": "./node_modules/.bin/vitest run tests/infra/  --reporter=default",
-    "api": "node --experimental-vm-modules ./node_modules/.bin/vitest run tests/api/ --reporter=default",
+    "test:e2e": "./node_modules/.bin/vitest run tests/api/e2e*.test.ts --reporter=junit --outputFile.junit=results/e2e-report.xml --passWithNoTests",
+    "test:infra": "./node_modules/.bin/vitest run tests/infra/",
+    "api": "node --experimental-vm-modules ./node_modules/.bin/vitest run tests/api/",
     "test:api": "npm run compile && npm run api"
   },
   "devDependencies": {

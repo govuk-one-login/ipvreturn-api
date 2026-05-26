@@ -8,13 +8,8 @@ import { Context } from "aws-lambda";
 import crypto from "node:crypto";
 
 const mockLogger = vi.hoisted(() => ({
-  setPersistentLogAttributes: vi.fn(),
-  addContext: vi.fn(),
-  appendKeys: vi.fn(),
   info: vi.fn(),
-  debug: vi.fn(),
-  error: vi.fn(),
-  warn: vi.fn(),
+  debug: vi.fn()
 }));
 
 vi.mock("@aws-lambda-powertools/logger", () => ({
@@ -95,7 +90,7 @@ describe("Tests", () => {
 
             expect(mockLogger.info).toHaveBeenNthCalledWith(2, "Successfully uploaded a new object version of jwks.json to bucket")
             expect(result).toEqual("Success");
-            expect(s3Mock).toHaveReceivedNthCommandWith(PutObjectCommand, 1, validPutObjectCommandInput as any);
+            expect(s3Mock).toHaveReceivedNthCommandWith(PutObjectCommand, 1, validPutObjectCommandInput as PutObjectCommandInput & Record<string, unknown>);
         });
 
         it("Shouldn't parse keys that are with usage that is not SIGN_VERIFY", async () => {
@@ -191,7 +186,7 @@ describe("Tests", () => {
                 expect(error).toEqual(new Error("Unable to create JWKS file: Failed to save to S3: S3 Upload Error"));
             }
 
-            expect(s3Mock).toHaveReceivedCommandWith(PutObjectCommand, validPutObjectCommandInput as any);
+            expect(s3Mock).toHaveReceivedCommandWith(PutObjectCommand, validPutObjectCommandInput as PutObjectCommandInput & Record<string, unknown>);
             expect(result).toBeUndefined();
         });
 
@@ -207,7 +202,7 @@ describe("Tests", () => {
                 expect(error).toEqual(new Error("Unable to create JWKS file: Failed to save to S3: S3 Upload Error"));
             }
 
-            expect(s3Mock).toHaveReceivedCommandWith(PutObjectCommand, validPutObjectCommandInput as any);
+            expect(s3Mock).toHaveReceivedCommandWith(PutObjectCommand, validPutObjectCommandInput as PutObjectCommandInput & Record<string, unknown>);
             expect(result).toBeUndefined();
         });
     });

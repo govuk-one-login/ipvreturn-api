@@ -52,10 +52,8 @@ export class PublishKeyHandler implements LambdaInterface {
     // PLEASE NOTE: THIS LAMBDA WILL OVERWRITE EVERYTHING IN THE JWKS.JSON FILE. It does not append the current decryption key details.
     public async handler(event: Record<string, unknown>, context: Context): Promise<string | undefined> {
         try {
-            console.log("HELLO!!!")
             logger.info(`Initiating lambda ${context.functionName} version ${context.functionVersion}`);
             logger.debug(`Using key ${this.signingKeyId} and uploading to ${this.bucketName}`);
-            console.log("PAST LOGGER!!!")
             const jsonWebKeySet: Jwks = { keys: [] };
             const signingKey = await this.getKmsKey();
             logger.debug(`Obtained the Public Key: ${JSON.stringify(signingKey)}`);
