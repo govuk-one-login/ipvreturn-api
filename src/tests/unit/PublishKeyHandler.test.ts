@@ -8,9 +8,13 @@ import { Context } from "aws-lambda";
 import crypto from "node:crypto";
 
 const mockLogger = vi.hoisted(() => ({
+  setPersistentLogAttributes: vi.fn(),
+  addContext: vi.fn(),
+  appendKeys: vi.fn(),
   info: vi.fn(),
   debug: vi.fn(),
-  error: vi.fn()
+  error: vi.fn(),
+  warn: vi.fn(),
 }));
 
 vi.mock("@aws-lambda-powertools/logger", () => ({
