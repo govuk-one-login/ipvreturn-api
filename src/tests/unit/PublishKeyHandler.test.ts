@@ -9,7 +9,8 @@ import crypto from "node:crypto";
 
 const mockLogger = vi.hoisted(() => ({
   info: vi.fn(),
-  debug: vi.fn()
+  debug: vi.fn(),
+  error: vi.fn()
 }));
 
 vi.mock("@aws-lambda-powertools/logger", () => ({
