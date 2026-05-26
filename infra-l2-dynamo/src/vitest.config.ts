@@ -7,11 +7,5 @@ export default defineConfig({
     setupFiles: [],
     include: ["**/tests/**/*.test.ts"],
     clearMocks: true,
-    coverage: {
-      enabled: true,
-      provider: "v8",
-      reportsDirectory: "coverage",
-    },
-    reporters: ["default"],
   },
 });
