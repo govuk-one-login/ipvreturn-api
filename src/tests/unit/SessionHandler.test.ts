@@ -1,12 +1,12 @@
 import { lambdaHandler } from "../../SessionHandler";
 import { VALID_SESSION, INVALID_SESSION } from "./data/session-events";
 import { SessionProcessor } from "../../services/SessionProcessor";
-import { mock } from "jest-mock-extended";
+import { mock } from "vitest-mock-extended";
 
 const mockedSessionProcessor = mock<SessionProcessor>();
-jest.mock("../../utils/Config", () => {
+vi.mock("../../utils/Config", () => {
 	return {
-		getParameter: jest.fn(() => {return "client-id";}),
+		getParameter: vi.fn(() => {return "client-id";}),
 	};
 });
 
@@ -18,7 +18,7 @@ describe("SessionHandler", () => {
 	});
 
 	it("returns success response for a valid request payload", async () => {
-		SessionProcessor.getInstance = jest.fn().mockReturnValue(mockedSessionProcessor);
+		SessionProcessor.getInstance = vi.fn().mockReturnValue(mockedSessionProcessor);
 		mockedSessionProcessor.processRequest.mockResolvedValue({ statusCode: 200, body: JSON.stringify({ message: "Success" }) });
 		const response = await lambdaHandler(VALID_SESSION, "IPR");
 

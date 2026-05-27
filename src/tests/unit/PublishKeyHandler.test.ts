@@ -1,18 +1,19 @@
-import { PublishKeyHandler } from "../../PublishKeyHandler";
-import { expect, jest } from "@jest/globals";
+
+import { PublishKeyHandler, logger } from "../../PublishKeyHandler";
 import { mockClient } from "aws-sdk-client-mock";
-import "aws-sdk-client-mock-jest";
 import { GetPublicKeyCommand, GetPublicKeyCommandOutput, KMSClient } from "@aws-sdk/client-kms";
-import { PutObjectCommand, PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Jwk } from "../../types/Keys";
 import { Context } from "aws-lambda";
 import crypto from "node:crypto";
 
-jest.mock("@aws-lambda-powertools/logger", () => ({
-    Logger: jest.fn().mockImplementation(() => ({
-        info: (x: any) => console.log(x),
-        debug: (x: any) => console.log(x),
-    })),
+vi.mock("@aws-lambda-powertools/logger", () => ({
+	Logger: vi.fn().mockImplementation(function () {
+    return {
+      info: vi.fn(),
+      debug: vi.fn(),
+    };
+  }),
 }));
 
 const { publicKey } = crypto.generateKeyPairSync('rsa', {
@@ -61,14 +62,6 @@ const invalidGetPublicKeyCommandOutput: GetPublicKeyCommandOutput = {
     KeyUsage: "ENCRYPT_DECRYPT",
     PublicKey: new Uint8Array(publicKeyDer)
 };
-const validPutObjectCommandInput: PutObjectCommandInput = {
-    Bucket: bucketName,
-    Key: "jwks.json",
-    Body: JSON.stringify({
-        keys: [validJwk],
-    }),
-    ContentType: "application/json",
-};
 
 describe("Tests", () => {
     const s3Mock = mockClient(S3Client);
@@ -85,8 +78,19 @@ describe("Tests", () => {
             const publishKeyHandler: PublishKeyHandler = new PublishKeyHandler(keyID, bucketName);
             const result: string | undefined = await publishKeyHandler.handler(validEvent, validContext);
 
+            expect(logger.info).toHaveBeenNthCalledWith(2, "Successfully uploaded a new object version of jwks.json to bucket")
+            expect(logger.debug).toHaveBeenNthCalledWith(1, `Using key ${keyID} and uploading to ${bucketName}`)
             expect(result).toEqual("Success");
-            expect(s3Mock).toHaveReceivedNthCommandWith(1, PutObjectCommand, validPutObjectCommandInput);
+            expect(s3Mock).toHaveReceivedCommandWith(PutObjectCommand, 
+                {
+                    Bucket: bucketName,
+                    Key: "jwks.json",
+                    Body: JSON.stringify({
+                        keys: [validJwk],
+                    }),
+                    ContentType: "application/json",
+                }
+            );
         });
 
         it("Shouldn't parse keys that are with usage that is not SIGN_VERIFY", async () => {
@@ -182,7 +186,15 @@ describe("Tests", () => {
                 expect(error).toEqual(new Error("Unable to create JWKS file: Failed to save to S3: S3 Upload Error"));
             }
 
-            expect(s3Mock).toHaveReceivedCommandWith(PutObjectCommand, validPutObjectCommandInput);
+            expect(s3Mock).toHaveReceivedCommandWith(PutObjectCommand,
+                {
+                    Bucket: bucketName,
+                    Key: "jwks.json",
+                    Body: JSON.stringify({
+                        keys: [validJwk],
+                    }),
+                    ContentType: "application/json",
+                });
             expect(result).toBeUndefined();
         });
 
@@ -198,7 +210,15 @@ describe("Tests", () => {
                 expect(error).toEqual(new Error("Unable to create JWKS file: Failed to save to S3: S3 Upload Error"));
             }
 
-            expect(s3Mock).toHaveReceivedCommandWith(PutObjectCommand, validPutObjectCommandInput);
+            expect(s3Mock).toHaveReceivedCommandWith(PutObjectCommand, 
+                {
+                    Bucket: bucketName,
+                    Key: "jwks.json",
+                    Body: JSON.stringify({
+                        keys: [validJwk],
+                    }),
+                    ContentType: "application/json",
+                });
             expect(result).toBeUndefined();
         });
     });

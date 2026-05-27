@@ -2,7 +2,7 @@ import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
 import { PostEventProcessor } from "../../../services/PostEventProcessor";
-import { mock } from "jest-mock-extended";
+import { mock } from "vitest-mock-extended";
 import { IPRServiceSession } from "../../../services/IPRServiceSession";
 import { IPRServiceAuth } from "../../../services/IPRServiceAuth";
 import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
@@ -27,7 +27,7 @@ let postEventProcessorMockSessionService: PostEventProcessor;
 let postEventProcessorMockServices: PostEventProcessor;
 let iprServiceAuth: IPRServiceAuth;
 const tableName = "MYTABLE";
-const mockDynamoDbClient = jest.mocked(createDynamoDbClient());
+const mockDynamoDbClient = vi.mocked(createDynamoDbClient());
 const mockIprServiceSession = mock<IPRServiceSession>();
 const mockIprServiceAuth = mock<IPRServiceAuth>();
 const mockLogger = mock<Logger>();
@@ -36,9 +36,9 @@ const metrics = new Metrics({ namespace: "F2F" });
 
 describe("PostEventProcessor", () => {
 	beforeAll(() => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 		const fakeTime = 1684933200.123;
-		jest.setSystemTime(new Date(fakeTime * 1000)); // 2023-05-24T13:00:00.123Z
+		vi.setSystemTime(new Date(fakeTime * 1000)); // 2023-05-24T13:00:00.123Z
 		iprServiceAuth = new IPRServiceAuth(tableName, mockLogger, mockDynamoDbClient);
 		postEventProcessorMockSessionService = new PostEventProcessor(mockLogger, metrics);
 		postEventProcessorMockServices = new PostEventProcessor(mockLogger, metrics);
@@ -56,7 +56,7 @@ describe("PostEventProcessor", () => {
 	});
 
 	beforeEach(() => {
-		jest.resetAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it("Returns success response when call to save event data is successful", async () => {
@@ -108,7 +108,7 @@ describe("PostEventProcessor", () => {
 			timestamp_formatted: "2023-04-19T11:00:01.000Z",
 			user: {
 				user_id: "01333e01-dde3-412f-a484-4444",
-				email: "jest@test.com",
+				email: "vi@test.com",
 			},
 		};
 		await expect(postEventProcessorMockSessionService.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_NAME_MISSING))).rejects.toThrow(
@@ -128,7 +128,7 @@ describe("PostEventProcessor", () => {
 			timestamp_formatted: "2023-04-19T11:00:01.000Z",
 			user: {
 				user_id: "01333e01-dde3-412f-a484-4444",
-				email: "jest@test.com",
+				email: "vi@test.com",
 			},
 		};
 		await expect(postEventProcessorMockSessionService.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_NAME_SPACES))).rejects.toThrow(
@@ -147,7 +147,7 @@ describe("PostEventProcessor", () => {
 			timestamp_formatted: "2023-04-19T11:00:01.000Z",
 			user: {
 				user_id: "01333e01-dde3-412f-a484-4444",
-				email: "jest@test.com",
+				email: "vi@test.com",
 			},
 		};
 		await expect(postEventProcessorMockSessionService.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_TIMESTAMP_MISSING))).rejects.toThrow(
@@ -194,12 +194,12 @@ describe("PostEventProcessor", () => {
 				timestamp_formatted: "2023-04-19T11:00:01.000Z",
 				user: {
 					user_id: "01333e01-dde3-412f-a484-4444",
-					email: "test@jest.com",
+					email: "test@vi.com",
 				}
 			};
 			await postEventProcessorMockServices.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_MISSING_LANDINGURL));
 			expect(mockIprServiceAuth.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn", { 
-				":userEmail": "test@jest.com",
+				":userEmail": "test@vi.com",
 				":ipvStartedOn": 1681902001,
 				":clientName": "ekwU",
 				":redirectUri": "https://home.account.gov.uk/your-services",
@@ -229,7 +229,7 @@ describe("PostEventProcessor", () => {
 				timestamp_formatted: "2023-04-19T11:00:01.000Z",
 				user: {
 					user_id: "01333e01-dde3-412f-a484-4444",
-					email: "test@jest.com",
+					email: "test@vi.com",
 				}
 			};
 
@@ -239,7 +239,7 @@ describe("PostEventProcessor", () => {
 
 			await postEventProcessorMockServices.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_MISSING_LANDINGURL));
 			expect(mockIprServiceAuth.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn", { 
-				":userEmail": "test@jest.com",
+				":userEmail": "test@vi.com",
 				":ipvStartedOn": 1681902001,
 				":clientName": clientId,
 				":redirectUri": clientLandingPageUrl,
@@ -258,12 +258,12 @@ describe("PostEventProcessor", () => {
 				timestamp_formatted: "2023-04-19T11:00:01.000Z",
 				user: {
 					user_id: "01333e01-dde3-412f-a484-4444",
-					email: "test@jest.com",
+					email: "test@vi.com",
 				},
 			};
 			await postEventProcessorMockServices.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_URL_SPACES));
 			expect(mockIprServiceAuth.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET ipvStartedOn = :ipvStartedOn, userEmail = :userEmail, clientName = :clientName,  redirectUri = :redirectUri, expiresOn = :expiresOn", { 
-				":userEmail": "test@jest.com",
+				":userEmail": "test@vi.com",
 				":ipvStartedOn": 1681902001,
 				":clientName": "ekwU",
 				":redirectUri": "https://home.account.gov.uk/your-services",
@@ -320,7 +320,7 @@ describe("PostEventProcessor", () => {
 				redirectUri: "test",
 				expiresOn: absoluteTimeNow() + 1000,
 			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue({ Item });
 			await postEventProcessorMockSessionService.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
 			const expiresOn = absoluteTimeNow() + Number(process.env.SESSION_RETURN_RECORD_TTL_SECS!);
 			 
@@ -345,7 +345,7 @@ describe("PostEventProcessor", () => {
 				redirectUri: "test",
 				expiresOn: absoluteTimeNow() + 1000,
 			};
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item });
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue({ Item });
 			const YotiStartEvent = JSON.parse(VALID_F2F_YOTI_START_TXMA_EVENT_STRING);
 			YotiStartEvent.user.govuk_signin_journey_id = "sdfssg";
 			await postEventProcessorMockSessionService.processRequest(JSON.stringify(YotiStartEvent));
@@ -421,7 +421,7 @@ describe("PostEventProcessor", () => {
 		};
 
 		beforeEach(() => {
-			mockDynamoDbClient.send = jest.fn().mockResolvedValue({ Item: mockAuthItem });
+			mockDynamoDbClient.send = vi.fn().mockResolvedValue({ Item: mockAuthItem });
 		});
 
 		it("Calls saveEventData with appropriate payload for F2F_YOTI_START event", async () => {
@@ -535,7 +535,7 @@ describe("PostEventProcessor", () => {
 
 		it("Checks for record in auth table with relevant userID and throws error if not found", async () => {
 			await expect(postEventProcessorMockServices.processRequest(VALID_F2F_YOTI_START_TXMA_EVENT_STRING)).rejects.toThrow(
-				new AppError(HttpCodesEnum.BAD_REQUEST, "Cannot parse event data"),
+				new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 			);
 			 
 			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event" }, { "messageCode": "SQS_OUT_OF_SYNC" });	

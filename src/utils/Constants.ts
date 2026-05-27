@@ -30,6 +30,8 @@ export class Constants {
 
     static readonly STREAM_PROCESSOR_LOGGER_SVC_NAME = "StreamProcessorHandler";
 
+    static readonly PUBLISH_KEY_LOGGER_SVC_NAME = "PublishKeyHandler";
+
     static readonly IPVRETURN_METRICS_NAMESPACE = "IPVRETURN-CRI";
 
     static readonly OIDC_TOKEN_ENDPOINT = "token";

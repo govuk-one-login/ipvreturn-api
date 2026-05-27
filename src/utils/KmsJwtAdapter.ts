@@ -36,7 +36,7 @@ export class KmsJwtAdapter {
 			signature: "",
 		};
 		const params = {
-			Message: Buffer.from(`${tokenComponents.header}.${tokenComponents.payload}`),
+			Message: new Uint8Array(Buffer.from(`${tokenComponents.header}.${tokenComponents.payload}`)),
 			KeyId: kid,
 			SigningAlgorithm: SigningAlgorithmSpec.RSASSA_PKCS1_V1_5_SHA_256,
 			MessageType: MessageType.RAW,
@@ -47,9 +47,9 @@ export class KmsJwtAdapter {
 			throw new Error("Failed to sign Jwt");
 		}
 
-		tokenComponents.signature = Buffer.from(res.Signature).toString("base64").replace(/\+/g, "-")
-			.replace(/\//g, "_")
-			.replace(/=/g, "");
+		tokenComponents.signature = Buffer.from(res.Signature).toString("base64").replaceAll("+", "-")
+			.replaceAll("/", "_")
+			.replaceAll("=", "");
 		return `${tokenComponents.header}.${tokenComponents.payload}.${tokenComponents.signature}`;
 	}
 
