@@ -12,7 +12,6 @@
         "aws-cdk-lib": "2.253.1",
         "@types/js-yaml": "4.0.5",
         "vitest": "4.1.4",
-        "ts-node": "10.9.2",
         "typescript": "4.9.5",
         "yaml-cfn": "0.3.1"
     },
@@ -20,5 +19,6 @@
         "test": "npm run infra",
         "infra":"./node_modules/.bin/vitest run tests/infra",
         "test:infra": "npm run infra"
-    }
+    },
+    "type": "module"
 }
