@@ -10,6 +10,16 @@ export default defineConfig({
     coverage: {
       enabled: true,
       provider: "v8",
+      include: ["**/*.ts"],
+      exclude: [
+        "**/tests/**/*.ts",
+        "**/models/**/*.ts",
+        "**/type/**/*.ts",
+        "vitest.config.ts",
+        "vitest.setup.ts",
+        "**/node_modules/**",
+        "config.ts",
+      ],
       reportsDirectory: "coverage",
       reporter: ["lcov", "text"],
     },

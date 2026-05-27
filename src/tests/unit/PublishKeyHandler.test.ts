@@ -1,5 +1,5 @@
 
-import { PublishKeyHandler } from "../../PublishKeyHandler";
+import { PublishKeyHandler, logger } from "../../PublishKeyHandler";
 import { mockClient } from "aws-sdk-client-mock";
 import { GetPublicKeyCommand, GetPublicKeyCommandOutput, KMSClient } from "@aws-sdk/client-kms";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
@@ -7,14 +7,12 @@ import { Jwk } from "../../types/Keys";
 import { Context } from "aws-lambda";
 import crypto from "node:crypto";
 
-const mockLogger = vi.hoisted(() => ({
-  info: vi.fn(),
-  debug: vi.fn(),
-}));
-
 vi.mock("@aws-lambda-powertools/logger", () => ({
-  Logger: vi.fn().mockImplementation(function () {
-    return mockLogger;
+	Logger: vi.fn().mockImplementation(function () {
+    return {
+      info: vi.fn(),
+      debug: vi.fn(),
+    };
   }),
 }));
 
@@ -80,8 +78,8 @@ describe("Tests", () => {
             const publishKeyHandler: PublishKeyHandler = new PublishKeyHandler(keyID, bucketName);
             const result: string | undefined = await publishKeyHandler.handler(validEvent, validContext);
 
-            expect(mockLogger.info).toHaveBeenNthCalledWith(2, "Successfully uploaded a new object version of jwks.json to bucket")
-            expect(mockLogger.debug).toHaveBeenNthCalledWith(1, `Using key ${keyID} and uploading to ${bucketName}`)
+            expect(logger.info).toHaveBeenNthCalledWith(2, "Successfully uploaded a new object version of jwks.json to bucket")
+            expect(logger.debug).toHaveBeenNthCalledWith(1, `Using key ${keyID} and uploading to ${bucketName}`)
             expect(result).toEqual("Success");
             expect(s3Mock).toHaveReceivedCommandWith(PutObjectCommand, 
                 {

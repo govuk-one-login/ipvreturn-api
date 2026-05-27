@@ -1,8 +1,8 @@
 import { SQSEvent } from "aws-lambda";
-import { lambdaHandler, logger } from "../../DequeueHandler";
+import { lambdaHandler, logger, s3Client } from "../../DequeueHandler";
 import { BatchItemFailure } from "../../utils/BatchItemFailure";
 import { mockClient } from "aws-sdk-client-mock";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 vi.useFakeTimers().setSystemTime(new Date("2020-01-01"));
 
@@ -15,7 +15,7 @@ vi.mock("@aws-lambda-powertools/logger", () => ({
   }),
 }));
 
-const s3Mock = mockClient(S3Client);
+const s3Mock = mockClient(s3Client);
 
 describe("DequeueHandler", () => {
   const body1 = JSON.stringify({

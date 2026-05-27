@@ -8,11 +8,17 @@ import { NodeHttpHandler } from "@smithy/node-http-handler";
 import crypto from "node:crypto";
 import { Constants } from "./utils/Constants";
 
-const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : Constants.DEBUG;
+const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL
+	? process.env.POWERTOOLS_LOG_LEVEL
+	: Constants.DEBUG;
+const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME
+	? process.env.POWERTOOLS_SERVICE_NAME
+	: Constants.PUBLISH_KEY_LOGGER_SVC_NAME;
+
 
 export const logger = new Logger({
     logLevel: POWERTOOLS_LOG_LEVEL,
-    serviceName: "PublishKeyHandler",
+    serviceName: POWERTOOLS_SERVICE_NAME,
 });
 
 export class PublishKeyHandler implements LambdaInterface {
