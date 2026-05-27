@@ -30,12 +30,11 @@
     "tough-cookie": "6.0.1"
   },
   "scripts": {
-    "unit": "./node_modules/.bin/vitest run tests/unit --no-cache  --reporter=default",
+    "unit": "./node_modules/.bin/vitest run tests/unit --no-cache",
     "test:unit": "npm run compile && npm run unit",
     "lint:fix": "eslint --fix --output-file ./reports/eslint/report.html --format html -c eslint.config.mjs --ext *.ts .",
     "compile": "./node_modules/.bin/tsc",
     "lint": "eslint -c eslint.config.mjs --ext *.ts .",
-    "test:e2e": "./node_modules/.bin/vitest run tests/api/e2e*.test.ts --reporter=default --reporter=junit --outputFile.junit=results/e2e-report.xml --passWithNoTests",
     "test:infra": "./node_modules/.bin/vitest run tests/infra/  --reporter=default",
     "api": "node --experimental-vm-modules ./node_modules/.bin/vitest run tests/api/ --reporter=default",
     "test:api": "npm run compile && npm run api"
@@ -58,7 +57,7 @@
     "js-yaml": "4.1.1",
     "prettier": "3.6.2",
     "ts-node": "10.9.2",
-    "typescript": "4.9.5",
+    "typescript": "5.9.3",
     "vitest": "4.1.4",
     "vitest-mock-extended": "4.0.0",
     "yaml-cfn": "0.3.2"

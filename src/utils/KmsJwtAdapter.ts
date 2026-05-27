@@ -36,7 +36,7 @@ export class KmsJwtAdapter {
 			signature: "",
 		};
 		const params = {
-			Message: Buffer.from(`${tokenComponents.header}.${tokenComponents.payload}`),
+			Message: new Uint8Array(Buffer.from(`${tokenComponents.header}.${tokenComponents.payload}`)),
 			KeyId: kid,
 			SigningAlgorithm: SigningAlgorithmSpec.RSASSA_PKCS1_V1_5_SHA_256,
 			MessageType: MessageType.RAW,
