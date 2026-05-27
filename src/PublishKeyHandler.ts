@@ -6,20 +6,8 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { KMSClient, GetPublicKeyCommand, GetPublicKeyCommandOutput } from "@aws-sdk/client-kms";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import crypto from "node:crypto";
-import { Constants } from "./utils/Constants";
 
-const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL
-	? process.env.POWERTOOLS_LOG_LEVEL
-	: Constants.DEBUG;
-const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME
-	? process.env.POWERTOOLS_SERVICE_NAME
-	: Constants.PUBLISH_KEY_LOGGER_SVC_NAME;
-
-
-export const logger = new Logger({
-    logLevel: POWERTOOLS_LOG_LEVEL,
-    serviceName: POWERTOOLS_SERVICE_NAME,
-});
+export const logger = new Logger({ serviceName: "PublishKeyHandler" });
 
 export class PublishKeyHandler implements LambdaInterface {
     signingKeyId: string;
@@ -60,6 +48,7 @@ export class PublishKeyHandler implements LambdaInterface {
         try {
             logger.info(`Initiating lambda ${context.functionName} version ${context.functionVersion}`);
             logger.debug(`Using key ${this.signingKeyId} and uploading to ${this.bucketName}`);
+            
             const jsonWebKeySet: Jwks = { keys: [] };
             const signingKey = await this.getKmsKey();
             logger.debug(`Obtained the Public Key: ${JSON.stringify(signingKey)}`);
