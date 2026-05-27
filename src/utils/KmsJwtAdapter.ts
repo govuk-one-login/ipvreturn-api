@@ -47,9 +47,9 @@ export class KmsJwtAdapter {
 			throw new Error("Failed to sign Jwt");
 		}
 
-		tokenComponents.signature = Buffer.from(res.Signature).toString("base64").replaceAll(/\+/g, "-")
-			.replaceAll(/\//g, "_")
-			.replaceAll(/=/g, "");
+		tokenComponents.signature = Buffer.from(res.Signature).toString("base64").replaceAll("+", "-")
+			.replaceAll("/", "_")
+			.replaceAll("=", "");
 		return `${tokenComponents.header}.${tokenComponents.payload}.${tokenComponents.signature}`;
 	}
 
