@@ -234,7 +234,7 @@ Resources:
           - .js=.mjs
         Banner:
           - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
-        format: cjs
+        format: esm
         Sourcemap: true
         EntryPoints:
           - MockOidcProviderHandler.ts
