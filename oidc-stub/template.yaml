@@ -226,21 +226,6 @@ Resources:
         - AWSXrayWriteOnlyAccess
     Metadata:
       BuildMethod: makefile
-      BuildProperties:
-        Minify: true
-        Target: es2022
-        Format: esm
-        OutExtension:
-          - .js=.mjs
-        Banner:
-          - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
-        format: cjs
-        Sourcemap: true
-        EntryPoints:
-          - MockOidcProviderHandler.ts
-        Loader:
-          - .ejs=copy
-        UseNpmCi: True
 
   MockOidcProviderFunctionLogGroup:
     Type: AWS::Logs::LogGroup
