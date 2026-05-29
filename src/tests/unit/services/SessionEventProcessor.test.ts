@@ -2,7 +2,7 @@
 import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SessionEventProcessor } from "../../../services/SessionEventProcessor";
-import { mock } from "jest-mock-extended";
+import { mock } from "vitest-mock-extended";
 import { DynamoDBStreamEvent } from "aws-lambda";
 import { VALID_DYNAMODB_STREAM_EVENT, VALID_DYNAMODB_STREAM_EVENT_WITH_PO_DETAILS } from "../data/dynamodb-stream-record";
 import { IPRServiceSession } from "../../../services/IPRServiceSession";
@@ -15,7 +15,7 @@ const mockLogger = mock<Logger>();
 const metrics = mock<Metrics>();
 let streamEvent: DynamoDBStreamEvent;
 let streamEventWithPoDetails: DynamoDBStreamEvent;
-jest.spyOn(console, "log").mockImplementation(() => {});
+vi.spyOn(console, "log").mockImplementation(() => {});
 
 describe("SessionEventProcessor", () => {
 	beforeAll(() => {
@@ -27,7 +27,7 @@ describe("SessionEventProcessor", () => {
 	});
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		streamEvent = VALID_DYNAMODB_STREAM_EVENT;
 		streamEventWithPoDetails = VALID_DYNAMODB_STREAM_EVENT_WITH_PO_DETAILS;
 	});

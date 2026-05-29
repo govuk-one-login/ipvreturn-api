@@ -7,7 +7,7 @@ import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_
 import { SendEmailProcessor } from "../../../services/SendEmailProcessor";
 import { SendEmailService } from "../../../services/SendEmailService";
 import { IPRServiceSession } from "../../../services/IPRServiceSession";
-import { mock } from "jest-mock-extended";
+import { mock } from "vitest-mock-extended";
 import { EmailResponse } from "../../../models/EmailResponse";
 import { ExtSessionEvent, SessionEvent } from "../../../models/SessionEvent";
 import { Email, DynamicEmail, VCGenerationFailureEmail } from "../../../models/Email";
@@ -126,9 +126,9 @@ describe("SendEmailProcessor", () => {
 	});
 
 	beforeEach(() => {
-		jest.clearAllMocks();
-		jest.useFakeTimers();
-		jest.setSystemTime(new Date(1585695600000));
+		vi.clearAllMocks();
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date(1585695600000));
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
 		sqsEventVCGenerationFailureEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_VC_GENERATION_FAILURE_EMAIL;
@@ -137,7 +137,7 @@ describe("SendEmailProcessor", () => {
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it("Returns success response when all required Email attributes exists to send static template Email messageType", async () => {

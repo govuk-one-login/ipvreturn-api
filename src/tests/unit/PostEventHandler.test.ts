@@ -1,4 +1,4 @@
-import { mock } from "jest-mock-extended";
+import { mock } from "vitest-mock-extended";
 import { lambdaHandler } from "../../PostEventHandler";
 import { PostEventProcessor } from "../../services/PostEventProcessor";
 import { VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT, VALID_IPV_F2F_RESTART_SQS_EVENT } from "../data/sqs-events";
@@ -7,20 +7,20 @@ import { HttpCodesEnum } from "../../models/enums/HttpCodesEnum";
 
 const mockPostEventProcessor = mock<PostEventProcessor>();
 
-jest.mock("../../services/PostEventProcessor", () => {
+vi.mock("../../services/PostEventProcessor", () => {
 	return {
-		PostEventProcessor: jest.fn(() => mockPostEventProcessor),
+		PostEventProcessor: vi.fn(() => mockPostEventProcessor),
 	};
 });
 
-jest.mock("../../utils/Config", () => {
+vi.mock("../../utils/Config", () => {
 	return {
-		getParameter: jest.fn(() => {return "dgsdgsg";}),
+		getParameter: vi.fn(() => {return "dgsdgsg";}),
 	};
 });
 describe("PostEventHandler", () => {
 	it("returns success response", async () => {
-		PostEventProcessor.getInstance = jest.fn().mockReturnValue(mockPostEventProcessor);
+		PostEventProcessor.getInstance = vi.fn().mockReturnValue(mockPostEventProcessor);
 		await lambdaHandler(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT, "IPR");
 
 		 
@@ -34,7 +34,7 @@ describe("PostEventHandler", () => {
 	});
 
 	it("Returns batch error so error can be added to DLQ when postEvent processor throws AppError for IPV_F2F_RESTART event", async () => {
-		PostEventProcessor.getInstance = jest.fn().mockImplementation(() => {
+		PostEventProcessor.getInstance = vi.fn().mockImplementation(() => {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
 		});
 		const response = await lambdaHandler(VALID_IPV_F2F_RESTART_SQS_EVENT, "IPR")
@@ -42,7 +42,7 @@ describe("PostEventHandler", () => {
 	});
 
 	it("errors with batchItemFailures when postEvent processor throws AppError for all other events", async () => {
-		PostEventProcessor.getInstance = jest.fn().mockImplementation(() => {
+		PostEventProcessor.getInstance = vi.fn().mockImplementation(() => {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Missing event config");
 		});
 		const response = await lambdaHandler(VALID_AUTH_IPV_AUTHORISATION_REQUESTED_SQS_EVENT, "IPR");

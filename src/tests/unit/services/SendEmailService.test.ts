@@ -5,7 +5,7 @@ import { SQSEvent } from "aws-lambda";
 import { NotifyClient } from "notifications-node-client";
 import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL, VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_VC_GENERATION_FAILURE_EMAIL } from "../../data/sqs-events";
 import { SendEmailService } from "../../../services/SendEmailService";
-import { mock } from "jest-mock-extended";
+import { mock } from "vitest-mock-extended";
 import { Email, DynamicEmail } from "../../../models/Email";
 import { Constants } from "../../../utils/Constants";
 import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
@@ -31,7 +31,7 @@ describe("SendEmailService", () => {
 	});
 
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
 		sqsEventNewEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_DYNAMIC_EMAIL;
 		sqsEventVCGenerationFailureEmail = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT_VC_GENERATION_FAILURE_EMAIL;

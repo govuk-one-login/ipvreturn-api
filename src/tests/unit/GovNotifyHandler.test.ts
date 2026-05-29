@@ -1,4 +1,4 @@
-import { mock } from "jest-mock-extended";
+import { mock } from "vitest-mock-extended";
 import { lambdaHandler } from "../../GovNotifyHandler";
 import { SendEmailProcessor } from "../../services/SendEmailProcessor";
 import { VALID_GOV_NOTIFY_HANDLER_SQS_EVENT } from "../data/sqs-events";
@@ -7,20 +7,20 @@ import { HttpCodesEnum } from "../../models/enums/HttpCodesEnum";
 
 const mockedSendEmailRequestProcessor = mock<SendEmailProcessor>();
 
-jest.mock("../../services/SendEmailProcessor", () => {
+vi.mock("../../services/SendEmailProcessor", () => {
 	return {
-		SendEmailProcessor: jest.fn(() => mockedSendEmailRequestProcessor),
+		SendEmailProcessor: vi.fn(() => mockedSendEmailRequestProcessor),
 	};
 });
 
-jest.mock("../../utils/Config", () => {
+vi.mock("../../utils/Config", () => {
 	return {
-		getParameter: jest.fn(() => {return "dgsdgsg";}),
+		getParameter: vi.fn(() => {return "dgsdgsg";}),
 	};
 });
 describe("GovNotifyHandler", () => {
 	it("return success response for govNotify", async () => {
-		SendEmailProcessor.getInstance = jest.fn().mockReturnValue(mockedSendEmailRequestProcessor);
+		SendEmailProcessor.getInstance = vi.fn().mockReturnValue(mockedSendEmailRequestProcessor);
 		await lambdaHandler(VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, "IPR");
 
 		 
@@ -34,7 +34,7 @@ describe("GovNotifyHandler", () => {
 	});
 
 	it("errors when email processor throws AppError", async () => {
-		SendEmailProcessor.getInstance = jest.fn().mockImplementation(() => {
+		SendEmailProcessor.getInstance = vi.fn().mockImplementation(() => {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "emailSending - failed: got error while sending email.");
 		});
 		const response = await lambdaHandler(VALID_GOV_NOTIFY_HANDLER_SQS_EVENT, "IPR");

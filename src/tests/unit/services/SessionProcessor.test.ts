@@ -1,5 +1,5 @@
 import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
-import { mock } from "jest-mock-extended";
+import { mock } from "vitest-mock-extended";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Response } from "../../../utils/Response";
 import { HttpCodesEnum } from "../../../utils/HttpCodesEnum";
@@ -48,11 +48,11 @@ const failingKmsJwtDecodeAdapterFactory = () => new MockFailingKmsJwtAdapter();
 
 const logger = mock<Logger>();
 const metrics = mock<Metrics>();
-jest.mock("axios");
-const mockStsClient = jest.mocked(stsClient);
+vi.mock("axios");
+const mockStsClient = vi.mocked(stsClient);
 const validRequest = VALID_SESSION;
 const CLIENT_ID = "oidc-client-id";
-jest.spyOn(TxmaEventUtils, "buildCoreEventFields");
+vi.spyOn(TxmaEventUtils, "buildCoreEventFields");
 
 function getMockSessionEventItem(): SessionEvent {
 	const sess: SessionEvent = {
@@ -85,7 +85,7 @@ function getMockSessionEventItem(): SessionEvent {
 
 describe("SessionProcessor", () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 
 		process.env.KMS_KEY_ARN = "mock-kms-key-arn";
 		process.env.OIDC_URL = "https://mock-oidc-url.com";
@@ -109,13 +109,13 @@ describe("SessionProcessor", () => {
 			SecAccessKey: "SecAccessKey",
 			SessionToken: "SessionToken",
 		};
-		IPRServiceSession.getInstance = jest.fn().mockReturnValue(mockIprService);
-		const mockGetCredentials = jest.fn().mockReturnValue({ Credentials: credential });
+		IPRServiceSession.getInstance = vi.fn().mockReturnValue(mockIprService);
+		const mockGetCredentials = vi.fn().mockReturnValue({ Credentials: credential });
 		mockStsClient.assumeRoleWithWebIdentity = mockGetCredentials;
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	it("Return 401 when auth_code is missing in the request", async () => {
@@ -269,8 +269,8 @@ describe("SessionProcessor", () => {
 
 	describe("should send correct TXMA event", () => {
 		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date(1585695600000)); // == 2020-03-31T23:00:00.000
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date(1585695600000)); // == 2020-03-31T23:00:00.000
 		});
 
 		it("ip_address is X_FORWARDED_FOR if header is present", async () => {
@@ -279,7 +279,7 @@ describe("SessionProcessor", () => {
 			// @ts-expect-error writing resolved promise
 			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 			// @ts-expect-error private access manipulation used for testing
-			jest.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
+			vi.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
 			const validSession = JSON.parse(JSON.stringify(VALID_SESSION));
 			await sessionProcessorTest.processRequest(validSession);
 
@@ -303,7 +303,7 @@ describe("SessionProcessor", () => {
 			// @ts-expect-error writing resolved promise
 			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 			// @ts-expect-error private access manipulation used for testing
-			jest.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
+			vi.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
 			const missingXForwardedFor = { ...VALID_SESSION, headers: { "txma-audit-encoded": "ABCDEFG" }, requestContext: { identity: { sourceIp: "2.2.2" } } };
 			const missingXForwardedForSession = JSON.parse(JSON.stringify(missingXForwardedFor));
 
@@ -329,7 +329,7 @@ describe("SessionProcessor", () => {
 			// @ts-expect-error writing resolved promise
 			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
 			// @ts-expect-error private access manipulation used for testing
-			jest.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
+			vi.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
 			const sessionWithOutHeaders = JSON.parse(JSON.stringify(VALID_SESSION));
 			delete sessionWithOutHeaders.headers;
 			console.log("result", await sessionProcessorTest.processRequest(sessionWithOutHeaders));
