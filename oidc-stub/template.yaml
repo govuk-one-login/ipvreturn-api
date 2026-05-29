@@ -226,7 +226,8 @@ Resources:
         - AWSXrayWriteOnlyAccess
     Metadata:
       BuildMethod: makefile
-      Loader:
+      BuildProperties:
+        Loader:
           - .ejs=copy
 
   MockOidcProviderFunctionLogGroup:
