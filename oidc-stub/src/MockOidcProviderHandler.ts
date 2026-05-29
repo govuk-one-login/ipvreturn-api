@@ -4,14 +4,11 @@ import serverlessExpress from '@codegenie/serverless-express';
 import configuration from './configuration';
 import routes from './routes';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import ejs from 'ejs';
 
 const app = express();
 
 // Basic middleware
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 app.set('views', path.join(__dirname, 'views'));
 
 app.engine('ejs', ejs.renderFile);
