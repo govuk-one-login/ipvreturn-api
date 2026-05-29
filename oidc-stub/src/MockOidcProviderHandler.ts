@@ -36,11 +36,9 @@ const setup = async () => {
   return serverlessExpress({ app });
 };
 
-const handler = async (event: any, context: any) => {
+export const handler = async (event: any, context: any) => {
   if (!serverlessHandle) {
     serverlessHandle = await setup();
   }
   return serverlessHandle(event, context);
 };
-
-export default handler;
