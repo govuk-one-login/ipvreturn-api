@@ -5,10 +5,10 @@ build-MockOidcProviderFunction:
 	--platform=node \
 	--target=node22 \
 	--format=esm \
-	--outfile=$(ARTIFACTS_DIR)/MockOidcProviderHandler.js \
+	--outfile=$(ARTIFACTS_DIR)/MockOidcProviderHandler.mjs \
 	--banner:js="import { createRequire } from 'module'; const require = createRequire(import.meta.url);" \
 	--minify \
-	--sourcemap \
+	--sourcemap
 	cp -r views $(ARTIFACTS_DIR)/
 	cp package.json $(ARTIFACTS_DIR)/
 	cp package-lock.json $(ARTIFACTS_DIR)/
