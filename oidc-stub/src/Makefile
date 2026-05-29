@@ -11,7 +11,7 @@ build-MockOidcProviderFunction:
 	--sourcemap \
 	--out-extension:.js=.mjs \
 	--loader:.ejs=copy \
-cp -r views $(ARTIFACTS_DIR)/
-cp package.json $(ARTIFACTS_DIR)/
-cp package-lock.json $(ARTIFACTS_DIR)/
-cd $(ARTIFACTS_DIR) && npm ci --omit=dev
+	cp -r views $(ARTIFACTS_DIR)/
+	cp package.json $(ARTIFACTS_DIR)/
+	cp package-lock.json $(ARTIFACTS_DIR)/
+	cd $(ARTIFACTS_DIR) && npm ci --omit=dev
