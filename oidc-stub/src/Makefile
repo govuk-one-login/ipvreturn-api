@@ -5,7 +5,6 @@ build-MockOidcProviderFunction:
 	--platform=node \
 	--target=node22 \
 	--format=esm \
-	--banner:js="import { createRequire } from 'module'; const require = createRequire(import.meta.url);" \
 	--outfile=$(ARTIFACTS_DIR)/MockOidcProviderHandler.js
 	cp -r views $(ARTIFACTS_DIR)/
 	cp package.json $(ARTIFACTS_DIR)/
