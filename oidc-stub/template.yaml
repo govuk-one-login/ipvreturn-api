@@ -226,6 +226,8 @@ Resources:
         - AWSXrayWriteOnlyAccess
     Metadata:
       BuildMethod: makefile
+      Loader:
+          - .ejs=copy
 
   MockOidcProviderFunctionLogGroup:
     Type: AWS::Logs::LogGroup
