@@ -628,3 +628,5 @@ describe("post event processor", () => {
 		await validateTxMAEventData({ eventName: "IPR_USER_REDIRECTED", schemaName: "IPR_USER_REDIRECTED_SCHEMA" }, allTxmaEventBodiesPostRedirect);
 	}, 60000);
 });
+
+
