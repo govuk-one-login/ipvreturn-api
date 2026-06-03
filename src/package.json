@@ -36,7 +36,7 @@
     "compile": "./node_modules/.bin/tsc",
     "lint": "eslint -c eslint.config.mjs --ext *.ts .",
     "test:infra": "./node_modules/.bin/vitest run tests/infra/  --reporter=default",
-    "api": "node --experimental-vm-modules ./node_modules/.bin/vitest run tests/api/ --reporter=default",
+    "api": "./node_modules/.bin/vitest run tests/api/ --reporter=default",
     "test:api": "npm run compile && npm run api"
   },
   "devDependencies": {
