@@ -7,7 +7,6 @@ build-MockOidcProviderFunction:
 	--format=esm \
 	--outfile=$(ARTIFACTS_DIR)/MockOidcProviderHandler.mjs \
 	--banner:js="import { createRequire } from 'module'; const require = createRequire(import.meta.url);" \
-	--minify \
 	--sourcemap
 	cp -r views $(ARTIFACTS_DIR)/
 	cp package.json $(ARTIFACTS_DIR)/
