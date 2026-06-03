@@ -51,7 +51,7 @@
     "aws-sdk-client-mock": "4.1.0",
     "aws-sdk-client-mock-vitest": "7.0.1",
     "aws4-axios": "3.4.0",
-    "dotenv": "16.4.7",
+    "dotenv": "17.4.2",
     "eslint": "10.0.2",
     "fast-xml-parser": "5.7.3",
     "js-yaml": "4.1.1",
