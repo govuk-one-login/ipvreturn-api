@@ -94,7 +94,7 @@ export class PublishKeyHandler implements LambdaInterface {
     }
 
     private convertToJwk(kmsKeyOutput: GetPublicKeyCommandOutput): Jwk {
-        const publicKey: crypto.JsonWebKey = crypto
+        const publicKey: JsonWebKey = crypto
             .createPublicKey({
                 key: kmsKeyOutput.PublicKey as unknown as Buffer,
                 type: "spki",

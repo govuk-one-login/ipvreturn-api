@@ -1,5 +1,3 @@
-import { JsonWebKey } from "node:crypto";
-
 export type Jwks = {
     keys: Jwk[];
 };
