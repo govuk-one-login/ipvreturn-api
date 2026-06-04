@@ -19,8 +19,8 @@
     "@aws-sdk/util-dynamodb": "3.996.2",
     "@smithy/node-http-handler": "4.0.4",
     "aws-xray-sdk-core": "3.10.3",
-    "axios": "1.16.0",
-    "axios-cookiejar-support": "4.0.3",
+    "axios": "1.17.0",
+    "axios-cookiejar-support": "7.0.0",
     "class-validator": "0.14.1",
     "ecdsa-sig-formatter": "1.0.11",
     "esbuild": "0.25.2",
@@ -36,7 +36,7 @@
     "compile": "./node_modules/.bin/tsc",
     "lint": "eslint -c eslint.config.mjs --ext *.ts .",
     "test:infra": "./node_modules/.bin/vitest run tests/infra/  --reporter=default",
-    "api": "node --experimental-vm-modules ./node_modules/.bin/vitest run tests/api/ --reporter=default",
+    "api": "./node_modules/.bin/vitest run tests/api/ --reporter=default",
     "test:api": "npm run compile && npm run api"
   },
   "devDependencies": {
@@ -47,7 +47,7 @@
     "@typescript-eslint/eslint-plugin": "8.59.3",
     "@vitest/coverage-v8": "4.1.4",
     "ajv": "8.20.0",
-    "aws-cdk-lib": "2.253.1",
+    "aws-cdk-lib": "2.257.0",
     "aws-sdk-client-mock": "4.1.0",
     "aws-sdk-client-mock-vitest": "7.0.1",
     "aws4-axios": "3.4.0",
