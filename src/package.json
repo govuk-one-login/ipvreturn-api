@@ -23,7 +23,7 @@
     "axios-cookiejar-support": "7.0.0",
     "class-validator": "0.14.1",
     "ecdsa-sig-formatter": "1.0.11",
-    "esbuild": "0.25.2",
+    "esbuild": "0.28.1",
     "jose": "6.2.3",
     "node-jose": "2.2.0",
     "notifications-node-client": "7.0.6",
