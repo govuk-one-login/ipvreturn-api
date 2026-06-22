@@ -1,6 +1,6 @@
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { Logger } from "@aws-lambda-powertools/logger";
-import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { buildGovNotifyEventFields } from "../utils/GovNotifyEvent";
@@ -97,7 +97,7 @@ export class SessionEventProcessor {
 			};
 			await this.iprService.saveEventData(sessionEventData.userId, updateExpression, expressionAttributeValues);
 			this.logger.info({ message: "Updated the session event record with notified flag" });
-			this.metrics.addMetric("SessionEventProcessor_successfully_processed_events", MetricUnits.Count, 1);
+			this.metrics.addMetric("SessionEventProcessor_successfully_processed_events", MetricUnit.Count, 1);
 		} catch (error: any) {
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
@@ -112,7 +112,7 @@ export class SessionEventProcessor {
 			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEvent, emailType, this.logger));
 			this.metrics.addMetric(
 				emailType === Constants.VC_GENERATION_FAILURE_EMAIL ? "VC_generation_failure_email_added_to_queue" : "visit_email_added_to_queue",
-				MetricUnits.Count,
+				MetricUnit.Count,
 				1
 			);	
 		} catch (error) {

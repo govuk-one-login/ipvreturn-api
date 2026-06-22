@@ -1,4 +1,4 @@
-import { LambdaInterface } from "@aws-lambda-powertools/commons";
+import { LambdaInterface } from "@aws-lambda-powertools/commons/lib/esm/types";
 import { Context } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Jwk, Jwks } from "./types/Keys";

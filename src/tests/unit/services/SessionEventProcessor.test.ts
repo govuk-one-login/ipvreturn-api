@@ -1,5 +1,5 @@
  
-import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { SessionEventProcessor } from "../../../services/SessionEventProcessor";
 import { mock } from "vitest-mock-extended";
@@ -54,7 +54,7 @@ describe("SessionEventProcessor", () => {
 		});
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
 		expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 
 	});
 
@@ -63,7 +63,7 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		sessionEvent.notified = true;
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 	});
 
 	it.each([
@@ -76,7 +76,7 @@ describe("SessionEventProcessor", () => {
 		delete sessionEvent[attribute];
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 		expect(mockLogger.warn).toHaveBeenNthCalledWith(1, `${attribute} is not yet populated, unable to process the DB record.`, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 	});
 
 	it.each([
@@ -105,7 +105,7 @@ describe("SessionEventProcessor", () => {
 		});
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
 		expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 	});
 
 	it.each([
@@ -133,7 +133,7 @@ describe("SessionEventProcessor", () => {
 		});
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
 		expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 	});
 
 	it("Throws error if failure to send to GovNotify queue", async () => {
@@ -143,7 +143,7 @@ describe("SessionEventProcessor", () => {
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
 		expect(mockLogger.error).toHaveBeenNthCalledWith(1, "FAILED_TO_WRITE_GOV_NOTIFY", { "error": "Failed to send to GovNotify Queue", "reason": "Processing Event session data, failed to post VIST_PO_EMAIL_STATIC type message to GovNotify SQS Queue" }, { "messageCode": "FAILED_TO_WRITE_GOV_NOTIFY_SQS" });
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 	});
 
 	it("Throws error if failure to update the session event record with notified flag", async () => {
@@ -152,7 +152,7 @@ describe("SessionEventProcessor", () => {
 		mockIprService.saveEventData.mockRejectedValueOnce("Error updating the session event record");
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 		expect(mockIprService.saveEventData).toHaveBeenCalledTimes(1);
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 	});
 
 	it("Returns success response when all the necessary fields to send new template email are populated in the session Event record", async () => {
@@ -180,7 +180,7 @@ describe("SessionEventProcessor", () => {
 			":notified": true,
 		};
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 	});
 
 	it("Logs Info message when session event record is missing documentUploadedOn field and hence sending static template email", async () => {
@@ -204,7 +204,7 @@ describe("SessionEventProcessor", () => {
 			":notified": true,
 		};
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 
 	});
 
@@ -234,7 +234,7 @@ describe("SessionEventProcessor", () => {
 			":notified": true,
 		};
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 	});
 
 	describe("VC Generation Failure Email", () => {
@@ -262,7 +262,7 @@ describe("SessionEventProcessor", () => {
 			});
 			expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
 			expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
-			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "VC_generation_failure_email_added_to_queue", MetricUnits.Count, 1);
+			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "VC_generation_failure_email_added_to_queue", MetricUnit.Count, 1);
 		});
 
 		it("Throws error when session event record is already processed and user is notified via email", async () => {
@@ -275,7 +275,7 @@ describe("SessionEventProcessor", () => {
 			
 			expect(mockIprService.sendToGovNotify).not.toHaveBeenCalled();
 			expect(mockIprService.saveEventData).not.toHaveBeenCalled();
-			expect(metrics.addMetric).not.toHaveBeenCalledWith("VC_generation_failure_email_added_to_queue", MetricUnits.Count, 1);
+			expect(metrics.addMetric).not.toHaveBeenCalledWith("VC_generation_failure_email_added_to_queue", MetricUnit.Count, 1);
 		});
 		
 		it("Throws error if failure to send PO failure email to GovNotify queue", async () => {
@@ -287,7 +287,7 @@ describe("SessionEventProcessor", () => {
 			await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 			
 			expect(mockLogger.error).toHaveBeenCalledWith("FAILED_TO_WRITE_GOV_NOTIFY", { "error": "Failed to send to GovNotify Queue", "reason": "Processing Event session data, failed to post VC_GENERATION_FAILURE_EMAIL type message to GovNotify SQS Queue" }, { "messageCode": "FAILED_TO_WRITE_GOV_NOTIFY_SQS" });
-			expect(metrics.addMetric).not.toHaveBeenCalledWith("VC_generation_failure_email_added_to_queue", MetricUnits.Count, 1);
+			expect(metrics.addMetric).not.toHaveBeenCalledWith("VC_generation_failure_email_added_to_queue", MetricUnit.Count, 1);
 		});
 	});
 

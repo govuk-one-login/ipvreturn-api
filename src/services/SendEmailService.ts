@@ -10,7 +10,7 @@ import { sleep } from "../utils/Sleep";
 import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { Constants } from "../utils/Constants";
 import { DocumentTypes } from "../models/enums/DocumentTypes";
-import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
 
 /**
  * Class to send emails using gov notify service
@@ -138,7 +138,7 @@ export class SendEmailService {
 				const singleMetric = this.metrics.singleMetric();
 				singleMetric.addDimension("emailType", emailType);
 				const metricName = emailType === Constants.VC_GENERATION_FAILURE_EMAIL ? "GovNotify_vc_generation_failure_email_sent" : "GovNotify_visit_email_sent";
-				singleMetric.addMetric(metricName, MetricUnits.Count, 1);
+				singleMetric.addMetric(metricName, MetricUnit.Count, 1);
     			this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
 
     			return new EmailResponse(new Date().toISOString(), "", { emailResponseStatus: emailResponse.status, emailResponseId: emailResponse.data.id });

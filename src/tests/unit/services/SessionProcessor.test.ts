@@ -1,4 +1,4 @@
-import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
 import { mock } from "vitest-mock-extended";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { Response } from "../../../utils/Response";
@@ -129,7 +129,7 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.MISSING_CONFIGURATION,
 			}),
 		);
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
 	});
 
 	it("Return 500 ServerError when an error occurred while retrieving id_token from OIDC endpoint", async () => {
@@ -146,7 +146,7 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.UNEXPECTED_ERROR_FETCHING_OIDC_TOKEN,
 			}),
 		);
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
 	});
 
 	it("Return 500 ServerError when failed to decode the id_token jwt", async () => {
@@ -165,7 +165,7 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.FAILED_DECODING_JWT,
 			}),
 		);
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
 	});
 
 	it("Return 500 ServerError when failed to sign the client_assertion_jwt", async () => {
@@ -182,7 +182,7 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.ERROR_SIGNING_JWT,
 			}),
 		);
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
 	});
 
 	it("Return 401 when verification of id_token fails", async () => {
@@ -201,7 +201,7 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.FAILED_VERIFYING_JWT,
 			}),
 		);
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
 	});
 
 	it.each([
@@ -227,7 +227,7 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.FAILED_VALIDATING_JWT,
 			}),
 		);
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
 	});
 
 	it("Return 401 Unauthorized error when session event not found for a given userId", async () => {
@@ -247,7 +247,7 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.SESSION_NOT_FOUND,
 			}),
 		);
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
 	});
 
 	it("Return successful response with 200 OK when session event data was retrieved and returns redirect_uri", async () => {
@@ -264,7 +264,7 @@ describe("SessionProcessor", () => {
 			redirect_uri: mockSessionEvent.redirectUri,
 		}));
 		expect(out.statusCode).toBe(HttpCodesEnum.OK);
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
 	});
 
 	describe("should send correct TXMA event", () => {
@@ -294,7 +294,7 @@ describe("SessionProcessor", () => {
 				},
 				"ABCDEFG",
 			);
-			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
 		});
 
 		it("ip_address is source IP if no X_FORWARDED_FOR header is present", async () => {
@@ -320,7 +320,7 @@ describe("SessionProcessor", () => {
 				},
 				"ABCDEFG",
 			);
-			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
 		});
 
 		it("when no headers are included defaults are used", async () => {
@@ -344,7 +344,7 @@ describe("SessionProcessor", () => {
 				},
 				undefined,
 			);
-			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
 		});
 	});
 
@@ -367,8 +367,8 @@ describe("SessionProcessor", () => {
 			message: `${attribute} is not yet populated, unable to process the DB record.`,
 		}));
 		expect(out.statusCode).toBe(HttpCodesEnum.OK);
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_entered_IPR_in_incorrect_state", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "User_entered_IPR_in_incorrect_state", MetricUnit.Count, 1);
 	});
 
 	it("Throws 401 Unauthorized error when User is not yet notified", async () => {
@@ -389,6 +389,6 @@ describe("SessionProcessor", () => {
 				messageCode: MessageCodes.USER_NOT_NOTIFIED,
 			}),
 		);
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "User_redirected_from_IPR", MetricUnit.Count, 1);
 	});
 });

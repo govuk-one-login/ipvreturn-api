@@ -1,7 +1,7 @@
  
  
 import { Logger } from "@aws-lambda-powertools/logger";
-import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
 import { KmsJwtAdapter } from "../utils/KmsJwtAdapter";
 import { HttpCodesEnum } from "../utils/HttpCodesEnum";
 import { APIGatewayProxyEvent } from "aws-lambda";
@@ -149,7 +149,7 @@ export class SessionProcessor {
 				this.validationHelper.validateSessionEventFields(session);
 			} catch (error: any) {
 				this.logger.info("Some events are missing for the session event for this userId", error.message);
-				this.metrics.addMetric("User_entered_IPR_in_incorrect_state", MetricUnits.Count, 1);
+				this.metrics.addMetric("User_entered_IPR_in_incorrect_state", MetricUnit.Count, 1);
 				return {
 					statusCode: HttpCodesEnum.OK,
 					body: JSON.stringify({
@@ -181,7 +181,7 @@ export class SessionProcessor {
 				});
 			}
 
-			this.metrics.addMetric("User_redirected_from_IPR", MetricUnits.Count, 1);
+			this.metrics.addMetric("User_redirected_from_IPR", MetricUnit.Count, 1);
 			return {
 				statusCode: HttpCodesEnum.OK,
 				body: JSON.stringify({
