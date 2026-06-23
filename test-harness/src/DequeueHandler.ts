@@ -1,5 +1,5 @@
 import { SQSEvent } from "aws-lambda";
-import { LambdaInterface } from "@aws-lambda-powertools/commons/lib/esm/types";
+import { LambdaInterface } from "@aws-lambda-powertools/commons/types";
 import { Logger } from "@aws-lambda-powertools/logger";
 import { LogLevel } from "@aws-lambda-powertools/logger/lib/esm/types/Logger";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";

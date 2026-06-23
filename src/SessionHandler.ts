@@ -1,11 +1,11 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
-import { LogLevel } from "@aws-lambda-powertools/logger/lib/esm/types/Logger";
+import { LogLevel } from "@aws-lambda-powertools/logger/types";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Response } from "./utils/Response";
 import { ResourcesEnum } from "./models/enums/ResourcesEnum";
 import { HttpCodesEnum } from "./utils/HttpCodesEnum";
-import { LambdaInterface } from "@aws-lambda-powertools/commons/lib/esm/types";
+import { LambdaInterface } from "@aws-lambda-powertools/commons/types";
 import { SessionProcessor } from "./services/SessionProcessor";
 import { HttpVerbsEnum } from "./utils/HttpVerbsEnum";
 import { getParameter } from "./utils/Config";

@@ -1,8 +1,8 @@
 import { SQSEvent, SQSRecord } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
-import { LogLevel } from "@aws-lambda-powertools/logger/lib/esm/types/Logger";
+import { LogLevel } from "@aws-lambda-powertools/logger/types";
 import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
-import { LambdaInterface } from "@aws-lambda-powertools/commons/lib/esm/types";
+import { LambdaInterface } from "@aws-lambda-powertools/commons/types";
 import { PostEventProcessor } from "./services/PostEventProcessor";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE;
