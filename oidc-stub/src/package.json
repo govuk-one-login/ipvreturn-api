@@ -20,7 +20,7 @@
     "@types/aws-lambda": "8.10.148",
     "@types/ejs": "3.1.5",
     "@types/lodash": "4.17.24",
-    "@types/node": "20.14.8",
+    "@types/node": "24.0.0",
     "@types/oidc-provider": "9.5.0",
     "typescript": "6.0.3"
   },
