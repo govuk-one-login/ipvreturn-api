@@ -1,10 +1,11 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
+import { LogLevel } from "@aws-lambda-powertools/logger/types";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Response } from "./utils/Response";
 import { ResourcesEnum } from "./models/enums/ResourcesEnum";
 import { HttpCodesEnum } from "./utils/HttpCodesEnum";
-import { LambdaInterface } from "@aws-lambda-powertools/commons";
+import { LambdaInterface } from "@aws-lambda-powertools/commons/types";
 import { SessionProcessor } from "./services/SessionProcessor";
 import { HttpVerbsEnum } from "./utils/HttpVerbsEnum";
 import { getParameter } from "./utils/Config";
@@ -17,7 +18,7 @@ const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? 
 const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : "DEBUG";
 
 const logger = new Logger({
-	logLevel: POWERTOOLS_LOG_LEVEL,
+	logLevel: POWERTOOLS_LOG_LEVEL as LogLevel,
 	serviceName: "SessionHandler",
 });
 let CLIENT_ID: string;

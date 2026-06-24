@@ -1,7 +1,8 @@
 import { DynamoDBRecord, DynamoDBStreamEvent } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
-import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
-import { LambdaInterface } from "@aws-lambda-powertools/commons";
+import { LogLevel } from "@aws-lambda-powertools/logger/types";
+import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
+import { LambdaInterface } from "@aws-lambda-powertools/commons/types";
 import { Constants } from "./utils/Constants";
 import { SessionEventProcessor } from "./services/SessionEventProcessor";
 import { DynamoDBBatchResponse } from "aws-lambda/trigger/dynamodb-stream";
@@ -12,7 +13,7 @@ const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWE
 const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME ? process.env.POWERTOOLS_SERVICE_NAME : Constants.STREAM_PROCESSOR_LOGGER_SVC_NAME;
 
 const logger = new Logger({
-	logLevel: POWERTOOLS_LOG_LEVEL,
+	logLevel: POWERTOOLS_LOG_LEVEL as LogLevel,
 	serviceName: POWERTOOLS_SERVICE_NAME,
 });
 
@@ -45,7 +46,7 @@ class StreamProcessorHandler implements LambdaInterface {
 				// Reorganise to only run on specific events
 				const singleMetric = metrics.singleMetric();
 				singleMetric.addDimension("reason", error.message);
-				singleMetric.addMetric("StreamEventProcessor_unprocessed_events", MetricUnits.Count, 1);
+				singleMetric.addMetric("StreamEventProcessor_unprocessed_events", MetricUnit.Count, 1);
 				
 				logger.info({ message: "An error has occurred when processing the session record ", error });
 				return { batchItemFailures:[] };

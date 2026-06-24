@@ -1,5 +1,5 @@
 import { Logger } from "@aws-lambda-powertools/logger";
-import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
 
 import { AppError } from "../utils/AppError";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
@@ -56,7 +56,7 @@ export class PostEventProcessor {
 
 			const singleMetric = this.metrics.singleMetric();
 			singleMetric.addDimension("eventType", eventName);
-			singleMetric.addMetric("PostEventProcessor_event", MetricUnits.Count, 1);
+			singleMetric.addMetric("PostEventProcessor_event", MetricUnit.Count, 1);
 
 			const obfuscatedObject = await this.iprServiceSession.obfuscateJSONValues(eventDetails, Constants.TXMA_FIELDS_TO_SHOW);
 			this.logger.info({ message: "Obfuscated TxMA Event", txmaEvent: obfuscatedObject });
@@ -95,7 +95,7 @@ export class PostEventProcessor {
 				
 				const singleMetric = this.metrics.singleMetric();
 				singleMetric.addDimension("reason", "isFlaggedForDeletionOrEventAlreadyProcessed");
-				singleMetric.addMetric("PostEventProcessor_unprocessed_events", MetricUnits.Count, 1);
+				singleMetric.addMetric("PostEventProcessor_unprocessed_events", MetricUnit.Count, 1);
 				return "Record flagged for deletion or event already processed, skipping update";
 			}
 			let updateExpression, expressionAttributeValues: { [key: string]: any }, expiresOn;
@@ -116,7 +116,7 @@ export class PostEventProcessor {
 						
 						const singleMetric = this.metrics.singleMetric();
 						singleMetric.addDimension("reason", "missing_mandatory_details");
-						singleMetric.addMetric("PostEventProcessor_unprocessed_events", MetricUnits.Count, 1);
+						singleMetric.addMetric("PostEventProcessor_unprocessed_events", MetricUnit.Count, 1);
 						return `Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`;
 					}
 					if (isRedrive && eventDetails?.clientLandingPageUrl === "invalidUndefinedRedirect") {
@@ -267,7 +267,7 @@ export class PostEventProcessor {
 				const saveEventData = await this.iprServiceAuth.saveEventData(userId, updateExpression, expressionAttributeValues);
 				const singleMetric = this.metrics.singleMetric();
 				singleMetric.addDimension("eventType", eventName);
-				singleMetric.addMetric("PostEventProcessor_event_processed_successfully", MetricUnits.Count, 1);
+				singleMetric.addMetric("PostEventProcessor_event_processed_successfully", MetricUnit.Count, 1);
 				return {
 					statusCode: HttpCodesEnum.CREATED,
 					eventBody: saveEventData ? saveEventData : "OK",
@@ -276,7 +276,7 @@ export class PostEventProcessor {
 				const saveEventData = await this.iprServiceSession.saveEventData(userId, updateExpression, expressionAttributeValues);
 				const singleMetric = this.metrics.singleMetric();
 				singleMetric.addDimension("eventType", eventName);
-				singleMetric.addMetric("PostEventProcessor_event_processed_successfully", MetricUnits.Count, 1);
+				singleMetric.addMetric("PostEventProcessor_event_processed_successfully", MetricUnit.Count, 1);
 				return {
 					statusCode: HttpCodesEnum.CREATED,
 					eventBody: saveEventData ? saveEventData : "OK",

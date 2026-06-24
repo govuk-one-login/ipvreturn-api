@@ -1,7 +1,8 @@
 import { SQSEvent, SQSRecord } from "aws-lambda";
 import { Logger } from "@aws-lambda-powertools/logger";
-import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
-import { LambdaInterface } from "@aws-lambda-powertools/commons";
+import { LogLevel } from "@aws-lambda-powertools/logger/types";
+import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
+import { LambdaInterface } from "@aws-lambda-powertools/commons/types";
 import { PostEventProcessor } from "./services/PostEventProcessor";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE;
@@ -9,7 +10,7 @@ const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL;
 const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME;
 
 const logger = new Logger({
-	logLevel: POWERTOOLS_LOG_LEVEL,
+	logLevel: POWERTOOLS_LOG_LEVEL as LogLevel,
 	serviceName: POWERTOOLS_SERVICE_NAME,
 });
 
@@ -49,7 +50,7 @@ class PostEventHandler implements LambdaInterface {
 				logger.error({ message: "SQS Event could not be processed", error });
 				const singleMetric = metrics.singleMetric();
 				singleMetric.addDimension("reason", error.message);
-				singleMetric.addMetric("PostEventProcessor_error_events", MetricUnits.Count, 1);
+				singleMetric.addMetric("PostEventProcessor_error_events", MetricUnit.Count, 1);
 				return { 
 					batchItemFailures:[] 
 				};

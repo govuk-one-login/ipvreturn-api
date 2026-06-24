@@ -8,7 +8,7 @@ import { SendEmailService } from "../../../services/SendEmailService";
 import { mock } from "vitest-mock-extended";
 import { Email, DynamicEmail } from "../../../models/Email";
 import { Constants } from "../../../utils/Constants";
-import { Metrics, MetricUnits } from "@aws-lambda-powertools/metrics";
+import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
 
 const mockGovNotify = mock<NotifyClient>();
 let sendEmailServiceTest: SendEmailService;
@@ -63,7 +63,7 @@ describe("SendEmailService", () => {
 		expect(emailResponse.emailFailureMessage).toBe("");		
 		expect(emailResponse.metadata.emailResponseStatus).toBe(201);
 		expect(emailResponse.metadata.emailResponseId).toBe("oldEmail-test-id");
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnit.Count, 1);
 		expect(metrics.addDimension).toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_STATIC);
 
 	});
@@ -87,7 +87,7 @@ describe("SendEmailService", () => {
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
 		await expect(sendEmailServiceTest.sendEmail(email, Constants.VIST_PO_EMAIL_STATIC)).rejects.toThrow();
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(1);
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnit.Count, 1);
 		expect(metrics.addDimension).not.toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_STATIC);
 	});
 
@@ -111,7 +111,7 @@ describe("SendEmailService", () => {
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
 		await expect(sendEmailServiceTest.sendEmail(email, Constants.VIST_PO_EMAIL_STATIC)).rejects.toThrow();
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(4);
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnit.Count, 1);
 		expect(metrics.addDimension).not.toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_STATIC);
 	});
 
@@ -135,7 +135,7 @@ describe("SendEmailService", () => {
 		const email = Email.parseRequest(JSON.stringify(eventBody.Message));
 		await expect(sendEmailServiceTest.sendEmail(email, Constants.VIST_PO_EMAIL_STATIC)).rejects.toThrow();
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledTimes(4);
-		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnit.Count, 1);
 		expect(metrics.addDimension).not.toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_STATIC);
 	});
 
@@ -170,7 +170,7 @@ describe("SendEmailService", () => {
 		expect(emailResponse.emailFailureMessage).toBe("");
 		expect(emailResponse.metadata.emailResponseStatus).toBe(201);
 		expect(emailResponse.metadata.emailResponseId).toBe("newEmail-test-id");
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "GovNotify_visit_email_sent", MetricUnit.Count, 1);
 		expect(metrics.addDimension).toHaveBeenNthCalledWith(1, "emailType", Constants.VIST_PO_EMAIL_DYNAMIC);
 	});
 
@@ -188,7 +188,7 @@ describe("SendEmailService", () => {
 		await sendEmailServiceTest.sendEmail(msg as any, Constants.VC_GENERATION_FAILURE_EMAIL);
 		expect(metrics.addMetric).toHaveBeenCalledWith(
 			"GovNotify_vc_generation_failure_email_sent",
-			MetricUnits.Count,
+			MetricUnit.Count,
 			1
 		);
 		expect(metrics.addDimension).toHaveBeenNthCalledWith(
@@ -223,7 +223,7 @@ describe("SendEmailService", () => {
 		expect(emailResponse.emailFailureMessage).toBe("");
 		expect(emailResponse.metadata.emailResponseStatus).toBe(201);
 		expect(emailResponse.metadata.emailResponseId).toBe("vcGenerationFailureEmail-test-id");
-		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "GovNotify_vc_generation_failure_email_sent", MetricUnits.Count, 1);
+		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "GovNotify_vc_generation_failure_email_sent", MetricUnit.Count, 1);
 		expect(metrics.addDimension).toHaveBeenNthCalledWith(1, "emailType", Constants.VC_GENERATION_FAILURE_EMAIL);
 	});
 
