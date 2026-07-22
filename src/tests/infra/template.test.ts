@@ -11,7 +11,7 @@ describe("Infra", () => {
 	beforeAll(() => {
 		const yamltemplate: any = load(
 			readFileSync("../deploy/template.yaml", "utf-8"),
-			{ schema },
+			{ schema }
 		);
 		//delete yamltemplate.Resources.F2FRestApi.Properties.DefinitionBody; // To be removed, not SAM compatible.
 		template = Template.fromJSON(yamltemplate);
