@@ -1,5 +1,5 @@
 import { Template } from 'aws-cdk-lib/assertions';
-import { schema } from "yaml-cfn";
+const { schema } = require('yaml-cfn');
 import { readFileSync } from 'fs';
 import { load } from 'js-yaml';
 
