@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/govuk-one-login/quality-gates/refs/tags/v0.15.0/schemas/schema.json",
+  "$schema": "https://raw.githubusercontent.com/govuk-one-login/quality-gates/refs/tags/v0.16.0/schemas/schema.json",
   "services": [
     {
       "product": "IP-Return-Service",
@@ -57,13 +57,11 @@
           },
           "checks": [
             {
-              "name": "regression"
-            },
-            {
-              "name": "stack"
-            },
-            {
-              "name": "integration"
+              "name": "integration",
+              "purpose": [
+                "regression"
+              ],
+              "scope": "component"
             }
           ]
         },
@@ -108,10 +106,11 @@
               "name": "code style and linting"
             },
             {
-              "name": "regression"
-            },
-            {
-              "name": "stack"
+              "name": "integration",
+              "scope": "component",
+              "purpose": [
+                "regression"
+              ]
             }
           ]
         },
@@ -166,10 +165,11 @@
               "name": "code style and linting"
             },
             {
-              "name": "regression"
-            },
-            {
-              "name": "stack"
+              "name": "integration",
+              "scope": "component",
+              "purpose": [
+                "regression"
+              ]
             }
           ]
         },
