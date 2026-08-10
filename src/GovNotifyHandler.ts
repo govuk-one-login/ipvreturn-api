@@ -28,8 +28,8 @@ class GovNotifyHandler implements LambdaInterface {
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
 	async handler(event: SQSEvent, context: any): Promise<SQSBatchResponse> {
 
-		// clear PersistentLogAttributes set by any previous invocation, and add lambda context for this invocation
-		logger.setPersistentLogAttributes({});
+		// clear logger state set by any previous invocation, and add lambda context for this invocation
+		logger.resetKeys();
 		logger.addContext(context);
 	
 		const batchFailures: SQSBatchItemFailure[] = [];
