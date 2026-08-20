@@ -310,8 +310,8 @@ Globals:
         DT_CONNECTION_BASE_URL: !Sub
           - '{{resolve:secretsmanager:${SecretArn}:SecretString:DT_CONNECTION_BASE_URL}}' #pragma: allowlist secret
           - SecretArn: !FindInMap [ EnvironmentConfiguration, !Ref Environment, dynatraceSecretArn ]
-        DT_CLUSTER: !Sub
-          - '{{resolve:secretsmanager:${SecretArn}:SecretString:DT_CLUSTER}}' #pragma: allowlist secret
+        DT_CLUSTER_ID: !Sub
+          - '{{resolve:secretsmanager:${SecretArn}:SecretString:DT_CLUSTER_ID}}' #pragma: allowlist secret
           - SecretArn: !FindInMap [ EnvironmentConfiguration, !Ref Environment, dynatraceSecretArn ]
         DT_LOG_COLLECTION_AUTH_TOKEN: !Sub
           - '{{resolve:secretsmanager:${SecretArn}:SecretString:DT_LOG_COLLECTION_AUTH_TOKEN}}' #pragma: allowlist secret
@@ -319,6 +319,7 @@ Globals:
         DT_TENANT: !Sub
           - '{{resolve:secretsmanager:${SecretArn}:SecretString:DT_TENANT}}' #pragma: allowlist secret
           - SecretArn: !FindInMap [ EnvironmentConfiguration, !Ref Environment, dynatraceSecretArn ]
+        DT_OPEN_TELEMETRY_ENABLE_INTEGRATION: "true"
         AWS_STACK_NAME: !Sub ${AWS::StackName} # The AWS Stack Name, as passed into the template.
         POWERTOOLS_LOG_LEVEL: !If [IsNotProdLikeEnvironment, "DEBUG", "INFO"] # The LogLevel for the AWS PowerTools LogHelper
         POWERTOOLS_METRICS_NAMESPACE: IPR-CRI # The Metric Namespace for the AWS PowerTools MetricHelper
