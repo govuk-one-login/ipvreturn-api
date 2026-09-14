@@ -35,6 +35,9 @@
     "compile": "./node_modules/.bin/tsc",
     "lint": "eslint -c eslint.config.mjs --ext *.ts .",
     "test:infra": "./node_modules/.bin/vitest run tests/infra/  --reporter=default",
+    "test:infra:dynamo": "./node_modules/.bin/vitest run  --reporter=default --dir ../infra-l2-dynamo/src",
+    "test:infra:kms": "./node_modules/.bin/vitest run --reporter=default --dir ../infra-l2-kms/src",
+    "test:infra:outbound-proxy": "./node_modules/.bin/vitest run --reporter=default --dir ../infra-l2-outbound-proxy/src",
     "api": "./node_modules/.bin/vitest run tests/api/ --reporter=default",
     "test:api": "npm run compile && npm run api"
   },
