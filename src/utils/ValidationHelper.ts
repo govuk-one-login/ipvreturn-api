@@ -1,6 +1,6 @@
 import { validateOrReject } from "class-validator";
 import { AppError } from "./AppError";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
 import { JwtPayload } from "./IVeriCredential";

@@ -4,7 +4,7 @@
 import { mock } from "vitest-mock-extended";
 import { SendMessageCommand } from "@aws-sdk/client-sqs";
 import { IPRServiceSession } from "../../../services/IPRServiceSession";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
 import { sqsClient } from "../../../utils/SqsClient";
 import { TxmaEvent } from "../../../utils/TxmaEvent";

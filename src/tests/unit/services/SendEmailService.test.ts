@@ -1,5 +1,5 @@
  
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { SQSEvent } from "aws-lambda";
 // @ts-expect-error Ignores import error needs addressed
 import { NotifyClient } from "notifications-node-client";

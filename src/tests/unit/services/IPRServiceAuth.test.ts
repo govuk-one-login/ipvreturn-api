@@ -2,7 +2,7 @@
  
 import { mock } from "vitest-mock-extended";
 import { IPRServiceAuth } from "../../../services/IPRServiceAuth";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
 import { AppError } from "../../../utils/AppError";
 import { absoluteTimeNow } from "../../../utils/DateTimeUtils";

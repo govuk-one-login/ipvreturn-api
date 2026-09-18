@@ -1,5 +1,5 @@
 import { Metrics } from "@aws-lambda-powertools/metrics";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
 import { PostEventProcessor } from "../../../services/PostEventProcessor";
 import { mock } from "vitest-mock-extended";

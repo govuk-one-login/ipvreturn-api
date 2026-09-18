@@ -4,7 +4,7 @@ import { POST_SEND_EMAIL_403 } from "../data/postSendEmail/postSendEmail403";
 import { POST_SEND_EMAIL_429 } from "../data/postSendEmail/postSendEmail429";
 import { POST_SEND_EMAIL_500 } from "../data/postSendEmail/postSendEmail500";
 import { HttpCodesEnum } from "../utils/HttpCodesEnum";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 
 export class GovNotifyRequestProcessor {
