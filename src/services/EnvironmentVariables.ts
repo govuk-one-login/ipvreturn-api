@@ -58,7 +58,7 @@ export class EnvironmentVariables {
 	 * This function performs validation on env variable values.
 	 * If certain variables have unexpected values the constructor will throw an error and/or log an error message
 	 */
-  	private verifyEnvVariablesByServiceType(serviceType: ServicesEnum, logger: Logger): void {
+  	private verifyEnvVariablesByServiceType(serviceType: ServicesEnum): void {
   		switch (serviceType) {
   			case ServicesEnum.GOV_NOTIFY_SERVICE: {
   				if (!this.GOVUKNOTIFY_API_KEY_SSM_PATH || this.GOVUKNOTIFY_API_KEY_SSM_PATH.trim().length === 0 ||
@@ -132,8 +132,8 @@ export class EnvironmentVariables {
   	/**
     * Constructor reads all necessary environment variables by ServiceType
     */
-  	constructor(logger: Logger, serviceType: ServicesEnum) {
-  		this.verifyEnvVariablesByServiceType(serviceType, logger);
+  	constructor(serviceType: ServicesEnum) {
+  		this.verifyEnvVariablesByServiceType(serviceType);
   	}
 
   	/**
@@ -180,7 +180,7 @@ export class EnvironmentVariables {
   		return +this.SESSION_RETURN_RECORD_TTL_SECS!;
   	}
 
-  	getGovNotifyQueueURL(logger: Logger): string {
+  	getGovNotifyQueueURL(): string {
   		if (!this.GOV_NOTIFY_QUEUE_URL || this.GOV_NOTIFY_QUEUE_URL.trim().length === 0) {
   			logger.error({ message: "GovNotifyService - Misconfigured external API's key" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
   			throw new AppError(HttpCodesEnum.SERVER_ERROR, Constants.ENV_VAR_UNDEFINED);

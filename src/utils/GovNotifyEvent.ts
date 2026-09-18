@@ -21,7 +21,7 @@ export interface GovNotifyEvent {
 	};
 }
 
-export const buildGovNotifyEventFields = (sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger ): GovNotifyEvent => {
+export const buildGovNotifyEventFields = (sessionEvent: ExtSessionEvent | SessionEvent, emailType: string): GovNotifyEvent => {
 	
 	switch (emailType) {					
 		case Constants.VIST_PO_EMAIL_STATIC:{

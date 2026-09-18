@@ -19,8 +19,6 @@ export class IPRServiceSession {
 
 	private readonly dynamo: DynamoDBDocument;
 
-	readonly logger: Logger;
-
 	private readonly environmentVariables: EnvironmentVariables;
 
 	private static instance: IPRServiceSession;
@@ -34,16 +32,15 @@ export class IPRServiceSession {
 		[Constants.IPV_F2F_CRI_VC_ERROR, "readyToResumeOn"],
 	]);
 
-	constructor(tableName: any, logger: Logger, dynamoDbClient: DynamoDBDocument) {
+	constructor(tableName: any, dynamoDbClient: DynamoDBDocument) {
 		this.tableName = tableName;
 		this.dynamo = dynamoDbClient;
-		this.logger = logger;
-		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.NA);
+		this.environmentVariables = new EnvironmentVariables(ServicesEnum.NA);
 	}
 
-	static getInstance(tableName: string, logger: Logger, dynamoDbClient: DynamoDBDocument): IPRServiceSession {
+	static getInstance(tableName: string, dynamoDbClient: DynamoDBDocument): IPRServiceSession {
 		if (!IPRServiceSession.instance) {
-			IPRServiceSession.instance = new IPRServiceSession(tableName, logger, dynamoDbClient);
+			IPRServiceSession.instance = new IPRServiceSession(tableName, dynamoDbClient);
 		}
 		return IPRServiceSession.instance;
 	}
@@ -59,13 +56,13 @@ export class IPRServiceSession {
 		try {
 			session = await this.dynamo.send(getSessionCommand);
 		} catch (error: any) {
-			this.logger.error({ message: "getSessionBySub - failed executing get from dynamodb", name: error?.name, info: error?.message });
+			logger.error({ message: "getSessionBySub - failed executing get from dynamodb", name: error?.name, info: error?.message });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 		}
 
 		if (session.Item) {
 			if (session.Item.expiresOn < absoluteTimeNow()) {
-				this.logger.error({ message: "Session has expired", messageCode: MessageCodes.SESSION_EXPIRED });
+				logger.error({ message: "Session has expired", messageCode: MessageCodes.SESSION_EXPIRED });
 				throw new AppError( HttpCodesEnum.UNAUTHORIZED, "Session has expired");
 			}
 			return session.Item as ExtSessionEvent;
@@ -74,7 +71,7 @@ export class IPRServiceSession {
 
 
 	async isFlaggedForDeletionOrEventAlreadyProcessed(userId: string, eventType: string): Promise<boolean | undefined> {
-		this.logger.info({ message: "Checking if record is flagged for deletion or already processed", tableName: this.tableName });
+		logger.info({ message: "Checking if record is flagged for deletion or already processed", tableName: this.tableName });
 		const getSessionCommand = new GetCommand({
 			TableName: this.tableName,
 			Key: {
@@ -86,25 +83,25 @@ export class IPRServiceSession {
 			const eventAttribute = this.eventAttributeMap.get(eventType);
 			// If Event type is AUTH_DELETE_ACCOUNT or IPV_F2F_RESTART and no record was found, or flagged for deletion then do not process the event.
 			if ((eventType === Constants.AUTH_DELETE_ACCOUNT || eventType === Constants.IPV_F2F_RESTART) && (!session.Item || session?.Item?.accountDeletedOn)) {
-				this.logger.info({ message: `Received ${eventType} event and no session with that userId was found OR session was found but accountDeletedOn was already set` });
+				logger.info({ message: `Received ${eventType} event and no session with that userId was found OR session was found but accountDeletedOn was already set` });
 				return true;
 			} else if (session.Item && (session.Item.accountDeletedOn || session.Item[eventAttribute!])) {
 				// Do not process the event if the record is flagged for deletion or the event mapped attribute exists.
-				this.logger.info({ message: `Session record with that userId was found with either accountDeletedOn set or with ${eventAttribute} already set` });
+				logger.info({ message: `Session record with that userId was found with either accountDeletedOn set or with ${eventAttribute} already set` });
 				return true;
 			} else {
 				// Process all events except AUTH_DELETE_ACCOUNT or IPV_F2F_RESTART when no record exists.
 				return false;
 			}
 		} catch (e: any) {
-			this.logger.error({ message: "getSessionById - failed executing get from dynamodb:", e });
+			logger.error({ message: "getSessionById - failed executing get from dynamodb:", e });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 		}
 	}
 
 	async saveEventData(userId: string, updateExpression: string, expressionAttributeValues: any): Promise<string | void> {
 
-		this.logger.info({ message: "Saving event data to dynamodb", tableName: this.tableName });
+		logger.info({ message: "Saving event data to dynamodb", tableName: this.tableName });
 		const updateSessionInfoCommand = new UpdateCommand({
 			TableName: this.tableName,
 			Key: {
@@ -117,12 +114,12 @@ export class IPRServiceSession {
         	updateSessionInfoCommand.input.ExpressionAttributeValues = expressionAttributeValues;
 		}
 
-		this.logger.info("Updating session record" );
+		logger.info("Updating session record" );
 
 		try {
 			await this.dynamo.send(updateSessionInfoCommand);
 		} catch (e: any) {
-			this.logger.error({ message: "Failed to update session record in dynamo", e });
+			logger.error({ message: "Failed to update session record in dynamo", e });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error updating session record");
 		}
 	}
@@ -132,13 +129,13 @@ export class IPRServiceSession {
 			const messageBody = JSON.stringify(event);
 			const params = {
 				MessageBody: messageBody,
-				QueueUrl: this.environmentVariables.getGovNotifyQueueURL(this.logger),
+				QueueUrl: this.environmentVariables.getGovNotifyQueueURL(),
 			};
 
 			await sqsClient.send(new SendMessageCommand(params));
-			this.logger.info("Sent message to Gov Notify");
+			logger.info("Sent message to Gov Notify");
 		} catch (error) {
-			this.logger.error({ message: "Error when sending message to GovNotify Queue", error });
+			logger.error({ message: "Error when sending message to GovNotify Queue", error });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "sending event to govNotify queue - failed ");
 		}
 	}
@@ -154,14 +151,14 @@ export class IPRServiceSession {
 				MessageBody: messageBody,
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			};
-			this.logger.info({ message: "Sending message to TxMA", eventName: event.event_name });
+			logger.info({ message: "Sending message to TxMA", eventName: event.event_name });
 			await sqsClient.send(new SendMessageCommand(params));
-			this.logger.info("Sent message to TxMA");
+			logger.info("Sent message to TxMA");
 
 			const obfuscatedObject = await this.obfuscateJSONValues(event, Constants.TXMA_FIELDS_TO_SHOW);
-			this.logger.info({ message: "Obfuscated TxMA Event", txmaEvent: JSON.stringify(obfuscatedObject, null, 2) });
+			logger.info({ message: "Obfuscated TxMA Event", txmaEvent: JSON.stringify(obfuscatedObject, null, 2) });
 		} catch (error) {
-			this.logger.error({
+			logger.error({
 				message: `Error when sending event ${event.event_name} to TXMA Queue`,
 				error,
 				messageCode: MessageCodes.FAILED_TO_WRITE_TXMA,

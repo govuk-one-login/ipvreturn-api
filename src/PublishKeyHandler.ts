@@ -7,8 +7,6 @@ import { KMSClient, GetPublicKeyCommand, GetPublicKeyCommandOutput } from "@aws-
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import crypto from "node:crypto";
 
-export const logger = new Logger({ serviceName: "PublishKeyHandler" });
-
 export class PublishKeyHandler implements LambdaInterface {
     signingKeyId: string;
     bucketName: string;
