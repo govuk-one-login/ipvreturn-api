@@ -8,14 +8,7 @@ import { Jwk } from "../../types/Keys";
 import { Context } from "aws-lambda";
 import crypto from "node:crypto";
 
-vi.mock("@govuk-one-login/cri-logger", () => ({
-	Logger: vi.fn().mockImplementation(function () {
-    return {
-      info: vi.fn(),
-      debug: vi.fn(),
-    };
-  }),
-}));
+vi.mock("@govuk-one-login/cri-logger");
 
 const { publicKey } = crypto.generateKeyPairSync('rsa', {
     modulusLength: 2048,
