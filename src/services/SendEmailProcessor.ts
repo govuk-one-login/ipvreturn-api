@@ -34,7 +34,7 @@ export class SendEmailProcessor {
 	constructor(metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string) {
 		this.validationHelper = new ValidationHelper();
 		this.metrics = metrics;
-		this.govNotifyService = SendEmailService.getInstance(logger, this.metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
+		this.govNotifyService = SendEmailService.getInstance(this.metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
 		this.sessionEventsTable = sessionEventsTable;
 		this.iprService = IPRServiceSession.getInstance(this.sessionEventsTable, createDynamoDbClient());
 
@@ -52,7 +52,7 @@ export class SendEmailProcessor {
 	async processRequest(message: Email | DynamicEmail | FallbackEmail | VCGenerationFailureEmail): Promise<EmailResponse> {
 		// Validate Email model
 		try {
-			await this.validationHelper.validateModel(message, logger);
+			await this.validationHelper.validateModel(message);
 			// ignored so as not log PII
 			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error) {
@@ -99,7 +99,7 @@ export class SendEmailProcessor {
 		//Skip validating the session record fields if messageType is VISIT_PO_EMAIL_FALLBACK
 		if (message.messageType !== Constants.VISIT_PO_EMAIL_FALLBACK) {
 			// Validate all necessary fields are populated in the session store before processing the data.
-			data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, logger);
+			data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType);
 		}
 		
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);

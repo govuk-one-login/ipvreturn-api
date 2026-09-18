@@ -40,7 +40,7 @@ class MockGovNotifyHandler implements LambdaInterface {
 							 logger.info("PARSED JSON", { payloadParsed });
 							 logger.info("PARSED EMAIL", payloadParsed.email_address);
 							 logger.info("FINISHED PARSING, awaiting return");
-							 return await GovNotifyRequestProcessor.getInstance(logger, metrics).mockSendEmail(payloadParsed.email_address);
+							 return await GovNotifyRequestProcessor.getInstance(metrics).mockSendEmail(payloadParsed.email_address);
 						 }
 
 					 } catch (err: any) {

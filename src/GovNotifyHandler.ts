@@ -16,7 +16,7 @@ const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceNa
 
 let GOVUKNOTIFY_API_KEY: string;
 class GovNotifyHandler implements LambdaInterface {
-	private readonly environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GOV_NOTIFY_SERVICE);
+	private readonly environmentVariables = new EnvironmentVariables(ServicesEnum.GOV_NOTIFY_SERVICE);
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
 	async handler(event: SQSEvent, context: any): Promise<SQSBatchResponse> {
@@ -77,7 +77,7 @@ class GovNotifyHandler implements LambdaInterface {
 					}
 				}	
 
-				await SendEmailProcessor.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId, this.environmentVariables.sessionEventsTable()).processRequest(message);
+				await SendEmailProcessor.getInstance(metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId, this.environmentVariables.sessionEventsTable()).processRequest(message);
 				logger.info("Finished processing record from SQS");
 
 				// return an empty batchItemFailures array to mark the batch as a success

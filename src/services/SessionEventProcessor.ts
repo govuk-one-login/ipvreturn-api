@@ -74,7 +74,7 @@ export class SessionEventProcessor {
 			let data;
 			try {
 				// Validate for fields and confirm the emailType
-				data = await this.validationHelper.validateSessionEvent(sessionEventData, emailType, logger);
+				data = await this.validationHelper.validateSessionEvent(sessionEventData, emailType);
 				// ignored so as not log PII
 				/* eslint-disable @typescript-eslint/no-unused-vars */	
 			} catch (error)	{
@@ -106,7 +106,7 @@ export class SessionEventProcessor {
 		try {
 			logger.info({ message: `Trying to send  ${emailType} type message to GovNotify handler` });
 
-			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEvent, emailType, logger));
+			await this.iprService.sendToGovNotify(buildGovNotifyEventFields(sessionEvent, emailType));
 			this.metrics.addMetric(
 				emailType === Constants.VC_GENERATION_FAILURE_EMAIL ? "VC_generation_failure_email_added_to_queue" : "visit_email_added_to_queue",
 				MetricUnit.Count,

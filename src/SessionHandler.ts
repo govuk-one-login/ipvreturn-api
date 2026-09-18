@@ -20,7 +20,7 @@ let CLIENT_ID: string;
 const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceName: "SessionHandler" });
 
 class Session implements LambdaInterface {
-	private readonly environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GET_SESSION_EVENT_DATA_SERVICE);
+	private readonly environmentVariables = new EnvironmentVariables(ServicesEnum.GET_SESSION_EVENT_DATA_SERVICE);
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
 	@logger.injectLambdaContext()
@@ -47,7 +47,7 @@ class Session implements LambdaInterface {
 							}
 						}
 						logger.appendKeys({ requestId: event.requestContext.requestId });
-						return await SessionProcessor.getInstance(logger, metrics, CLIENT_ID).processRequest(event);
+						return await SessionProcessor.getInstance(metrics, CLIENT_ID).processRequest(event);
 					} catch (error) {
 						logger.error({ message: "An error has occurred. ",
 							error,

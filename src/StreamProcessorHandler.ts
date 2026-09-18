@@ -29,7 +29,7 @@ class StreamProcessorHandler implements LambdaInterface {
 				if (record.eventName === "MODIFY") {
 					// @ts-expect-error allow undefined to be passed
 					const sessionEvent = unmarshall(record.dynamodb?.NewImage);
-					await SessionEventProcessor.getInstance(logger, metrics).processRequest(sessionEvent);
+					await SessionEventProcessor.getInstance(metrics).processRequest(sessionEvent);
 					return { batchItemFailures:[] };
 				} else {
 					logger.warn("Record eventName doesnt match MODIFY state");
