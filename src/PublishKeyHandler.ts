@@ -1,13 +1,11 @@
 import { LambdaInterface } from "@aws-lambda-powertools/commons/types";
 import { Context } from "aws-lambda";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { Jwk, Jwks } from "./types/Keys";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { KMSClient, GetPublicKeyCommand, GetPublicKeyCommandOutput } from "@aws-sdk/client-kms";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import crypto from "node:crypto";
-
-export const logger = new Logger({ serviceName: "PublishKeyHandler" });
 
 export class PublishKeyHandler implements LambdaInterface {
     signingKeyId: string;

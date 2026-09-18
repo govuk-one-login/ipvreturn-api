@@ -1,6 +1,6 @@
  
 import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { SessionEventProcessor } from "../../../services/SessionEventProcessor";
 import { mock } from "vitest-mock-extended";
 import { DynamoDBStreamEvent } from "aws-lambda";
@@ -11,7 +11,7 @@ import { unmarshall } from "@aws-sdk/util-dynamodb";
 
 let sessionEventProcessorTest: SessionEventProcessor;
 const mockIprService = mock<IPRServiceSession>();
-const mockLogger = mock<Logger>();
+vi.mock("@govuk-one-login/cri-logger");
 const metrics = mock<Metrics>();
 let streamEvent: DynamoDBStreamEvent;
 let streamEventWithPoDetails: DynamoDBStreamEvent;
@@ -19,7 +19,7 @@ vi.spyOn(console, "log").mockImplementation(() => {});
 
 describe("SessionEventProcessor", () => {
 	beforeAll(() => {
-		sessionEventProcessorTest = new SessionEventProcessor(mockLogger, metrics);
+		sessionEventProcessorTest = new SessionEventProcessor(metrics);
 		// @ts-expect-error private access manipulation used for testing
 		sessionEventProcessorTest.iprService = mockIprService;
 		streamEvent = VALID_DYNAMODB_STREAM_EVENT;
@@ -53,7 +53,7 @@ describe("SessionEventProcessor", () => {
 			},
 		});
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
-		expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
+		expect(logger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
 		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 
 	});
@@ -75,7 +75,7 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEvent.Records[0].dynamodb?.NewImage);
 		delete sessionEvent[attribute];
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
-		expect(mockLogger.warn).toHaveBeenNthCalledWith(1, `${attribute} is not yet populated, unable to process the DB record.`, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
+		expect(logger.warn).toHaveBeenNthCalledWith(1, `${attribute} is not yet populated, unable to process the DB record.`, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT" });
 		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 	});
 
@@ -104,7 +104,7 @@ describe("SessionEventProcessor", () => {
 			},
 		});
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
-		expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
+		expect(logger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
 		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 	});
 
@@ -132,7 +132,7 @@ describe("SessionEventProcessor", () => {
 			},
 		});
 		expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
-		expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
+		expect(logger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
 		expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 	});
 
@@ -142,7 +142,7 @@ describe("SessionEventProcessor", () => {
 		mockIprService.sendToGovNotify.mockRejectedValueOnce("Failed to send to GovNotify Queue");
 		await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1, "FAILED_TO_WRITE_GOV_NOTIFY", { "error": "Failed to send to GovNotify Queue", "reason": "Processing Event session data, failed to post VIST_PO_EMAIL_STATIC type message to GovNotify SQS Queue" }, { "messageCode": "FAILED_TO_WRITE_GOV_NOTIFY_SQS" });
+		expect(logger.error).toHaveBeenNthCalledWith(1, "FAILED_TO_WRITE_GOV_NOTIFY", { "error": "Failed to send to GovNotify Queue", "reason": "Processing Event session data, failed to post VIST_PO_EMAIL_STATIC type message to GovNotify SQS Queue" }, { "messageCode": "FAILED_TO_WRITE_GOV_NOTIFY_SQS" });
 		expect(metrics.addMetric).not.toHaveBeenNthCalledWith(1, "visit_email_added_to_queue", MetricUnit.Count, 1);
 	});
 
@@ -188,7 +188,7 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEventWithPoDetails.Records[0].dynamodb?.NewImage);
 		delete sessionEvent.documentUploadedOn;
 		await sessionEventProcessorTest.processRequest(sessionEvent);
-		expect(mockLogger.info).toHaveBeenNthCalledWith(1, { "message":"documentUploadedOn is not yet populated, sending the static template email." });
+		expect(logger.info).toHaveBeenNthCalledWith(1, { "message":"documentUploadedOn is not yet populated, sending the static template email." });
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
 			Message: {
@@ -218,7 +218,7 @@ describe("SessionEventProcessor", () => {
 		const sessionEvent = unmarshall(streamEventWithPoDetails.Records[0].dynamodb?.NewImage);
 		delete sessionEvent[attribute];
 		await sessionEventProcessorTest.processRequest(sessionEvent);	
-		expect(mockLogger.info).toHaveBeenNthCalledWith(1, "Unable to process the DB record as the necessary fields to send the dynamic template email are not populated, trying to send the static template email.", { "messageCode": "MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT" });
+		expect(logger.info).toHaveBeenNthCalledWith(1, "Unable to process the DB record as the necessary fields to send the dynamic template email are not populated, trying to send the static template email.", { "messageCode": "MISSING_NEW_PO_FIELDS_IN_SESSION_EVENT" });
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledTimes(1);
 		expect(mockIprService.sendToGovNotify).toHaveBeenCalledWith({
 			Message: {
@@ -261,7 +261,7 @@ describe("SessionEventProcessor", () => {
 				},
 			});
 			expect(mockIprService.saveEventData).toHaveBeenCalledWith(`${sessionEvent.userId}`, updateExpression, expressionAttributeValues);
-			expect(mockLogger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
+			expect(logger.appendKeys).toHaveBeenCalledWith({ govuk_signin_journey_id: sessionEvent.clientSessionId });
 			expect(metrics.addMetric).toHaveBeenNthCalledWith(1, "VC_generation_failure_email_added_to_queue", MetricUnit.Count, 1);
 		});
 
@@ -286,7 +286,7 @@ describe("SessionEventProcessor", () => {
 
 			await expect(sessionEventProcessorTest.processRequest(sessionEvent)).rejects.toThrow();
 			
-			expect(mockLogger.error).toHaveBeenCalledWith("FAILED_TO_WRITE_GOV_NOTIFY", { "error": "Failed to send to GovNotify Queue", "reason": "Processing Event session data, failed to post VC_GENERATION_FAILURE_EMAIL type message to GovNotify SQS Queue" }, { "messageCode": "FAILED_TO_WRITE_GOV_NOTIFY_SQS" });
+			expect(logger.error).toHaveBeenCalledWith("FAILED_TO_WRITE_GOV_NOTIFY", { "error": "Failed to send to GovNotify Queue", "reason": "Processing Event session data, failed to post VC_GENERATION_FAILURE_EMAIL type message to GovNotify SQS Queue" }, { "messageCode": "FAILED_TO_WRITE_GOV_NOTIFY_SQS" });
 			expect(metrics.addMetric).not.toHaveBeenCalledWith("VC_generation_failure_email_added_to_queue", MetricUnit.Count, 1);
 		});
 	});

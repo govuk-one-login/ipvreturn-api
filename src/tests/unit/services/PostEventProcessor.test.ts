@@ -1,5 +1,5 @@
 import { Metrics } from "@aws-lambda-powertools/metrics";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
 import { PostEventProcessor } from "../../../services/PostEventProcessor";
 import { mock } from "vitest-mock-extended";
@@ -30,7 +30,7 @@ const tableName = "MYTABLE";
 const mockDynamoDbClient = vi.mocked(createDynamoDbClient());
 const mockIprServiceSession = mock<IPRServiceSession>();
 const mockIprServiceAuth = mock<IPRServiceAuth>();
-const mockLogger = mock<Logger>();
+vi.mock("@govuk-one-login/cri-logger");
 
 const metrics = new Metrics({ namespace: "F2F" });
 
@@ -39,9 +39,9 @@ describe("PostEventProcessor", () => {
 		vi.useFakeTimers();
 		const fakeTime = 1684933200.123;
 		vi.setSystemTime(new Date(fakeTime * 1000)); // 2023-05-24T13:00:00.123Z
-		iprServiceAuth = new IPRServiceAuth(tableName, mockLogger, mockDynamoDbClient);
-		postEventProcessorMockSessionService = new PostEventProcessor(mockLogger, metrics);
-		postEventProcessorMockServices = new PostEventProcessor(mockLogger, metrics);
+		iprServiceAuth = new IPRServiceAuth(tableName, mockDynamoDbClient);
+		postEventProcessorMockSessionService = new PostEventProcessor(metrics);
+		postEventProcessorMockServices = new PostEventProcessor(metrics);
 		// @ts-expect-error private access manipulation used for testing
 		postEventProcessorMockServices.iprServiceSession = mockIprServiceSession;
 		// @ts-expect-error private access manipulation used for testing
@@ -95,7 +95,7 @@ describe("PostEventProcessor", () => {
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 		 
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "Missing user details in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+		expect(logger.error).toHaveBeenNthCalledWith(1, { "message": "Missing user details in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 
 	});
 
@@ -115,7 +115,7 @@ describe("PostEventProcessor", () => {
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 		 
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+		expect(logger.error).toHaveBeenNthCalledWith(1, { "message": "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 	});
 
 	it("Throws error if eventName is only spaces", async () => {
@@ -135,7 +135,7 @@ describe("PostEventProcessor", () => {
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 		 
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+		expect(logger.error).toHaveBeenNthCalledWith(1, { "message": "Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 	});
 
 	it("Throws error if timestamp is missing", async () => {
@@ -154,7 +154,7 @@ describe("PostEventProcessor", () => {
 			new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 		);
 		 
-		expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+		expect(logger.error).toHaveBeenNthCalledWith(1, { "message":"Missing or invalid value for any or all of event name, timestamp in the incoming SQS event" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 	});
 
 	describe("AUTH_IPV_AUTHORISATION_REQUESTED event", () => {
@@ -180,7 +180,7 @@ describe("PostEventProcessor", () => {
 			};
 			const result = await postEventProcessorMockServices.processRequest(JSON.stringify(AUTH_IPV_AUTHORISATION_REQUESTED_EVENT_MISSING_EMAIL));
 			 
-			expect(mockLogger.warn).toHaveBeenCalledWith({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+			expect(logger.warn).toHaveBeenCalledWith({ message: "Missing or invalid value for any or all of userDetails.email, eventDetails.client_id fields required for AUTH_IPV_AUTHORISATION_REQUESTED event type" }, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 			expect(result).toBe(`Missing info in sqs ${Constants.AUTH_IPV_AUTHORISATION_REQUESTED} event, it is unlikely that this event was meant for F2F`);
 		});
 
@@ -279,7 +279,7 @@ describe("PostEventProcessor", () => {
 			expect(mockIprServiceSession.saveEventData).toHaveBeenCalledWith("01333e01-dde3-412f-a484-4444", "SET readyToResumeOn = :readyToResumeOn, nameParts = :nameParts", { ":readyToResumeOn": 1681902001, ":nameParts": [{ "type": "GivenName", "value": "ANGELA" }, { "type": "GivenName", "value": "ZOE" }, { "type":"FamilyName", "value":"UK SPECIMEN" }] });
 			// Check if it logs about docExpiryDate missing
 			 
-			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No docExpiryDate in IPV_F2F_CRI_VC_CONSUMED event");
+			expect(logger.info).toHaveBeenNthCalledWith(3, "No docExpiryDate in IPV_F2F_CRI_VC_CONSUMED event");
 		});
 
 		it("Throws error if restricted is missing", async () => {
@@ -300,7 +300,7 @@ describe("PostEventProcessor", () => {
 				new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 			);
 			 
-			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+			expect(logger.error).toHaveBeenNthCalledWith(1, { "message":"Missing nameParts fields required for IPV_F2F_CRI_VC_CONSUMED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 		});
 
 		it("Calls saveEventData with appropriate payload for IPV_F2F_CRI_VC_CONSUMED_EVENT event with docExpiryDate field", async () => {
@@ -387,7 +387,7 @@ describe("PostEventProcessor", () => {
 				new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 			);
 			 
-			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing post_office_visit_details fields required for F2F_DOCUMENT_UPLOADED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+			expect(logger.error).toHaveBeenNthCalledWith(1, { "message":"Missing post_office_visit_details fields required for F2F_DOCUMENT_UPLOADED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 		});
 
 		it("Throws error if extensions is missing", async () => {
@@ -406,7 +406,7 @@ describe("PostEventProcessor", () => {
 				new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 			);
 			 
-			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing post_office_visit_details fields required for F2F_DOCUMENT_UPLOADED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+			expect(logger.error).toHaveBeenNthCalledWith(1, { "message":"Missing post_office_visit_details fields required for F2F_DOCUMENT_UPLOADED event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 		});
 	});
 
@@ -498,7 +498,7 @@ describe("PostEventProcessor", () => {
 				]
 			});
 			 
-			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No post_office_details in F2F_YOTI_START event");
+			expect(logger.info).toHaveBeenNthCalledWith(3, "No post_office_details in F2F_YOTI_START event");
 		});
 
 		it("Logs if post_office_details and document_details is missing", async () => {
@@ -528,9 +528,9 @@ describe("PostEventProcessor", () => {
 				]
 			});
 			 
-			expect(mockLogger.info).toHaveBeenNthCalledWith(3, "No post_office_details in F2F_YOTI_START event");
+			expect(logger.info).toHaveBeenNthCalledWith(3, "No post_office_details in F2F_YOTI_START event");
 			 
-			expect(mockLogger.info).toHaveBeenNthCalledWith(4, "No document_details in F2F_YOTI_START event");
+			expect(logger.info).toHaveBeenNthCalledWith(4, "No document_details in F2F_YOTI_START event");
 		});
 
 		it("Checks for record in auth table with relevant userID and throws error if not found", async () => {
@@ -538,7 +538,7 @@ describe("PostEventProcessor", () => {
 				new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 			);
 			 
-			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message": "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event" }, { "messageCode": "SQS_OUT_OF_SYNC" });	
+			expect(logger.error).toHaveBeenNthCalledWith(1, { "message": "F2F_YOTI_START event received before AUTH_IPV_AUTHORISATION_REQUESTED event" }, { "messageCode": "SQS_OUT_OF_SYNC" });	
 		});
 
 		it("Throws error if nameParts is missing", async () => {
@@ -550,7 +550,7 @@ describe("PostEventProcessor", () => {
 				new AppError(HttpCodesEnum.SERVER_ERROR, "Cannot parse event data"),
 			);
 			 
-			expect(mockLogger.error).toHaveBeenNthCalledWith(1, { "message":"Missing nameParts fields required for F2F_YOTI_START event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
+			expect(logger.error).toHaveBeenNthCalledWith(1, { "message":"Missing nameParts fields required for F2F_YOTI_START event type" }, { "messageCode": "MISSING_MANDATORY_FIELDS_IN_SQS_EVENT" });
 		});
 	});
 
