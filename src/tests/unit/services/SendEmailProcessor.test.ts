@@ -19,7 +19,7 @@ const mockIprService = mock<IPRServiceSession>();
 // pragma: allowlist nextline secret
 const GOVUKNOTIFY_API_KEY = "sdhohofsdf";
 const SESSION_EVENTS_TABLE = "session-table";
-const logger = mock<Logger>();
+vi.mock("@govuk-one-login/cri-logger");
 const metrics = new Metrics({ namespace: "IPR" });
 let sqsEvent: SQSEvent;
 let sqsEventNewEmail: SQSEvent;
@@ -111,7 +111,7 @@ function getMockExtSessionEventItem(): ExtSessionEvent {
 
 describe("SendEmailProcessor", () => {
 	beforeAll(() => {
-		sendEmailProcessorTest = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY, "serviceId", SESSION_EVENTS_TABLE);
+		sendEmailProcessorTest = new SendEmailProcessor(metrics, GOVUKNOTIFY_API_KEY, "serviceId", SESSION_EVENTS_TABLE);
 		// @ts-expect-error private access manipulation used for testing
 		sendEmailProcessorTest.govNotifyService = mockGovNotifyService;
 		// @ts-expect-error private access manipulation used for testing

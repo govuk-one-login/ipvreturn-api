@@ -1,5 +1,6 @@
 
-import { PublishKeyHandler, logger } from "../../PublishKeyHandler";
+import { PublishKeyHandler } from "../../PublishKeyHandler";
+import { logger } from "@govuk-one-login/cri-logger";
 import { mockClient } from "aws-sdk-client-mock";
 import { GetPublicKeyCommand, GetPublicKeyCommandOutput, KMSClient } from "@aws-sdk/client-kms";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
@@ -7,7 +8,7 @@ import { Jwk } from "../../types/Keys";
 import { Context } from "aws-lambda";
 import crypto from "node:crypto";
 
-vi.mock("@aws-lambda-powertools/logger", () => ({
+vi.mock("@govuk-one-login/cri-logger", () => ({
 	Logger: vi.fn().mockImplementation(function () {
     return {
       info: vi.fn(),

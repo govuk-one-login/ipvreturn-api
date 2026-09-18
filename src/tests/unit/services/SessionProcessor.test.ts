@@ -46,7 +46,7 @@ const failingKmsJwtAdapterFactory = () => new MockKmsJwtAdapter(false, validPayl
 const failingKmsJwtSigningAdapterFactory = () => new MockFailingKmsSigningJwtAdapter();
 const failingKmsJwtDecodeAdapterFactory = () => new MockFailingKmsJwtAdapter();
 
-const logger = mock<Logger>();
+vi.mock("@govuk-one-login/cri-logger");
 const metrics = mock<Metrics>();
 vi.mock("axios");
 const mockStsClient = vi.mocked(stsClient);
@@ -96,7 +96,7 @@ describe("SessionProcessor", () => {
 		process.env.ISSUER = MOCK_ISSUER;
 
 		mockSessionEvent = getMockSessionEventItem();
-		sessionProcessorTest = new SessionProcessor(logger, metrics, CLIENT_ID);
+		sessionProcessorTest = new SessionProcessor(metrics, CLIENT_ID);
 
 		// @ts-expect-error private access manipulation used for testing
 		sessionProcessorTest.kmsJwtAdapter = passingKmsJwtAdapterFactory();

@@ -1,5 +1,4 @@
  
-import { logger } from "@govuk-one-login/cri-logger";
 import { SQSEvent } from "aws-lambda";
 // @ts-expect-error Ignores import error needs addressed
 import { NotifyClient } from "notifications-node-client";
@@ -14,7 +13,6 @@ const mockGovNotify = mock<NotifyClient>();
 let sendEmailServiceTest: SendEmailService;
 // pragma: allowlist nextline secret
 const GOVUKNOTIFY_API_KEY = "sdhohofsdf";
-const logger = mock<Logger>();
 const metrics = mock<Metrics>();
 let sqsEvent: SQSEvent;
 let sqsEventNewEmail: SQSEvent;
@@ -22,7 +20,7 @@ let sqsEventVCGenerationFailureEmail: SQSEvent;
 
 describe("SendEmailService", () => {
 	beforeAll(() => {
-		sendEmailServiceTest = SendEmailService.getInstance(logger, metrics, GOVUKNOTIFY_API_KEY, "serviceId");
+		sendEmailServiceTest = SendEmailService.getInstance(metrics, GOVUKNOTIFY_API_KEY, "serviceId");
 		// @ts-expect-error private access manipulation used for testing
 		sendEmailServiceTest.govNotify = mockGovNotify;
 		sqsEvent = VALID_GOV_NOTIFY_HANDLER_SQS_EVENT;
