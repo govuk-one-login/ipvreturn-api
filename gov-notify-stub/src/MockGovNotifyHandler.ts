@@ -1,9 +1,10 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { logger } from "@govuk-one-login/cri-logger";
+import { LogLevel } from "@aws-lambda-powertools/logger/types";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Response } from "./utils/Response";
 import { ResourcesEnum } from "./models/enums/ResourcesEnum";
-
+ 
 import { HttpCodesEnum } from "./utils/HttpCodesEnum";
 import { LambdaInterface } from "@aws-lambda-powertools/commons/lib/esm/types";
 import { AppError } from "./utils/AppError";
@@ -12,8 +13,10 @@ import { Constants } from "./utils/Constants";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : Constants.IPR_METRICS_NAMESPACE;
 const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME ? process.env.POWERTOOLS_SERVICE_NAME : Constants.AUTHORIZATIONCODE_LOGGER_SVC_NAME;
+const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL as LogLevel ? process.env.POWERTOOLS_LOG_LEVEL as LogLevel: Constants.DEBUG;
 
 const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceName: POWERTOOLS_SERVICE_NAME });
+logger.setLogLevel(POWERTOOLS_LOG_LEVEL);
 
 class MockGovNotifyHandler implements LambdaInterface {
 

@@ -1,5 +1,6 @@
 import { SQSBatchItemFailure, SQSBatchResponse, SQSEvent, SQSRecord } from "aws-lambda";
 import { logger } from "@govuk-one-login/cri-logger";
+import { LogLevel } from "@aws-lambda-powertools/logger/types";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { LambdaInterface } from "@aws-lambda-powertools/commons/types";
 import { Constants } from "./utils/Constants";
@@ -11,8 +12,10 @@ import { DynamicEmail, Email, FallbackEmail, VCGenerationFailureEmail } from "./
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : Constants.IPVRETURN_METRICS_NAMESPACE;
 const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME ? process.env.POWERTOOLS_SERVICE_NAME : Constants.EMAIL_LOGGER_SVC_NAME;
+const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL as LogLevel ? process.env.POWERTOOLS_LOG_LEVEL as LogLevel: Constants.DEBUG;
 
 const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceName: POWERTOOLS_SERVICE_NAME });
+logger.setLogLevel(POWERTOOLS_LOG_LEVEL);
 
 let GOVUKNOTIFY_API_KEY: string;
 class GovNotifyHandler implements LambdaInterface {
