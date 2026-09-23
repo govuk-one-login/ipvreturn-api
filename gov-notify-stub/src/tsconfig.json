@@ -12,7 +12,6 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "./build/",
     "module": "es2022",
-    "types": ["node"]
   },
   "exclude": ["node_modules"]
 }
