@@ -7,7 +7,7 @@ import { NodeHttpHandler } from "@smithy/node-http-handler";
 import { Constants } from "./utils/Constants";
 import { BatchItemFailure } from "./utils/BatchItemFailure";
 
-const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL as LogLevel: Constants.DEBUG;
+const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL as LogLevel : Constants.DEBUG;
 
 logger.setLogLevel(POWERTOOLS_LOG_LEVEL);
 

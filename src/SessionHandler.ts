@@ -16,7 +16,7 @@ import { AppError } from "./utils/AppError";
 import { Constants } from "./utils/Constants";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : "CIC-CRI";
-const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL as LogLevel: Constants.DEBUG;
+const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL as LogLevel : Constants.DEBUG;
 
 let CLIENT_ID: string;
 
