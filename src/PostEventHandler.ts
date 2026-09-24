@@ -1,17 +1,14 @@
 import { SQSEvent, SQSRecord } from "aws-lambda";
 import { logger } from "@govuk-one-login/cri-logger";
-import { LogLevel } from "@aws-lambda-powertools/logger/types";
 import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
 import { LambdaInterface } from "@aws-lambda-powertools/commons/types";
 import { PostEventProcessor } from "./services/PostEventProcessor";
-import { Constants } from "./utils/Constants";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE;
-const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL as LogLevel : Constants.DEBUG;
 const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME;
 
 const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceName: POWERTOOLS_SERVICE_NAME });
-logger.setLogLevel(POWERTOOLS_LOG_LEVEL);
+logger.setLogLevel("DEBUG");
 
 class PostEventHandler implements LambdaInterface {
 
@@ -34,8 +31,13 @@ class PostEventHandler implements LambdaInterface {
 				logger.error({ message:"Received invalid JSON in the SQS event record.body" });
 				return { batchItemFailures:[] };
 			}
-
-			logger.debug("Starting to process record", { event_name: body.event_name });
+			console.log("LOG LEVEL", logger.getLevelName())
+			logger.debug("Starting to process record IN DEBUG MODE", { event_name: body.event_name });
+			logger.info("Starting to process record IN DEBUG MODE", { event_name: body.event_name });
+			logger.setLogLevel("INFO");
+			console.log("LOG LEVEL", logger.getLevelName())
+			logger.debug("Starting to process record IN INFO MODE", { event_name: body.event_name });
+			logger.info("Starting to process record IN INFO MODE", { event_name: body.event_name });
 
 			try {
 				await PostEventProcessor.getInstance(metrics).processRequest(record.body);
