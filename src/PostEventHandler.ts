@@ -8,8 +8,7 @@ const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE;
 const POWERTOOLS_SERVICE_NAME = process.env.POWERTOOLS_SERVICE_NAME;
 
 const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceName: POWERTOOLS_SERVICE_NAME });
-logger.setLogLevel("DEBUG");
-console.log("LOG LEVEL 1", logger.getLevelName())
+
 class PostEventHandler implements LambdaInterface {
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
@@ -18,8 +17,7 @@ class PostEventHandler implements LambdaInterface {
 		// clear logger state set by any previous invocation, and add lambda context for this invocation
 		logger.resetKeys();
 		logger.addContext(context);
-		logger.setLogLevel("DEBUG");
-		console.log("LOG LEVEL 2", logger.getLevelName())
+		console.log("LOG LEVEL", logger.getLevelName())
 		if (event.Records.length === 1) {
 			let body;
 			const record: SQSRecord = event.Records[0];
@@ -32,13 +30,8 @@ class PostEventHandler implements LambdaInterface {
 				logger.error({ message:"Received invalid JSON in the SQS event record.body" });
 				return { batchItemFailures:[] };
 			}
-			console.log("LOG LEVEL 3", logger.getLevelName())
-			logger.debug("Starting to process record IN DEBUG MODE", { event_name: body.event_name });
-			logger.info("Starting to process record IN DEBUG MODE", { event_name: body.event_name });
-			logger.setLogLevel("INFO");
-			console.log("LOG LEVEL 4", logger.getLevelName())
-			logger.debug("Starting to process record IN INFO MODE", { event_name: body.event_name });
-			logger.info("Starting to process record IN INFO MODE", { event_name: body.event_name });
+			
+			logger.debug("Starting to process record", { event_name: body.event_name });
 
 			try {
 				await PostEventProcessor.getInstance(metrics).processRequest(record.body);
