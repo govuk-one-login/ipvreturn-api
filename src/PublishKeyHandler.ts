@@ -1,13 +1,11 @@
 import { LambdaInterface } from "@aws-lambda-powertools/commons/types";
 import { Context } from "aws-lambda";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { Jwk, Jwks } from "./types/Keys";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { KMSClient, GetPublicKeyCommand, GetPublicKeyCommandOutput } from "@aws-sdk/client-kms";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import crypto from "node:crypto";
-
-export const logger = new Logger({ serviceName: "PublishKeyHandler" });
 
 export class PublishKeyHandler implements LambdaInterface {
     signingKeyId: string;
@@ -47,10 +45,10 @@ export class PublishKeyHandler implements LambdaInterface {
     public async handler(event: Record<string, unknown>, context: Context): Promise<string | undefined> {
         try {
             logger.info(`Initiating lambda ${context.functionName} version ${context.functionVersion}`);
-            logger.debug(`Using key ${this.signingKeyId} and uploading to ${this.bucketName}`);
+            logger.info(`Using key ${this.signingKeyId} and uploading to ${this.bucketName}`);
             const jsonWebKeySet: Jwks = { keys: [] };
             const signingKey = await this.getKmsKey();
-            logger.debug(`Obtained the Public Key: ${JSON.stringify(signingKey)}`);
+            logger.info(`Obtained the Public Key: ${JSON.stringify(signingKey)}`);
 
             const signingKeyAsJwk: Jwk = this.convertToJwk(signingKey);
             jsonWebKeySet.keys.push(signingKeyAsJwk);
@@ -72,7 +70,7 @@ export class PublishKeyHandler implements LambdaInterface {
                 Body: JSON.stringify(jsonWebKeySet),
                 ContentType: "application/json",
             };
-            logger.debug(`uploadParams = ${JSON.stringify(uploadParams)}`);
+            logger.info(`uploadParams = ${JSON.stringify(uploadParams)}`);
 
             await this.s3Client.send(new PutObjectCommand(uploadParams));
         } catch (error) {
@@ -84,7 +82,7 @@ export class PublishKeyHandler implements LambdaInterface {
         try {
             const signingKey = await this.kmsClient.send(new GetPublicKeyCommand({ KeyId: this.signingKeyId }));
             if (!this.isValidPublicKey(signingKey)) {
-                logger.debug(`InvalidKey: ${JSON.stringify(signingKey)}`);
+                logger.info(`InvalidKey: ${JSON.stringify(signingKey)}`);
                 throw new Error(`Public key data obtained from KMS is invalid`);
             }
             return signingKey;

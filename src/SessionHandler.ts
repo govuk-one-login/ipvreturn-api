@@ -1,6 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { Logger } from "@aws-lambda-powertools/logger";
-import { LogLevel } from "@aws-lambda-powertools/logger/types";
+import { logger } from "@govuk-one-login/cri-logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { Response } from "./utils/Response";
 import { ResourcesEnum } from "./models/enums/ResourcesEnum";
@@ -15,18 +14,13 @@ import { MessageCodes } from "./models/enums/MessageCodes";
 import { AppError } from "./utils/AppError";
 
 const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : "CIC-CRI";
-const POWERTOOLS_LOG_LEVEL = process.env.POWERTOOLS_LOG_LEVEL ? process.env.POWERTOOLS_LOG_LEVEL : "DEBUG";
 
-const logger = new Logger({
-	logLevel: POWERTOOLS_LOG_LEVEL as LogLevel,
-	serviceName: "SessionHandler",
-});
 let CLIENT_ID: string;
 
 const metrics = new Metrics({ namespace: POWERTOOLS_METRICS_NAMESPACE, serviceName: "SessionHandler" });
 
 class Session implements LambdaInterface {
-	private readonly environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GET_SESSION_EVENT_DATA_SERVICE);
+	private readonly environmentVariables = new EnvironmentVariables(ServicesEnum.GET_SESSION_EVENT_DATA_SERVICE);
 
 	@metrics.logMetrics({ throwOnEmptyMetrics: false, captureColdStartMetric: true })
 	@logger.injectLambdaContext()
@@ -53,7 +47,7 @@ class Session implements LambdaInterface {
 							}
 						}
 						logger.appendKeys({ requestId: event.requestContext.requestId });
-						return await SessionProcessor.getInstance(logger, metrics, CLIENT_ID).processRequest(event);
+						return await SessionProcessor.getInstance(metrics, CLIENT_ID).processRequest(event);
 					} catch (error) {
 						logger.error({ message: "An error has occurred. ",
 							error,

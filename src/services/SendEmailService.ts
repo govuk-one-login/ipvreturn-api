@@ -3,7 +3,7 @@ import { NotifyClient } from "notifications-node-client";
 import { EmailResponse } from "../models/EmailResponse";
 import { GovNotifyErrorMapper } from "./GovNotifyErrorMapper";
 import { EnvironmentVariables } from "./EnvironmentVariables";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { AppError } from "../utils/AppError";
 import { sleep } from "../utils/Sleep";
@@ -25,8 +25,6 @@ export class SendEmailService {
 
     private readonly environmentVariables: EnvironmentVariables;
 
-    private readonly logger: Logger;
-
 	private readonly metrics: Metrics;
 
 	/**
@@ -35,17 +33,16 @@ export class SendEmailService {
 	 * @param environmentVariables
 	 * @private
 	 */
-	private constructor(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string) {
-    	this.logger = logger;
+	private constructor(metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string) {
 		this.metrics = metrics;
-    	this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GOV_NOTIFY_SERVICE);
+    	this.environmentVariables = new EnvironmentVariables(ServicesEnum.GOV_NOTIFY_SERVICE);
     	this.govNotify = new NotifyClient(this.environmentVariables.govukNotifyApiUrl(), govnotifyServiceId, GOVUKNOTIFY_API_KEY);
     	this.govNotifyErrorMapper = new GovNotifyErrorMapper();
 	}
 
-	static getInstance(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string): SendEmailService {
+	static getInstance(metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string): SendEmailService {
     	if (!this.instance) {
-    		this.instance = new SendEmailService(logger, metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
+    		this.instance = new SendEmailService(metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
     	}
     	return this.instance;
 	}
@@ -111,7 +108,7 @@ export class SendEmailService {
     			break;
     		}
     		default: {
-    			this.logger.error(`Unrecognised emailType: ${emailType}, unable to send the email.`);
+    			logger.error(`Unrecognised emailType: ${emailType}, unable to send the email.`);
     			throw new AppError(HttpCodesEnum.SERVER_ERROR, `Unrecognised emailType: ${emailType}, unable to send the email.`);
     		}
     	} 
@@ -121,32 +118,32 @@ export class SendEmailService {
     		reference: message.referenceId,
     	};
 
-    	this.logger.debug("sendEmail", SendEmailService.name);
+    	logger.info("sendEmail", SendEmailService.name);
 
     	let retryCount = 0;
     	//retry for maxRetry count configured value if fails
     	while (retryCount <= this.environmentVariables.maxRetries()) {
-    		this.logger.debug(`sendEmail - trying to send ${emailType} message ${SendEmailService.name} ${new Date().toISOString()}`, {
+    		logger.info(`sendEmail - trying to send ${emailType} message ${SendEmailService.name} ${new Date().toISOString()}`, {
     			templateId,
     			retryCount,
     		});
 
     		try {
-    			this.logger.info("govNotify URL: " + this.environmentVariables.govukNotifyApiUrl());
+    			logger.info("govNotify URL: " + this.environmentVariables.govukNotifyApiUrl());
     			const emailResponse = await this.govNotify.sendEmail(templateId, message.emailAddress, options);
 
 				const singleMetric = this.metrics.singleMetric();
 				singleMetric.addDimension("emailType", emailType);
 				const metricName = emailType === Constants.VC_GENERATION_FAILURE_EMAIL ? "GovNotify_vc_generation_failure_email_sent" : "GovNotify_visit_email_sent";
 				singleMetric.addMetric(metricName, MetricUnit.Count, 1);
-    			this.logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
+    			logger.info("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
 
     			return new EmailResponse(new Date().toISOString(), "", { emailResponseStatus: emailResponse.status, emailResponseId: emailResponse.data.id });
     		} catch (err: any) {
-    			this.logger.error("sendEmail - GOV UK Notify threw an error");
+    			logger.error("sendEmail - GOV UK Notify threw an error");
 
     			if (err.response) {
-    				this.logger.error(`GOV UK Notify error ${SendEmailService.name}`, {
+    				logger.error(`GOV UK Notify error ${SendEmailService.name}`, {
     					statusCode: err.response.data.status_code,
     					errors: err.response.data.errors,
     				});
@@ -155,12 +152,12 @@ export class SendEmailService {
     			const appError: any = this.govNotifyErrorMapper.map(err.response.data.status_code, err.response.data.errors[0].message); // NOSONAR - not Array#map; this is our error mapper method
 
     			if (appError.obj!.shouldRetry && retryCount < this.environmentVariables.maxRetries()) {
-    				this.logger.error(`sendEmail - Mapped error ${SendEmailService.name}`, { appError });
-    				this.logger.error(`sendEmail - Retrying to send the email. Sleeping for ${this.environmentVariables.backoffPeriod()} ms ${SendEmailService.name} ${new Date().toISOString()}`, { retryCount });
+    				logger.error(`sendEmail - Mapped error ${SendEmailService.name}`, { appError });
+    				logger.error(`sendEmail - Retrying to send the email. Sleeping for ${this.environmentVariables.backoffPeriod()} ms ${SendEmailService.name} ${new Date().toISOString()}`, { retryCount });
     				await sleep(this.environmentVariables.backoffPeriod());
     				retryCount++;
     			} else {
-    				this.logger.error("sendEmail - Mapped error", SendEmailService.name, appError.message);
+    				logger.error("sendEmail - Mapped error", SendEmailService.name, appError.message);
     				throw appError;
     			}
     		}
@@ -168,7 +165,7 @@ export class SendEmailService {
 
     	// If the email couldn't be sent after the retries,
     	// an error is thrown
-    	this.logger.error(`sendEmail - cannot send Email even after ${this.environmentVariables.maxRetries()} retries.`);
+    	logger.error(`sendEmail - cannot send Email even after ${this.environmentVariables.maxRetries()} retries.`);
     	throw new AppError(HttpCodesEnum.SERVER_ERROR, `Cannot send Email even after ${this.environmentVariables.maxRetries()} retries.`);
 	}
 

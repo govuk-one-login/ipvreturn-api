@@ -1,15 +1,14 @@
  
  
-import { mock } from "vitest-mock-extended";
 import { IPRServiceAuth } from "../../../services/IPRServiceAuth";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
 import { AppError } from "../../../utils/AppError";
 import { absoluteTimeNow } from "../../../utils/DateTimeUtils";
 import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
 import { MessageCodes } from "../../../models/enums/MessageCodes";
 
-const logger = mock<Logger>();
+vi.mock("@govuk-one-login/cri-logger");
 
 let iprServiceAuth: IPRServiceAuth;
 const tableName = "MYTABLE";
@@ -43,7 +42,7 @@ describe("IPR Service", () => {
 
 	beforeEach(() => {
 		vi.resetAllMocks();
-		iprServiceAuth = new IPRServiceAuth(tableName, logger, mockDynamoDbClient);
+		iprServiceAuth = new IPRServiceAuth(tableName, mockDynamoDbClient);
 	});
 
 	describe("saveEventData", () => {

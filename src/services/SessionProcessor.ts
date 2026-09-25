@@ -1,6 +1,6 @@
  
  
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
 import { KmsJwtAdapter } from "../utils/KmsJwtAdapter";
 import { HttpCodesEnum } from "../utils/HttpCodesEnum";
@@ -25,8 +25,6 @@ import { MessageCodes } from "../models/enums/MessageCodes";
 export class SessionProcessor {
 	private static instance: SessionProcessor;
 
-	private readonly logger: Logger;
-
 	private readonly metrics: Metrics;
 
 	private readonly kmsJwtAdapter: KmsJwtAdapter;
@@ -37,18 +35,17 @@ export class SessionProcessor {
 
 	private CLIENT_ID;
 
-	constructor(logger: Logger, metrics: Metrics, CLIENT_ID: string) {
-		this.logger = logger;
-		this.environmentVariables = new EnvironmentVariables(logger, ServicesEnum.GET_SESSION_EVENT_DATA_SERVICE);
+	constructor(metrics: Metrics, CLIENT_ID: string) {
+		this.environmentVariables = new EnvironmentVariables(ServicesEnum.GET_SESSION_EVENT_DATA_SERVICE);
 		this.kmsJwtAdapter = new KmsJwtAdapter(this.environmentVariables.kmsKeyArn());
 		this.metrics = metrics;
 		this.CLIENT_ID = CLIENT_ID;
 		this.validationHelper = new ValidationHelper();
 	}
 
-	static getInstance(logger: Logger, metrics: Metrics, CLIENT_ID: string): SessionProcessor {
+	static getInstance(metrics: Metrics, CLIENT_ID: string): SessionProcessor {
 		if (!SessionProcessor.instance) {
-			SessionProcessor.instance = new SessionProcessor(logger, metrics, CLIENT_ID);
+			SessionProcessor.instance = new SessionProcessor(metrics, CLIENT_ID);
 		}
 		return SessionProcessor.instance;
 	}
@@ -64,19 +61,19 @@ export class SessionProcessor {
 			const { data: openIdConfiguration } = await axios.get(openIdConfigEndpoint);
 
 			if (openIdConfiguration.issuer == null || openIdConfiguration.jwks_uri == null ) {
-				this.logger.error({ message: "Missing openIdConfiguration values." }, {
+				logger.error({ message: "Missing openIdConfiguration values." }, {
 					messageCode: MessageCodes.MISSING_OIDC_CONFIGURATION,
 				});
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Missing openIdConfiguration values.");
 			}
 
-			this.logger.debug("Fetching OpenId Configuration data");
+			logger.info("Fetching OpenId Configuration data");
 			issuer = openIdConfiguration.issuer;
 			jwksEndpoint = openIdConfiguration.jwks_uri;
 
 			// Generate id_token
 			if (authCode == null || authCode.length <= 0) {
-				this.logger.error({ message: "Missing authCode to generate id_token" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
+				logger.error({ message: "Missing authCode to generate id_token" }, { messageCode: MessageCodes.MISSING_CONFIGURATION });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Missing authCode to generate id_token");
 			}
 			const idToken = await this.generateIdToken(authCode);
@@ -85,30 +82,30 @@ export class SessionProcessor {
 			try {
 				parsedIdTokenJwt = this.kmsJwtAdapter.decode(idToken);
 			} catch (error) {
-				this.logger.error("FAILED_DECODING_JWT", { messageCode: MessageCodes.FAILED_DECODING_JWT, error });
+				logger.error("FAILED_DECODING_JWT", { messageCode: MessageCodes.FAILED_DECODING_JWT, error });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Invalid request: Rejected jwt");
 			}
 			const jwtIdTokenHeader: JwtHeader = parsedIdTokenJwt.header;
 			const jwtIdTokenKid: string = jwtIdTokenHeader.kid!;
-			this.logger.info("ORCH TOKEN KID", jwtIdTokenKid);
+			logger.info("ORCH TOKEN KID", jwtIdTokenKid);
 			const jwtIdTokenPayload: JwtPayload = parsedIdTokenJwt.payload;
 
 			// idToken Validation
 			try {
 				const payload = await this.kmsJwtAdapter.verifyWithJwks(idToken, jwksEndpoint, jwtIdTokenKid);
 				if (!payload) {
-					this.logger.error("JWT verification failed", { messageCode: MessageCodes.FAILED_VERIFYING_JWT });
+					logger.error("JWT verification failed", { messageCode: MessageCodes.FAILED_VERIFYING_JWT });
 					return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT verification failed");
 				}
 			} catch (error) {
-				this.logger.error("UNEXPECTED_ERROR_VERIFYING_JWT", { messageCode: MessageCodes.UNEXPECTED_ERROR_VERIFYING_JWT, error });
+				logger.error("UNEXPECTED_ERROR_VERIFYING_JWT", { messageCode: MessageCodes.UNEXPECTED_ERROR_VERIFYING_JWT, error });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Invalid request: Could not verify jwt");
 			}
 
 			// Verify Jwt claims
 			const jwtErrors = this.validationHelper.isJwtValid(jwtIdTokenPayload, this.CLIENT_ID, issuer);
 			if (jwtErrors.length > 0) {
-				this.logger.error({ message: jwtErrors }, { messageCode: MessageCodes.FAILED_VALIDATING_JWT });
+				logger.error({ message: jwtErrors }, { messageCode: MessageCodes.FAILED_VALIDATING_JWT });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT validation/verification failed");
 			}
 
@@ -121,7 +118,7 @@ export class SessionProcessor {
 					RoleArn: this.environmentVariables.assumeRoleWithWebIdentityArn(),
 				});
 			} catch (error) {
-				this.logger.error({ message: "An error occurred while assuming the role with WebIdentity" }, { messageCode: MessageCodes.ERROR_ASSUMING_ROLE_WITH_WEB_IDENTITY, error });
+				logger.error({ message: "An error occurred while assuming the role with WebIdentity" }, { messageCode: MessageCodes.ERROR_ASSUMING_ROLE_WITH_WEB_IDENTITY, error });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "An error occurred while assuming the role with WebIdentity");
 			}
 
@@ -129,7 +126,6 @@ export class SessionProcessor {
 			// from the ID token
 			const iprService = IPRServiceSession.getInstance(
 				this.environmentVariables.sessionEventsTable(),
-				this.logger,
 				createDynamoDbClientWithCreds(assumedRole.Credentials),
 			);
 
@@ -139,16 +135,16 @@ export class SessionProcessor {
 			const sub = jwtIdTokenPayload.sub!;
 			const session = await iprService.getSessionBySub(sub);
 			if (!session) {
-				this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
+				logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "No session event found for this userId");
 			}
-			this.logger.appendKeys({ govuk_signin_journey_id: session.clientSessionId });
+			logger.appendKeys({ govuk_signin_journey_id: session.clientSessionId });
 
 			// Validate sessionEvent Item if its missing some events.
 			try {
 				this.validationHelper.validateSessionEventFields(session);
 			} catch (error: any) {
-				this.logger.info("Some events are missing for the session event for this userId", error.message);
+				logger.info("Some events are missing for the session event for this userId", error.message);
 				this.metrics.addMetric("User_entered_IPR_in_incorrect_state", MetricUnit.Count, 1);
 				return {
 					statusCode: HttpCodesEnum.OK,
@@ -161,10 +157,10 @@ export class SessionProcessor {
 
 			// Validate the notified field is set to true
 			if (!session.notified) {
-				this.logger.error("User is not yet notified for this session event.", { messageCode: MessageCodes.USER_NOT_NOTIFIED });
+				logger.error("User is not yet notified for this session event.", { messageCode: MessageCodes.USER_NOT_NOTIFIED });
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "User is not yet notified for this session event.");
 			}
-			this.logger.info("User is successfully redirected to : ", session?.redirectUri);
+			logger.info("User is successfully redirected to : ", session?.redirectUri);
 
 			try {
 				await iprService.sendToTXMA({
@@ -175,7 +171,7 @@ export class SessionProcessor {
 				  },
 				}, encodedHeader);
 			} catch (error) {
-				this.logger.error("Failed to send IPR_USER_REDIRECTED event to TXMA", {
+				logger.error("Failed to send IPR_USER_REDIRECTED event to TXMA", {
 					error,
 					messageCode: MessageCodes.FAILED_TO_WRITE_TXMA,
 				});
@@ -220,7 +216,7 @@ export class SessionProcessor {
 		try {
 			client_assertion = await this.kmsJwtAdapter.sign(jwtPayload);
 		} catch (error) {
-			this.logger.error("Failed to sign the client_assertion Jwt", {
+			logger.error("Failed to sign the client_assertion Jwt", {
 				error,
 				messageCode: MessageCodes.ERROR_SIGNING_JWT,
 			});
@@ -239,7 +235,7 @@ export class SessionProcessor {
 			);
 			return data.id_token;
 		} catch (error) {
-			this.logger.error("An error occurred when fetching OIDC token response", {
+			logger.error("An error occurred when fetching OIDC token response", {
 				error,
 				messageCode: MessageCodes.UNEXPECTED_ERROR_FETCHING_OIDC_TOKEN,
 			});
