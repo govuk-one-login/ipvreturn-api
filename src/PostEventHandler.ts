@@ -17,7 +17,7 @@ class PostEventHandler implements LambdaInterface {
 		// clear logger state set by any previous invocation, and add lambda context for this invocation
 		logger.resetKeys();
 		logger.addContext(context);
-		console.log("LOG LEVEL", logger.getLevelName())
+		
 		if (event.Records.length === 1) {
 			let body;
 			const record: SQSRecord = event.Records[0];
@@ -30,7 +30,7 @@ class PostEventHandler implements LambdaInterface {
 				logger.error({ message:"Received invalid JSON in the SQS event record.body" });
 				return { batchItemFailures:[] };
 			}
-			
+
 			logger.debug("Starting to process record", { event_name: body.event_name });
 
 			try {
