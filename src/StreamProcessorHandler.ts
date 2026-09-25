@@ -2,7 +2,6 @@ import { DynamoDBRecord, DynamoDBStreamEvent } from "aws-lambda";
 import { logger } from "@govuk-one-login/cri-logger";
 import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
 import { LambdaInterface } from "@aws-lambda-powertools/commons/types";
-import { Constants } from "./utils/Constants";
 import { SessionEventProcessor } from "./services/SessionEventProcessor";
 import { DynamoDBBatchResponse } from "aws-lambda/trigger/dynamodb-stream";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
