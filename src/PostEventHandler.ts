@@ -31,12 +31,12 @@ class PostEventHandler implements LambdaInterface {
 				return { batchItemFailures:[] };
 			}
 
-			logger.debug("Starting to process record", { event_name: body.event_name });
+			logger.info("Starting to process record", { event_name: body.event_name });
 
 			try {
 				await PostEventProcessor.getInstance(metrics).processRequest(record.body);
 
-				logger.debug("Finished processing record from SQS");
+				logger.info("Finished processing record from SQS");
 				return { batchItemFailures:[] };
 
 			} catch (error: any) {

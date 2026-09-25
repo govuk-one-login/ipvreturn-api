@@ -13,7 +13,7 @@ import { ServicesEnum } from "./models/enums/ServicesEnum";
 import { MessageCodes } from "./models/enums/MessageCodes";
 import { AppError } from "./utils/AppError";
 
-const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE ? process.env.POWERTOOLS_METRICS_NAMESPACE : "CIC-CRI";
+const POWERTOOLS_METRICS_NAMESPACE = process.env.POWERTOOLS_METRICS_NAMESPACE;
 
 let CLIENT_ID: string;
 
@@ -30,7 +30,7 @@ class Session implements LambdaInterface {
 		logger.resetKeys();
 		logger.addContext(context);
 
-		logger.debug("metrics is", { metrics });
+		logger.info("metrics is", { metrics });
 
 		switch (event.resource) {
 			case ResourcesEnum.SESSION:

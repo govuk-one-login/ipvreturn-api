@@ -118,12 +118,12 @@ export class SendEmailService {
     		reference: message.referenceId,
     	};
 
-    	logger.debug("sendEmail", SendEmailService.name);
+    	logger.info("sendEmail", SendEmailService.name);
 
     	let retryCount = 0;
     	//retry for maxRetry count configured value if fails
     	while (retryCount <= this.environmentVariables.maxRetries()) {
-    		logger.debug(`sendEmail - trying to send ${emailType} message ${SendEmailService.name} ${new Date().toISOString()}`, {
+    		logger.info(`sendEmail - trying to send ${emailType} message ${SendEmailService.name} ${new Date().toISOString()}`, {
     			templateId,
     			retryCount,
     		});
@@ -136,7 +136,7 @@ export class SendEmailService {
 				singleMetric.addDimension("emailType", emailType);
 				const metricName = emailType === Constants.VC_GENERATION_FAILURE_EMAIL ? "GovNotify_vc_generation_failure_email_sent" : "GovNotify_visit_email_sent";
 				singleMetric.addMetric(metricName, MetricUnit.Count, 1);
-    			logger.debug("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
+    			logger.info("sendEmail - response status after sending Email", SendEmailService.name, emailResponse.status);
 
     			return new EmailResponse(new Date().toISOString(), "", { emailResponseStatus: emailResponse.status, emailResponseId: emailResponse.data.id });
     		} catch (err: any) {

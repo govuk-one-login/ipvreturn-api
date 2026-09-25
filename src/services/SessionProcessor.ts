@@ -67,7 +67,7 @@ export class SessionProcessor {
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "Missing openIdConfiguration values.");
 			}
 
-			logger.debug("Fetching OpenId Configuration data");
+			logger.info("Fetching OpenId Configuration data");
 			issuer = openIdConfiguration.issuer;
 			jwksEndpoint = openIdConfiguration.jwks_uri;
 
