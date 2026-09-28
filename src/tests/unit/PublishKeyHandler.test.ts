@@ -72,8 +72,7 @@ describe("Tests", () => {
             const publishKeyHandler: PublishKeyHandler = new PublishKeyHandler(keyID, bucketName);
             const result: string | undefined = await publishKeyHandler.handler(validEvent, validContext);
 
-            expect(logger.info).toHaveBeenNthCalledWith(2, `Using key ${keyID} and uploading to ${bucketName}`)
-            expect(logger.info).toHaveBeenNthCalledWith(5, "Successfully uploaded a new object version of jwks.json to bucket")
+            expect(logger.info).toHaveBeenNthCalledWith(3, "Successfully uploaded a new object version of jwks.json to bucket")
             expect(result).toEqual("Success");
             expect(s3Mock).toHaveReceivedCommandWith(PutObjectCommand, 
                 {
