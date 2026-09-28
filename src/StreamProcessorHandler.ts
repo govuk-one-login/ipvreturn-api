@@ -21,7 +21,6 @@ class StreamProcessorHandler implements LambdaInterface {
 		logger.resetKeys();
 		logger.addContext(context);
 		
-		logger.debug("DB Stream event received");
 		if (event.Records.length === 1) {
 			const record: DynamoDBRecord = event.Records[0];
 			logger.info("Starting to process stream record");

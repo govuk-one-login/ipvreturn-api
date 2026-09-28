@@ -117,9 +117,7 @@ export class SendEmailService {
     		personalisation,
     		reference: message.referenceId,
     	};
-
-    	logger.info("sendEmail", SendEmailService.name);
-
+		
     	let retryCount = 0;
     	//retry for maxRetry count configured value if fails
     	while (retryCount <= this.environmentVariables.maxRetries()) {

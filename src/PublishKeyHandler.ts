@@ -45,11 +45,9 @@ export class PublishKeyHandler implements LambdaInterface {
     public async handler(event: Record<string, unknown>, context: Context): Promise<string | undefined> {
         try {
             logger.info(`Initiating lambda ${context.functionName} version ${context.functionVersion}`);
-            logger.info(`Using key ${this.signingKeyId} and uploading to ${this.bucketName}`);
             const jsonWebKeySet: Jwks = { keys: [] };
             const signingKey = await this.getKmsKey();
-            logger.info(`Obtained the Public Key: ${JSON.stringify(signingKey)}`);
-
+            
             const signingKeyAsJwk: Jwk = this.convertToJwk(signingKey);
             jsonWebKeySet.keys.push(signingKeyAsJwk);
 
