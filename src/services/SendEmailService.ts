@@ -11,6 +11,7 @@ import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { Constants } from "../utils/Constants";
 import { DocumentTypes } from "../models/enums/DocumentTypes";
 import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
+import { translateDateToWelsh } from "../utils/DateTimeUtils";
 
 /**
  * Class to send emails using gov notify service
@@ -85,8 +86,9 @@ export class SendEmailService {
 					  "id_expiry_date_english": this.getFullFormattedDate(message.documentExpiryDate, "en-GB"),
 					  "id_expiry_date_welsh": this.getFullFormattedDate(message.documentExpiryDate, "cy-GB"),
     				"branch_name_and_address": message.poAddress,
-    				"date": message.poVisitDate,
-    				"time": message.poVisitTime.replaceAll(/\s/g, ""),
+					  "po_visit_date_english": message.poVisitDate,
+					  "po_visit_date_welsh": translateDateToWelsh(message.poVisitDate),
+    				"po_visit_time": message.poVisitTime.replaceAll(/\s/g, ""),
     			};
     			templateId = this.environmentVariables.getDynamicEmailTemplateId();
     			break;
