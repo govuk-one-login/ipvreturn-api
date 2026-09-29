@@ -159,7 +159,8 @@ describe("SendEmailService", () => {
 				"chosen_photo_ID": "passport",
 				"date": "7 September 2023",
 				"time": "4:43pm",
-				"id_expiry_date": "21 November 2030",
+				"id_expiry_date_english": "21 November 2030",
+				"id_expiry_date_welsh": "21 Tachwedd 2030",
 			},
     		reference: expect.anything(),
     	});
