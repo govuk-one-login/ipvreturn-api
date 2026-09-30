@@ -1,10 +1,9 @@
  
  
  
-import { mock } from "vitest-mock-extended";
 import { SendMessageCommand } from "@aws-sdk/client-sqs";
 import { IPRServiceSession } from "../../../services/IPRServiceSession";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { createDynamoDbClient } from "../../../utils/DynamoDBFactory";
 import { sqsClient } from "../../../utils/SqsClient";
 import { TxmaEvent } from "../../../utils/TxmaEvent";
@@ -14,7 +13,7 @@ import { absoluteTimeNow } from "../../../utils/DateTimeUtils";
 import { HttpCodesEnum } from "../../../models/enums/HttpCodesEnum";
 import { MessageCodes } from "../../../models/enums/MessageCodes";
 
-const logger = mock<Logger>();
+vi.mock("@govuk-one-login/cri-logger");
 
 let iprServiceSession: IPRServiceSession;
 const tableName = "MYTABLE";
@@ -62,7 +61,7 @@ describe("IPR Service", () => {
 
 	beforeEach(() => {
 		vi.resetAllMocks();
-		iprServiceSession = new IPRServiceSession(tableName, logger, mockDynamoDbClient);
+		iprServiceSession = new IPRServiceSession(tableName, mockDynamoDbClient);
 	});
 
 	describe("isFlaggedForDeletionOrEventAlreadyProcessed", () => {
@@ -213,7 +212,7 @@ describe("IPR Service", () => {
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 
 		it("Should send event to TxMA without encodedHeader if encodedHeader param is empty", async () => {  	
@@ -226,7 +225,7 @@ describe("IPR Service", () => {
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 	
 		it("Should send event to TxMA with the correct details for a payload without restricted present", async () => {  
@@ -246,7 +245,7 @@ describe("IPR Service", () => {
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 
 		it("Should send event to TxMA with the correct details for a payload with restricted present", async () => {  
@@ -266,7 +265,7 @@ describe("IPR Service", () => {
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 
 
@@ -286,7 +285,7 @@ describe("IPR Service", () => {
 				QueueUrl: process.env.TXMA_QUEUE_URL,
 			});
 			expect(sqsClient.send).toHaveBeenCalled();
-			expect(iprServiceSession.logger.info).toHaveBeenCalledWith("Sent message to TxMA");
+			expect(logger.info).toHaveBeenCalledWith("Sent message to TxMA");
 		});
 	
 		it("Should throw error if is fails to send to TXMA queue", async () => {

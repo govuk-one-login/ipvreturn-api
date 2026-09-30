@@ -3,7 +3,7 @@ import { MessageCodes } from "../models/enums/MessageCodes";
 import { AppError } from "./AppError";
 import { Constants } from "./Constants";
 import { HttpCodesEnum } from "./HttpCodesEnum";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { personalIdentityUtils } from "./PersonalIdentityUtils";
 
 export interface GovNotifyEvent {
@@ -21,7 +21,7 @@ export interface GovNotifyEvent {
 	};
 }
 
-export const buildGovNotifyEventFields = (sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger ): GovNotifyEvent => {
+export const buildGovNotifyEventFields = (sessionEvent: ExtSessionEvent | SessionEvent, emailType: string): GovNotifyEvent => {
 	
 	switch (emailType) {					
 		case Constants.VIST_PO_EMAIL_STATIC:{

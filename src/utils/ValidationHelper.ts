@@ -1,6 +1,6 @@
 import { validateOrReject } from "class-validator";
 import { AppError } from "./AppError";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { HttpCodesEnum } from "../models/enums/HttpCodesEnum";
 import { ExtSessionEvent, SessionEvent } from "../models/SessionEvent";
 import { JwtPayload } from "./IVeriCredential";
@@ -11,7 +11,7 @@ import { FallbackEmail } from "../models/Email";
 
 export class ValidationHelper {
 
-	async validateModel(model: object, logger: Logger): Promise<void> {
+	async validateModel(model: object): Promise<void> {
 		try {
 			await validateOrReject(model, { forbidUnknownValues: true });
 		} catch (errors) {
@@ -41,10 +41,10 @@ export class ValidationHelper {
 		}
 	}
 
-	async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string, logger: Logger): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent | FallbackEmail; emailType: string }> {
+	async validateSessionEvent(sessionEvent: ExtSessionEvent | SessionEvent, emailType: string): Promise<{ sessionEvent: ExtSessionEvent | SessionEvent | FallbackEmail; emailType: string }> {
 		//Validate all necessary fields are populated required to send the email before processing the data.
 		try {
-			await this.validateModel(sessionEvent, logger);
+			await this.validateModel(sessionEvent);
 			// ignored so as not log PII
 			/* eslint-disable @typescript-eslint/no-unused-vars */				
 		} catch (error) {
@@ -54,7 +54,7 @@ export class ValidationHelper {
 				sessionEvent = new SessionEvent(sessionEvent);		
 				emailType = Constants.VIST_PO_EMAIL_STATIC;
 				// Validate fields required for sending the static email
-				await this.validateSessionEvent(sessionEvent, emailType, logger);
+				await this.validateSessionEvent(sessionEvent, emailType);
 			} else {
 				logger.error("The mandatory fields required for static template email are missing in session record, trying to send the fallback template email.", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "The mandatory fields required for static template email are missing in session record, trying to send the fallback template email.");			

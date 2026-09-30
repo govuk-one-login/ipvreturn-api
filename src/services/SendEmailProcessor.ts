@@ -3,7 +3,7 @@ import { EmailResponse } from "../models/EmailResponse";
 import { ValidationHelper } from "../utils/ValidationHelper";
 import { createDynamoDbClient } from "../utils/DynamoDBFactory";
 import { buildCoreEventFields } from "../utils/TxmaEvent";
-import { Logger } from "@aws-lambda-powertools/logger";
+import { logger } from "@govuk-one-login/cri-logger";
 import { Metrics } from "@aws-lambda-powertools/metrics";
 import { SendEmailService } from "./SendEmailService";
 import { IPRServiceSession } from "./IPRServiceSession";
@@ -19,8 +19,6 @@ export class SendEmailProcessor {
 
 	private static instance: SendEmailProcessor;
 
-	private readonly logger: Logger;
-
 	private readonly metrics: Metrics;
 
 	private readonly sessionEventsTable: string;
@@ -33,21 +31,20 @@ export class SendEmailProcessor {
 
 	private readonly issuer: string;
 
-	constructor(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string) {
-		this.logger = logger;
+	constructor(metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string) {
 		this.validationHelper = new ValidationHelper();
 		this.metrics = metrics;
-		this.govNotifyService = SendEmailService.getInstance(this.logger, this.metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
+		this.govNotifyService = SendEmailService.getInstance(this.metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId);
 		this.sessionEventsTable = sessionEventsTable;
-		this.iprService = IPRServiceSession.getInstance(this.sessionEventsTable, this.logger, createDynamoDbClient());
+		this.iprService = IPRServiceSession.getInstance(this.sessionEventsTable, createDynamoDbClient());
 
-		const environmentVariables = new EnvironmentVariables(this.logger, ServicesEnum.GOV_NOTIFY_SERVICE);
+		const environmentVariables = new EnvironmentVariables(ServicesEnum.GOV_NOTIFY_SERVICE);
 		this.issuer = environmentVariables.issuer();
 	}
 
-	static getInstance(logger: Logger, metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string): SendEmailProcessor {
+	static getInstance(metrics: Metrics, GOVUKNOTIFY_API_KEY: string, govnotifyServiceId: string, sessionEventsTable: string): SendEmailProcessor {
 		if (!SendEmailProcessor.instance) {
-			SendEmailProcessor.instance = new SendEmailProcessor(logger, metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId, sessionEventsTable);
+			SendEmailProcessor.instance = new SendEmailProcessor(metrics, GOVUKNOTIFY_API_KEY, govnotifyServiceId, sessionEventsTable);
 		}
 		return SendEmailProcessor.instance;
 	}
@@ -55,11 +52,11 @@ export class SendEmailProcessor {
 	async processRequest(message: Email | DynamicEmail | FallbackEmail | VCGenerationFailureEmail): Promise<EmailResponse> {
 		// Validate Email model
 		try {
-			await this.validationHelper.validateModel(message, this.logger);
+			await this.validationHelper.validateModel(message);
 			// ignored so as not log PII
 			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error) {
-			this.logger.error("Failed to Validate Email model data", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
+			logger.error("Failed to Validate Email model data", { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Failed to Validate Email model data.");
 		}
 
@@ -68,23 +65,23 @@ export class SendEmailProcessor {
 		try {
 			session = await this.iprService.getSessionBySub(message.userId);
 			if (!session) {
-				this.logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
+				logger.error("No session event found for this userId", { messageCode: MessageCodes.SESSION_NOT_FOUND });
 				throw new AppError(HttpCodesEnum.SERVER_ERROR, "No session event found for this userId");
 			}
-			this.logger.appendKeys({
+			logger.appendKeys({
 				govuk_signin_journey_id: session.clientSessionId,
 			});
-			this.logger.info("Session retrieved from session store");
+			logger.info("Session retrieved from session store");
 			// ignored so as not log PII
 			/* eslint-disable @typescript-eslint/no-unused-vars */
 		} catch (error) {
-			this.logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:" }, { messageCode: MessageCodes.ERROR_RETRIEVING_SESSION });
+			logger.error({ message: "getSessionByUserId - failed executing get from dynamodb:" }, { messageCode: MessageCodes.ERROR_RETRIEVING_SESSION });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Error retrieving Session");
 		}
 
 		// Validate the notified field is set to true
 		if (!session.notified) {
-			this.logger.error("Notified flag is not set to true for this user session event", { messageCode: MessageCodes.NOTIFIED_FLAG_NOT_SET_TO_TRUE });
+			logger.error("Notified flag is not set to true for this user session event", { messageCode: MessageCodes.NOTIFIED_FLAG_NOT_SET_TO_TRUE });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, "Notified flag is not set to true for this user session event");
 		}
 
@@ -92,7 +89,7 @@ export class SendEmailProcessor {
 		try {
 			this.validationHelper.validateSessionEventFields(session);
 		} catch (error: any) {
-			this.logger.warn(error.message, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
+			logger.warn(error.message, { messageCode: MessageCodes.MISSING_MANDATORY_FIELDS_IN_SESSION_EVENT });
 			throw new AppError(HttpCodesEnum.SERVER_ERROR, error.message);
 		}
 		
@@ -102,7 +99,7 @@ export class SendEmailProcessor {
 		//Skip validating the session record fields if messageType is VISIT_PO_EMAIL_FALLBACK
 		if (message.messageType !== Constants.VISIT_PO_EMAIL_FALLBACK) {
 			// Validate all necessary fields are populated in the session store before processing the data.
-			data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType, this.logger);
+			data = await this.validationHelper.validateSessionEvent(sessionEventData, message.messageType);
 		}
 		
 		const emailResponse: EmailResponse = await this.govNotifyService.sendEmail(message, data.emailType);
@@ -116,7 +113,7 @@ export class SendEmailProcessor {
 			},
 		});
 
-		this.logger.info("Response after sending Email message", { emailResponse });
+		logger.info("Response after sending Email message", { emailResponse });
 		return emailResponse;
 	}
 }

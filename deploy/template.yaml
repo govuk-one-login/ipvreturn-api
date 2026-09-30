@@ -320,7 +320,7 @@ Globals:
           - '{{resolve:secretsmanager:${SecretArn}:SecretString:DT_TENANT}}' #pragma: allowlist secret
           - SecretArn: !FindInMap [ EnvironmentConfiguration, !Ref Environment, dynatraceSecretArn ]
         AWS_STACK_NAME: !Sub ${AWS::StackName} # The AWS Stack Name, as passed into the template.
-        POWERTOOLS_LOG_LEVEL: !If [IsNotProdLikeEnvironment, "DEBUG", "INFO"] # The LogLevel for the AWS PowerTools LogHelper
+        POWERTOOLS_LOG_LEVEL: "INFO" # The LogLevel for the Common CRI Logger
         POWERTOOLS_METRICS_NAMESPACE: IPR-CRI # The Metric Namespace for the AWS PowerTools MetricHelper
         ISSUER: !FindInMap [EnvironmentVariables, !Ref Environment, ISSUER]
     AutoPublishAlias: live
