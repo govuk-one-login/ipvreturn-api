@@ -77,7 +77,7 @@ Mappings:
   EnvironmentConfiguration: # This is where you store per-environment settings.
     dev:
       dynatraceSecretArn: arn:aws:secretsmanager:eu-west-2:216552277552:secret:DynatraceNonProductionVariables #pragma: allowlist secret
-      logretentionindays: 3
+      logretentionindays: 365
       apiTracingEnabled: true
     build:
       dynatraceSecretArn: arn:aws:secretsmanager:eu-west-2:216552277552:secret:DynatraceNonProductionVariables #pragma: allowlist secret
