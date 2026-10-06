@@ -109,6 +109,10 @@ export class SessionProcessor {
 				return new Response(HttpCodesEnum.UNAUTHORIZED, "JWT validation/verification failed");
 			}
 
+
+
+			
+
 			// Call AssumeRoleWithWebIdentity using the id_token
 			let assumedRole;
 			try {
