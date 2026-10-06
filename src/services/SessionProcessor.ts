@@ -111,6 +111,10 @@ export class SessionProcessor {
 
 
 
+
+
+
+
 			
 
 			// Call AssumeRoleWithWebIdentity using the id_token
