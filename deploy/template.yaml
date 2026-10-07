@@ -1917,7 +1917,12 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/Ipvreturn-publishKey-${AWS::StackName}"
-      RetentionInDays: 30
+      RetentionInDays:
+        !FindInMap [
+          EnvironmentConfiguration,
+          !Ref Environment,
+          logretentionindays,
+        ]
 
   PublishKeyFunctionPermission:
     Type: AWS::Lambda::Permission
