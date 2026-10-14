@@ -151,7 +151,7 @@ describe("SendEmailService", () => {
 		const emailResponse = await sendEmailServiceTest.sendEmail(newEmail, Constants.VIST_PO_EMAIL_DYNAMIC);
 
 		expect(mockGovNotify.sendEmail).toHaveBeenCalledWith("new-template-id", "test.user@digital.cabinet-office.gov.uk", {
-    		"personalisation": {
+			"personalisation": {
 				"first name": "Frederick",
 				"last name": "Flintstone",
 				"return_journey_URL": "www.test.com/return_journey_url",
@@ -162,6 +162,9 @@ describe("SendEmailService", () => {
 				"po_visit_time": "4:43pm",
 				"id_expiry_date_english": "21 November 2030",
 				"id_expiry_date_welsh": "21 Tachwedd 2030",
+				"session_expiry_date_english": "20 October 2026",
+				"session_expiry_date_welsh": "20 Hydref 2026",
+				"session_expiry_time": "5:01pm",
 			},
     		reference: expect.anything(),
     	});

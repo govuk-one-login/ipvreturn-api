@@ -66,6 +66,7 @@ function getMockExtSessionEventItem(): ExtSessionEvent {
 		ipvStartedOn: 1681902001,
 		journeyWentAsyncOn: 1681902002,
 		readyToResumeOn: 1681902003,
+		expiresOn: 1681902004,
 		redirectUri: "http://redirect.url",
 		nameParts: [
 			{
@@ -297,6 +298,7 @@ describe("SendEmailProcessor", () => {
 		"documentExpiryDate",
 		"postOfficeVisitDetails",
 		"postOfficeInfo",
+		"expiresOn"
 	])("when session event record is missing necessary field %s required to send newEmail, then it falls back to sending static template Email", async (attribute) => {
 		const expectedDateTime = new Date().toISOString();
 		const mockEmailResponse = new EmailResponse(expectedDateTime, "", 201);
