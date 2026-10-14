@@ -80,7 +80,7 @@ export class SessionEvent {
 }
 
 /**
- * Object to represent new data containing additional post_office related details and docType, docExpiryData
+ * Object to represent new data containing additional post_office related details and docType, docExpiryData, sessionExpiresOn
  * required to send new template email
  */
 export class ExtSessionEvent extends SessionEvent {
@@ -91,6 +91,7 @@ export class ExtSessionEvent extends SessionEvent {
 		this.documentExpiryDate = data.documentExpiryDate!;
 		this.postOfficeVisitDetails = data.postOfficeVisitDetails!;
 		this.postOfficeInfo = data.postOfficeInfo!;
+		this.expiresOn = data.expiresOn!;
 	}
 
 	static parseRequest(data: string): ExtSessionEvent {
@@ -112,7 +113,9 @@ export class ExtSessionEvent extends SessionEvent {
 
 	accountDeletedOn?: number;
 
-    expiresOn?: number;
+	@IsNumber()
+	@IsNotEmpty()
+	expiresOn!: number;
 
 	@IsString()
 	@IsNotEmpty()
