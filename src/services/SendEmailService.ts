@@ -192,6 +192,7 @@ export class SendEmailService {
     const date = new Date(timestamp);
     const time = date
       .toLocaleTimeString("en-GB", {
+        timeZone: "Europe/London",
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
