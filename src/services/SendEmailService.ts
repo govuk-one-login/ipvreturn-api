@@ -78,18 +78,29 @@ export class SendEmailService {
     		}
     		case Constants.VIST_PO_EMAIL_DYNAMIC: {				
     			// Send Dynamic template email
-    			personalisation = {
-    				"first name": message.firstName,
-    				"last name": message.lastName,
-    				"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
-    				"chosen_photo_ID": DocumentTypes[message.documentType as keyof typeof DocumentTypes],
+				personalisation = {
+					"first name": message.firstName,
+					"last name": message.lastName,
+					"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
+					"chosen_photo_ID": DocumentTypes[message.documentType as keyof typeof DocumentTypes],
 					"id_expiry_date_english": this.getFullFormattedDate(message.documentExpiryDate, "en-GB"),
 					"id_expiry_date_welsh": this.getFullFormattedDate(message.documentExpiryDate, "cy-GB"),
-    				"branch_name_and_address": message.poAddress,
+					"branch_name_and_address": message.poAddress,
 					"po_visit_date_english": message.poVisitDate,
 					"po_visit_date_welsh": translateDateToWelsh(message.poVisitDate),
-    				"po_visit_time": message.poVisitTime.replaceAll(/\s/g, ""),
-    			};
+					"po_visit_time": message.poVisitTime.replaceAll(/\s/g, ""),  
+					"session_expiry_date_english": this.getFullFormattedDate(
+						message.sessionExpiresOn * 1000,
+						"en-GB",
+					),
+					"session_expiry_date_welsh": this.getFullFormattedDate(
+						message.sessionExpiresOn * 1000,
+						"cy-GB",
+					),
+					"session_expiry_time": this.getFormattedTime(
+						message.sessionExpiresOn * 1000,
+					),
+				};
     			templateId = this.environmentVariables.getDynamicEmailTemplateId();
     			break;
     		}
@@ -174,6 +185,20 @@ export class SendEmailService {
     	const dateObject = new Date(date);
 	    const formattedDate = dateObject.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
     	return formattedDate;
-	}
+  }
+  
+  
+  getFormattedTime(timestamp: number): string {
+    const date = new Date(timestamp);
+    const time = date
+      .toLocaleTimeString("en-GB", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .replace(" ", "");
+
+    return time;
+  }
 
 }
