@@ -169,8 +169,9 @@ describe("SessionEventProcessor", () => {
 				documentExpiryDate: "2030-01-01",
 				documentType: "PASSPORT",
 				poAddress: "1 The Street, Funkytown N1 2AA",
-    			poVisitDate: "1985-01-25",
-    			poVisitTime: "1688477191",
+				poVisitDate: "1985-01-25",
+				poVisitTime: "1688477191",
+				sessionExpiresOn: 1793365929,
 				messageType: Constants.VIST_PO_EMAIL_DYNAMIC,
 
 			},
@@ -213,6 +214,7 @@ describe("SessionEventProcessor", () => {
 		"documentExpiryDate",
 		"postOfficeVisitDetails",
 		"postOfficeInfo",
+		"expiresOn"
 	])("Logs Info message when session event record is missing necessary attribute -  %s, to send new template email and hence falls back to sending static template email", async (attribute) => {
 		// @ts-expect-error allow undefined to be passed
 		const sessionEvent = unmarshall(streamEventWithPoDetails.Records[0].dynamodb?.NewImage);
