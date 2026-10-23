@@ -2561,9 +2561,9 @@ Resources:
         - RunbookUrl: !FindInMap [StaticVariables, urls, IPRSupportManual]
       ActionsEnabled: true
       OKActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       AlarmActions:
-        - !ImportValue platform-alarm-topic-slack-warning-alert
+        - !ImportValue build-notifications-WarningAlertsTopicArn
       InsufficientDataActions: []
       TreatMissingData: notBreaching
       ComparisonOperator: GreaterThanOrEqualToThreshold
