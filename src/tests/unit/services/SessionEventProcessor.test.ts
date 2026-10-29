@@ -214,6 +214,7 @@ describe("SessionEventProcessor", () => {
 		"documentExpiryDate",
 		"postOfficeVisitDetails",
 		"postOfficeInfo",
+		"expiresOn",
 	])("Logs Info message when session event record is missing necessary attribute -  %s, to send new template email and hence falls back to sending static template email", async (attribute) => {
 		// @ts-expect-error allow undefined to be passed
 		const sessionEvent = unmarshall(streamEventWithPoDetails.Records[0].dynamodb?.NewImage);
