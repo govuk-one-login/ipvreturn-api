@@ -18,6 +18,7 @@ export interface GovNotifyEvent {
 		"poAddress"?: string;
 		"poVisitDate"?: string;
 		"poVisitTime"?: string;
+		"sessionExpiresOn"?: number;
 	};
 }
 
@@ -50,6 +51,7 @@ export const buildGovNotifyEventFields = (sessionEvent: ExtSessionEvent | Sessio
 					poVisitDate: newSessionEvent.postOfficeVisitDetails[0].post_office_date_of_visit,
 					poVisitTime: newSessionEvent.postOfficeVisitDetails[0].post_office_time_of_visit,
 					documentExpiryDate: newSessionEvent.documentExpiryDate,
+					sessionExpiresOn: newSessionEvent.expiresOn,
 					messageType: Constants.VIST_PO_EMAIL_DYNAMIC,
 				},
 			};

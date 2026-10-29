@@ -66,6 +66,7 @@ function getMockExtSessionEventItem(): ExtSessionEvent {
 		ipvStartedOn: 1681902001,
 		journeyWentAsyncOn: 1681902002,
 		readyToResumeOn: 1681902003,
+		expiresOn: 1681902004,
 		redirectUri: "http://redirect.url",
 		nameParts: [
 			{

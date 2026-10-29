@@ -50,6 +50,9 @@ export const VALID_DYNAMODB_STREAM_EVENT = {
 					},
 					"readyToResumeOn": {
 						"N": "1681902003",
+					},		
+					"expiresOn": {
+						"N": "1793365929",
 					},
 					"nameParts": {
 						"L": [
@@ -123,6 +126,9 @@ export const VALID_DYNAMODB_STREAM_EVENT_WITH_PO_DETAILS = {
 					},
 					"readyToResumeOn": {
 						"N": "1681902003",
+					},	
+					"expiresOn": {
+						"N": "1793365929",
 					},
 					"documentExpiryDate": {
 						"S": "2030-01-01",

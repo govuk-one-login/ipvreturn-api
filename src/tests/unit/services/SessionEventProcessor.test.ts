@@ -170,7 +170,8 @@ describe("SessionEventProcessor", () => {
 				documentType: "PASSPORT",
 				poAddress: "1 The Street, Funkytown N1 2AA",
     			poVisitDate: "1985-01-25",
-    			poVisitTime: "1688477191",
+				poVisitTime: "1688477191",
+				sessionExpiresOn: 1793365929,
 				messageType: Constants.VIST_PO_EMAIL_DYNAMIC,
 
 			},
