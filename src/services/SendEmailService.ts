@@ -11,7 +11,12 @@ import { ServicesEnum } from "../models/enums/ServicesEnum";
 import { Constants } from "../utils/Constants";
 import { DocumentTypes } from "../models/enums/DocumentTypes";
 import { Metrics, MetricUnit } from "@aws-lambda-powertools/metrics";
-import { translateDateToWelsh } from "../utils/DateTimeUtils";
+import {
+  getFormattedDateFromIsoString,
+  getFormattedDateFromUnixTimestamp,
+  getFormattedTimeFromUnixTimestamp,
+  translateDateToWelsh,
+} from "../utils/DateTimeUtils";
 
 /**
  * Class to send emails using gov notify service
@@ -78,18 +83,21 @@ export class SendEmailService {
     		}
     		case Constants.VIST_PO_EMAIL_DYNAMIC: {				
     			// Send Dynamic template email
-    			personalisation = {
-    				"first name": message.firstName,
-    				"last name": message.lastName,
-    				"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
-    				"chosen_photo_ID": DocumentTypes[message.documentType as keyof typeof DocumentTypes],
-					"id_expiry_date_english": this.getFullFormattedDate(message.documentExpiryDate, "en-GB"),
-					"id_expiry_date_welsh": this.getFullFormattedDate(message.documentExpiryDate, "cy-GB"),
-    				"branch_name_and_address": message.poAddress,
+				personalisation = {
+					"first name": message.firstName,
+					"last name": message.lastName,
+					"return_journey_URL": this.environmentVariables.returnJourneyUrl(),
+					"chosen_photo_ID": DocumentTypes[message.documentType as keyof typeof DocumentTypes],
+					"id_expiry_date_english": getFormattedDateFromIsoString(message.documentExpiryDate, "en-GB"),
+					"id_expiry_date_welsh": getFormattedDateFromIsoString(message.documentExpiryDate, "cy-GB"),
+					"branch_name_and_address": message.poAddress,
 					"po_visit_date_english": message.poVisitDate,
 					"po_visit_date_welsh": translateDateToWelsh(message.poVisitDate),
-    				"po_visit_time": message.poVisitTime.replaceAll(/\s/g, ""),
-    			};
+					"po_visit_time": message.poVisitTime.replaceAll(/\s/g, ""),  
+					"session_expiry_date_english": getFormattedDateFromUnixTimestamp(message.sessionExpiresOn, "en-GB"),
+					"session_expiry_date_welsh": getFormattedDateFromUnixTimestamp(message.sessionExpiresOn, "cy-GB"),
+					"session_expiry_time": getFormattedTimeFromUnixTimestamp(message.sessionExpiresOn),
+				};
     			templateId = this.environmentVariables.getDynamicEmailTemplateId();
     			break;
     		}
@@ -169,11 +177,4 @@ export class SendEmailService {
     	logger.error(`sendEmail - cannot send Email even after ${this.environmentVariables.maxRetries()} retries.`);
     	throw new AppError(HttpCodesEnum.SERVER_ERROR, `Cannot send Email even after ${this.environmentVariables.maxRetries()} retries.`);
 	}
-
-	getFullFormattedDate(date: any, locale: string): string {
-    	const dateObject = new Date(date);
-	    const formattedDate = dateObject.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
-    	return formattedDate;
-	}
-
 }
