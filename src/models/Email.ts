@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEmail, IsNumber, IsOptional } from "class-validator";
+import { IsString, IsNotEmpty, IsEmail, IsNumber } from "class-validator";
 import { randomUUID } from "crypto";
 
 import { AppError } from "../utils/AppError";
@@ -69,7 +69,7 @@ export class DynamicEmail extends Email {
 		this.poVisitDate = data.poVisitDate!;
 		this.poVisitTime = data.poVisitTime!;
 		this.documentExpiryDate = data.documentExpiryDate!;
-		this.sessionExpiresOn = data.sessionExpiresOn;
+		this.sessionExpiresOn = data.sessionExpiresOn!;
 	}
 
 	static parseRequest(data: any): Email {
@@ -104,9 +104,9 @@ export class DynamicEmail extends Email {
     @IsNotEmpty()
 	documentExpiryDate!: string;
 	
-	@IsOptional()
 	@IsNumber()
-	sessionExpiresOn?: number;
+	@IsNotEmpty()
+	sessionExpiresOn!: number;
 
 }
 

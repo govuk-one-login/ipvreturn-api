@@ -298,6 +298,7 @@ describe("SendEmailProcessor", () => {
 		"documentExpiryDate",
 		"postOfficeVisitDetails",
 		"postOfficeInfo",
+		"expiresOn",
 	])("when session event record is missing necessary field %s required to send newEmail, then it falls back to sending static template Email", async (attribute) => {
 		const expectedDateTime = new Date().toISOString();
 		const mockEmailResponse = new EmailResponse(expectedDateTime, "", 201);
