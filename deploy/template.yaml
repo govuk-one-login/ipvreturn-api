@@ -98,23 +98,18 @@ Mappings:
 
   PlatformConfiguration:
     dev:
-      CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
       TxMASQS: "mock-sqs"
       TxMAKey: "mock-kms"
     build:
-      CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
       TxMASQS: "mock-sqs"
       TxMAKey: "mock-kms"
     staging:
-      CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
       TxMASQS: arn:aws:sqs:eu-west-2:178023842775:self-staging-EC-SQS-Output-Queue-return
       TxMAKey: arn:aws:kms:eu-west-2:178023842775:key/aba0d7ef-779a-4f6c-9b50-ec91f6cb8b5c
     integration:
-      CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
       TxMASQS: arn:aws:sqs:eu-west-2:729485541398:self-integration-EC-SQS-Output-Queue-return
       TxMAKey: arn:aws:kms:eu-west-2:729485541398:key/e45c19b4-bf7c-4542-95d0-89485c20533c
     production:
-      CSLSEGRESS: arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython
       TxMASQS: arn:aws:sqs:eu-west-2:451773080033:self-production-EC-SQS-Output-Queue-return
       TxMAKey: arn:aws:kms:eu-west-2:451773080033:key/35e96311-91fd-425e-bb53-b90bc8c3549c
 
@@ -862,14 +857,6 @@ Resources:
           logretentionindays,
         ]
 
-  PostEventFunctionLogsSubscriptionFilterCSLS:
-    Type: AWS::Logs::SubscriptionFilter
-    Condition: IsProdLikeEnvironment
-    Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
-      FilterPattern: ""
-      LogGroupName: !Ref PostEventFunctionLogGroup
-
   PostEventFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -1076,14 +1063,6 @@ Resources:
           logretentionindays,
         ]
 
-  GovNotifyFunctionLogsSubscriptionFilterCSLS:
-    Type: AWS::Logs::SubscriptionFilter
-    Condition: IsProdLikeEnvironment
-    Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
-      FilterPattern: ""
-      LogGroupName: !Ref GovNotifyFunctionLogGroup
-
   GovNotifyFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -1282,14 +1261,6 @@ Resources:
           logretentionindays,
         ]
 
-  StreamProcessorFunctionLogsSubscriptionFilterCSLS:
-    Type: AWS::Logs::SubscriptionFilter
-    Condition: IsProdLikeEnvironment
-    Properties:
-      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
-      FilterPattern: ""
-      LogGroupName: !Ref StreamProcessorFunctionLogGroup
-
   StreamProcessorFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -1473,15 +1444,6 @@ Resources:
           !Ref Environment,
           logretentionindays,
         ]
-
-  SessionFunctionLogsSubscriptionFilterCSLS:
-    Type: AWS::Logs::SubscriptionFilter
-    # Condition: IsProdLikeEnvironment
-    Properties:
-      DestinationArn:
-        !FindInMap [PlatformConfiguration, !Ref Environment, CSLSEGRESS]
-      FilterPattern: ""
-      LogGroupName: !Ref SessionFunctionLogGroup
 
   SessionFunctionPermission:
     Type: AWS::Lambda::Permission
