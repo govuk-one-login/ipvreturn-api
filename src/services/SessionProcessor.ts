@@ -8,7 +8,7 @@ import { APIGatewayProxyEvent } from "aws-lambda";
 import { Response } from "../utils/Response";
 import { absoluteTimeNow } from "../utils/DateTimeUtils";
 import { buildCoreEventFields } from "../utils/TxmaEvent";
-import { randomUUID } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import axios from "axios";
 import { AppError } from "../utils/AppError";
 import { createDynamoDbClientWithCreds } from "../utils/DynamoDBFactory";
@@ -21,6 +21,8 @@ import { Constants } from "../utils/Constants";
 import { SessionEventStatusEnum } from "../models/enums/SessionEventStatusEnum";
 import { stsClient } from "../utils/StsClient";
 import { MessageCodes } from "../models/enums/MessageCodes";
+import { AssumeRoleWithWebIdentityCommandOutput } from "@aws-sdk/client-sts";
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 
 export class SessionProcessor {
 	private static instance: SessionProcessor;
@@ -116,7 +118,6 @@ export class SessionProcessor {
 					RoleSessionName: Constants.ROLE_SESSION_NAME,
 					WebIdentityToken: idToken,
 					RoleArn: this.environmentVariables.assumeRoleWithWebIdentityArn(),
-					DurationSeconds: 60 // Testing if credentials are cached
 				});
 			} catch (error) {
 				logger.error({ message: "An error occurred while assuming the role with WebIdentity" }, { messageCode: MessageCodes.ERROR_ASSUMING_ROLE_WITH_WEB_IDENTITY, error });
@@ -130,6 +131,7 @@ export class SessionProcessor {
 				createDynamoDbClientWithCreds(assumedRole.Credentials),
 			);
 
+			await this.compareCredentials(assumedRole.Credentials, iprService.dynamo);
 			// The assumed role only allows access
 			// to rows where the leading key (partition key)
 			// is equal to the sub of the ID.
@@ -242,6 +244,23 @@ export class SessionProcessor {
 			});
 			throw new AppError(HttpCodesEnum.UNAUTHORIZED, "An error occurred when fetching OIDC token response");
 		}
+	}
+
+	async compareCredentials(stsCreds: AssumeRoleWithWebIdentityCommandOutput["Credentials"], dynamoDocClient: DynamoDBDocument){
+		const stsAccessKeyId = stsCreds?.AccessKeyId!
+		const dynamoCreds = await dynamoDocClient.config.credentials()
+		const dynamoAccessKeyId = dynamoCreds.accessKeyId
+
+		if(stsAccessKeyId != dynamoAccessKeyId){
+			logger.warn("Dynamo client not using STS creds", {
+				stsAccessKeyIdHash: this.hashString(stsAccessKeyId as string), 
+				dynamoAccessKeyIdHash: this.hashString(dynamoAccessKeyId)
+			})
+		}
+	}
+
+	private hashString(input: string): string {
+		return createHash('sha256').update(input).digest("base64");
 	}
 
 }
