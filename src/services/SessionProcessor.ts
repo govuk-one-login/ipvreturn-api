@@ -116,6 +116,7 @@ export class SessionProcessor {
 					RoleSessionName: Constants.ROLE_SESSION_NAME,
 					WebIdentityToken: idToken,
 					RoleArn: this.environmentVariables.assumeRoleWithWebIdentityArn(),
+					DurationSeconds: 60 // Testing if credentials are cached
 				});
 			} catch (error) {
 				logger.error({ message: "An error occurred while assuming the role with WebIdentity" }, { messageCode: MessageCodes.ERROR_ASSUMING_ROLE_WITH_WEB_IDENTITY, error });
