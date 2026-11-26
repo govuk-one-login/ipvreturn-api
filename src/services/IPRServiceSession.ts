@@ -17,7 +17,7 @@ import { absoluteTimeNow } from "../utils/DateTimeUtils";
 export class IPRServiceSession {
 	readonly tableName: string;
 
-	private readonly dynamo: DynamoDBDocument;
+	readonly dynamo: DynamoDBDocument;
 
 	private readonly environmentVariables: EnvironmentVariables;
 
