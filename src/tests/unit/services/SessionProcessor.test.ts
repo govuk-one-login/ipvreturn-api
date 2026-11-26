@@ -10,7 +10,7 @@ import {
 } from "../utils/MockJwtVerifierSigner";
 import { SessionProcessor } from "../../../services/SessionProcessor";
 import { IPRServiceSession } from "../../../services/IPRServiceSession";
-import { SessionEvent } from "../../../models/SessionEvent";
+import { ExtSessionEvent, SessionEvent } from "../../../models/SessionEvent";
 import { MISSING_AUTH_CODE, VALID_SESSION } from "../data/session-events";
 import { SessionEventStatusEnum } from "../../../models/enums/SessionEventStatusEnum";
 import axios from "axios";
@@ -22,7 +22,6 @@ import * as TxmaEventUtils from "../../../utils/TxmaEvent";
 
 /* eslint @typescript-eslint/unbound-method: 0 */
 let sessionProcessorTest: SessionProcessor;
-const mockIprService = mock<IPRServiceSession>();
 let mockSessionEvent: SessionEvent;
 const MOCK_ISSUER = "mock-issuer";
 const validPayload = {
@@ -53,6 +52,8 @@ const mockStsClient = vi.mocked(stsClient);
 const validRequest = VALID_SESSION;
 const CLIENT_ID = "oidc-client-id";
 vi.spyOn(TxmaEventUtils, "buildCoreEventFields");
+const getSessionSpy = vi.spyOn(IPRServiceSession.prototype, "getSessionBySub")
+const sendToTxmaSpy = vi.spyOn(IPRServiceSession.prototype, "sendToTXMA")
 
 function getMockSessionEventItem(): SessionEvent {
 	const sess: SessionEvent = {
@@ -86,6 +87,8 @@ function getMockSessionEventItem(): SessionEvent {
 describe("SessionProcessor", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		sendToTxmaSpy.mockImplementation(vi.fn())
+		getSessionSpy.mockImplementation(vi.fn())
 
 		process.env.KMS_KEY_ARN = "mock-kms-key-arn";
 		process.env.OIDC_URL = "https://mock-oidc-url.com";
@@ -109,7 +112,6 @@ describe("SessionProcessor", () => {
 			SecAccessKey: "SecAccessKey",
 			SessionToken: "SessionToken",
 		};
-		IPRServiceSession.getInstance = vi.fn().mockReturnValue(mockIprService);
 		const mockGetCredentials = vi.fn().mockReturnValue({ Credentials: credential });
 		mockStsClient.assumeRoleWithWebIdentity = mockGetCredentials;
 	});
@@ -233,11 +235,10 @@ describe("SessionProcessor", () => {
 	it("Return 401 Unauthorized error when session event not found for a given userId", async () => {
 		// @ts-expect-error writing resolved promise
 		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-expect-error writing resolved promise
-		mockIprService.getSessionBySub.mockReturnValue(null);
+		getSessionSpy.mockResolvedValue(null as unknown as ExtSessionEvent);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
-		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
+		expect(getSessionSpy).toHaveBeenCalledTimes(1);
 		expect(out.body).toBe("No session event found for this userId");
 		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
 		expect(logger.error).toHaveBeenCalledTimes(1);
@@ -253,11 +254,10 @@ describe("SessionProcessor", () => {
 	it("Return successful response with 200 OK when session event data was retrieved and returns redirect_uri", async () => {
 		// @ts-expect-error writing resolved promise
 		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-		// @ts-expect-error writing resolved promise
-		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+		getSessionSpy.mockResolvedValue(mockSessionEvent as ExtSessionEvent);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
-		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
+		expect(getSessionSpy).toHaveBeenCalledTimes(1);
 
 		expect(out.body).toEqual(JSON.stringify({
 			status: SessionEventStatusEnum.COMPLETED,
@@ -276,14 +276,13 @@ describe("SessionProcessor", () => {
 		it("ip_address is X_FORWARDED_FOR if header is present", async () => {
 			// @ts-expect-error writing resolved promise
 			axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-			// @ts-expect-error writing resolved promise
-			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+			getSessionSpy.mockResolvedValue(mockSessionEvent as ExtSessionEvent);
 			// @ts-expect-error private access manipulation used for testing
 			vi.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
 			const validSession = JSON.parse(JSON.stringify(VALID_SESSION));
 			await sessionProcessorTest.processRequest(validSession);
 
-			expect(mockIprService.sendToTXMA).toHaveBeenCalledWith(
+			expect(sendToTxmaSpy).toHaveBeenCalledWith(
 				{
 					"event_name": "IPR_USER_REDIRECTED",
 					"event_timestamp_ms": 1585695600000,
@@ -300,8 +299,7 @@ describe("SessionProcessor", () => {
 		it("ip_address is source IP if no X_FORWARDED_FOR header is present", async () => {
 			// @ts-expect-error writing resolved promise
 			axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-			// @ts-expect-error writing resolved promise
-			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+			getSessionSpy.mockResolvedValue(mockSessionEvent as ExtSessionEvent);
 			// @ts-expect-error private access manipulation used for testing
 			vi.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
 			const missingXForwardedFor = { ...VALID_SESSION, headers: { "txma-audit-encoded": "ABCDEFG" }, requestContext: { identity: { sourceIp: "2.2.2" } } };
@@ -309,7 +307,7 @@ describe("SessionProcessor", () => {
 
 			await sessionProcessorTest.processRequest(missingXForwardedForSession);
 
-			expect(mockIprService.sendToTXMA).toHaveBeenCalledWith(
+			expect(sendToTxmaSpy).toHaveBeenCalledWith(
 				{
 					"event_name": "IPR_USER_REDIRECTED",
 					"event_timestamp_ms": 1585695600000,
@@ -326,14 +324,13 @@ describe("SessionProcessor", () => {
 		it("when no headers are included defaults are used", async () => {
 			// @ts-expect-error writing resolved promise
 			axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
-			// @ts-expect-error writing resolved promise
-			mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+			getSessionSpy.mockResolvedValue(mockSessionEvent as ExtSessionEvent);
 			// @ts-expect-error private access manipulation used for testing
 			vi.spyOn(sessionProcessorTest.validationHelper, "isJwtValid").mockReturnValue("");
 			const sessionWithOutHeaders = JSON.parse(JSON.stringify(VALID_SESSION));
 			delete sessionWithOutHeaders.headers;
 			console.log("result", await sessionProcessorTest.processRequest(sessionWithOutHeaders));
-			expect(mockIprService.sendToTXMA).toHaveBeenCalledWith(
+			expect(sendToTxmaSpy).toHaveBeenCalledWith(
 				{
 					"event_name": "IPR_USER_REDIRECTED",
 					"event_timestamp_ms": 1585695600000,
@@ -357,11 +354,10 @@ describe("SessionProcessor", () => {
 		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
 		// @ts-expect-error private access manipulation used for testing
 		delete mockSessionEvent[attribute];
-		// @ts-expect-error writing resolved promise
-		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+		getSessionSpy.mockResolvedValue(mockSessionEvent as ExtSessionEvent);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
-		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
+		expect(getSessionSpy).toHaveBeenCalledTimes(1);
 		expect(out.body).toEqual(JSON.stringify({
 			status: SessionEventStatusEnum.PENDING,
 			message: `${attribute} is not yet populated, unable to process the DB record.`,
@@ -375,11 +371,10 @@ describe("SessionProcessor", () => {
 		// @ts-expect-error writing resolved promise
 		axios.post.mockResolvedValueOnce({ data:{ id_token: "id_token_jwt" } });
 		mockSessionEvent.notified = false;
-		// @ts-expect-error writing resolved promise
-		mockIprService.getSessionBySub.mockReturnValue(mockSessionEvent);
+		getSessionSpy.mockResolvedValue(mockSessionEvent as ExtSessionEvent);
 		const out: Response = await sessionProcessorTest.processRequest(validRequest);
 
-		expect(mockIprService.getSessionBySub).toHaveBeenCalledTimes(1);
+		expect(getSessionSpy).toHaveBeenCalledTimes(1);
 		expect(out.body).toBe("User is not yet notified for this session event.");
 		expect(out.statusCode).toBe(HttpCodesEnum.UNAUTHORIZED);
 		expect(logger.error).toHaveBeenCalledTimes(1);
